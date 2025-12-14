@@ -17,6 +17,14 @@ const GOOGLE_SHEETS_URL = 'https://script.googleusercontent.com/macros/echo?user
 let transactions: any[] = []
 let baCounter = 1
 
+// Storage untuk target umur material (in-memory)
+// Key: partNumber, Value: { partNumber, targetUmurHari, jenisBarang, material, mesin }
+let targetUmurMaterial: Map<string, any> = new Map()
+
+// Storage untuk history penggantian material
+// Key: `${snMesin}_${partNumber}`, Value: array of history
+let materialHistory: Map<string, any[]> = new Map()
+
 // Cache untuk data
 let cachedData: any[] = []
 let lastFetchTime = 0
@@ -92,38 +100,78 @@ function calculateStock() {
   return Object.values(stockMap)
 }
 
-// Helper: Calculate Material Age
+// Helper: Calculate Material Age (UPDATED - hitung dari tanggal pasang sampai hari ini)
 function calculateMaterialAge() {
   const ageMap: any = {}
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
   
   transactions
     .filter(tx => tx.jenisTransaksi.includes('Keluar'))
+    .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime())
     .forEach(tx => {
       tx.materials.forEach((mat: any) => {
-        const key = `${mat.snMesin}_${mat.partNumber}`
+        if (!mat.snMesin) return // Skip if no S/N
         
-        if (!ageMap[key]) {
-          ageMap[key] = {
-            snMesin: mat.snMesin,
-            partNumber: mat.partNumber,
-            material: mat.material,
-            mesin: mat.mesin,
-            lokasi: tx.lokasiTujuan,
-            tanggalPasang: tx.tanggal,
-            tanggalGanti: null,
-            umurHari: 0,
-            status: 'Terpasang'
-          }
-        } else {
-          // Material diganti
-          const tanggalPasang = new Date(ageMap[key].tanggalPasang)
-          const tanggalGanti = new Date(tx.tanggal)
-          const umurMs = tanggalGanti.getTime() - tanggalPasang.getTime()
-          const umurHari = Math.floor(umurMs / (1000 * 60 * 60 * 24))
-          
-          ageMap[key].tanggalGanti = tx.tanggal
-          ageMap[key].umurHari = umurHari
-          ageMap[key].status = 'Perlu Diganti'
+        const key = `${mat.snMesin}_${mat.partNumber}`
+        const historyKey = key
+        
+        // Initialize history if not exists
+        if (!materialHistory.has(historyKey)) {
+          materialHistory.set(historyKey, [])
+        }
+        
+        const history = materialHistory.get(historyKey)!
+        
+        // Add to history
+        history.push({
+          tanggal: tx.tanggal,
+          nomorBA: tx.nomorBA,
+          lokasi: tx.lokasiTujuan,
+          jumlah: mat.jumlah,
+          pemeriksa: tx.pemeriksa,
+          penerima: tx.penerima,
+          penggantianKe: history.length + 1
+        })
+        
+        // Current material (last transaction)
+        const tanggalPasang = new Date(tx.tanggal)
+        tanggalPasang.setHours(0, 0, 0, 0)
+        
+        // Calculate umur dari tanggal pasang sampai hari ini
+        const umurMs = today.getTime() - tanggalPasang.getTime()
+        const umurHari = Math.floor(umurMs / (1000 * 60 * 60 * 24))
+        
+        // Get target umur for this part number
+        const targetUmur = targetUmurMaterial.get(mat.partNumber)
+        const targetUmurHari = targetUmur?.targetUmurHari || 365 // Default 365 hari
+        
+        // Determine status based on target
+        let status = 'Terpasang'
+        let statusClass = 'green'
+        
+        if (umurHari >= targetUmurHari) {
+          status = 'Perlu Diganti'
+          statusClass = 'red'
+        } else if (umurHari >= (targetUmurHari - 20)) {
+          status = 'Mendekati Batas'
+          statusClass = 'yellow'
+        }
+        
+        ageMap[key] = {
+          snMesin: mat.snMesin,
+          partNumber: mat.partNumber,
+          jenisBarang: mat.jenisBarang,
+          material: mat.material,
+          mesin: mat.mesin,
+          lokasi: tx.lokasiTujuan,
+          tanggalPasang: tx.tanggal,
+          umurHari: umurHari,
+          targetUmurHari: targetUmurHari,
+          sisaHari: targetUmurHari - umurHari,
+          status: status,
+          statusClass: statusClass,
+          totalPenggantian: history.length
         }
       })
     })
@@ -264,6 +312,73 @@ app.get('/api/ba/:nomor', (c) => {
   }
   
   return c.json({ ba })
+})
+
+// API: Get material history by S/N and Part Number
+app.get('/api/material-history/:snMesin/:partNumber', (c) => {
+  const snMesin = c.req.param('snMesin')
+  const partNumber = c.req.param('partNumber')
+  const key = `${snMesin}_${partNumber}`
+  
+  const history = materialHistory.get(key) || []
+  
+  return c.json({ 
+    snMesin,
+    partNumber,
+    totalPenggantian: history.length,
+    history: history 
+  })
+})
+
+// API: Get all target umur material
+app.get('/api/target-umur', (c) => {
+  const targets = Array.from(targetUmurMaterial.values())
+  return c.json({ targets })
+})
+
+// API: Save or update target umur for part number
+app.post('/api/target-umur', async (c) => {
+  try {
+    const body = await c.req.json()
+    const { partNumber, targetUmurHari, jenisBarang, material, mesin } = body
+    
+    if (!partNumber || !targetUmurHari) {
+      return c.json({ error: 'Part number and target umur required' }, 400)
+    }
+    
+    targetUmurMaterial.set(partNumber, {
+      partNumber,
+      targetUmurHari: parseInt(targetUmurHari),
+      jenisBarang,
+      material,
+      mesin,
+      updatedAt: new Date().toISOString()
+    })
+    
+    return c.json({ 
+      success: true,
+      message: 'Target umur saved successfully',
+      data: targetUmurMaterial.get(partNumber)
+    })
+  } catch (error) {
+    return c.json({ error: 'Failed to save target umur' }, 500)
+  }
+})
+
+// API: Get target umur by part number
+app.get('/api/target-umur/:partNumber', (c) => {
+  const partNumber = c.req.param('partNumber')
+  const target = targetUmurMaterial.get(partNumber)
+  
+  if (!target) {
+    return c.json({ 
+      partNumber,
+      targetUmurHari: 365, // Default
+      isDefault: true
+    })
+  }
+  
+  return c.json({ ...target, isDefault: false })
 })
 
 // Main page - Input Form
@@ -639,13 +754,16 @@ function getDashboardUmurHTML() {
                             <th class="px-4 py-3 text-left">Material</th>
                             <th class="px-4 py-3 text-left">Tanggal Pasang</th>
                             <th class="px-4 py-3 text-center">Umur (Hari)</th>
+                            <th class="px-4 py-3 text-center">Target (Hari)</th>
+                            <th class="px-4 py-3 text-center">Sisa (Hari)</th>
                             <th class="px-4 py-3 text-left">Lokasi</th>
                             <th class="px-4 py-3 text-center">Status</th>
+                            <th class="px-4 py-3 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="ageTable">
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                            <td colspan="10" class="px-4 py-8 text-center text-gray-500">
                                 Belum ada data material terpasang
                             </td>
                         </tr>
