@@ -106,6 +106,9 @@ function calculateMaterialAge() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   
+  // IMPORTANT: Clear history sebelum recalculate untuk avoid duplikasi
+  materialHistory.clear()
+  
   transactions
     .filter(tx => tx.jenisTransaksi.includes('Keluar'))
     .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime())
@@ -127,7 +130,7 @@ function calculateMaterialAge() {
         history.push({
           tanggal: tx.tanggal,
           nomorBA: tx.nomorBA,
-          lokasi: tx.lokasiTujuan,
+          lokasi: tx.lokasiTujuan, // FIXED: Gunakan lokasiTujuan
           jumlah: mat.jumlah,
           pemeriksa: tx.pemeriksa,
           penerima: tx.penerima,
