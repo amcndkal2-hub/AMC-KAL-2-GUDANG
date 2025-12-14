@@ -74,27 +74,55 @@
 
 ---
 
-### 3. 📅 Dashboard Umur Material
+### 3. 📅 Dashboard Umur Material (UPDATED v2.1)
 **URL**: `/dashboard/umur`
 
 **Fitur:**
 - Filter Lokasi (unit pemasangan)
 - Filter Material (search)
 - Filter S/N Mesin
-- Tabel umur material:
+- **Tabel umur material lengkap:**
   - S/N Mesin
-  - Part Number
-  - Material
+  - Part Number + Jenis Barang
+  - Material + Mesin
   - Tanggal Pasang
-  - **Umur (Hari)** - calculated
+  - **Umur (Hari)** - dari tanggal pasang sampai **HARI INI** ✨
+  - **Target (Hari)** - editable dengan klik ✨
+  - **Sisa (Hari)** - warna dinamis (hijau/kuning/merah) ✨
   - Lokasi
-  - Status (Terpasang / Perlu Diganti)
+  - Status (badge warna)
+  - **Button History** dengan counter penggantian ✨
 
-**Rules Umur:**
-- Hitung umur hanya jika **material sama** diganti pada **S/N Mesin sama**
-- Umur = Tanggal Ganti - Tanggal Pasang
-- Status "Perlu Diganti" jika umur > 600 hari
-- Tracking history penggantian
+**Fitur Baru:**
+1. **Set Target Umur per Part Number** ✨
+   - Klik angka target → modal input muncul
+   - Set target umur (hari)
+   - Default: 365 hari
+   - Tersimpan permanent per part number
+
+2. **Alert Warna Otomatis:** ✨
+   - 🟢 **HIJAU (Terpasang)**: Umur < (Target - 20 hari)
+   - 🟡 **KUNING (Mendekati Batas)**: Umur >= (Target - 20 hari)  
+     → **ACTION**: Siapkan material pengganti!
+   - 🔴 **MERAH (Perlu Diganti)**: Umur >= Target  
+     → **URGENT**: Segera ganti material!
+
+3. **History Modal Penggantian** ✨
+   - Klik button "History (X)" → modal muncul
+   - Tampil semua penggantian:
+     - Penggantian ke-1, ke-2, ke-3, dst
+     - Tanggal, Nomor BA (clickable)
+     - Lokasi, Jumlah
+     - Pemeriksa, Penerima
+   - Link ke BA dokumen
+
+**Rules Umur (UPDATED):**
+- ✅ **Perhitungan**: Umur = **HARI INI** - Tanggal Pasang
+  - Contoh: Pasang 15/10/2025, Hari ini 14/12/2025 → **60 hari**
+- ✅ Track by S/N Mesin + Part Number
+- ✅ Alert 20 hari sebelum target → warna KUNING
+- ✅ Lewat target → warna MERAH
+- ✅ History penggantian: 1st, 2nd, 3rd, dst
 
 ---
 
@@ -167,6 +195,45 @@ GET /api/dashboard/umur-material?lokasi=BABAI&material=FILTER
 
 # Get BA by number
 GET /api/ba/BA2025001
+```
+
+### 4. Material Age & Target (NEW v2.1)
+```bash
+# Get all target umur material
+GET /api/target-umur
+
+# Get target umur by part number
+GET /api/target-umur/:partNumber
+
+# Save or update target umur
+POST /api/target-umur
+Body: {
+  partNumber: "1319257",
+  targetUmurHari: 365,
+  jenisBarang: "MATERIAL HANDAL",
+  material: "FILTER INSERT",
+  mesin: "F6L912"
+}
+
+# Get material history by S/N and Part Number
+GET /api/material-history/:snMesin/:partNumber
+Response: {
+  snMesin: "11",
+  partNumber: "NSX400A",
+  totalPenggantian: 3,
+  history: [
+    {
+      penggantianKe: 1,
+      tanggal: "2025-01-15",
+      nomorBA: "BA2025001",
+      lokasi: "GUNUNG PUREI",
+      jumlah: 1,
+      pemeriksa: "MUCHLIS ADITYA ANHAR",
+      penerima: "RIVALDO RENIER T"
+    },
+    ...
+  ]
+}
 ```
 
 ---
@@ -387,8 +454,20 @@ npm run deploy:prod
 
 ## 🆕 Fitur yang Baru Ditambahkan
 
-### ✅ Completed in This Version
+### ✅ Completed - Version 2.1 (Latest)
 
+**NEW in v2.1 - Dashboard Umur Material Improvements:**
+1. ✅ **Fix Perhitungan Umur** - dari tanggal pasang sampai **HARI INI**
+2. ✅ **Set Target Umur** per Part Number (editable dengan klik)
+3. ✅ **Alert Warna Otomatis**:
+   - 🟢 Hijau: Normal (umur < target - 20 hari)
+   - 🟡 Kuning: Mendekati batas (20 hari sebelum target)
+   - 🔴 Merah: Perlu diganti (lewat target)
+4. ✅ **History Modal** - tampil semua penggantian (1st, 2nd, 3rd, dst)
+5. ✅ **Kolom Baru**: Target (Hari), Sisa (Hari), Button History
+6. ✅ **New APIs**: target-umur, material-history
+
+**Completed in v2.0:**
 1. **Navigasi Menu** - 4 menu utama di top navigation
 2. **Dashboard Stok Material**:
    - Filter Jenis Barang (3 kategori + Semua)
@@ -396,12 +475,7 @@ npm run deploy:prod
    - Search Part Number
    - Alert system (Habis/Hampir Habis/Tersedia)
    - Export Excel (CSV)
-3. **Dashboard Umur Material**:
-   - Filter Lokasi pemasangan
-   - Filter Material (search)
-   - Filter S/N Mesin
-   - Perhitungan umur otomatis
-   - Status Terpasang/Perlu Diganti
+3. **Dashboard Umur Material** (base version)
 4. **Dashboard Mutasi Material**:
    - Tampilan tabel dengan multiple materials
    - Filter Tanggal & Nomor BA
@@ -512,8 +586,13 @@ wrangler secret put FIREBASE_API_KEY
 
 ## 🎯 Status & Roadmap
 
-- **Current Version**: v2.0 (Dashboard Complete)
+- **Current Version**: v2.1 (Dashboard Umur Material Enhanced)
 - **Status**: ✅ Active (Sandbox)
+- **Latest Update**: 
+  - ✅ Fix perhitungan umur (sampai hari ini)
+  - ✅ Set target umur per part number
+  - ✅ Alert warna otomatis (hijau/kuning/merah)
+  - ✅ History penggantian modal
 - **Next Priority**: Firebase Firestore Integration
 - **Last Updated**: 2025-12-14
 
