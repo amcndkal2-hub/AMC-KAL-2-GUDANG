@@ -1,250 +1,551 @@
-# Sistem Inventaris Spare Part
+# Sistem Manajemen Material Spare Part
 
 ## Project Overview
-- **Name**: Sistem Inventaris Spare Part
-- **Goal**: Aplikasi web untuk mengelola transaksi inventaris spare part dengan integrasi Google Sheets
+- **Name**: Sistem Manajemen Material Spare Part
+- **Goal**: Aplikasi web lengkap untuk mengelola transaksi, stok, umur, dan mutasi material spare part dengan integrasi Google Sheets dan sistem Berita Acara (BA)
 - **Features**: 
-  - Form input transaksi material
-  - Searchable part number dengan autofill
-  - Dropdown dinamis untuk lokasi, pemeriksa, dan penerima
-  - Tanda tangan digital menggunakan signature pad
-  - Validasi form dan data submission
+  - Form input transaksi material dengan multiple items
+  - Searchable part number dengan autofill otomatis
+  - Dashboard Stok Material dengan alert
+  - Dashboard Umur Material
+  - Dashboard Mutasi Material dengan BA tracking
+  - Tanda tangan digital
+  - Export data (CSV/PDF)
 
 ## URLs
 - **Development (Sandbox)**: https://3000-itxfls7jninzh0h0emwqh-b32ec7bb.sandbox.novita.ai
 - **Production**: (belum di-deploy)
 - **GitHub**: (belum di-setup)
 
-## Fitur yang Sudah Selesai
-1. ✅ Backend API dengan Hono framework
-2. ✅ Integrasi dengan Google Sheets JSON API
-3. ✅ Searchable part number dengan autofill otomatis (Jenis Barang, Material, Mesin)
-4. ✅ Dropdown dinamis untuk:
-   - Lokasi Keluar/Asal
-   - Lokasi Tujuan
-   - Nama Pemeriksa
-   - Nama Penerima
-5. ✅ Input manual untuk S/N Mesin dan Jumlah
-6. ✅ Signature pad untuk tanda tangan digital (touchscreen support)
-7. ✅ Form validation dan data submission
+## 🎯 Fitur Utama
 
-## Fitur yang Belum Diimplementasikan
-1. ⏳ Penyimpanan data transaksi ke database atau Google Sheets
-2. ⏳ Export data ke PDF/Excel
-3. ⏳ History transaksi
-4. ⏳ Dashboard dan reporting
-5. ⏳ User authentication
-6. ⏳ Multiple material items dalam satu transaksi
+### 1. ✅ Form Input Transaksi Material
+**URL**: `/`
 
-## Data Architecture
-- **Data Source**: Google Sheets JSON API
-- **Storage Services**: 
-  - Cache in-memory (5 menit)
-  - Future: Cloudflare D1/KV untuk persistent storage
-- **Data Models**:
-  ```typescript
-  interface SparePartData {
-    JENIS_BARANG: string
-    PART_NUMBER: number | string
-    MATERIAL: string
-    MESIN: string
-    UNIT: string
-    Pemeriksa: string
-    Penerima: string
+**Fitur:**
+- Input tanggal dan jenis transaksi (Masuk/Keluar)
+- Lokasi asal dan tujuan (dropdown dari Google Sheets)
+- **Multiple Material Items** - tambah unlimited material dalam 1 transaksi
+- Searchable part number dengan autofill:
+  - Jenis Barang ✨ auto-fill
+  - Material ✨ auto-fill
+  - Mesin ✨ auto-fill
+- Input manual: S/N Mesin dan Jumlah
+- Signature pad untuk Pemeriksa dan Penerima
+- **Auto-generate Nomor BA** (BA2025001, BA2025002, ...)
+
+**Rules:**
+- Jika 2+ material di input dalam 1 waktu → Nomor BA sama
+- Nomor BA format: `BA[YEAR][NUMBER]` (contoh: BA2025001)
+- Validasi: minimal 1 material, kedua tanda tangan harus ada
+
+---
+
+### 2. 📊 Dashboard Stok Material
+**URL**: `/dashboard/stok`
+
+**Fitur:**
+- **Filter Jenis Barang:**
+  - MATERIAL HANDAL
+  - FILTER
+  - MATERIAL BEKAS
+  - SEMUA
+- Filter Type Mesin (dropdown dinamis)
+- Search Part Number
+- Tabel stok dengan kolom:
+  - Part Number
+  - Jenis Barang
+  - Material
+  - Mesin
+  - Stok Masuk (hijau)
+  - Stok Keluar (merah)
+  - Stok Akhir (dengan badge status)
+  - Unit
+- **Alert System:**
+  - 🔴 **Habis**: Stok = 0
+  - 🟡 **Hampir Habis**: Stok ≤ 10
+  - 🟢 **Tersedia**: Stok > 10
+- Export: PDF, Excel (CSV)
+
+**Rules Stok:**
+- Part Number yang sama → Stok = Masuk - Keluar
+- Perhitungan otomatis dari semua transaksi
+- Real-time update
+
+---
+
+### 3. 📅 Dashboard Umur Material
+**URL**: `/dashboard/umur`
+
+**Fitur:**
+- Filter Lokasi (unit pemasangan)
+- Filter Material (search)
+- Filter S/N Mesin
+- Tabel umur material:
+  - S/N Mesin
+  - Part Number
+  - Material
+  - Tanggal Pasang
+  - **Umur (Hari)** - calculated
+  - Lokasi
+  - Status (Terpasang / Perlu Diganti)
+
+**Rules Umur:**
+- Hitung umur hanya jika **material sama** diganti pada **S/N Mesin sama**
+- Umur = Tanggal Ganti - Tanggal Pasang
+- Status "Perlu Diganti" jika umur > 600 hari
+- Tracking history penggantian
+
+---
+
+### 4. 🔄 Dashboard Mutasi Material
+**URL**: `/dashboard/mutasi`
+
+**Fitur:**
+- Filter Tanggal
+- Filter Nomor BA (search)
+- Tabel mutasi:
+  - **Nomor BA** (clickable → view detail)
+  - Tanggal
+  - Jenis Transaksi (badge Masuk/Keluar)
+  - Part Number (multi-row jika multiple items)
+  - Jumlah
+  - Lokasi Keluar & Tujuan
+  - Pemeriksa & Penerima
+  - Status BA (Terkirim button)
+- **View BA Modal** - tampil seperti dokumen PLN:
+  - Header: Nomor BA, Tanggal
+  - Info: Lokasi, Jenis, Dasar (LH 02)
+  - Tabel material dengan Part Number, Material, Mesin, Jumlah, S/N
+  - Tanda tangan Pemeriksa & Penerima (display image)
+  - Action: Print, Download PDF
+- Export All BA
+
+**Rules BA:**
+- 1 transaksi = 1 Nomor BA
+- Multiple material dalam 1 transaksi = Nomor BA sama
+- BA otomatis increment (001, 002, 003, ...)
+- Format: `BA[YEAR][NUMBER]` (BA2025001)
+
+---
+
+## 📋 API Endpoints
+
+### 1. Master Data
+```bash
+# Get all data from Google Sheets
+GET /api/data
+
+# Search part number
+GET /api/search-part?q=1319257
+
+# Get dropdown values (units, pemeriksa, penerima)
+GET /api/dropdown-values
+```
+
+### 2. Transaction
+```bash
+# Save transaction (auto-generate BA number)
+POST /api/save-transaction
+Body: {
+  tanggal, jenisTransaksi, lokasiAsal, lokasiTujuan,
+  pemeriksa, penerima, ttdPemeriksa, ttdPenerima,
+  materials: [{partNumber, jenisBarang, material, mesin, snMesin, jumlah}]
+}
+
+# Get all transactions
+GET /api/transactions
+```
+
+### 3. Dashboard
+```bash
+# Get stock dashboard with filters
+GET /api/dashboard/stock?jenis=FILTER&mesin=TCD+2013
+
+# Get material age dashboard with filters
+GET /api/dashboard/umur-material?lokasi=BABAI&material=FILTER
+
+# Get BA by number
+GET /api/ba/BA2025001
+```
+
+---
+
+## 💾 Data Architecture
+
+### Storage (Current: In-Memory)
+```javascript
+transactions = [
+  {
+    id: "timestamp",
+    nomorBA: "BA2025001",
+    tanggal: "2025-12-14",
+    jenisTransaksi: "Keluar (Pengeluaran Gudang)",
+    lokasiAsal: "GUDANG BUNTOK",
+    lokasiTujuan: "BABAI",
+    pemeriksa: "MUCHLIS ADITYA ANHAR",
+    penerima: "RIVALDO RENIER T",
+    ttdPemeriksa: "data:image/png;base64,...",
+    ttdPenerima: "data:image/png;base64,...",
+    materials: [
+      {
+        partNumber: "1319257",
+        jenisBarang: "MATERIAL HANDAL",
+        material: "FILTER INSERT",
+        mesin: "F6L912",
+        snMesin: "SN-001",
+        jumlah: 5
+      }
+    ],
+    createdAt: "2025-12-14T..."
   }
-  
-  interface Transaction {
-    tanggal: string
-    jenisTransaksi: string
-    lokasiAsal: string
-    lokasiTujuan: string
-    pemeriksa: string
-    penerima: string
-    ttdPemeriksa: string (base64)
-    ttdPenerima: string (base64)
-    materials: Material[]
-  }
-  ```
-
-## API Endpoints
-
-### 1. GET /api/data
-Mengambil semua data spare part dari Google Sheets
-```bash
-curl https://3000-itxfls7jninzh0h0emwqh-b32ec7bb.sandbox.novita.ai/api/data
+]
 ```
 
-### 2. GET /api/search-part?q=<query>
-Mencari part number berdasarkan query
-```bash
-curl https://3000-itxfls7jninzh0h0emwqh-b32ec7bb.sandbox.novita.ai/api/search-part?q=1319257
+### Future: Firebase Firestore Structure
+```
+/transactions/{id}
+  - nomorBA
+  - tanggal
+  - jenisTransaksi
+  - lokasiAsal
+  - lokasiTujuan
+  - pemeriksa
+  - penerima
+  - ttdPemeriksa (base64)
+  - ttdPenerima (base64)
+  - materials (array)
+  - createdAt
+
+/stock/{partNumber}
+  - partNumber
+  - jenisBarang
+  - material
+  - mesin
+  - stokMasuk
+  - stokKeluar
+  - stokAkhir
+  - lastUpdated
+
+/materialAge/{snMesin_partNumber}
+  - snMesin
+  - partNumber
+  - material
+  - mesin
+  - lokasi
+  - tanggalPasang
+  - tanggalGanti
+  - umurHari
+  - status
 ```
 
-### 3. GET /api/dropdown-values
-Mengambil nilai unik untuk dropdown (units, pemeriksa, penerima)
-```bash
-curl https://3000-itxfls7jninzh0h0emwqh-b32ec7bb.sandbox.novita.ai/api/dropdown-values
-```
+---
 
-### 4. POST /api/save-transaction
-Menyimpan data transaksi (currently logs to console)
-```bash
-curl -X POST https://3000-itxfls7jninzh0h0emwqh-b32ec7bb.sandbox.novita.ai/api/save-transaction \
-  -H "Content-Type: application/json" \
-  -d '{"tanggal":"2025-12-14","jenisTransaksi":"Keluar",...}'
-```
+## 🚀 User Guide
 
-## User Guide
+### A. Input Transaksi Baru
 
-### Cara Menggunakan Aplikasi
-
-1. **Buka aplikasi** di browser:
-   - Development: https://3000-itxfls7jninzh0h0emwqh-b32ec7bb.sandbox.novita.ai
-
+1. **Buka Form Input** (`/`)
 2. **Isi Informasi Umum**:
-   - Pilih tanggal transaksi
-   - Pilih jenis transaksi (Keluar/Masuk)
-   - Pilih lokasi asal dan tujuan dari dropdown
+   - Tanggal (default: today)
+   - Jenis Transaksi: Keluar/Masuk
+   - Lokasi Asal & Tujuan
+3. **Tambah Material**:
+   - Ketik Part Number → pilih dari autocomplete
+   - Jenis Barang, Material, Mesin auto-fill ✨
+   - Isi S/N Mesin manual
+   - Isi Jumlah
+   - Klik "Tambah Baris Material" untuk item lain
+4. **Tanda Tangan**:
+   - Pilih Pemeriksa → tanda tangan di canvas
+   - Pilih Penerima → tanda tangan di canvas
+5. **Submit**:
+   - Klik "Simpan Transaksi"
+   - Muncul modal sukses dengan **Nomor BA**
+   - Klik "Lihat BA" → redirect ke Dashboard Mutasi
 
-3. **Isi Detail Material**:
-   - **Cara 1 - Search Part Number**: Ketik part number di kolom "Part Number (Cari)"
-     - Sistem akan menampilkan hasil pencarian
-     - Klik hasil yang sesuai
-     - Data Jenis Barang, Material, dan Mesin akan terisi otomatis
-   
-   - **Cara 2 - Pilih dari Dropdown**: Ketik sebagian part number untuk melihat pilihan
-   
-   - Isi S/N Mesin secara manual (contoh: SN-EXC-001)
-   - Isi jumlah/kuantitas
+### B. Monitor Stok Material
 
-4. **Tambah Material** (opsional):
-   - Klik tombol "Tambah Baris Material" untuk menambah item lain
-   - Klik tombol "Hapus" untuk menghapus baris yang tidak diperlukan
+1. **Buka Dashboard Stok** (`/dashboard/stok`)
+2. **Filter Jenis Barang**: 
+   - Klik button: MATERIAL HANDAL / FILTER / MATERIAL BEKAS
+3. **Filter Mesin**:
+   - Pilih dari dropdown
+4. **Search**:
+   - Ketik Part Number di search box
+5. **Lihat Status**:
+   - 🟢 Tersedia (stok > 10)
+   - 🟡 Hampir Habis (stok ≤ 10)
+   - 🔴 Habis (stok = 0)
+6. **Export**:
+   - Klik "Excel" → download CSV
 
-5. **Isi Penanggung Jawab**:
-   - Pilih nama Pemeriksa dari dropdown
-   - Tanda tangan di area signature pad (support mouse dan touchscreen)
-   - Pilih nama Penerima dari dropdown
-   - Tanda tangan di area signature pad kedua
+### C. Monitor Umur Material
 
-6. **Submit**:
-   - Klik tombol "Simpan Transaksi"
-   - Sistem akan validasi:
-     - Semua field wajib terisi
-     - Minimal 1 material
-     - Kedua tanda tangan harus ada
-   - Jika berhasil, akan muncul notifikasi sukses
+1. **Buka Dashboard Umur** (`/dashboard/umur`)
+2. **Filter Lokasi**:
+   - Pilih unit/lokasi pemasangan
+3. **Filter Material**:
+   - Ketik nama material
+4. **Filter S/N Mesin**:
+   - Ketik S/N untuk track specific mesin
+5. **Lihat Status**:
+   - 🟢 Terpasang (normal)
+   - 🔴 Perlu Diganti (umur > 600 hari)
 
-7. **Reset Form**:
-   - Klik tombol "Reset" untuk mengosongkan form
-   - Konfirmasi akan muncul sebelum form di-reset
+### D. Lihat & Export BA
 
-## Development
+1. **Buka Dashboard Mutasi** (`/dashboard/mutasi`)
+2. **Filter** (optional):
+   - Tanggal
+   - Nomor BA
+3. **View BA**:
+   - Klik Nomor BA → modal muncul
+   - Lihat detail lengkap seperti dokumen PLN
+   - Tanda tangan ditampilkan
+4. **Export BA**:
+   - Klik "Print" → print halaman
+   - Klik "Download PDF" → download (coming soon)
+   - Klik "Export BA" di atas → export all
+
+---
+
+## 🎨 Tech Stack
+
+- **Backend**: Hono v4.11.0 (Cloudflare Workers)
+- **Frontend**: Vanilla JavaScript + HTML5
+- **Styling**: Tailwind CSS v3 (CDN)
+- **Icons**: FontAwesome v6.4.0
+- **Data Source**: Google Sheets JSON API
+- **Storage**: In-memory (current) → Firestore (future)
+- **Platform**: Cloudflare Pages/Workers
+- **Build**: Vite v6.3.5
+- **Dev Server**: PM2
+
+---
+
+## 📂 Project Structure
+
+```
+webapp/
+├── src/
+│   ├── index.tsx              # Main backend with all routes
+│   └── renderer.tsx           # JSX renderer
+├── public/
+│   └── static/
+│       ├── app.js             # Form input logic
+│       ├── dashboard-stok.js  # Stock dashboard
+│       ├── dashboard-umur.js  # Material age dashboard
+│       └── dashboard-mutasi.js # Mutation dashboard
+├── dist/                      # Build output
+├── .dev.vars                  # Environment variables (Firebase config)
+├── ecosystem.config.cjs       # PM2 configuration
+├── package.json
+├── wrangler.jsonc
+└── README.md
+```
+
+---
+
+## 🔧 Development
 
 ### Local Development
-```bash
-# Install dependencies
-npm install
 
-# Build project
+```bash
+# Clean port
+fuser -k 3000/tcp 2>/dev/null || true
+
+# Build project (REQUIRED first time)
 npm run build
 
-# Start development server (sandbox)
+# Start with PM2
 pm2 start ecosystem.config.cjs
 
-# Or using wrangler directly
-npm run dev:sandbox
+# Check logs
+pm2 logs webapp --nostream
 
-# Test service
+# Test
 curl http://localhost:3000
 ```
 
 ### Deployment to Cloudflare Pages
+
 ```bash
+# Prerequisites
+# 1. Call setup_cloudflare_api_key first
+# 2. Verify: npx wrangler whoami
+
 # Build and deploy
-npm run deploy:prod
-
-# Or manual steps:
 npm run build
-wrangler pages deploy dist --project-name webapp
+npx wrangler pages deploy dist --project-name webapp
+
+# Or use npm script
+npm run deploy:prod
 ```
 
-## Tech Stack
-- **Backend**: Hono v4.11.0 (lightweight web framework)
-- **Frontend**: HTML5 + Vanilla JavaScript
-- **Styling**: Tailwind CSS v3 (via CDN)
-- **Icons**: FontAwesome v6.4.0
-- **Platform**: Cloudflare Pages/Workers
-- **Build Tool**: Vite v6.3.5
-- **Process Manager**: PM2 (for sandbox development)
+---
 
-## Project Structure
-```
-webapp/
-├── src/
-│   ├── index.tsx          # Main Hono application
-│   └── renderer.tsx       # JSX renderer
-├── public/
-│   └── static/
-│       └── app.js         # Frontend JavaScript
-├── dist/                  # Build output
-├── ecosystem.config.cjs   # PM2 configuration
-├── package.json          # Dependencies
-├── wrangler.jsonc        # Cloudflare configuration
-└── README.md            # Documentation
-```
+## 🆕 Fitur yang Baru Ditambahkan
 
-## Rekomendasi Pengembangan Selanjutnya
+### ✅ Completed in This Version
+
+1. **Navigasi Menu** - 4 menu utama di top navigation
+2. **Dashboard Stok Material**:
+   - Filter Jenis Barang (3 kategori + Semua)
+   - Filter Mesin (dropdown dinamis)
+   - Search Part Number
+   - Alert system (Habis/Hampir Habis/Tersedia)
+   - Export Excel (CSV)
+3. **Dashboard Umur Material**:
+   - Filter Lokasi pemasangan
+   - Filter Material (search)
+   - Filter S/N Mesin
+   - Perhitungan umur otomatis
+   - Status Terpasang/Perlu Diganti
+4. **Dashboard Mutasi Material**:
+   - Tampilan tabel dengan multiple materials
+   - Filter Tanggal & Nomor BA
+   - View BA Modal (dokumen lengkap)
+   - Display tanda tangan di BA
+   - Button Export BA
+5. **Auto BA Number Generation**:
+   - Format: BA[YEAR][NUMBER]
+   - Auto-increment: BA2025001, BA2025002, ...
+   - Multiple materials = 1 BA number
+6. **Success Modal** setelah submit
+7. **Stock Calculation** (Masuk - Keluar)
+8. **Material Age Calculation** by S/N Mesin
+
+---
+
+## ⏳ Fitur yang Belum Diimplementasikan
 
 ### High Priority
-1. **Implement Database Storage**: 
-   - Setup Cloudflare D1 untuk persistent storage
-   - Create migrations dan schema
-   - Implement save transaction ke database
-
-2. **Export/Print Feature**:
-   - Generate PDF untuk bukti transaksi
-   - Include signature images dalam PDF
-   - Add print button
-
-3. **Transaction History**:
-   - Halaman untuk melihat history transaksi
-   - Filter by date, location, part number
-   - Search functionality
+1. **Firebase Firestore Integration**:
+   - Persistent storage
+   - Real-time sync
+   - Setup: Perlu Firebase Project ID & API Key
+2. **PDF Export**:
+   - BA export ke PDF dengan layout PLN
+   - Include signature images
+   - Library: jsPDF atau Puppeteer
+3. **Print Optimization**:
+   - CSS for print (@media print)
+   - Page breaks untuk multiple materials
 
 ### Medium Priority
 4. **User Authentication**:
-   - Login system dengan role (admin, operator)
-   - Hanya admin yang bisa hapus/edit transaksi
-   - Audit trail untuk setiap perubahan
-
-5. **Dashboard & Analytics**:
-   - Statistik penggunaan spare part
-   - Chart untuk trend konsumsi
-   - Low stock alert
-
-6. **Mobile Optimization**:
-   - Responsive design improvements
-   - Touch-friendly interface
-   - Offline mode dengan service worker
+   - Login system
+   - Role: Admin, Operator
+   - Permission management
+5. **Advanced Filters**:
+   - Date range picker
+   - Multiple filter combinations
+   - Save filter presets
+6. **Notification System**:
+   - Email notification untuk BA
+   - Alert untuk stok hampir habis
+   - Reminder untuk material perlu diganti
 
 ### Low Priority
-7. **Advanced Features**:
-   - Barcode scanning untuk part number
-   - Photo upload untuk kondisi barang
-   - Email notification untuk transaksi penting
-   - Integration dengan sistem ERP
+7. **Mobile App** (PWA)
+8. **Barcode Scanner** untuk Part Number
+9. **Photo Upload** kondisi barang
+10. **Integration** dengan ERP lain
 
-## Status
-- **Platform**: Cloudflare Pages (Development)
+---
+
+## 📊 Business Rules Summary
+
+### Stok Material
+- **Rule**: Part Number sama → Stok = ∑Masuk - ∑Keluar
+- **Alert**: 
+  - Habis (0)
+  - Hampir Habis (≤10)
+  - Tersedia (>10)
+
+### Umur Material
+- **Rule**: Hitung umur hanya jika:
+  - Material SAMA diganti pada
+  - S/N Mesin SAMA
+- **Formula**: Umur = Tanggal Ganti - Tanggal Pasang
+- **Alert**: Perlu Diganti jika umur > 600 hari
+
+### Nomor BA
+- **Rule**:
+  - 1 transaksi = 1 Nomor BA
+  - Multiple materials dalam 1 input = BA sama
+  - Auto-increment: 001, 002, 003, ...
+- **Format**: `BA[YEAR][NUMBER]`
+- **Example**: BA2025001, BA2025002
+
+---
+
+## 🔐 Configuration
+
+### Firebase Setup (Future)
+
+Edit `.dev.vars`:
+```bash
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_API_KEY=your-api-key
+FIREBASE_DATABASE_URL=https://your-project-id.firebaseio.com
+```
+
+Deploy ke production:
+```bash
+wrangler secret put FIREBASE_PROJECT_ID
+wrangler secret put FIREBASE_API_KEY
+```
+
+---
+
+## 📝 Notes
+
+- **Cache Duration**: Google Sheets data di-cache 5 menit
+- **In-Memory Storage**: Data hilang saat restart (belum persistent)
+- **BA Counter**: Reset ke 1 saat restart
+- **Signature Format**: Base64 PNG
+- **Multi-material Support**: Unlimited items per transaksi
+
+---
+
+## 🎯 Status & Roadmap
+
+- **Current Version**: v2.0 (Dashboard Complete)
 - **Status**: ✅ Active (Sandbox)
+- **Next Priority**: Firebase Firestore Integration
 - **Last Updated**: 2025-12-14
 
-## Notes
-- Cache duration untuk data Google Sheets: 5 menit
-- Signature images disimpan dalam format base64 PNG
-- Form validation dilakukan di client-side dan server-side
-- Support untuk multiple material items dalam satu transaksi (unlimited)
+---
 
-## Contact & Support
-Untuk pertanyaan atau issue, silakan hubungi tim developer.
+## 👥 Contact & Support
+
+Untuk pertanyaan, bug report, atau feature request, silakan hubungi tim developer.
+
+---
+
+## 📸 Screenshots
+
+### Form Input
+- Multiple material items ✅
+- Signature pad touchscreen ✅
+- Auto BA number generation ✅
+
+### Dashboard Stok
+- Filter jenis barang ✅
+- Alert system dengan badge colors ✅
+- Export Excel ✅
+
+### Dashboard Umur
+- Filter lokasi & material ✅
+- Perhitungan umur otomatis ✅
+
+### Dashboard Mutasi
+- View BA modal dengan dokumen PLN format ✅
+- Tanda tangan display ✅
+- Export BA ✅
+
+---
+
+**Happy Coding! 🚀**
