@@ -383,13 +383,17 @@ async function handleSubmit(e) {
         const result = await response.json();
         
         if (result.success) {
-            alert('✅ Transaksi berhasil disimpan!');
+            alert(`✅ Transaksi berhasil disimpan!\nNomor BA: ${result.nomorBA}`);
             
-            // Show summary
-            displayTransactionSummary(formData);
+            // Show success modal with BA number
+            showSuccessModal(result.nomorBA, formData);
             
-            // Reset form
-            // resetForm();
+            // Optional: Reset form after delay
+            setTimeout(() => {
+                if (confirm('Data sudah disimpan. Ingin membuat transaksi baru?')) {
+                    resetForm();
+                }
+            }, 2000);
         } else {
             alert('❌ Gagal menyimpan transaksi: ' + (result.error || 'Unknown error'));
         }
@@ -427,6 +431,36 @@ ${data.materials.map((m, i) => `
     `;
     
     console.log(summary);
+}
+
+// Show success modal
+function showSuccessModal(nomorBA, data) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <i class="fas fa-check text-green-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Transaksi Berhasil Disimpan!</h3>
+                <p class="text-sm text-gray-500 mb-4">
+                    Nomor Berita Acara: <strong class="text-blue-600">${nomorBA}</strong>
+                </p>
+                <div class="flex gap-3">
+                    <a href="/dashboard/mutasi" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        Lihat BA
+                    </a>
+                    <button onclick="this.closest('.fixed').remove()" 
+                        class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
 }
 
 // Reset form
