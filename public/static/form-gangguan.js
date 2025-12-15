@@ -4,9 +4,8 @@
 
 let materialRowCountGangguan = 0
 
-// Signature Pads
+// Signature Pad
 let canvasPelapor, ctxPelapor, isDrawingPelapor = false
-let canvasManajer, ctxManajer, isDrawingManajer = false
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -55,7 +54,7 @@ async function loadDropdownUnits() {
   }
 }
 
-// ===== Signature Pads =====
+// ===== Signature Pad =====
 function setupSignaturePads() {
   // Pelapor
   canvasPelapor = document.getElementById('signaturePelapor')
@@ -92,44 +91,8 @@ function setupSignaturePads() {
     canvasPelapor.dispatchEvent(mouseEvent)
   })
   
-  // Manajer
-  canvasManajer = document.getElementById('signatureManajer')
-  ctxManajer = canvasManajer.getContext('2d')
-  setupCanvas(canvasManajer, ctxManajer)
-  
-  canvasManajer.addEventListener('mousedown', (e) => startDrawing(e, 'manajer'))
-  canvasManajer.addEventListener('mousemove', (e) => draw(e, 'manajer'))
-  canvasManajer.addEventListener('mouseup', () => stopDrawing('manajer'))
-  canvasManajer.addEventListener('mouseout', () => stopDrawing('manajer'))
-  
-  // Touch events for mobile
-  canvasManajer.addEventListener('touchstart', (e) => {
-    e.preventDefault()
-    const touch = e.touches[0]
-    const mouseEvent = new MouseEvent('mousedown', {
-      clientX: touch.clientX,
-      clientY: touch.clientY
-    })
-    canvasManajer.dispatchEvent(mouseEvent)
-  })
-  canvasManajer.addEventListener('touchmove', (e) => {
-    e.preventDefault()
-    const touch = e.touches[0]
-    const mouseEvent = new MouseEvent('mousemove', {
-      clientX: touch.clientX,
-      clientY: touch.clientY
-    })
-    canvasManajer.dispatchEvent(mouseEvent)
-  })
-  canvasManajer.addEventListener('touchend', (e) => {
-    e.preventDefault()
-    const mouseEvent = new MouseEvent('mouseup', {})
-    canvasManajer.dispatchEvent(mouseEvent)
-  })
-  
-  // Clear buttons
+  // Clear button
   document.getElementById('clearPelapor').addEventListener('click', () => clearSignature('pelapor'))
-  document.getElementById('clearManajer').addEventListener('click', () => clearSignature('manajer'))
 }
 
 function setupCanvas(canvas, ctx) {
@@ -140,48 +103,26 @@ function setupCanvas(canvas, ctx) {
 }
 
 function startDrawing(e, type) {
-  if (type === 'pelapor') {
-    isDrawingPelapor = true
-    const rect = canvasPelapor.getBoundingClientRect()
-    ctxPelapor.beginPath()
-    ctxPelapor.moveTo(e.clientX - rect.left, e.clientY - rect.top)
-  } else {
-    isDrawingManajer = true
-    const rect = canvasManajer.getBoundingClientRect()
-    ctxManajer.beginPath()
-    ctxManajer.moveTo(e.clientX - rect.left, e.clientY - rect.top)
-  }
+  isDrawingPelapor = true
+  const rect = canvasPelapor.getBoundingClientRect()
+  ctxPelapor.beginPath()
+  ctxPelapor.moveTo(e.clientX - rect.left, e.clientY - rect.top)
 }
 
 function draw(e, type) {
-  if (type === 'pelapor' && !isDrawingPelapor) return
-  if (type === 'manajer' && !isDrawingManajer) return
+  if (!isDrawingPelapor) return
   
-  if (type === 'pelapor') {
-    const rect = canvasPelapor.getBoundingClientRect()
-    ctxPelapor.lineTo(e.clientX - rect.left, e.clientY - rect.top)
-    ctxPelapor.stroke()
-  } else {
-    const rect = canvasManajer.getBoundingClientRect()
-    ctxManajer.lineTo(e.clientX - rect.left, e.clientY - rect.top)
-    ctxManajer.stroke()
-  }
+  const rect = canvasPelapor.getBoundingClientRect()
+  ctxPelapor.lineTo(e.clientX - rect.left, e.clientY - rect.top)
+  ctxPelapor.stroke()
 }
 
 function stopDrawing(type) {
-  if (type === 'pelapor') {
-    isDrawingPelapor = false
-  } else {
-    isDrawingManajer = false
-  }
+  isDrawingPelapor = false
 }
 
 function clearSignature(type) {
-  if (type === 'pelapor') {
-    ctxPelapor.clearRect(0, 0, canvasPelapor.width, canvasPelapor.height)
-  } else {
-    ctxManajer.clearRect(0, 0, canvasManajer.width, canvasManajer.height)
-  }
+  ctxPelapor.clearRect(0, 0, canvasPelapor.width, canvasPelapor.height)
 }
 
 // ===== Material Management =====
@@ -310,14 +251,9 @@ function selectMaterial(rowId, item) {
 async function handleFormSubmit(e) {
   e.preventDefault()
   
-  // Validate signatures
+  // Validate signature
   if (isCanvasEmpty(canvasPelapor)) {
     alert('Tanda tangan Pelapor harus diisi!')
-    return
-  }
-  
-  if (isCanvasEmpty(canvasManajer)) {
-    alert('Tanda tangan Manajer harus diisi!')
     return
   }
   
@@ -363,9 +299,7 @@ async function handleFormSubmit(e) {
     rencanaPerbaikan: document.getElementById('rencanaPerbaikan').value,
     materials: materials,
     namaPelapor: document.getElementById('namaPelapor').value,
-    namaManajer: document.getElementById('namaManajer').value,
-    ttdPelapor: canvasPelapor.toDataURL('image/png'),
-    ttdManajer: canvasManajer.toDataURL('image/png')
+    ttdPelapor: canvasPelapor.toDataURL('image/png')
   }
   
   try {
@@ -426,7 +360,6 @@ function showSuccessModal(nomorLH05) {
 function resetForm() {
   document.getElementById('gangguanForm').reset()
   clearSignature('pelapor')
-  clearSignature('manajer')
   
   // Reset materials to 1 row
   document.getElementById('materialListGangguan').innerHTML = ''

@@ -321,17 +321,13 @@ function showLH05Modal(gangguan) {
           </div>
         </div>
         
-        <!-- Signatures -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
-          <div class="text-center">
-            <p class="text-sm text-gray-600 mb-2">Pelapor</p>
-            <img src="${gangguan.ttdPelapor}" alt="TTD Pelapor" class="mx-auto border rounded" style="max-width: 200px; height: 100px;">
-            <p class="font-semibold text-gray-800 mt-2">${gangguan.namaPelapor}</p>
-          </div>
-          <div class="text-center">
-            <p class="text-sm text-gray-600 mb-2">Manajer</p>
-            <img src="${gangguan.ttdManajer}" alt="TTD Manajer" class="mx-auto border rounded" style="max-width: 200px; height: 100px;">
-            <p class="font-semibold text-gray-800 mt-2">${gangguan.namaManajer}</p>
+        <!-- Signature -->
+        <div class="pt-6 border-t">
+          <div class="text-center max-w-md mx-auto">
+            <p class="text-sm text-gray-600 mb-2">Tanda Tangan Pelapor</p>
+            <img src="${gangguan.ttdPelapor}" alt="TTD Pelapor" class="mx-auto border rounded-lg shadow" style="max-width: 300px; height: 150px;">
+            <p class="font-semibold text-gray-800 mt-3 text-lg">${gangguan.namaPelapor}</p>
+            <p class="text-sm text-gray-500">Pelapor</p>
           </div>
         </div>
       </div>

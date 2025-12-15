@@ -1365,33 +1365,19 @@ function getFormGangguanHTML() {
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h2 class="text-xl font-semibold text-gray-800 mb-4">
                             <i class="fas fa-signature text-red-600 mr-2"></i>
-                            12. Tanda Tangan Digital
+                            12. Tanda Tangan Digital Pelapor
                         </h2>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Pelapor</label>
-                                <input type="text" id="namaPelapor" required placeholder="Nama Pelapor"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
-                                
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Pelapor</label>
-                                <canvas id="signaturePelapor" width="300" height="150" class="signature-pad w-full bg-gray-50"></canvas>
-                                <button type="button" id="clearPelapor" class="mt-2 text-sm text-red-600 hover:text-red-700">
-                                    <i class="fas fa-eraser mr-1"></i>Hapus
-                                </button>
-                            </div>
+                        <div class="max-w-md mx-auto">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Pelapor</label>
+                            <input type="text" id="namaPelapor" required placeholder="Nama Pelapor"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
                             
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Manajer</label>
-                                <input type="text" id="namaManajer" required placeholder="Nama Manajer"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
-                                
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Manajer</label>
-                                <canvas id="signatureManajer" width="300" height="150" class="signature-pad w-full bg-gray-50"></canvas>
-                                <button type="button" id="clearManajer" class="mt-2 text-sm text-red-600 hover:text-red-700">
-                                    <i class="fas fa-eraser mr-1"></i>Hapus
-                                </button>
-                            </div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Pelapor</label>
+                            <canvas id="signaturePelapor" width="400" height="200" class="signature-pad w-full bg-gray-50"></canvas>
+                            <button type="button" id="clearPelapor" class="mt-2 text-sm text-red-600 hover:text-red-700">
+                                <i class="fas fa-eraser mr-1"></i>Hapus Tanda Tangan
+                            </button>
                         </div>
                     </div>
 
