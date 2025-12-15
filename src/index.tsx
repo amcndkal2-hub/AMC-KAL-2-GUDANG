@@ -17,6 +17,10 @@ const GOOGLE_SHEETS_URL = 'https://script.googleusercontent.com/macros/echo?user
 let transactions: any[] = []
 let baCounter = 1
 
+// Storage untuk Form Gangguan LH05
+let gangguanTransactions: any[] = []
+let lh05Counter = 1
+
 // Storage untuk target umur material (in-memory)
 // Key: partNumber, Value: { partNumber, targetUmurHari, jenisBarang, material, mesin }
 let targetUmurMaterial: Map<string, any> = new Map()
@@ -64,6 +68,14 @@ function generateNomorBA() {
   const paddedNumber = String(baCounter).padStart(3, '0')
   baCounter++
   return `BA${new Date().getFullYear()}${paddedNumber}`
+}
+
+// Helper: Generate Nomor BA LH05
+function generateNomorLH05() {
+  const paddedNumber = String(lh05Counter).padStart(3, '0')
+  const year = new Date().getFullYear()
+  lh05Counter++
+  return `${paddedNumber}/ND KAL 2/LH05/${year}`
 }
 
 // Helper: Calculate Stock
@@ -384,6 +396,72 @@ app.get('/api/target-umur/:partNumber', (c) => {
   return c.json({ ...target, isDefault: false })
 })
 
+// ==================== API FORM GANGGUAN LH05 ====================
+
+// API: Save Form Gangguan LH05
+app.post('/api/save-gangguan', async (c) => {
+  try {
+    const body = await c.req.json()
+    
+    // Generate Nomor LH05
+    const nomorLH05 = generateNomorLH05()
+    
+    // Add transaction
+    const gangguan = {
+      id: Date.now().toString(),
+      nomorLH05,
+      ...body,
+      createdAt: new Date().toISOString()
+    }
+    
+    gangguanTransactions.push(gangguan)
+    
+    return c.json({ 
+      success: true, 
+      message: 'Form gangguan saved successfully',
+      nomorLH05,
+      data: gangguan 
+    })
+  } catch (error) {
+    return c.json({ error: 'Failed to save gangguan' }, 500)
+  }
+})
+
+// API: Get all gangguan transactions
+app.get('/api/gangguan-transactions', (c) => {
+  return c.json({ gangguanTransactions })
+})
+
+// API: Get gangguan by Nomor LH05
+app.get('/api/gangguan/:nomor', (c) => {
+  const nomor = c.req.param('nomor')
+  const gangguan = gangguanTransactions.find(tx => tx.nomorLH05 === nomor)
+  
+  if (!gangguan) {
+    return c.json({ error: 'LH05 not found' }, 404)
+  }
+  
+  return c.json({ gangguan })
+})
+
+// API: Get gangguan dashboard with filters
+app.get('/api/dashboard/gangguan', (c) => {
+  const kelompok = c.req.query('kelompok') || ''
+  const tanggal = c.req.query('tanggal') || ''
+  
+  let data = gangguanTransactions
+  
+  if (kelompok) {
+    data = data.filter((g: any) => g.kelompokSPD === kelompok)
+  }
+  
+  if (tanggal) {
+    data = data.filter((g: any) => g.hariTanggal?.includes(tanggal))
+  }
+  
+  return c.json({ data })
+})
+
 // Main page - Input Form
 app.get('/', (c) => {
   return c.html(getInputFormHTML())
@@ -402,6 +480,16 @@ app.get('/dashboard/umur', (c) => {
 // Dashboard Mutasi Material
 app.get('/dashboard/mutasi', (c) => {
   return c.html(getDashboardMutasiHTML())
+})
+
+// Form Gangguan dan Permintaan Material
+app.get('/form-gangguan', (c) => {
+  return c.html(getFormGangguanHTML())
+})
+
+// Dashboard Gangguan dan Permintaan Material
+app.get('/dashboard/gangguan', (c) => {
+  return c.html(getDashboardGangguanHTML())
 })
 
 // HTML Templates
@@ -434,18 +522,24 @@ function getInputFormHTML() {
                     <i class="fas fa-warehouse text-2xl"></i>
                     <span class="text-xl font-bold">Sistem Manajemen Material</span>
                 </div>
-                <div class="flex space-x-4">
-                    <a href="/" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">
-                        <i class="fas fa-plus mr-2"></i>Input Material
+                <div class="flex flex-wrap space-x-2">
+                    <a href="/" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                        <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded">
-                        <i class="fas fa-chart-bar mr-2"></i>Stok Material
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 hover:bg-blue-700 rounded">
-                        <i class="fas fa-calendar-alt mr-2"></i>Umur Material
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 hover:bg-blue-700 rounded">
-                        <i class="fas fa-exchange-alt mr-2"></i>Mutasi Material
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                    </a>
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
                 </div>
             </div>
@@ -595,18 +689,24 @@ function getDashboardStokHTML() {
                     <i class="fas fa-chart-bar text-2xl"></i>
                     <span class="text-xl font-bold">Dashboard Stok Material</span>
                 </div>
-                <div class="flex space-x-4">
-                    <a href="/" class="px-4 py-2 hover:bg-green-700 rounded">
-                        <i class="fas fa-plus mr-2"></i>Input Material
+                <div class="flex flex-wrap space-x-2">
+                    <a href="/" class="px-3 py-2 hover:bg-green-700 rounded">
+                        <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 bg-green-700 rounded">
-                        <i class="fas fa-chart-bar mr-2"></i>Stok Material
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-green-700 rounded">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 hover:bg-green-700 rounded">
-                        <i class="fas fa-calendar-alt mr-2"></i>Umur Material
+                    <a href="/dashboard/stok" class="px-3 py-2 bg-green-700 rounded hover:bg-green-800">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 hover:bg-green-700 rounded">
-                        <i class="fas fa-exchange-alt mr-2"></i>Mutasi Material
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-green-700 rounded">
+                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                    </a>
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-green-700 rounded">
+                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-green-700 rounded">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
                 </div>
             </div>
@@ -705,18 +805,24 @@ function getDashboardUmurHTML() {
                     <i class="fas fa-calendar-alt text-2xl"></i>
                     <span class="text-xl font-bold">Dashboard Umur Material</span>
                 </div>
-                <div class="flex space-x-4">
-                    <a href="/" class="px-4 py-2 hover:bg-pink-700 rounded">
-                        <i class="fas fa-plus mr-2"></i>Input Material
+                <div class="flex flex-wrap space-x-2">
+                    <a href="/" class="px-3 py-2 hover:bg-pink-700 rounded">
+                        <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-pink-700 rounded">
-                        <i class="fas fa-chart-bar mr-2"></i>Stok Material
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-pink-700 rounded">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 bg-pink-700 rounded">
-                        <i class="fas fa-calendar-alt mr-2"></i>Umur Material
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-pink-700 rounded">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 hover:bg-pink-700 rounded">
-                        <i class="fas fa-exchange-alt mr-2"></i>Mutasi Material
+                    <a href="/dashboard/umur" class="px-3 py-2 bg-pink-700 rounded hover:bg-pink-800">
+                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                    </a>
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-pink-700 rounded">
+                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-pink-700 rounded">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
                 </div>
             </div>
@@ -799,18 +905,24 @@ function getDashboardMutasiHTML() {
                     <i class="fas fa-exchange-alt text-2xl"></i>
                     <span class="text-xl font-bold">Dashboard Mutasi Material</span>
                 </div>
-                <div class="flex space-x-4">
-                    <a href="/" class="px-4 py-2 hover:bg-cyan-700 rounded">
-                        <i class="fas fa-plus mr-2"></i>Input Material
+                <div class="flex flex-wrap space-x-2">
+                    <a href="/" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                        <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-cyan-700 rounded">
-                        <i class="fas fa-chart-bar mr-2"></i>Stok Material
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 hover:bg-cyan-700 rounded">
-                        <i class="fas fa-calendar-alt mr-2"></i>Umur Material
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 bg-cyan-700 rounded">
-                        <i class="fas fa-exchange-alt mr-2"></i>Mutasi Material
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                    </a>
+                    <a href="/dashboard/mutasi" class="px-3 py-2 bg-cyan-700 rounded hover:bg-cyan-800">
+                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
                 </div>
             </div>
@@ -868,6 +980,446 @@ function getDashboardMutasiHTML() {
         </div>
 
         <script src="/static/dashboard-mutasi.js"></script>
+    </body>
+    </html>
+  `
+}
+
+function getFormGangguanHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Form Gangguan dan Permintaan Material</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <style>
+          .signature-pad {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            cursor: crosshair;
+          }
+          .signature-pad:hover {
+            border-color: #3b82f6;
+          }
+        </style>
+    </head>
+    <body class="bg-gray-50">
+        <!-- Navigation -->
+        <nav class="bg-red-600 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                    <span class="text-xl font-bold">Form Gangguan dan Permintaan Material</span>
+                </div>
+                <div class="flex flex-wrap space-x-2">
+                    <a href="/" class="px-3 py-2 hover:bg-red-700 rounded">
+                        <i class="fas fa-plus mr-1"></i>Input Material
+                    </a>
+                    <a href="/form-gangguan" class="px-3 py-2 bg-red-700 rounded hover:bg-red-800">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-red-700 rounded">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                    </a>
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-red-700 rounded">
+                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                    </a>
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-red-700 rounded">
+                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-red-700 rounded">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="min-h-screen py-8 px-4">
+            <div class="max-w-6xl mx-auto">
+                <!-- Header -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                        <i class="fas fa-file-alt text-red-600 mr-3"></i>
+                        Form Gangguan dan Permintaan Material
+                    </h1>
+                    <p class="text-gray-600">Berita Acara LH05</p>
+                </div>
+
+                <!-- Form -->
+                <form id="gangguanForm" class="space-y-6">
+                    <!-- BA LH05 Number (Auto) -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-hashtag text-red-600 mr-2"></i>
+                            Nomor BA LH05 (Auto)
+                        </h2>
+                        <div class="bg-gray-100 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-2">Nomor akan di-generate otomatis:</p>
+                            <p class="text-2xl font-bold text-red-600">Format: XXX/ND KAL 2/LH05/TAHUN</p>
+                            <p class="text-sm text-gray-500 mt-2">Contoh: 001/ND KAL 2/LH05/2025</p>
+                        </div>
+                    </div>
+
+                    <!-- 1. Hari/Tanggal/Jam Kejadian -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            1. Hari/Tanggal/Jam Kejadian
+                        </h2>
+                        <input type="datetime-local" id="hariTanggal" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <!-- 2. Kelompok SPD yang rusak -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            2. Kelompok SPD yang rusak
+                        </h2>
+                        <select id="kelompokSPD" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                            <option value="">-- Pilih Kelompok SPD --</option>
+                            <option value="MEKANIK">MEKANIK</option>
+                            <option value="ELEKTRIK">ELEKTRIK</option>
+                        </select>
+                    </div>
+
+                    <!-- 3-6. Isian Manual -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            Analisa Gangguan
+                        </h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    3. Komponen yang rusak
+                                </label>
+                                <input type="text" id="komponenRusak" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    4. Gejala yang timbul
+                                </label>
+                                <textarea id="gejala" required rows="3"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    5. Uraian kejadian
+                                </label>
+                                <textarea id="uraianKejadian" required rows="3"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    6. Analisa penyebab
+                                </label>
+                                <textarea id="analisaPenyebab" required rows="3"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    7. Kesimpulan kerusakan
+                                </label>
+                                <textarea id="kesimpulan" required rows="3"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 8. Akibat terhadap sistem pembangkit -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            8. Akibat terhadap sistem pembangkit
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Beban Puncak (MW)
+                                </label>
+                                <input type="number" id="bebanPuncak" step="0.01" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Daya Mampu (MW)
+                                </label>
+                                <input type="number" id="dayaMampu" step="0.01" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Status Pemadaman
+                                </label>
+                                <select id="pemadaman" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="">-- Pilih Status --</option>
+                                    <option value="NORMAL">NORMAL</option>
+                                    <option value="SIAGA">SIAGA</option>
+                                    <option value="DEFISIT">DEFISIT</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 9-10. Tindakan -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            Tindakan dan Rencana
+                        </h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    9. Tindakan penanggulangan
+                                </label>
+                                <textarea id="tindakanPenanggulangan" required rows="3"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    10. Rencana perbaikan
+                                </label>
+                                <textarea id="rencanaPerbaikan" required rows="3"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 11. Kebutuhan Material -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-boxes text-red-600 mr-2"></i>
+                            11. Kebutuhan Material
+                        </h2>
+                        
+                        <div id="materialListGangguan" class="space-y-4"></div>
+                        
+                        <button type="button" id="addMaterialGangguan" 
+                            class="w-full mt-4 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition flex items-center justify-center">
+                            <i class="fas fa-plus mr-2"></i>
+                            Tambah Material
+                        </button>
+                    </div>
+
+                    <!-- 12. TTD Digital -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-signature text-red-600 mr-2"></i>
+                            12. Tanda Tangan Digital
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pelapor</label>
+                                <input type="text" id="namaPelapor" required placeholder="Nama Pelapor"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                                
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Pelapor</label>
+                                <canvas id="signaturePelapor" width="300" height="150" class="signature-pad w-full bg-gray-50"></canvas>
+                                <button type="button" id="clearPelapor" class="mt-2 text-sm text-red-600 hover:text-red-700">
+                                    <i class="fas fa-eraser mr-1"></i>Hapus
+                                </button>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Manajer</label>
+                                <input type="text" id="namaManajer" required placeholder="Nama Manajer"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                                
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Manajer</label>
+                                <canvas id="signatureManajer" width="300" height="150" class="signature-pad w-full bg-gray-50"></canvas>
+                                <button type="button" id="clearManajer" class="mt-2 text-sm text-red-600 hover:text-red-700">
+                                    <i class="fas fa-eraser mr-1"></i>Hapus
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="flex gap-4">
+                        <button type="submit" 
+                            class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 transition text-lg font-semibold">
+                            <i class="fas fa-save mr-2"></i>Simpan Form Gangguan
+                        </button>
+                        <button type="button" id="resetFormGangguan"
+                            class="px-6 py-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                            <i class="fas fa-undo mr-2"></i>Reset
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script src="/static/form-gangguan.js"></script>
+    </body>
+    </html>
+  `
+}
+
+function getDashboardGangguanHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard Gangguan dan Permintaan Material</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-gray-50">
+        <nav class="bg-orange-600 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-tools text-2xl"></i>
+                    <span class="text-xl font-bold">Dashboard Gangguan dan Permintaan Material</span>
+                </div>
+                <div class="flex flex-wrap space-x-2">
+                    <a href="/" class="px-3 py-2 hover:bg-orange-700 rounded">
+                        <i class="fas fa-plus mr-1"></i>Input Material
+                    </a>
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-orange-700 rounded">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-orange-700 rounded">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                    </a>
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-orange-700 rounded">
+                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                    </a>
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-orange-700 rounded">
+                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-3 py-2 bg-orange-700 rounded hover:bg-orange-800">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="flex">
+            <!-- Sidebar Filter (Kiri) -->
+            <div class="w-64 bg-white shadow-lg p-6 min-h-screen">
+                <h2 class="text-xl font-bold mb-6 text-gray-800">
+                    <i class="fas fa-filter mr-2 text-orange-600"></i>
+                    Filter Data
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Kelompok SPD</label>
+                        <select id="filterKelompok" class="w-full px-3 py-2 border rounded-lg text-sm">
+                            <option value="">Semua</option>
+                            <option value="MEKANIK">MEKANIK</option>
+                            <option value="ELEKTRIK">ELEKTRIK</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Tanggal</label>
+                        <input type="date" id="filterTanggal" class="w-full px-3 py-2 border rounded-lg text-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Status Pemadaman</label>
+                        <select id="filterPemadaman" class="w-full px-3 py-2 border rounded-lg text-sm">
+                            <option value="">Semua</option>
+                            <option value="NORMAL">NORMAL</option>
+                            <option value="SIAGA">SIAGA</option>
+                            <option value="DEFISIT">DEFISIT</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Cari Nomor LH05</label>
+                        <input type="text" id="searchNomor" placeholder="001/ND KAL 2/LH05/2025" 
+                            class="w-full px-3 py-2 border rounded-lg text-sm">
+                    </div>
+                    
+                    <button onclick="applyFilters()" class="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700">
+                        <i class="fas fa-search mr-2"></i>Terapkan Filter
+                    </button>
+                    
+                    <button onclick="resetFilters()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                        <i class="fas fa-undo mr-2"></i>Reset Filter
+                    </button>
+                </div>
+                
+                <div class="mt-8 p-4 bg-orange-50 rounded-lg">
+                    <h3 class="font-semibold text-orange-800 mb-2">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Statistik
+                    </h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Total Gangguan:</span>
+                            <span id="totalGangguan" class="font-bold">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Mekanik:</span>
+                            <span id="totalMekanik" class="font-bold">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Elektrik:</span>
+                            <span id="totalElektrik" class="font-bold">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content (Kanan) -->
+            <div class="flex-1 p-6">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">
+                            <i class="fas fa-list-ul mr-2 text-orange-600"></i>
+                            Daftar Gangguan dan Permintaan Material
+                        </h2>
+                        <button onclick="exportAllLH05()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                            <i class="fas fa-file-export mr-2"></i>Export All
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <table class="w-full">
+                        <thead class="bg-gray-800 text-white">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Nomor LH05</th>
+                                <th class="px-4 py-3 text-left">Tanggal Kejadian</th>
+                                <th class="px-4 py-3 text-left">Kelompok SPD</th>
+                                <th class="px-4 py-3 text-left">Komponen Rusak</th>
+                                <th class="px-4 py-3 text-center">Beban (MW)</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3 text-center">Material</th>
+                                <th class="px-4 py-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gangguanTable">
+                            <tr>
+                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                    Belum ada data gangguan
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/dashboard-gangguan.js"></script>
     </body>
     </html>
   `
