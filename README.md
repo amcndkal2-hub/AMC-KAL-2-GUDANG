@@ -1,15 +1,17 @@
 # Sistem Manajemen Material Spare Part
 
 ## Project Overview
-- **Name**: Sistem Manajemen Material Spare Part
-- **Goal**: Aplikasi web lengkap untuk mengelola transaksi, stok, umur, dan mutasi material spare part dengan integrasi Google Sheets dan sistem Berita Acara (BA)
+- **Name**: Sistem Manajemen Material Spare Part v3.0
+- **Goal**: Aplikasi web lengkap untuk mengelola transaksi, stok, umur, mutasi, **dan gangguan** material spare part dengan integrasi Google Sheets dan sistem Berita Acara (BA + BA LH05)
 - **Features**: 
   - Form input transaksi material dengan multiple items
+  - **Form Gangguan dan Permintaan Material (BA LH05)** ✨ NEW
   - Searchable part number dengan autofill otomatis
   - Dashboard Stok Material dengan alert
-  - Dashboard Umur Material
+  - Dashboard Umur Material dengan target dan history
   - Dashboard Mutasi Material dengan BA tracking
-  - Tanda tangan digital
+  - **Dashboard Gangguan dengan sidebar filter** ✨ NEW
+  - Tanda tangan digital (touchscreen)
   - Export data (CSV/PDF)
 
 ## URLs
@@ -157,6 +159,88 @@
 
 ---
 
+### 5. ⚠️ Form Gangguan dan Permintaan Material (NEW v3.0)
+**URL**: `/form-gangguan`
+
+**Fitur:**
+- **Auto-generate Nomor BA LH05**: Format `XXX/ND KAL 2/LH05/TAHUN`
+  - Contoh: 001/ND KAL 2/LH05/2025
+- **1. Hari/Tanggal/Jam Kejadian** - datetime picker
+- **2. Kelompok SPD yang rusak** - dropdown:
+  - MEKANIK
+  - ELEKTRIK
+- **3-7. Isian Manual:**
+  - Komponen yang rusak
+  - Gejala yang timbul
+  - Uraian kejadian
+  - Analisa penyebab
+  - Kesimpulan kerusakan
+- **8. Akibat terhadap sistem pembangkit:**
+  - Beban Puncak (MW) - input angka
+  - Daya Mampu (MW) - input angka
+  - Status Pemadaman - dropdown (NORMAL/SIAGA/DEFISIT)
+- **9-10. Tindakan:**
+  - Tindakan penanggulangan
+  - Rencana perbaikan
+- **11. Kebutuhan Material:**
+  - Searchable part number dengan autofill
+  - Tombol "Tambah Material" (unlimited items)
+  - Format sama dengan form material biasa
+- **12. TTD Digital:**
+  - Tanda tangan Pelapor
+  - Tanda tangan Manajer
+
+**Rules LH05:**
+- Nomor auto-increment: 001, 002, 003, ...
+- Format: `XXX/ND KAL 2/LH05/TAHUN`
+- Multiple materials dalam 1 form = 1 Nomor LH05
+- Data terpisah dari BA biasa
+
+---
+
+### 6. 🛠️ Dashboard Gangguan dan Permintaan Material (NEW v3.0)
+**URL**: `/dashboard/gangguan`
+
+**Layout Baru:**
+- **Sidebar Filter (Kiri) - Vertikal:**
+  - Filter Kelompok SPD (MEKANIK/ELEKTRIK)
+  - Filter Tanggal
+  - Filter Status Pemadaman (NORMAL/SIAGA/DEFISIT)
+  - Search Nomor LH05
+  - Button: Terapkan Filter, Reset Filter
+  - **Statistik Box:**
+    - Total Gangguan
+    - Total Mekanik
+    - Total Elektrik
+
+- **Main Content (Kanan):**
+  - Tabel lengkap gangguan:
+    - **Nomor LH05** (clickable → view detail)
+    - Tanggal Kejadian
+    - Kelompok SPD (badge warna)
+    - Komponen Rusak
+    - Beban (MW)
+    - Status Pemadaman (badge warna)
+    - Jumlah Material (badge)
+    - Aksi (button Detail)
+  - Button: Export All LH05
+
+**View LH05 Modal:**
+- Header: Nomor BA LH05, Info PLN
+- Detail lengkap semua isian (1-10)
+- Akibat sistem dengan grid display
+- Tabel Kebutuhan Material
+- Tanda tangan Pelapor & Manajer (image display)
+- Action: Print, Export PDF, Tutup
+
+**Rules Dashboard:**
+- Filter multiple combinations
+- Real-time statistics
+- Badge colors untuk status dan kelompok
+- Modal view sesuai format BA PLN
+
+---
+
 ## 📋 API Endpoints
 
 ### 1. Master Data
@@ -234,6 +318,40 @@ Response: {
     ...
   ]
 }
+```
+
+### 5. Form Gangguan LH05 (NEW v3.0)
+```bash
+# Save form gangguan (auto-generate LH05 number)
+POST /api/save-gangguan
+Body: {
+  hariTanggal: "2025-12-14T10:30",
+  kelompokSPD: "MEKANIK",
+  komponenRusak: "Pompa Air",
+  gejala: "Kebocoran pada seal",
+  uraianKejadian: "...",
+  analisaPenyebab: "...",
+  kesimpulan: "...",
+  bebanPuncak: 25.5,
+  dayaMampu: 30.0,
+  pemadaman: "NORMAL",
+  tindakanPenanggulangan: "...",
+  rencanaPerbaikan: "...",
+  materials: [{partNumber, jenisBarang, material, mesin, jumlah}],
+  namaPelapor: "...",
+  namaManajer: "...",
+  ttdPelapor: "data:image/png;base64,...",
+  ttdManajer: "data:image/png;base64,..."
+}
+
+# Get all gangguan transactions
+GET /api/gangguan-transactions
+
+# Get gangguan by Nomor LH05
+GET /api/gangguan/001%2FND%20KAL%202%2FLH05%2F2025
+
+# Get gangguan dashboard with filters
+GET /api/dashboard/gangguan?kelompok=MEKANIK&tanggal=2025-12-14
 ```
 
 ---
@@ -396,17 +514,19 @@ transactions = [
 ```
 webapp/
 ├── src/
-│   ├── index.tsx              # Main backend with all routes
-│   └── renderer.tsx           # JSX renderer
+│   ├── index.tsx                 # Main backend with all routes
+│   └── renderer.tsx              # JSX renderer
 ├── public/
 │   └── static/
-│       ├── app.js             # Form input logic
-│       ├── dashboard-stok.js  # Stock dashboard
-│       ├── dashboard-umur.js  # Material age dashboard
-│       └── dashboard-mutasi.js # Mutation dashboard
-├── dist/                      # Build output
-├── .dev.vars                  # Environment variables (Firebase config)
-├── ecosystem.config.cjs       # PM2 configuration
+│       ├── app.js                # Form input material logic
+│       ├── form-gangguan.js      # Form gangguan LH05 logic ✨ NEW
+│       ├── dashboard-stok.js     # Stock dashboard
+│       ├── dashboard-umur.js     # Material age dashboard
+│       ├── dashboard-mutasi.js   # Mutation dashboard
+│       └── dashboard-gangguan.js # Gangguan dashboard ✨ NEW
+├── dist/                         # Build output
+├── .dev.vars                     # Environment variables (Firebase config)
+├── ecosystem.config.cjs          # PM2 configuration
 ├── package.json
 ├── wrangler.jsonc
 └── README.md
@@ -454,9 +574,40 @@ npm run deploy:prod
 
 ## 🆕 Fitur yang Baru Ditambahkan
 
-### ✅ Completed - Version 2.1 (Latest)
+### ✅ Completed - Version 3.0 (Latest) ✨
 
-**NEW in v2.1 - Dashboard Umur Material Improvements:**
+**NEW in v3.0 - Form Gangguan dan Dashboard:**
+1. ✅ **Form Gangguan dan Permintaan Material** (`/form-gangguan`):
+   - Auto-generate Nomor BA LH05: `XXX/ND KAL 2/LH05/TAHUN`
+   - Input datetime kejadian gangguan
+   - Dropdown Kelompok SPD (MEKANIK/ELEKTRIK)
+   - Isian analisa gangguan (8 field)
+   - Input akibat sistem pembangkit (Beban, Daya, Status)
+   - Tindakan dan rencana perbaikan
+   - Kebutuhan material dengan searchable part number
+   - Tombol tambah material (unlimited items)
+   - TTD digital untuk Pelapor dan Manajer
+
+2. ✅ **Dashboard Gangguan** (`/dashboard/gangguan`):
+   - **Sidebar Filter Vertikal** di sisi kiri (NEW LAYOUT)
+   - Filter: Kelompok SPD, Tanggal, Status Pemadaman, Nomor LH05
+   - **Statistik Real-time**: Total Gangguan, Mekanik, Elektrik
+   - Tabel lengkap dengan badge warna
+   - **View BA LH05 Modal** - format dokumen PLN
+   - Display tanda tangan Pelapor & Manajer
+   - Export functionality (Print, PDF planned)
+
+3. ✅ **Backend API Gangguan**:
+   - POST /api/save-gangguan
+   - GET /api/gangguan-transactions
+   - GET /api/gangguan/:nomor
+   - GET /api/dashboard/gangguan
+
+4. ✅ **Updated Navigation**:
+   - 6 menu navigasi di semua halaman
+   - Link baru: Form Gangguan, Dashboard Gangguan
+
+**Completed in v2.1 - Dashboard Umur Material Improvements:**
 1. ✅ **Fix Perhitungan Umur** - dari tanggal pasang sampai **HARI INI**
 2. ✅ **Set Target Umur** per Part Number (editable dengan klik)
 3. ✅ **Alert Warna Otomatis**:
@@ -467,7 +618,7 @@ npm run deploy:prod
 5. ✅ **Kolom Baru**: Target (Hari), Sisa (Hari), Button History
 6. ✅ **New APIs**: target-umur, material-history
 
-**Completed in v2.0:**
+**Completed in v2.0 - Base Features:**
 1. **Navigasi Menu** - 4 menu utama di top navigation
 2. **Dashboard Stok Material**:
    - Filter Jenis Barang (3 kategori + Semua)
@@ -586,15 +737,20 @@ wrangler secret put FIREBASE_API_KEY
 
 ## 🎯 Status & Roadmap
 
-- **Current Version**: v2.1 (Dashboard Umur Material Enhanced)
+- **Current Version**: v3.0 (Form Gangguan dan Dashboard LH05) ✨
 - **Status**: ✅ Active (Sandbox)
 - **Latest Update**: 
-  - ✅ Fix perhitungan umur (sampai hari ini)
-  - ✅ Set target umur per part number
-  - ✅ Alert warna otomatis (hijau/kuning/merah)
-  - ✅ History penggantian modal
-- **Next Priority**: Firebase Firestore Integration
-- **Last Updated**: 2025-12-14
+  - ✅ Form Gangguan dan Permintaan Material (BA LH05)
+  - ✅ Dashboard Gangguan dengan sidebar filter vertikal
+  - ✅ Auto-generate Nomor LH05 (XXX/ND KAL 2/LH05/TAHUN)
+  - ✅ TTD digital Pelapor & Manajer
+  - ✅ View BA LH05 modal format PLN
+  - ✅ 6 menu navigasi konsisten
+- **Next Priority**: 
+  1. Firebase Firestore Integration
+  2. PDF Export untuk BA dan LH05
+  3. Redesign filter dashboard lainnya dengan sidebar vertikal
+- **Last Updated**: 2025-12-14 (v3.0)
 
 ---
 
