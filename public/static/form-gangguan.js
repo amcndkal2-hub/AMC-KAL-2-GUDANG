@@ -12,6 +12,7 @@ let canvasManajer, ctxManajer, isDrawingManajer = false
 document.addEventListener('DOMContentLoaded', function() {
   initializeForm()
   setupSignaturePads()
+  loadDropdownUnits()
   
   // Add first material row
   addMaterialRow()
@@ -31,6 +32,27 @@ function initializeForm() {
   
   // Reset button
   document.getElementById('resetFormGangguan').addEventListener('click', resetForm)
+}
+
+// Load Unit/ULD dropdown from API
+async function loadDropdownUnits() {
+  try {
+    const response = await fetch('/api/dropdown-values')
+    const data = await response.json()
+    
+    const unitSelect = document.getElementById('unitULD')
+    
+    if (data.units && data.units.length > 0) {
+      data.units.forEach(unit => {
+        const option = document.createElement('option')
+        option.value = unit
+        option.textContent = unit
+        unitSelect.appendChild(option)
+      })
+    }
+  } catch (error) {
+    console.error('Error loading units:', error)
+  }
 }
 
 // ===== Signature Pads =====
@@ -327,6 +349,7 @@ async function handleFormSubmit(e) {
   // Collect form data
   const formData = {
     hariTanggal: document.getElementById('hariTanggal').value,
+    unitULD: document.getElementById('unitULD').value,
     kelompokSPD: document.getElementById('kelompokSPD').value,
     komponenRusak: document.getElementById('komponenRusak').value,
     gejala: document.getElementById('gejala').value,

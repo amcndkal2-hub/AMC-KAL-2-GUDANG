@@ -220,10 +220,14 @@ function showLH05Modal(gangguan) {
         </div>
         
         <!-- Info Kejadian -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="bg-gray-50 p-4 rounded-lg">
             <p class="text-sm text-gray-600 mb-1">Tanggal & Waktu Kejadian</p>
             <p class="font-semibold text-gray-800">${tanggal}</p>
+          </div>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-600 mb-1">Unit / ULD</p>
+            <p class="font-semibold text-gray-800">${gangguan.unitULD || '-'}</p>
           </div>
           <div class="bg-gray-50 p-4 rounded-lg">
             <p class="text-sm text-gray-600 mb-1">Kelompok SPD</p>

@@ -29,6 +29,13 @@ let targetUmurMaterial: Map<string, any> = new Map()
 // Key: `${snMesin}_${partNumber}`, Value: array of history
 let materialHistory: Map<string, any[]> = new Map()
 
+// Authentication storage
+const VALID_CREDENTIALS = {
+  username: 'AMC@12345',
+  password: '12345@AMC'
+}
+let activeSessions: Map<string, any> = new Map()
+
 // Cache untuk data
 let cachedData: any[] = []
 let lastFetchTime = 0
@@ -396,6 +403,80 @@ app.get('/api/target-umur/:partNumber', (c) => {
   return c.json({ ...target, isDefault: false })
 })
 
+// ==================== API AUTHENTICATION ====================
+
+// API: Login
+app.post('/api/login', async (c) => {
+  try {
+    const { username, password } = await c.req.json()
+    
+    if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
+      // Generate session token
+      const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`
+      
+      activeSessions.set(sessionToken, {
+        username,
+        loginTime: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() // 8 hours
+      })
+      
+      return c.json({
+        success: true,
+        message: 'Login successful',
+        sessionToken
+      })
+    } else {
+      return c.json({
+        success: false,
+        message: 'Username atau password salah'
+      }, 401)
+    }
+  } catch (error) {
+    return c.json({ error: 'Login failed' }, 500)
+  }
+})
+
+// API: Logout
+app.post('/api/logout', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization')
+    const sessionToken = authHeader?.replace('Bearer ', '')
+    
+    if (sessionToken) {
+      activeSessions.delete(sessionToken)
+    }
+    
+    return c.json({ success: true, message: 'Logout successful' })
+  } catch (error) {
+    return c.json({ error: 'Logout failed' }, 500)
+  }
+})
+
+// API: Check session
+app.get('/api/check-session', (c) => {
+  const authHeader = c.req.header('Authorization')
+  const sessionToken = authHeader?.replace('Bearer ', '')
+  
+  if (!sessionToken || !activeSessions.has(sessionToken)) {
+    return c.json({ valid: false }, 401)
+  }
+  
+  const session = activeSessions.get(sessionToken)
+  const now = new Date()
+  const expiresAt = new Date(session.expiresAt)
+  
+  if (now > expiresAt) {
+    activeSessions.delete(sessionToken)
+    return c.json({ valid: false, message: 'Session expired' }, 401)
+  }
+  
+  return c.json({ 
+    valid: true, 
+    username: session.username,
+    expiresAt: session.expiresAt
+  })
+})
+
 // ==================== API FORM GANGGUAN LH05 ====================
 
 // API: Save Form Gangguan LH05
@@ -482,12 +563,17 @@ app.get('/dashboard/mutasi', (c) => {
   return c.html(getDashboardMutasiHTML())
 })
 
-// Form Gangguan dan Permintaan Material
+// Login page
+app.get('/login', (c) => {
+  return c.html(getLoginHTML())
+})
+
+// Form Gangguan dan Permintaan Material (PUBLIC - no auth required)
 app.get('/form-gangguan', (c) => {
   return c.html(getFormGangguanHTML())
 })
 
-// Dashboard Gangguan dan Permintaan Material
+// Dashboard Gangguan dan Permintaan Material (PUBLIC - no auth required)
 app.get('/dashboard/gangguan', (c) => {
   return c.html(getDashboardGangguanHTML())
 })
@@ -522,7 +608,7 @@ function getInputFormHTML() {
                     <i class="fas fa-warehouse text-2xl"></i>
                     <span class="text-xl font-bold">Sistem Manajemen Material</span>
                 </div>
-                <div class="flex flex-wrap space-x-2">
+                <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
@@ -541,6 +627,9 @@ function getInputFormHTML() {
                     <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
                 </div>
             </div>
         </nav>
@@ -665,6 +754,7 @@ function getInputFormHTML() {
             </div>
         </div>
 
+        <script src="/static/auth-check.js"></script>
         <script src="/static/app.js"></script>
     </body>
     </html>
@@ -689,7 +779,7 @@ function getDashboardStokHTML() {
                     <i class="fas fa-chart-bar text-2xl"></i>
                     <span class="text-xl font-bold">Dashboard Stok Material</span>
                 </div>
-                <div class="flex flex-wrap space-x-2">
+                <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/" class="px-3 py-2 hover:bg-green-700 rounded">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
@@ -708,79 +798,125 @@ function getDashboardStokHTML() {
                     <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-green-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
                 </div>
             </div>
         </nav>
 
-        <div class="max-w-7xl mx-auto p-6">
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-2xl font-bold mb-4">Filter Type Mesin</h2>
+        <div class="flex">
+            <!-- Sidebar Filter (Kiri) -->
+            <div class="w-64 bg-white shadow-lg p-6 min-h-screen">
+                <h2 class="text-xl font-bold mb-6 text-gray-800">
+                    <i class="fas fa-filter mr-2 text-green-600"></i>
+                    Filter Data
+                </h2>
                 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <button onclick="filterJenis('MATERIAL HANDAL')" class="bg-blue-500 text-white px-4 py-3 rounded hover:bg-blue-600">
-                        MATERIAL HANDAL
-                    </button>
-                    <button onclick="filterJenis('FILTER')" class="bg-green-500 text-white px-4 py-3 rounded hover:bg-green-600">
-                        FILTER
-                    </button>
-                    <button onclick="filterJenis('MATERIAL BEKAS')" class="bg-yellow-500 text-white px-4 py-3 rounded hover:bg-yellow-600">
-                        MATERIAL BEKAS
-                    </button>
-                    <button onclick="filterJenis('')" class="bg-gray-500 text-white px-4 py-3 rounded hover:bg-gray-600">
-                        SEMUA
-                    </button>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Jenis Barang</label>
+                        <div class="space-y-2">
+                            <button onclick="filterJenis('MATERIAL HANDAL')" 
+                                class="w-full text-left px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-sm">
+                                MATERIAL HANDAL
+                            </button>
+                            <button onclick="filterJenis('FILTER')" 
+                                class="w-full text-left px-3 py-2 bg-green-100 hover:bg-green-200 rounded text-sm">
+                                FILTER
+                            </button>
+                            <button onclick="filterJenis('MATERIAL BEKAS')" 
+                                class="w-full text-left px-3 py-2 bg-yellow-100 hover:bg-yellow-200 rounded text-sm">
+                                MATERIAL BEKAS
+                            </button>
+                            <button onclick="filterJenis('')" 
+                                class="w-full text-left px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm">
+                                SEMUA
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div>
                         <label class="block text-sm font-medium mb-2">Cari Part Number</label>
-                        <input type="text" id="searchPart" placeholder="Cari Part Number..." 
-                            class="w-full px-4 py-2 border rounded-lg">
+                        <input type="text" id="searchPart" placeholder="Cari..." 
+                            class="w-full px-3 py-2 border rounded-lg text-sm">
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium mb-2">Filter Mesin</label>
-                        <select id="filterMesin" class="w-full px-4 py-2 border rounded-lg">
-                            <option value="">Semua Mesin</option>
+                        <select id="filterMesin" class="w-full px-3 py-2 border rounded-lg text-sm">
+                            <option value="">Semua</option>
                         </select>
+                    </div>
+                    
+                    <div class="pt-4 border-t">
+                        <button onclick="exportPDF()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 mb-2 text-sm">
+                            <i class="fas fa-file-pdf mr-2"></i>PDF
+                        </button>
+                        <button onclick="exportExcel()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm">
+                            <i class="fas fa-file-excel mr-2"></i>Excel
+                        </button>
                     </div>
                 </div>
                 
-                <div class="mt-4 flex justify-end space-x-2">
-                    <button onclick="exportPDF()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                        <i class="fas fa-file-pdf mr-2"></i>PDF
-                    </button>
-                    <button onclick="exportExcel()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                        <i class="fas fa-file-excel mr-2"></i>Excel
-                    </button>
+                <div class="mt-8 p-4 bg-green-50 rounded-lg">
+                    <h3 class="font-semibold text-green-800 mb-2">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Status Stok
+                    </h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                            <span>Habis (0)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>
+                            <span>Hampir Habis (≤10)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+                            <span>Tersedia (>10)</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <table class="w-full">
-                    <thead class="bg-gray-800 text-white">
-                        <tr>
-                            <th class="px-4 py-3 text-left">Part Number</th>
-                            <th class="px-4 py-3 text-left">Jenis Barang</th>
-                            <th class="px-4 py-3 text-left">Material</th>
-                            <th class="px-4 py-3 text-left">Mesin</th>
-                            <th class="px-4 py-3 text-center">Stok Masuk</th>
-                            <th class="px-4 py-3 text-center">Stok Keluar</th>
-                            <th class="px-4 py-3 text-center">Stok Akhir</th>
-                            <th class="px-4 py-3 text-left">Unit</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stockTable">
-                        <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">
-                                Belum ada data transaksi
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- Main Content (Kanan) -->
+            <div class="flex-1 p-6">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-boxes mr-2 text-green-600"></i>
+                        Daftar Stok Material
+                    </h2>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <table class="w-full">
+                        <thead class="bg-gray-800 text-white">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Part Number</th>
+                                <th class="px-4 py-3 text-left">Jenis Barang</th>
+                                <th class="px-4 py-3 text-left">Material</th>
+                                <th class="px-4 py-3 text-left">Mesin</th>
+                                <th class="px-4 py-3 text-center">Stok Masuk</th>
+                                <th class="px-4 py-3 text-center">Stok Keluar</th>
+                                <th class="px-4 py-3 text-center">Stok Akhir</th>
+                                <th class="px-4 py-3 text-left">Unit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTable">
+                            <tr>
+                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                    Belum ada data transaksi
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
+        <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-stok.js"></script>
     </body>
     </html>
@@ -1072,6 +1208,18 @@ function getFormGangguanHTML() {
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
                     </div>
 
+                    <!-- Unit/ULD -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-building text-red-600 mr-2"></i>
+                            Unit / ULD
+                        </h2>
+                        <select id="unitULD" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                            <option value="">-- Pilih Unit/ULD --</option>
+                        </select>
+                    </div>
+
                     <!-- 2. Kelompok SPD yang rusak -->
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h2 class="text-xl font-semibold text-gray-800 mb-4">
@@ -1263,6 +1411,167 @@ function getFormGangguanHTML() {
         </div>
 
         <script src="/static/form-gangguan.js"></script>
+    </body>
+    </html>
+  `
+}
+
+function getLoginHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login - Sistem Manajemen Material</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-gradient-to-br from-blue-500 to-blue-700 min-h-screen flex items-center justify-center">
+        <div class="max-w-md w-full mx-4">
+            <!-- Login Card -->
+            <div class="bg-white rounded-2xl shadow-2xl p-8">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <div class="bg-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-warehouse text-4xl text-white"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Sistem Manajemen Material</h1>
+                    <p class="text-gray-600">Silakan login untuk melanjutkan</p>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        <span id="errorText">Username atau password salah</span>
+                    </div>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2 text-blue-600"></i>Username
+                        </label>
+                        <input type="text" id="username" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Masukkan username">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-lock mr-2 text-blue-600"></i>Password
+                        </label>
+                        <div class="relative">
+                            <input type="password" id="password" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Masukkan password">
+                            <button type="button" id="togglePassword" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="loginButton"
+                        class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition font-semibold text-lg flex items-center justify-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        <span>Login</span>
+                    </button>
+                </form>
+
+                <!-- Public Access Link -->
+                <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                    <p class="text-gray-600 mb-3">Akses Publik:</p>
+                    <a href="/form-gangguan" 
+                        class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Form Gangguan dan Permintaan Material
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-6 text-white">
+                <p class="text-sm opacity-80">PT PLN (Persero) Unit Induk Wilayah Kalimantan Selatan & Tengah</p>
+            </div>
+        </div>
+
+        <script>
+          // Toggle password visibility
+          document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password')
+            const icon = this.querySelector('i')
+            
+            if (passwordInput.type === 'password') {
+              passwordInput.type = 'text'
+              icon.classList.remove('fa-eye')
+              icon.classList.add('fa-eye-slash')
+            } else {
+              passwordInput.type = 'password'
+              icon.classList.remove('fa-eye-slash')
+              icon.classList.add('fa-eye')
+            }
+          })
+
+          // Login form submit
+          document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault()
+            
+            const username = document.getElementById('username').value
+            const password = document.getElementById('password').value
+            const button = document.getElementById('loginButton')
+            const errorDiv = document.getElementById('errorMessage')
+            
+            // Disable button
+            button.disabled = true
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...'
+            
+            try {
+              const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+              })
+              
+              const data = await response.json()
+              
+              if (data.success) {
+                // Save session token
+                localStorage.setItem('sessionToken', data.sessionToken)
+                
+                // Show success and redirect
+                button.innerHTML = '<i class="fas fa-check mr-2"></i>Login Berhasil!'
+                button.classList.remove('bg-blue-600', 'hover:bg-blue-700')
+                button.classList.add('bg-green-600')
+                
+                setTimeout(() => {
+                  window.location.href = '/'
+                }, 500)
+              } else {
+                // Show error
+                errorDiv.classList.remove('hidden')
+                document.getElementById('errorText').textContent = data.message || 'Login gagal'
+                
+                // Reset button
+                button.disabled = false
+                button.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Login'
+              }
+            } catch (error) {
+              console.error('Login error:', error)
+              errorDiv.classList.remove('hidden')
+              document.getElementById('errorText').textContent = 'Terjadi kesalahan sistem'
+              
+              // Reset button
+              button.disabled = false
+              button.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Login'
+            }
+          })
+        </script>
     </body>
     </html>
   `
