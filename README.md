@@ -1,11 +1,11 @@
 # Sistem Manajemen Material Spare Part
 
 ## Project Overview
-- **Name**: Sistem Manajemen Material Spare Part v3.5 UNIFIED THEME
+- **Name**: Sistem Manajemen Material Spare Part v3.8 - Form Gangguan Auto-Redirect
 - **Goal**: Aplikasi web lengkap untuk mengelola transaksi, stok, umur, mutasi, **dan gangguan** material spare part dengan integrasi Google Sheets dan sistem Berita Acara (BA + BA LH05)
 - **Features**: 
   - Form input transaksi material dengan multiple items
-  - **Form Gangguan dan Permintaan Material (BA LH05)** ✨
+  - **Form Gangguan dan Permintaan Material (BA LH05)** dengan auto-redirect ✨ NEW v3.8
   - Searchable part number dengan autofill otomatis
   - **Dashboard Kebutuhan Material** dengan Status dropdown + filter Mesin & Unit ✨ NEW v3.5
   - Dashboard Stok Material dengan alert dan **dark sidebar** ✨
@@ -198,6 +198,11 @@
 - Format: `XXX/ND KAL 2/LH05/TAHUN`
 - Multiple materials dalam 1 form = 1 Nomor LH05
 - Data terpisah dari BA biasa
+- **✨ AUTO-REDIRECT v3.8:** Setelah submit form berhasil:
+  - Modal sukses muncul dengan Nomor LH05
+  - Button "Lihat Dashboard" - langsung ke Dashboard Gangguan
+  - Button "Input Lagi" - tutup modal untuk input baru
+  - Auto-redirect ke Dashboard Gangguan setelah 5 detik
 
 ---
 
