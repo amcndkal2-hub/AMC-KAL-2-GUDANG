@@ -18,7 +18,60 @@ let transactions: any[] = []
 let baCounter = 1
 
 // Storage untuk Form Gangguan LH05
+// ⚠️ CRITICAL WARNING: In-memory storage - Data AKAN HILANG saat service restart!
+// Untuk production: Gunakan Cloudflare D1, KV, atau database eksternal
+// 
+// TEMPORARY SOLUTION: Sample data untuk testing agar Dashboard Gangguan tidak kosong
 let gangguanTransactions: any[] = []
+
+// Flag untuk inisialisasi sample data hanya sekali
+let sampleDataInitialized = false
+
+// Function untuk load sample data (dipanggil saat app start)
+function initializeSampleGangguanData() {
+  if (sampleDataInitialized || gangguanTransactions.length > 0) {
+    return // Sudah ada data, skip
+  }
+  
+  // SAMPLE DATA - Ini akan muncul di Dashboard Gangguan setelah restart
+  // User bisa submit form baru untuk menambah data
+  gangguanTransactions.push({
+    id: "sample_" + Date.now(),
+    nomorLH05: "SAMPLE001/ND KAL 2/LH05/2025",
+    hariTanggal: new Date().toISOString().slice(0, 16),
+    unitULD: "TELAGA",
+    kelompokSPD: "MEKANIK",
+    komponenRusak: "Cylinder Liner",
+    gejala: "Kebocoran pada cylinder liner unit TELAGA",
+    uraianKejadian: "Ditemukan kebocoran oli pada cylinder liner bagian atas",
+    analisaPenyebab: "Seal cylinder liner sudah aus dan perlu diganti",
+    kesimpulan: "Perlu penggantian cylinder liner segera",
+    bebanPuncak: 300,
+    dayaMampu: 250,
+    pemadaman: "NORMAL",
+    tindakanPenanggulangan: "Isolasi unit sementara dan monitoring ketat",
+    rencanaPerbaikan: "Ganti cylinder liner dalam 24 jam",
+    materials: [
+      {
+        partNumber: "0490 1316",
+        jenisBarang: "SPARE PART UTAMA",
+        material: "CYLINDER LINER",
+        mesin: "TCD 2013",
+        jumlah: 1,
+        status: "Pengadaan"
+      }
+    ],
+    namaPelapor: "System Admin (Sample Data)",
+    ttdPelapor: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    createdAt: new Date().toISOString()
+  })
+  
+  sampleDataInitialized = true
+  console.log('✅ Sample gangguan data initialized for testing')
+}
+
+// Initialize sample data saat app start
+initializeSampleGangguanData()
 let lh05Counter = 1
 
 // Storage untuk target umur material (in-memory)

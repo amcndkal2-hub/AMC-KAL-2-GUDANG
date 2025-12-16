@@ -7,6 +7,17 @@ let filteredData = []
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+  // Check if coming from form submission (has timestamp parameter)
+  const urlParams = new URLSearchParams(window.location.search)
+  const fromForm = urlParams.get('t')
+  
+  if (fromForm) {
+    // Coming from form submission - force immediate load
+    console.log('Loading fresh data from form submission...')
+    // Remove timestamp from URL to clean it up
+    window.history.replaceState({}, document.title, window.location.pathname)
+  }
+  
   loadDashboardData()
   populateUnitFilter()
   

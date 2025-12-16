@@ -337,10 +337,14 @@ function showSuccessModal(nomorLH05) {
         <h2 class="text-2xl font-bold text-gray-800 mb-2">Form Berhasil Disimpan!</h2>
         <p class="text-gray-600 mb-4">Nomor BA LH05:</p>
         <p class="text-2xl font-bold text-red-600 mb-6">${nomorLH05}</p>
+        <p class="text-sm text-gray-500 mb-4">
+          <i class="fas fa-info-circle mr-1"></i>
+          Data akan muncul di Dashboard Gangguan dalam 2 detik...
+        </p>
         <div class="space-x-3">
-          <button onclick="window.location.href='/dashboard/gangguan'" 
+          <button onclick="redirectToDashboard()" 
             class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
-            <i class="fas fa-chart-line mr-2"></i>Lihat Dashboard
+            <i class="fas fa-chart-line mr-2"></i>Lihat Dashboard Sekarang
           </button>
           <button onclick="this.closest('.fixed').remove()" 
             class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
@@ -352,10 +356,16 @@ function showSuccessModal(nomorLH05) {
   `
   document.body.appendChild(modal)
   
-  // Auto redirect to Dashboard Gangguan after 5 seconds
+  // Auto redirect to Dashboard Gangguan after 2 seconds to ensure data is loaded
   setTimeout(() => {
-    window.location.href = '/dashboard/gangguan'
-  }, 5000)
+    redirectToDashboard()
+  }, 2000)
+}
+
+// Function to redirect with timestamp to force reload
+function redirectToDashboard() {
+  // Add timestamp parameter to force page reload and bypass cache
+  window.location.href = '/dashboard/gangguan?t=' + Date.now()
 }
 
 function resetForm() {
