@@ -543,6 +543,73 @@ app.get('/api/dashboard/gangguan', (c) => {
   return c.json({ data })
 })
 
+// API: Get kebutuhan material (flattened dari gangguan transactions)
+app.get('/api/kebutuhan-material', (c) => {
+  const status = c.req.query('status') || ''
+  const nomorLH05 = c.req.query('nomor') || ''
+  
+  let materials: any[] = []
+  
+  // Flatten materials from all gangguan transactions
+  gangguanTransactions.forEach(gangguan => {
+    if (gangguan.materials && Array.isArray(gangguan.materials)) {
+      gangguan.materials.forEach((mat: any) => {
+        materials.push({
+          ...mat,
+          nomorLH05: gangguan.nomorLH05,
+          unitULD: gangguan.unitULD,
+          tanggalGangguan: gangguan.hariTanggal,
+          kelompokSPD: gangguan.kelompokSPD,
+          status: mat.status || 'Pengadaan' // Default status
+        })
+      })
+    }
+  })
+  
+  // Apply filters
+  if (status) {
+    materials = materials.filter(m => m.status === status)
+  }
+  
+  if (nomorLH05) {
+    materials = materials.filter(m => m.nomorLH05.includes(nomorLH05))
+  }
+  
+  return c.json({ materials })
+})
+
+// API: Update status material
+app.post('/api/update-material-status', async (c) => {
+  try {
+    const { nomorLH05, partNumber, status } = await c.req.json()
+    
+    // Find gangguan transaction
+    const gangguan = gangguanTransactions.find(g => g.nomorLH05 === nomorLH05)
+    
+    if (!gangguan) {
+      return c.json({ error: 'Gangguan not found' }, 404)
+    }
+    
+    // Update material status
+    const material = gangguan.materials?.find((m: any) => m.partNumber === partNumber)
+    
+    if (!material) {
+      return c.json({ error: 'Material not found' }, 404)
+    }
+    
+    material.status = status
+    material.updatedAt = new Date().toISOString()
+    
+    return c.json({ 
+      success: true, 
+      message: 'Status updated',
+      material 
+    })
+  } catch (error) {
+    return c.json({ error: 'Failed to update status' }, 500)
+  }
+})
+
 // Main page - Input Form
 app.get('/', (c) => {
   return c.html(getInputFormHTML())
@@ -573,9 +640,14 @@ app.get('/form-gangguan', (c) => {
   return c.html(getFormGangguanHTML())
 })
 
-// Dashboard Gangguan dan Permintaan Material (PUBLIC - no auth required)
+// Dashboard Gangguan dan Permintaan Material (PROTECTED - auth required)
 app.get('/dashboard/gangguan', (c) => {
   return c.html(getDashboardGangguanHTML())
+})
+
+// Dashboard Kebutuhan Material (PROTECTED - auth required)
+app.get('/dashboard/kebutuhan-material', (c) => {
+  return c.html(getDashboardKebutuhanMaterialHTML())
 })
 
 // HTML Templates
@@ -797,6 +869,9 @@ function getDashboardStokHTML() {
                     </a>
                     <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-green-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-green-700 rounded">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
@@ -1563,6 +1638,159 @@ function getLoginHTML() {
   `
 }
 
+function getDashboardKebutuhanMaterialHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard Kebutuhan Material</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-gray-50">
+        <nav class="bg-purple-600 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-clipboard-list text-2xl"></i>
+                    <span class="text-xl font-bold">Dashboard Kebutuhan Material</span>
+                </div>
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/" class="px-3 py-2 hover:bg-purple-700 rounded">
+                        <i class="fas fa-plus mr-1"></i>Input Material
+                    </a>
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-purple-700 rounded">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-purple-700 rounded">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                    </a>
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-purple-700 rounded">
+                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                    </a>
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-purple-700 rounded">
+                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-purple-700 rounded">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 bg-purple-700 rounded hover:bg-purple-800">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="flex">
+            <!-- Sidebar Filter (Kiri) -->
+            <div class="w-64 bg-white shadow-lg p-6 min-h-screen">
+                <h2 class="text-xl font-bold mb-6 text-gray-800">
+                    <i class="fas fa-filter mr-2 text-purple-600"></i>
+                    Filter Data
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Filter Status</label>
+                        <select id="filterStatus" class="w-full px-3 py-2 border rounded-lg text-sm">
+                            <option value="">Semua Status</option>
+                            <option value="Pengadaan">Pengadaan</option>
+                            <option value="Tunda">Tunda</option>
+                            <option value="Reject">Reject</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Cari Nomor LH05</label>
+                        <input type="text" id="searchNomor" placeholder="Cari nomor..." 
+                            class="w-full px-3 py-2 border rounded-lg text-sm">
+                    </div>
+                    
+                    <button onclick="applyFilters()" class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-search mr-2"></i>Terapkan Filter
+                    </button>
+                    
+                    <button onclick="resetFilters()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                        <i class="fas fa-undo mr-2"></i>Reset Filter
+                    </button>
+                </div>
+                
+                <div class="mt-8 p-4 bg-purple-50 rounded-lg">
+                    <h3 class="font-semibold text-purple-800 mb-2">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Statistik
+                    </h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Total Material:</span>
+                            <span id="totalMaterial" class="font-bold">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Pengadaan:</span>
+                            <span id="totalPengadaan" class="font-bold text-blue-600">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Tunda:</span>
+                            <span id="totalTunda" class="font-bold text-yellow-600">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Reject:</span>
+                            <span id="totalReject" class="font-bold text-red-600">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content (Kanan) -->
+            <div class="flex-1 p-6">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">
+                            <i class="fas fa-boxes mr-2 text-purple-600"></i>
+                            Kebutuhan Material
+                        </h2>
+                        <button onclick="exportExcel()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                            <i class="fas fa-file-excel mr-2"></i>Export Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <table class="w-full">
+                        <thead class="bg-gray-800 text-white">
+                            <tr>
+                                <th class="px-4 py-3 text-center">No</th>
+                                <th class="px-4 py-3 text-left">Nomor LH05</th>
+                                <th class="px-4 py-3 text-left">Part Number</th>
+                                <th class="px-4 py-3 text-left">Material</th>
+                                <th class="px-4 py-3 text-left">Mesin</th>
+                                <th class="px-4 py-3 text-center">Jumlah</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kebutuhanTable">
+                            <tr>
+                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                    Belum ada data kebutuhan material
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/dashboard-kebutuhan.js"></script>
+    </body>
+    </html>
+  `
+}
+
 function getDashboardGangguanHTML() {
   return `
     <!DOCTYPE html>
@@ -1600,6 +1828,12 @@ function getDashboardGangguanHTML() {
                     <a href="/dashboard/gangguan" class="px-3 py-2 bg-orange-700 rounded hover:bg-orange-800">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-orange-700 rounded">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
                 </div>
             </div>
         </nav>
@@ -1714,6 +1948,7 @@ function getDashboardGangguanHTML() {
             </div>
         </div>
 
+        <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-gangguan.js"></script>
     </body>
     </html>
