@@ -1,18 +1,19 @@
 # Sistem Manajemen Material Spare Part
 
 ## Project Overview
-- **Name**: Sistem Manajemen Material Spare Part v3.4 FINAL
+- **Name**: Sistem Manajemen Material Spare Part v3.5 UNIFIED THEME
 - **Goal**: Aplikasi web lengkap untuk mengelola transaksi, stok, umur, mutasi, **dan gangguan** material spare part dengan integrasi Google Sheets dan sistem Berita Acara (BA + BA LH05)
 - **Features**: 
   - Form input transaksi material dengan multiple items
   - **Form Gangguan dan Permintaan Material (BA LH05)** ✨
   - Searchable part number dengan autofill otomatis
-  - **Dashboard Kebutuhan Material dengan Status dropdown** ✨ NEW v3.3
-  - Dashboard Stok Material dengan alert dan **vertical sidebar** ✨
-  - Dashboard Umur Material dengan target, history, dan **vertical sidebar** ✨ NEW v3.4
-  - Dashboard Mutasi Material dengan BA tracking dan **vertical sidebar** ✨ NEW v3.4
-  - **Dashboard Gangguan dengan vertical sidebar filter** ✨
-  - **Login & Authentication System** (Username/Password) ✨ NEW v3.1
+  - **Dashboard Kebutuhan Material** dengan Status dropdown + filter Mesin & Unit ✨ NEW v3.5
+  - Dashboard Stok Material dengan alert dan **dark sidebar** ✨
+  - Dashboard Umur Material dengan target, history, dan **dark sidebar** ✨
+  - Dashboard Mutasi Material dengan BA tracking dan **dark sidebar** ✨
+  - **Dashboard Gangguan dengan dark sidebar filter** ✨
+  - **UNIFIED THEME**: All dashboards dengan konsisten blue navbar + dark sidebar ✨ NEW v3.5
+  - **Login & Authentication System** (Username/Password) ✨
   - Tanda tangan digital (touchscreen)
   - Export data (CSV/PDF)
 
@@ -805,15 +806,19 @@ wrangler secret put FIREBASE_API_KEY
 
 ## 🎯 Status & Roadmap
 
-- **Current Version**: v3.4 FINAL ✨ (All Dashboards with Vertical Sidebar)
+- **Current Version**: v3.5 UNIFIED THEME ✨ (Consistent Blue & Dark Design)
 - **Status**: ✅ Active (Sandbox) - PRODUCTION READY
 - **Latest Update**: 
+  - ✅ **v3.5**: MAJOR UI OVERHAUL - All dashboards unified dengan blue navbar + dark sidebar
+  - ✅ **v3.5**: Dashboard Kebutuhan Material dengan filter Mesin & Unit tambahan
   - ✅ **v3.4**: Dashboard Umur & Mutasi redesigned dengan vertical sidebar
   - ✅ **v3.3**: Dashboard Kebutuhan Material dengan Nomor LH05 & Status dropdown
   - ✅ **v3.2**: Single signature (Pelapor only) pada Form Gangguan
   - ✅ **v3.1**: Login & Authentication System (Username/Password)
   - ✅ **v3.0**: Form Gangguan & Dashboard Gangguan dengan sidebar filter
-  - ✅ **All 7 dashboards** sekarang menggunakan consistent **vertical sidebar layout**
+  - ✅ **CONSISTENT THEME**: Semua dashboard menggunakan **blue navbar (bg-blue-600)** dan **dark sidebar (bg-gray-900)**
+  - ✅ **NO MORE RAINBOW**: Tidak ada lagi warna-warni (pink/cyan/purple/red/green) - semua biru konsisten
+  - ✅ **Table headers**: Semua table headers menggunakan **bg-blue-500**
   - ✅ **Protected routes** dengan session-based authentication
   - ✅ **Public access** untuk Form Gangguan (no login required)
   - ✅ **7 menu navigasi** konsisten di semua halaman
@@ -821,7 +826,7 @@ wrangler secret put FIREBASE_API_KEY
   1. Firebase Firestore Integration (Persistent Storage)
   2. PDF Export untuk BA dan LH05
   3. Advanced reporting & analytics
-- **Last Updated**: 2025-12-16 (v3.4 FINAL)
+- **Last Updated**: 2025-12-16 (v3.5 UNIFIED THEME)
 
 ---
 
