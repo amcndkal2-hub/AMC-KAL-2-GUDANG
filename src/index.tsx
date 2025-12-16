@@ -1010,6 +1010,7 @@ function getDashboardUmurHTML() {
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     </head>
     <body class="bg-gray-50">
+        <!-- Navigation -->
         <nav class="bg-pink-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-4">
@@ -1035,63 +1036,115 @@ function getDashboardUmurHTML() {
                     <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-pink-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-pink-700 rounded">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
                 </div>
             </div>
         </nav>
 
-        <div class="max-w-7xl mx-auto p-6">
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-2xl font-bold mb-4">Filter Lokasi</h2>
+        <!-- Main Content with Sidebar -->
+        <div class="flex">
+            <!-- Sidebar Filter (Vertical) -->
+            <aside class="w-80 bg-white shadow-lg min-h-screen p-6">
+                <h2 class="text-2xl font-bold text-pink-600 mb-6 flex items-center">
+                    <i class="fas fa-filter mr-2"></i>
+                    Filter Material
+                </h2>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="space-y-6">
+                    <!-- Filter Lokasi -->
                     <div>
-                        <label class="block text-sm font-medium mb-2">Filter Lokasi</label>
-                        <select id="filterLokasi" class="w-full px-4 py-2 border rounded-lg">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-map-marker-alt mr-2 text-pink-600"></i>
+                            Lokasi
+                        </label>
+                        <select id="filterLokasi" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
                             <option value="">Semua Lokasi</option>
                         </select>
                     </div>
                     
+                    <!-- Filter Material -->
                     <div>
-                        <label class="block text-sm font-medium mb-2">Filter Material</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-box mr-2 text-pink-600"></i>
+                            Material
+                        </label>
                         <input type="text" id="filterMaterial" placeholder="Cari Material..." 
-                            class="w-full px-4 py-2 border rounded-lg">
+                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
                     </div>
                     
+                    <!-- Filter S/N Mesin -->
                     <div>
-                        <label class="block text-sm font-medium mb-2">Filter S/N Mesin</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-barcode mr-2 text-pink-600"></i>
+                            S/N Mesin
+                        </label>
                         <input type="text" id="filterSN" placeholder="Cari S/N Mesin..." 
-                            class="w-full px-4 py-2 border rounded-lg">
+                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                    </div>
+
+                    <!-- Status Legend -->
+                    <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+                        <h3 class="font-bold text-sm mb-3 text-gray-700">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Keterangan Status
+                        </h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center">
+                                <span class="inline-block w-4 h-4 bg-red-100 border-2 border-red-500 rounded mr-2"></span>
+                                <span>Perlu Diganti (Lewat Target)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="inline-block w-4 h-4 bg-yellow-100 border-2 border-yellow-500 rounded mr-2"></span>
+                                <span>Mendekati Batas (≤20 hari)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="inline-block w-4 h-4 bg-green-100 border-2 border-green-500 rounded mr-2"></span>
+                                <span>Terpasang (Normal)</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </aside>
 
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <table class="w-full">
-                    <thead class="bg-gray-800 text-white">
-                        <tr>
-                            <th class="px-4 py-3 text-left">S/N Mesin</th>
-                            <th class="px-4 py-3 text-left">Part Number</th>
-                            <th class="px-4 py-3 text-left">Material</th>
-                            <th class="px-4 py-3 text-left">Tanggal Pasang</th>
-                            <th class="px-4 py-3 text-center">Umur (Hari)</th>
-                            <th class="px-4 py-3 text-center">Target (Hari)</th>
-                            <th class="px-4 py-3 text-center">Sisa (Hari)</th>
-                            <th class="px-4 py-3 text-left">Lokasi</th>
-                            <th class="px-4 py-3 text-center">Status</th>
-                            <th class="px-4 py-3 text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ageTable">
-                        <tr>
-                            <td colspan="10" class="px-4 py-8 text-center text-gray-500">
-                                Belum ada data material terpasang
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <!-- Main Content Area -->
+            <main class="flex-1 p-6">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-pink-600 text-white">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">S/N Mesin</th>
+                                    <th class="px-4 py-3 text-left">Part Number</th>
+                                    <th class="px-4 py-3 text-left">Material</th>
+                                    <th class="px-4 py-3 text-left">Tanggal Pasang</th>
+                                    <th class="px-4 py-3 text-center">Umur (Hari)</th>
+                                    <th class="px-4 py-3 text-center">Target (Hari)</th>
+                                    <th class="px-4 py-3 text-center">Sisa (Hari)</th>
+                                    <th class="px-4 py-3 text-left">Lokasi</th>
+                                    <th class="px-4 py-3 text-center">Status</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ageTable">
+                                <tr>
+                                    <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                                        <p>Memuat data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
         </div>
 
+        <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-umur.js"></script>
     </body>
     </html>
@@ -1110,6 +1163,7 @@ function getDashboardMutasiHTML() {
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     </head>
     <body class="bg-gray-50">
+        <!-- Navigation -->
         <nav class="bg-cyan-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-4">
@@ -1135,61 +1189,103 @@ function getDashboardMutasiHTML() {
                     <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-cyan-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
                 </div>
             </div>
         </nav>
 
-        <div class="max-w-7xl mx-auto p-6">
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-2xl font-bold mb-4">Filter Tanggal & Nomor BA</h2>
+        <!-- Main Content with Sidebar -->
+        <div class="flex">
+            <!-- Sidebar Filter (Vertical) -->
+            <aside class="w-80 bg-white shadow-lg min-h-screen p-6">
+                <h2 class="text-2xl font-bold text-cyan-600 mb-6 flex items-center">
+                    <i class="fas fa-filter mr-2"></i>
+                    Filter Mutasi
+                </h2>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="space-y-6">
+                    <!-- Filter Tanggal -->
                     <div>
-                        <label class="block text-sm font-medium mb-2">Filter Tanggal</label>
-                        <input type="date" id="filterTanggal" class="w-full px-4 py-2 border rounded-lg">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-calendar mr-2 text-cyan-600"></i>
+                            Tanggal
+                        </label>
+                        <input type="date" id="filterTanggal" 
+                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                     
+                    <!-- Filter Nomor BA -->
                     <div>
-                        <label class="block text-sm font-medium mb-2">Filter Nomor BA</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-file-alt mr-2 text-cyan-600"></i>
+                            Nomor BA
+                        </label>
                         <input type="text" id="filterNomorBA" placeholder="Cari Nomor BA..." 
-                            class="w-full px-4 py-2 border rounded-lg">
+                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
-                    
-                    <div class="flex items-end">
-                        <button onclick="exportAllBA()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 w-full">
-                            <i class="fas fa-file-export mr-2"></i>Export BA
+
+                    <!-- Export Button -->
+                    <div class="mt-8">
+                        <button onclick="exportAllBA()" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
+                            <i class="fas fa-file-export mr-2"></i>
+                            Export Semua BA
                         </button>
                     </div>
-                </div>
-            </div>
 
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <table class="w-full">
-                    <thead class="bg-gray-800 text-white">
-                        <tr>
-                            <th class="px-4 py-3 text-left">Nomor BA</th>
-                            <th class="px-4 py-3 text-left">Tanggal</th>
-                            <th class="px-4 py-3 text-left">Jenis Transaksi</th>
-                            <th class="px-4 py-3 text-left">Part Number</th>
-                            <th class="px-4 py-3 text-center">Jumlah</th>
-                            <th class="px-4 py-3 text-left">Lokasi Keluar</th>
-                            <th class="px-4 py-3 text-left">Lokasi Tujuan</th>
-                            <th class="px-4 py-3 text-left">Pemeriksa</th>
-                            <th class="px-4 py-3 text-left">Penerima</th>
-                            <th class="px-4 py-3 text-center">Status BA</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mutasiTable">
-                        <tr>
-                            <td colspan="10" class="px-4 py-8 text-center text-gray-500">
-                                Belum ada data mutasi
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                    <!-- Info Box -->
+                    <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+                        <h3 class="font-bold text-sm mb-3 text-gray-700">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Informasi
+                        </h3>
+                        <div class="space-y-2 text-sm text-gray-600">
+                            <p>• Klik Nomor BA untuk melihat detail</p>
+                            <p>• Status Terkirim untuk export BA</p>
+                            <p>• Filter berdasarkan tanggal dan BA</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 p-6">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-cyan-600 text-white">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Nomor BA</th>
+                                    <th class="px-4 py-3 text-left">Tanggal</th>
+                                    <th class="px-4 py-3 text-left">Jenis Transaksi</th>
+                                    <th class="px-4 py-3 text-left">Part Number</th>
+                                    <th class="px-4 py-3 text-center">Jumlah</th>
+                                    <th class="px-4 py-3 text-left">Lokasi Keluar</th>
+                                    <th class="px-4 py-3 text-left">Lokasi Tujuan</th>
+                                    <th class="px-4 py-3 text-left">Pemeriksa</th>
+                                    <th class="px-4 py-3 text-left">Penerima</th>
+                                    <th class="px-4 py-3 text-center">Status BA</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mutasiTable">
+                                <tr>
+                                    <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                                        <p>Memuat data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
         </div>
 
+        <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-mutasi.js"></script>
     </body>
     </html>
