@@ -728,15 +728,15 @@ function getInputFormHTML() {
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Tanggal</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label>
                                 <input type="date" id="tanggal" required
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Jenis Transaksi</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Transaksi</label>
                                 <select id="jenisTransaksi" required
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                                     <option value="">-- Pilih Jenis --</option>
                                     <option value="Keluar (Pengeluaran Gudang)">Keluar (Pengeluaran Gudang)</option>
                                     <option value="Masuk (Penerimaan Gudang)">Masuk (Penerimaan Gudang)</option>
@@ -744,15 +744,15 @@ function getInputFormHTML() {
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Lokasi Keluar/Asal</label>
-                                <select id="lokasiAsal" required class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Lokasi Keluar/Asal</label>
+                                <select id="lokasiAsal" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                                     <option value="">-- Pilih Lokasi --</option>
                                 </select>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Lokasi Tujuan</label>
-                                <select id="lokasiTujuan" required class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Lokasi Tujuan</label>
+                                <select id="lokasiTujuan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                                     <option value="">-- Pilih Lokasi --</option>
                                 </select>
                             </div>
@@ -784,12 +784,12 @@ function getInputFormHTML() {
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Pemeriksa</label>
-                                <select id="pemeriksa" required class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pemeriksa</label>
+                                <select id="pemeriksa" required class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
                                     <option value="">-- Pilih Pemeriksa --</option>
                                 </select>
                                 
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Tanda Tangan Pemeriksa</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Pemeriksa</label>
                                 <canvas id="signaturePemeriksa" width="300" height="150" class="signature-pad w-full bg-gray-50"></canvas>
                                 <button type="button" id="clearPemeriksa" class="mt-2 text-sm text-red-600 hover:text-red-700">
                                     <i class="fas fa-eraser mr-1"></i>Hapus
@@ -797,12 +797,12 @@ function getInputFormHTML() {
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Penerima</label>
-                                <select id="penerima" required class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Penerima</label>
+                                <select id="penerima" required class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
                                     <option value="">-- Pilih Penerima --</option>
                                 </select>
                                 
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Tanda Tangan Penerima</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Penerima</label>
                                 <canvas id="signaturePenerima" width="300" height="150" class="signature-pad w-full bg-gray-50"></canvas>
                                 <button type="button" id="clearPenerima" class="mt-2 text-sm text-red-600 hover:text-red-700">
                                     <i class="fas fa-eraser mr-1"></i>Hapus
@@ -1376,7 +1376,7 @@ function getFormGangguanHTML() {
                             1. Hari/Tanggal/Jam Kejadian
                         </h2>
                         <input type="datetime-local" id="hariTanggal" required
-                            class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
                     </div>
 
                     <!-- Unit/ULD -->
@@ -1386,7 +1386,7 @@ function getFormGangguanHTML() {
                             Unit / ULD
                         </h2>
                         <select id="unitULD" required
-                            class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
                             <option value="">-- Pilih Unit/ULD --</option>
                         </select>
                     </div>
@@ -1397,7 +1397,7 @@ function getFormGangguanHTML() {
                             2. Kelompok SPD yang rusak
                         </h2>
                         <select id="kelompokSPD" required
-                            class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
                             <option value="">-- Pilih Kelompok SPD --</option>
                             <option value="MEKANIK">MEKANIK</option>
                             <option value="ELEKTRIK">ELEKTRIK</option>
@@ -1416,7 +1416,7 @@ function getFormGangguanHTML() {
                                     3. Komponen yang rusak
                                 </label>
                                 <input type="text" id="komponenRusak" required
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                             </div>
                             
                             <div>
@@ -1424,7 +1424,7 @@ function getFormGangguanHTML() {
                                     4. Gejala yang timbul
                                 </label>
                                 <textarea id="gejala" required rows="3"
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
                             </div>
                             
                             <div>
@@ -1432,7 +1432,7 @@ function getFormGangguanHTML() {
                                     5. Uraian kejadian
                                 </label>
                                 <textarea id="uraianKejadian" required rows="3"
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
                             </div>
                             
                             <div>
@@ -1440,7 +1440,7 @@ function getFormGangguanHTML() {
                                     6. Analisa penyebab
                                 </label>
                                 <textarea id="analisaPenyebab" required rows="3"
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
                             </div>
                             
                             <div>
@@ -1448,7 +1448,7 @@ function getFormGangguanHTML() {
                                     7. Kesimpulan kerusakan
                                 </label>
                                 <textarea id="kesimpulan" required rows="3"
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
                             </div>
                         </div>
                     </div>
@@ -1465,7 +1465,7 @@ function getFormGangguanHTML() {
                                     Beban Puncak (MW)
                                 </label>
                                 <input type="number" id="bebanPuncak" step="0.01" required
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                             </div>
                             
                             <div>
@@ -1473,7 +1473,7 @@ function getFormGangguanHTML() {
                                     Daya Mampu (MW)
                                 </label>
                                 <input type="number" id="dayaMampu" step="0.01" required
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                             </div>
                             
                             <div>
@@ -1481,7 +1481,7 @@ function getFormGangguanHTML() {
                                     Status Pemadaman
                                 </label>
                                 <select id="pemadaman" required
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                                     <option value="">-- Pilih Status --</option>
                                     <option value="NORMAL">NORMAL</option>
                                     <option value="SIAGA">SIAGA</option>
@@ -1503,7 +1503,7 @@ function getFormGangguanHTML() {
                                     9. Tindakan penanggulangan
                                 </label>
                                 <textarea id="tindakanPenanggulangan" required rows="3"
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
                             </div>
                             
                             <div>
@@ -1511,7 +1511,7 @@ function getFormGangguanHTML() {
                                     10. Rencana perbaikan
                                 </label>
                                 <textarea id="rencanaPerbaikan" required rows="3"
-                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
                             </div>
                         </div>
                     </div>
@@ -1542,7 +1542,7 @@ function getFormGangguanHTML() {
                         <div class="max-w-md mx-auto">
                             <label class="block text-sm font-medium text-gray-300 mb-2">Nama Pelapor</label>
                             <input type="text" id="namaPelapor" required placeholder="Nama Pelapor"
-                                class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg mb-4">
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
                             
                             <label class="block text-sm font-medium text-gray-300 mb-2">Tanda Tangan Pelapor</label>
                             <canvas id="signaturePelapor" width="400" height="200" class="signature-pad w-full bg-gray-50"></canvas>
