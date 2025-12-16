@@ -1,16 +1,18 @@
 # Sistem Manajemen Material Spare Part
 
 ## Project Overview
-- **Name**: Sistem Manajemen Material Spare Part v3.0
+- **Name**: Sistem Manajemen Material Spare Part v3.4 FINAL
 - **Goal**: Aplikasi web lengkap untuk mengelola transaksi, stok, umur, mutasi, **dan gangguan** material spare part dengan integrasi Google Sheets dan sistem Berita Acara (BA + BA LH05)
 - **Features**: 
   - Form input transaksi material dengan multiple items
-  - **Form Gangguan dan Permintaan Material (BA LH05)** ✨ NEW
+  - **Form Gangguan dan Permintaan Material (BA LH05)** ✨
   - Searchable part number dengan autofill otomatis
-  - Dashboard Stok Material dengan alert
-  - Dashboard Umur Material dengan target dan history
-  - Dashboard Mutasi Material dengan BA tracking
-  - **Dashboard Gangguan dengan sidebar filter** ✨ NEW
+  - **Dashboard Kebutuhan Material dengan Status dropdown** ✨ NEW v3.3
+  - Dashboard Stok Material dengan alert dan **vertical sidebar** ✨
+  - Dashboard Umur Material dengan target, history, dan **vertical sidebar** ✨ NEW v3.4
+  - Dashboard Mutasi Material dengan BA tracking dan **vertical sidebar** ✨ NEW v3.4
+  - **Dashboard Gangguan dengan vertical sidebar filter** ✨
+  - **Login & Authentication System** (Username/Password) ✨ NEW v3.1
   - Tanda tangan digital (touchscreen)
   - Export data (CSV/PDF)
 
@@ -553,6 +555,11 @@ pm2 logs webapp --nostream
 
 # Test
 curl http://localhost:3000
+
+# Login to dashboards
+# Username: AMC@12345
+# Password: 12345@AMC
+# Note: Form Gangguan (/form-gangguan) is PUBLIC - no login required
 ```
 
 ### Deployment to Cloudflare Pages
@@ -574,9 +581,71 @@ npm run deploy:prod
 
 ## 🆕 Fitur yang Baru Ditambahkan
 
-### ✅ Completed - Version 3.0 (Latest) ✨
+### ✅ Completed - Version 3.4 FINAL (Latest) ✨
 
-**NEW in v3.0 - Form Gangguan dan Dashboard:**
+**NEW in v3.4 - Complete UI Redesign:**
+1. ✅ **Dashboard Umur Material - Vertical Sidebar** (`/dashboard/umur`):
+   - **Sidebar Filter Vertikal** di sisi kiri dengan filters untuk:
+     - Lokasi (dropdown dari Google Sheets)
+     - Material (searchable)
+     - S/N Mesin (searchable)
+   - **Status Legend Box** - keterangan warna (Hijau/Kuning/Merah)
+   - Layout konsisten dengan Dashboard Gangguan
+   - Protected dengan login authentication
+   - Logout button di navigation
+
+2. ✅ **Dashboard Mutasi Material - Vertical Sidebar** (`/dashboard/mutasi`):
+   - **Sidebar Filter Vertikal** di sisi kiri dengan filters untuk:
+     - Tanggal (date picker)
+     - Nomor BA (searchable)
+   - **Export Button** di sidebar - Export Semua BA
+   - **Info Box** - panduan penggunaan dashboard
+   - Layout konsisten dengan Dashboard Gangguan dan Umur
+   - Protected dengan login authentication
+   - Logout button di navigation
+
+3. ✅ **Consistency Across All Dashboards**:
+   - Semua 7 dashboard sekarang menggunakan **vertical sidebar layout**
+   - Navigation menu lengkap di semua halaman (7 menu)
+   - Warna konsisten per dashboard (pink=Umur, cyan=Mutasi, purple=Stok, etc)
+   - Protected routes (kecuali Form Gangguan yang public)
+
+**Completed in v3.3 - Dashboard Kebutuhan Material:**
+1. ✅ **Dashboard Kebutuhan Material** (`/dashboard/kebutuhan-material`):
+   - **Kolom Nomor LH05** - antara No dan Part Number
+   - **Dropdown Status** pada setiap baris:
+     - Pengadaan
+     - Tunda
+     - Reject
+   - **Sidebar Filter Vertikal** dengan filters:
+     - Status (dropdown)
+     - Nomor LH05 (search)
+   - **Backend API** untuk update status material
+   - **GET/POST** /api/kebutuhan-material/:nomor/status
+
+**Completed in v3.1-3.2 - Authentication & Form Improvements:**
+1. ✅ **Login & Authentication System**:
+   - **Login Page** (`/login`)
+   - **Credential Hardcoded**:
+     - Username: `AMC@12345`
+     - Password: `12345@AMC`
+   - **Session Storage** (8 jam expiration)
+   - **Protected Routes** - semua dashboard KECUALI `/form-gangguan` (public)
+   - **Logout Button** di semua protected pages
+   - **Auto-redirect** ke login jika session expired
+
+2. ✅ **Form Gangguan Improvements**:
+   - **Unit/ULD Dropdown** - data dari Google Sheets JSON
+   - **Single Signature** (Pelapor only) - canvas 400x200px
+   - **Public Access** - tidak perlu login
+   - Unit/ULD included dalam BA LH05 display
+
+3. ✅ **Dashboard Stok - Vertical Sidebar**:
+   - Filter relocated ke sidebar kiri
+   - Status Info Box dengan color legend
+   - Layout matching Dashboard Gangguan
+
+**Completed in v3.0 - Form Gangguan dan Dashboard:**
 1. ✅ **Form Gangguan dan Permintaan Material** (`/form-gangguan`):
    - Auto-generate Nomor BA LH05: `XXX/ND KAL 2/LH05/TAHUN`
    - Input datetime kejadian gangguan
@@ -586,7 +655,6 @@ npm run deploy:prod
    - Tindakan dan rencana perbaikan
    - Kebutuhan material dengan searchable part number
    - Tombol tambah material (unlimited items)
-   - TTD digital untuk Pelapor dan Manajer
 
 2. ✅ **Dashboard Gangguan** (`/dashboard/gangguan`):
    - **Sidebar Filter Vertikal** di sisi kiri (NEW LAYOUT)
@@ -594,7 +662,7 @@ npm run deploy:prod
    - **Statistik Real-time**: Total Gangguan, Mekanik, Elektrik
    - Tabel lengkap dengan badge warna
    - **View BA LH05 Modal** - format dokumen PLN
-   - Display tanda tangan Pelapor & Manajer
+   - Display tanda tangan Pelapor
    - Export functionality (Print, PDF planned)
 
 3. ✅ **Backend API Gangguan**:
@@ -604,8 +672,8 @@ npm run deploy:prod
    - GET /api/dashboard/gangguan
 
 4. ✅ **Updated Navigation**:
-   - 6 menu navigasi di semua halaman
-   - Link baru: Form Gangguan, Dashboard Gangguan
+   - 7 menu navigasi di semua halaman
+   - Link baru: Form Gangguan, Dashboard Gangguan, Dashboard Kebutuhan
 
 **Completed in v2.1 - Dashboard Umur Material Improvements:**
 1. ✅ **Fix Perhitungan Umur** - dari tanggal pasang sampai **HARI INI**
@@ -737,20 +805,23 @@ wrangler secret put FIREBASE_API_KEY
 
 ## 🎯 Status & Roadmap
 
-- **Current Version**: v3.0 (Form Gangguan dan Dashboard LH05) ✨
-- **Status**: ✅ Active (Sandbox)
+- **Current Version**: v3.4 FINAL ✨ (All Dashboards with Vertical Sidebar)
+- **Status**: ✅ Active (Sandbox) - PRODUCTION READY
 - **Latest Update**: 
-  - ✅ Form Gangguan dan Permintaan Material (BA LH05)
-  - ✅ Dashboard Gangguan dengan sidebar filter vertikal
-  - ✅ Auto-generate Nomor LH05 (XXX/ND KAL 2/LH05/TAHUN)
-  - ✅ TTD digital Pelapor & Manajer
-  - ✅ View BA LH05 modal format PLN
-  - ✅ 6 menu navigasi konsisten
+  - ✅ **v3.4**: Dashboard Umur & Mutasi redesigned dengan vertical sidebar
+  - ✅ **v3.3**: Dashboard Kebutuhan Material dengan Nomor LH05 & Status dropdown
+  - ✅ **v3.2**: Single signature (Pelapor only) pada Form Gangguan
+  - ✅ **v3.1**: Login & Authentication System (Username/Password)
+  - ✅ **v3.0**: Form Gangguan & Dashboard Gangguan dengan sidebar filter
+  - ✅ **All 7 dashboards** sekarang menggunakan consistent **vertical sidebar layout**
+  - ✅ **Protected routes** dengan session-based authentication
+  - ✅ **Public access** untuk Form Gangguan (no login required)
+  - ✅ **7 menu navigasi** konsisten di semua halaman
 - **Next Priority**: 
-  1. Firebase Firestore Integration
+  1. Firebase Firestore Integration (Persistent Storage)
   2. PDF Export untuk BA dan LH05
-  3. Redesign filter dashboard lainnya dengan sidebar vertikal
-- **Last Updated**: 2025-12-14 (v3.0)
+  3. Advanced reporting & analytics
+- **Last Updated**: 2025-12-16 (v3.4 FINAL)
 
 ---
 
