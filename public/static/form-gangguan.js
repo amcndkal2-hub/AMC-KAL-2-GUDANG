@@ -314,13 +314,8 @@ async function handleFormSubmit(e) {
     const result = await response.json()
     
     if (result.success) {
-      // Show success modal
+      // Show success modal (will auto-redirect to Dashboard Gangguan)
       showSuccessModal(result.nomorLH05)
-      
-      // Reset form after 2 seconds
-      setTimeout(() => {
-        resetForm()
-      }, 2000)
     } else {
       alert('Gagal menyimpan: ' + (result.error || 'Unknown error'))
     }
@@ -342,19 +337,25 @@ function showSuccessModal(nomorLH05) {
         <h2 class="text-2xl font-bold text-gray-800 mb-2">Form Berhasil Disimpan!</h2>
         <p class="text-gray-600 mb-4">Nomor BA LH05:</p>
         <p class="text-2xl font-bold text-red-600 mb-6">${nomorLH05}</p>
-        <button onclick="this.closest('.fixed').remove()" 
-          class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
-          OK
-        </button>
+        <div class="space-x-3">
+          <button onclick="window.location.href='/dashboard/gangguan'" 
+            class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+            <i class="fas fa-chart-line mr-2"></i>Lihat Dashboard
+          </button>
+          <button onclick="this.closest('.fixed').remove()" 
+            class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
+            Input Lagi
+          </button>
+        </div>
       </div>
     </div>
   `
   document.body.appendChild(modal)
   
-  // Auto close after 3 seconds
+  // Auto redirect to Dashboard Gangguan after 5 seconds
   setTimeout(() => {
-    modal.remove()
-  }, 3000)
+    window.location.href = '/dashboard/gangguan'
+  }, 5000)
 }
 
 function resetForm() {
