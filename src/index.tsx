@@ -2119,7 +2119,7 @@ function getDashboardGangguanHTML() {
         </div>
 
         <script src="/static/auth-check.js"></script>
-        <script src="/static/dashboard-gangguan.js"></script>
+        <script src="/static/dashboard-gangguan.js?v=3.9"></script>
     </body>
     </html>
   `

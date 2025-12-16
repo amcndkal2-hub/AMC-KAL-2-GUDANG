@@ -44,16 +44,25 @@ async function populateUnitFilter() {
 
 async function loadDashboardData() {
   try {
+    console.log('🔄 Loading gangguan data from API...')
     const response = await fetch('/api/gangguan-transactions')
     const data = await response.json()
+    
+    console.log('✅ API Response:', data)
+    console.log('📊 Total gangguan:', data.gangguanTransactions ? data.gangguanTransactions.length : 0)
     
     allGangguanData = data.gangguanTransactions || []
     filteredData = [...allGangguanData]
     
+    console.log('📋 allGangguanData:', allGangguanData.length, 'items')
+    console.log('🔍 filteredData:', filteredData.length, 'items')
+    
     updateStatistics()
     renderTable()
+    
+    console.log('✅ Dashboard data loaded successfully')
   } catch (error) {
-    console.error('Load data error:', error)
+    console.error('❌ Load data error:', error)
   }
 }
 
