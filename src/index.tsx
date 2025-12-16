@@ -1784,15 +1784,15 @@ function getDashboardKebutuhanMaterialHTML() {
         <div class="flex">
             <!-- Sidebar Filter (Kiri) -->
             <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen">
-                <h2 class="text-xl font-bold mb-6 text-gray-800">
-                    <i class="fas fa-filter mr-2 text-purple-600"></i>
+                <h2 class="text-xl font-bold mb-6 text-white">
+                    <i class="fas fa-filter mr-2 text-blue-400"></i>
                     Filter Data
                 </h2>
                 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium mb-2">Filter Status</label>
-                        <select id="filterStatus" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Filter Status</label>
+                        <select id="filterStatus" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
                             <option value="">Semua Status</option>
                             <option value="Pengadaan">Pengadaan</option>
                             <option value="Tunda">Tunda</option>
@@ -1801,9 +1801,23 @@ function getDashboardKebutuhanMaterialHTML() {
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium mb-2">Cari Nomor LH05</label>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Filter Mesin</label>
+                        <select id="filterMesin" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
+                            <option value="">Semua Mesin</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Filter Unit</label>
+                        <select id="filterUnit" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
+                            <option value="">Semua Unit</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Cari Nomor LH05</label>
                         <input type="text" id="searchNomor" placeholder="Cari nomor..." 
-                            class="w-full px-3 py-2 border rounded-lg text-sm">
+                            class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
                     </div>
                     
                     <button onclick="applyFilters()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
@@ -1899,32 +1913,32 @@ function getDashboardGangguanHTML() {
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     </head>
     <body class="bg-gray-50">
-        <nav class="bg-orange-600 text-white p-4 shadow-lg">
+        <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <i class="fas fa-tools text-2xl"></i>
                     <span class="text-xl font-bold">Dashboard Gangguan dan Permintaan Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-3 py-2 hover:bg-orange-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-orange-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-orange-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-orange-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-orange-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 bg-orange-700 rounded hover:bg-orange-800">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-orange-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
@@ -1936,16 +1950,16 @@ function getDashboardGangguanHTML() {
 
         <div class="flex">
             <!-- Sidebar Filter (Kiri) -->
-            <div class="w-64 bg-white shadow-lg p-6 min-h-screen">
-                <h2 class="text-xl font-bold mb-6 text-gray-800">
-                    <i class="fas fa-filter mr-2 text-orange-600"></i>
+            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen">
+                <h2 class="text-xl font-bold mb-6 text-white">
+                    <i class="fas fa-filter mr-2 text-blue-400"></i>
                     Filter Data
                 </h2>
                 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium mb-2">Kelompok SPD</label>
-                        <select id="filterKelompok" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Kelompok SPD</label>
+                        <select id="filterKelompok" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
                             <option value="">Semua</option>
                             <option value="MEKANIK">MEKANIK</option>
                             <option value="ELEKTRIK">ELEKTRIK</option>
@@ -1953,13 +1967,13 @@ function getDashboardGangguanHTML() {
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium mb-2">Tanggal</label>
-                        <input type="date" id="filterTanggal" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Tanggal</label>
+                        <input type="date" id="filterTanggal" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium mb-2">Status Pemadaman</label>
-                        <select id="filterPemadaman" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Status Pemadaman</label>
+                        <select id="filterPemadaman" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
                             <option value="">Semua</option>
                             <option value="NORMAL">NORMAL</option>
                             <option value="SIAGA">SIAGA</option>
@@ -1968,37 +1982,44 @@ function getDashboardGangguanHTML() {
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium mb-2">Cari Nomor LH05</label>
-                        <input type="text" id="searchNomor" placeholder="001/ND KAL 2/LH05/2025" 
-                            class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Filter Unit</label>
+                        <select id="filterUnit" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
+                            <option value="">Semua Unit</option>
+                        </select>
                     </div>
                     
-                    <button onclick="applyFilters()" class="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700">
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Cari Nomor LH05</label>
+                        <input type="text" id="searchNomor" placeholder="001/ND KAL 2/LH05/2025" 
+                            class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
+                    </div>
+                    
+                    <button onclick="applyFilters()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
                         <i class="fas fa-search mr-2"></i>Terapkan Filter
                     </button>
                     
-                    <button onclick="resetFilters()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                    <button onclick="resetFilters()" class="w-full bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-600">
                         <i class="fas fa-undo mr-2"></i>Reset Filter
                     </button>
                 </div>
                 
-                <div class="mt-8 p-4 bg-orange-50 rounded-lg">
-                    <h3 class="font-semibold text-orange-800 mb-2">
+                <div class="mt-8 p-4 bg-gray-800 rounded-lg">
+                    <h3 class="font-semibold text-blue-400 mb-2">
                         <i class="fas fa-info-circle mr-2"></i>
                         Statistik
                     </h3>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <span>Total Gangguan:</span>
-                            <span id="totalGangguan" class="font-bold">0</span>
+                            <span class="text-gray-300">Total Gangguan:</span>
+                            <span class="text-gray-300" id="totalGangguan" class="font-bold">0</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Mekanik:</span>
-                            <span id="totalMekanik" class="font-bold">0</span>
+                            <span class="text-gray-300">Mekanik:</span>
+                            <span class="text-gray-300" id="totalMekanik" class="font-bold">0</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Elektrik:</span>
-                            <span id="totalElektrik" class="font-bold">0</span>
+                            <span class="text-gray-300">Elektrik:</span>
+                            <span class="text-gray-300" id="totalElektrik" class="font-bold">0</span>
                         </div>
                     </div>
                 </div>
@@ -2009,10 +2030,10 @@ function getDashboardGangguanHTML() {
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <div class="flex justify-between items-center">
                         <h2 class="text-2xl font-bold text-gray-800">
-                            <i class="fas fa-list-ul mr-2 text-orange-600"></i>
+                            <i class="fas fa-list-ul mr-2 text-blue-600"></i>
                             Daftar Gangguan dan Permintaan Material
                         </h2>
-                        <button onclick="exportAllLH05()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        <button onclick="exportAllLH05()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                             <i class="fas fa-file-export mr-2"></i>Export All
                         </button>
                     </div>

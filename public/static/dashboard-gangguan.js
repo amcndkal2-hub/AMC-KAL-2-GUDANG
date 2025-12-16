@@ -8,10 +8,28 @@ let filteredData = []
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
   loadDashboardData()
+  populateUnitFilter()
   
   // Auto refresh every 30 seconds
   setInterval(loadDashboardData, 30000)
 })
+
+async function populateUnitFilter() {
+  try {
+    const response = await fetch('/api/dropdown-values')
+    const data = await response.json()
+    
+    const unitSelect = document.getElementById('filterUnit')
+    data.units.forEach(unit => {
+      const option = document.createElement('option')
+      option.value = unit
+      option.textContent = unit
+      unitSelect.appendChild(option)
+    })
+  } catch (error) {
+    console.error('Failed to load units:', error)
+  }
+}
 
 async function loadDashboardData() {
   try {
@@ -73,6 +91,7 @@ function resetFilters() {
   document.getElementById('filterKelompok').value = ''
   document.getElementById('filterTanggal').value = ''
   document.getElementById('filterPemadaman').value = ''
+  document.getElementById('filterUnit').value = ''
   document.getElementById('searchNomor').value = ''
   
   filteredData = [...allGangguanData]
@@ -366,5 +385,8 @@ function exportLH05PDF(nomorLH05) {
 
 function exportAllLH05() {
   alert('Export All LH05\n\nFungsi export semua BA akan diimplementasikan dengan format Excel atau CSV')
+  // TODO: Implement export all functionality
+}
+ dengan format Excel atau CSV')
   // TODO: Implement export all functionality
 }
