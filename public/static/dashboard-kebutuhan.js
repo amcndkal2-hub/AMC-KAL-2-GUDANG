@@ -8,14 +8,45 @@ let filteredMaterials = []
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
   loadKebutuhanMaterial()
+  populateFilters()
   
   // Auto refresh every 30 seconds
   setInterval(loadKebutuhanMaterial, 30000)
   
   // Filter change handlers
   document.getElementById('filterStatus').addEventListener('change', applyFilters)
+  document.getElementById('filterMesin').addEventListener('change', applyFilters)
+  document.getElementById('filterUnit').addEventListener('change', applyFilters)
   document.getElementById('searchNomor').addEventListener('input', applyFilters)
 })
+
+async function populateFilters() {
+  try {
+    const response = await fetch('/api/dropdown-values')
+    const data = await response.json()
+    
+    // Populate Unit filter
+    const unitSelect = document.getElementById('filterUnit')
+    data.units.forEach(unit => {
+      const option = document.createElement('option')
+      option.value = unit
+      option.textContent = unit
+      unitSelect.appendChild(option)
+    })
+    
+    // Extract unique mesin from all materials
+    const uniqueMesins = [...new Set(allMaterials.map(m => m.mesin))].filter(m => m).sort()
+    const mesinSelect = document.getElementById('filterMesin')
+    uniqueMesins.forEach(mesin => {
+      const option = document.createElement('option')
+      option.value = mesin
+      option.textContent = mesin
+      mesinSelect.appendChild(option)
+    })
+  } catch (error) {
+    console.error('Failed to load filters:', error)
+  }
+}
 
 async function loadKebutuhanMaterial() {
   try {
@@ -67,6 +98,8 @@ function applyFilters() {
 
 function resetFilters() {
   document.getElementById('filterStatus').value = ''
+  document.getElementById('filterMesin').value = ''
+  document.getElementById('filterUnit').value = ''
   document.getElementById('searchNomor').value = ''
   
   filteredMaterials = [...allMaterials]

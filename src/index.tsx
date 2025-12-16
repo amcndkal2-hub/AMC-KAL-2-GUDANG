@@ -699,7 +699,7 @@ function getInputFormHTML() {
                     <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
                 </div>
@@ -728,15 +728,15 @@ function getInputFormHTML() {
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Tanggal</label>
                                 <input type="date" id="tanggal" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500">
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Transaksi</label>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Jenis Transaksi</label>
                                 <select id="jenisTransaksi" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500">
                                     <option value="">-- Pilih Jenis --</option>
                                     <option value="Keluar (Pengeluaran Gudang)">Keluar (Pengeluaran Gudang)</option>
                                     <option value="Masuk (Penerimaan Gudang)">Masuk (Penerimaan Gudang)</option>
@@ -744,15 +744,15 @@ function getInputFormHTML() {
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Lokasi Keluar/Asal</label>
-                                <select id="lokasiAsal" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Lokasi Keluar/Asal</label>
+                                <select id="lokasiAsal" required class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
                                     <option value="">-- Pilih Lokasi --</option>
                                 </select>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Lokasi Tujuan</label>
-                                <select id="lokasiTujuan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Lokasi Tujuan</label>
+                                <select id="lokasiTujuan" required class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
                                     <option value="">-- Pilih Lokasi --</option>
                                 </select>
                             </div>
@@ -784,12 +784,12 @@ function getInputFormHTML() {
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Pemeriksa</label>
-                                <select id="pemeriksa" required class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Pemeriksa</label>
+                                <select id="pemeriksa" required class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg mb-4">
                                     <option value="">-- Pilih Pemeriksa --</option>
                                 </select>
                                 
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Pemeriksa</label>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Tanda Tangan Pemeriksa</label>
                                 <canvas id="signaturePemeriksa" width="300" height="150" class="signature-pad w-full bg-gray-50"></canvas>
                                 <button type="button" id="clearPemeriksa" class="mt-2 text-sm text-red-600 hover:text-red-700">
                                     <i class="fas fa-eraser mr-1"></i>Hapus
@@ -797,12 +797,12 @@ function getInputFormHTML() {
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Penerima</label>
-                                <select id="penerima" required class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Penerima</label>
+                                <select id="penerima" required class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg mb-4">
                                     <option value="">-- Pilih Penerima --</option>
                                 </select>
                                 
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Penerima</label>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Tanda Tangan Penerima</label>
                                 <canvas id="signaturePenerima" width="300" height="150" class="signature-pad w-full bg-gray-50"></canvas>
                                 <button type="button" id="clearPenerima" class="mt-2 text-sm text-red-600 hover:text-red-700">
                                     <i class="fas fa-eraser mr-1"></i>Hapus
@@ -814,7 +814,7 @@ function getInputFormHTML() {
                     <!-- Submit -->
                     <div class="flex gap-4">
                         <button type="submit" 
-                            class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 transition text-lg font-semibold">
+                            class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 transition text-lg font-semibold">
                             <i class="fas fa-save mr-2"></i>Simpan Transaksi
                         </button>
                         <button type="button" id="resetForm"
@@ -845,35 +845,35 @@ function getDashboardStokHTML() {
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     </head>
     <body class="bg-gray-50">
-        <nav class="bg-green-600 text-white p-4 shadow-lg">
+        <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <i class="fas fa-chart-bar text-2xl"></i>
                     <span class="text-xl font-bold">Dashboard Stok Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/" class="px-3 py-2 hover:bg-green-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-green-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 bg-green-700 rounded hover:bg-green-800">
+                    <a href="/dashboard/stok" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-green-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-green-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-green-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-green-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
                 </div>
@@ -925,7 +925,7 @@ function getDashboardStokHTML() {
                     </div>
                     
                     <div class="pt-4 border-t">
-                        <button onclick="exportPDF()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 mb-2 text-sm">
+                        <button onclick="exportPDF()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-blue-700 mb-2 text-sm">
                             <i class="fas fa-file-pdf mr-2"></i>PDF
                         </button>
                         <button onclick="exportExcel()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm">
@@ -967,7 +967,7 @@ function getDashboardStokHTML() {
 
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
                     <table class="w-full">
-                        <thead class="bg-gray-800 text-white">
+                        <thead class="bg-blue-500 text-white">
                             <tr>
                                 <th class="px-4 py-3 text-left">Part Number</th>
                                 <th class="px-4 py-3 text-left">Jenis Barang</th>
@@ -1011,35 +1011,35 @@ function getDashboardUmurHTML() {
     </head>
     <body class="bg-gray-50">
         <!-- Navigation -->
-        <nav class="bg-pink-600 text-white p-4 shadow-lg">
+        <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <i class="fas fa-calendar-alt text-2xl"></i>
                     <span class="text-xl font-bold">Dashboard Umur Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-3 py-2 hover:bg-pink-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-pink-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-pink-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 bg-pink-700 rounded hover:bg-pink-800">
+                    <a href="/dashboard/umur" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-pink-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-pink-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-pink-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
                 </div>
@@ -1049,8 +1049,8 @@ function getDashboardUmurHTML() {
         <!-- Main Content with Sidebar -->
         <div class="flex">
             <!-- Sidebar Filter (Vertical) -->
-            <aside class="w-80 bg-white shadow-lg min-h-screen p-6">
-                <h2 class="text-2xl font-bold text-pink-600 mb-6 flex items-center">
+            <aside class="w-80 bg-gray-900 shadow-lg min-h-screen p-6">
+                <h2 class="text-2xl font-bold text-blue-400 mb-6 flex items-center">
                     <i class="fas fa-filter mr-2"></i>
                     Filter Material
                 </h2>
@@ -1058,37 +1058,37 @@ function getDashboardUmurHTML() {
                 <div class="space-y-6">
                     <!-- Filter Lokasi -->
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <label class="block text-sm font-semibold text-gray-300 mb-3">
                             <i class="fas fa-map-marker-alt mr-2 text-pink-600"></i>
                             Lokasi
                         </label>
-                        <select id="filterLokasi" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                        <select id="filterLokasi" class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
                             <option value="">Semua Lokasi</option>
                         </select>
                     </div>
                     
                     <!-- Filter Material -->
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <label class="block text-sm font-semibold text-gray-300 mb-3">
                             <i class="fas fa-box mr-2 text-pink-600"></i>
                             Material
                         </label>
                         <input type="text" id="filterMaterial" placeholder="Cari Material..." 
-                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                            class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
                     </div>
                     
                     <!-- Filter S/N Mesin -->
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <label class="block text-sm font-semibold text-gray-300 mb-3">
                             <i class="fas fa-barcode mr-2 text-pink-600"></i>
                             S/N Mesin
                         </label>
                         <input type="text" id="filterSN" placeholder="Cari S/N Mesin..." 
-                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                            class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
                     </div>
 
                     <!-- Status Legend -->
-                    <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+                    <div class="mt-8 p-4 bg-gray-800 rounded-lg">
                         <h3 class="font-bold text-sm mb-3 text-gray-700">
                             <i class="fas fa-info-circle mr-2"></i>
                             Keterangan Status
@@ -1116,7 +1116,7 @@ function getDashboardUmurHTML() {
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-pink-600 text-white">
+                            <thead class="bg-blue-500 text-white">
                                 <tr>
                                     <th class="px-4 py-3 text-left">S/N Mesin</th>
                                     <th class="px-4 py-3 text-left">Part Number</th>
@@ -1164,35 +1164,35 @@ function getDashboardMutasiHTML() {
     </head>
     <body class="bg-gray-50">
         <!-- Navigation -->
-        <nav class="bg-cyan-600 text-white p-4 shadow-lg">
+        <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <i class="fas fa-exchange-alt text-2xl"></i>
                     <span class="text-xl font-bold">Dashboard Mutasi Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 bg-cyan-700 rounded hover:bg-cyan-800">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-cyan-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
                 </div>
@@ -1202,8 +1202,8 @@ function getDashboardMutasiHTML() {
         <!-- Main Content with Sidebar -->
         <div class="flex">
             <!-- Sidebar Filter (Vertical) -->
-            <aside class="w-80 bg-white shadow-lg min-h-screen p-6">
-                <h2 class="text-2xl font-bold text-cyan-600 mb-6 flex items-center">
+            <aside class="w-80 bg-gray-900 shadow-lg min-h-screen p-6">
+                <h2 class="text-2xl font-bold text-blue-400 mb-6 flex items-center">
                     <i class="fas fa-filter mr-2"></i>
                     Filter Mutasi
                 </h2>
@@ -1211,34 +1211,34 @@ function getDashboardMutasiHTML() {
                 <div class="space-y-6">
                     <!-- Filter Tanggal -->
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <label class="block text-sm font-semibold text-gray-300 mb-3">
                             <i class="fas fa-calendar mr-2 text-cyan-600"></i>
                             Tanggal
                         </label>
                         <input type="date" id="filterTanggal" 
-                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
+                            class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                     
                     <!-- Filter Nomor BA -->
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <label class="block text-sm font-semibold text-gray-300 mb-3">
                             <i class="fas fa-file-alt mr-2 text-cyan-600"></i>
                             Nomor BA
                         </label>
                         <input type="text" id="filterNomorBA" placeholder="Cari Nomor BA..." 
-                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
+                            class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
 
                     <!-- Export Button -->
                     <div class="mt-8">
-                        <button onclick="exportAllBA()" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
+                        <button onclick="exportAllBA()" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
                             <i class="fas fa-file-export mr-2"></i>
                             Export Semua BA
                         </button>
                     </div>
 
                     <!-- Info Box -->
-                    <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+                    <div class="mt-8 p-4 bg-gray-800 rounded-lg">
                         <h3 class="font-bold text-sm mb-3 text-gray-700">
                             <i class="fas fa-info-circle mr-2"></i>
                             Informasi
@@ -1257,7 +1257,7 @@ function getDashboardMutasiHTML() {
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-cyan-600 text-white">
+                            <thead class="bg-blue-500 text-white">
                                 <tr>
                                     <th class="px-4 py-3 text-left">Nomor BA</th>
                                     <th class="px-4 py-3 text-left">Tanggal</th>
@@ -1315,29 +1315,29 @@ function getFormGangguanHTML() {
     </head>
     <body class="bg-gray-50">
         <!-- Navigation -->
-        <nav class="bg-red-600 text-white p-4 shadow-lg">
+        <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <i class="fas fa-exclamation-triangle text-2xl"></i>
                     <span class="text-xl font-bold">Form Gangguan dan Permintaan Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-3 py-2 hover:bg-red-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 bg-red-700 rounded hover:bg-red-800">
+                    <a href="/form-gangguan" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-red-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-red-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-red-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-red-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
                 </div>
@@ -1376,7 +1376,7 @@ function getFormGangguanHTML() {
                             1. Hari/Tanggal/Jam Kejadian
                         </h2>
                         <input type="datetime-local" id="hariTanggal" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                            class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500">
                     </div>
 
                     <!-- Unit/ULD -->
@@ -1386,7 +1386,7 @@ function getFormGangguanHTML() {
                             Unit / ULD
                         </h2>
                         <select id="unitULD" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                            class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500">
                             <option value="">-- Pilih Unit/ULD --</option>
                         </select>
                     </div>
@@ -1397,7 +1397,7 @@ function getFormGangguanHTML() {
                             2. Kelompok SPD yang rusak
                         </h2>
                         <select id="kelompokSPD" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                            class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-red-500">
                             <option value="">-- Pilih Kelompok SPD --</option>
                             <option value="MEKANIK">MEKANIK</option>
                             <option value="ELEKTRIK">ELEKTRIK</option>
@@ -1412,43 +1412,43 @@ function getFormGangguanHTML() {
                         
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">
                                     3. Komponen yang rusak
                                 </label>
                                 <input type="text" id="komponenRusak" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">
                                     4. Gejala yang timbul
                                 </label>
                                 <textarea id="gejala" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">
                                     5. Uraian kejadian
                                 </label>
                                 <textarea id="uraianKejadian" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">
                                     6. Analisa penyebab
                                 </label>
                                 <textarea id="analisaPenyebab" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">
                                     7. Kesimpulan kerusakan
                                 </label>
                                 <textarea id="kesimpulan" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
                             </div>
                         </div>
                     </div>
@@ -1461,27 +1461,27 @@ function getFormGangguanHTML() {
                         
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">
                                     Beban Puncak (MW)
                                 </label>
                                 <input type="number" id="bebanPuncak" step="0.01" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">
                                     Daya Mampu (MW)
                                 </label>
                                 <input type="number" id="dayaMampu" step="0.01" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">
                                     Status Pemadaman
                                 </label>
                                 <select id="pemadaman" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg">
                                     <option value="">-- Pilih Status --</option>
                                     <option value="NORMAL">NORMAL</option>
                                     <option value="SIAGA">SIAGA</option>
@@ -1499,19 +1499,19 @@ function getFormGangguanHTML() {
                         
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">
                                     9. Tindakan penanggulangan
                                 </label>
                                 <textarea id="tindakanPenanggulangan" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">
                                     10. Rencana perbaikan
                                 </label>
                                 <textarea id="rencanaPerbaikan" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg"></textarea>
                             </div>
                         </div>
                     </div>
@@ -1526,7 +1526,7 @@ function getFormGangguanHTML() {
                         <div id="materialListGangguan" class="space-y-4"></div>
                         
                         <button type="button" id="addMaterialGangguan" 
-                            class="w-full mt-4 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition flex items-center justify-center">
+                            class="w-full mt-4 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
                             <i class="fas fa-plus mr-2"></i>
                             Tambah Material
                         </button>
@@ -1540,11 +1540,11 @@ function getFormGangguanHTML() {
                         </h2>
                         
                         <div class="max-w-md mx-auto">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Pelapor</label>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Nama Pelapor</label>
                             <input type="text" id="namaPelapor" required placeholder="Nama Pelapor"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                                class="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg mb-4">
                             
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Pelapor</label>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Tanda Tangan Pelapor</label>
                             <canvas id="signaturePelapor" width="400" height="200" class="signature-pad w-full bg-gray-50"></canvas>
                             <button type="button" id="clearPelapor" class="mt-2 text-sm text-red-600 hover:text-red-700">
                                 <i class="fas fa-eraser mr-1"></i>Hapus Tanda Tangan
@@ -1555,7 +1555,7 @@ function getFormGangguanHTML() {
                     <!-- Submit -->
                     <div class="flex gap-4">
                         <button type="submit" 
-                            class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 transition text-lg font-semibold">
+                            class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 transition text-lg font-semibold">
                             <i class="fas fa-save mr-2"></i>Simpan Form Gangguan
                         </button>
                         <button type="button" id="resetFormGangguan"
@@ -1608,7 +1608,7 @@ function getLoginHTML() {
                 <!-- Login Form -->
                 <form id="loginForm" class="space-y-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
                             <i class="fas fa-user mr-2 text-blue-600"></i>Username
                         </label>
                         <input type="text" id="username" required
@@ -1617,7 +1617,7 @@ function getLoginHTML() {
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
                             <i class="fas fa-lock mr-2 text-blue-600"></i>Password
                         </label>
                         <div class="relative">
@@ -1746,35 +1746,35 @@ function getDashboardKebutuhanMaterialHTML() {
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     </head>
     <body class="bg-gray-50">
-        <nav class="bg-purple-600 text-white p-4 shadow-lg">
+        <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <i class="fas fa-clipboard-list text-2xl"></i>
                     <span class="text-xl font-bold">Dashboard Kebutuhan Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/" class="px-3 py-2 hover:bg-purple-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-purple-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-purple-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-purple-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-purple-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-purple-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 bg-purple-700 rounded hover:bg-purple-800">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
                 </div>
@@ -1783,7 +1783,7 @@ function getDashboardKebutuhanMaterialHTML() {
 
         <div class="flex">
             <!-- Sidebar Filter (Kiri) -->
-            <div class="w-64 bg-white shadow-lg p-6 min-h-screen">
+            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen">
                 <h2 class="text-xl font-bold mb-6 text-gray-800">
                     <i class="fas fa-filter mr-2 text-purple-600"></i>
                     Filter Data
@@ -1806,7 +1806,7 @@ function getDashboardKebutuhanMaterialHTML() {
                             class="w-full px-3 py-2 border rounded-lg text-sm">
                     </div>
                     
-                    <button onclick="applyFilters()" class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">
+                    <button onclick="applyFilters()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
                         <i class="fas fa-search mr-2"></i>Terapkan Filter
                     </button>
                     
@@ -1849,7 +1849,7 @@ function getDashboardKebutuhanMaterialHTML() {
                             <i class="fas fa-boxes mr-2 text-purple-600"></i>
                             Kebutuhan Material
                         </h2>
-                        <button onclick="exportExcel()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        <button onclick="exportExcel()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                             <i class="fas fa-file-excel mr-2"></i>Export Excel
                         </button>
                     </div>
@@ -1857,7 +1857,7 @@ function getDashboardKebutuhanMaterialHTML() {
 
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
                     <table class="w-full">
-                        <thead class="bg-gray-800 text-white">
+                        <thead class="bg-blue-500 text-white">
                             <tr>
                                 <th class="px-4 py-3 text-center">No</th>
                                 <th class="px-4 py-3 text-left">Nomor LH05</th>
@@ -1927,7 +1927,7 @@ function getDashboardGangguanHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-orange-700 rounded">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
                 </div>
@@ -2012,7 +2012,7 @@ function getDashboardGangguanHTML() {
                             <i class="fas fa-list-ul mr-2 text-orange-600"></i>
                             Daftar Gangguan dan Permintaan Material
                         </h2>
-                        <button onclick="exportAllLH05()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        <button onclick="exportAllLH05()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                             <i class="fas fa-file-export mr-2"></i>Export All
                         </button>
                     </div>
@@ -2020,7 +2020,7 @@ function getDashboardGangguanHTML() {
 
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
                     <table class="w-full">
-                        <thead class="bg-gray-800 text-white">
+                        <thead class="bg-blue-500 text-white">
                             <tr>
                                 <th class="px-4 py-3 text-left">Nomor LH05</th>
                                 <th class="px-4 py-3 text-left">Tanggal Kejadian</th>
