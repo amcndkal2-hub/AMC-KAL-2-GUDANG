@@ -30,8 +30,11 @@ let sampleDataInitialized = false
 // Function untuk load sample data (dipanggil saat app start)
 function initializeSampleGangguanData() {
   if (sampleDataInitialized || gangguanTransactions.length > 0) {
+    console.log('⚠️ Sample data already initialized, skipping...')
     return // Sudah ada data, skip
   }
+  
+  console.log('🔧 Initializing sample gangguan data...')
   
   // SAMPLE DATA - Ini akan muncul di Dashboard Gangguan setelah restart
   // User bisa submit form baru untuk menambah data
@@ -67,12 +70,14 @@ function initializeSampleGangguanData() {
   })
   
   sampleDataInitialized = true
-  console.log('✅ Sample gangguan data initialized for testing')
+  console.log('✅ Sample gangguan data initialized:', gangguanTransactions.length, 'items')
 }
 
 // Initialize sample data saat app start
 initializeSampleGangguanData()
-let lh05Counter = 1
+
+// Counter untuk LH05 (mulai dari 1 atau dari sample data count + 1)
+let lh05Counter = gangguanTransactions.length + 1
 
 // Storage untuk target umur material (in-memory)
 // Key: partNumber, Value: { partNumber, targetUmurHari, jenisBarang, material, mesin }
@@ -537,8 +542,12 @@ app.post('/api/save-gangguan', async (c) => {
   try {
     const body = await c.req.json()
     
+    console.log('💾 Saving gangguan form...')
+    console.log('📋 Form data received:', JSON.stringify(body).substring(0, 200) + '...')
+    
     // Generate Nomor LH05
     const nomorLH05 = generateNomorLH05()
+    console.log('🏷️ Generated Nomor LH05:', nomorLH05)
     
     // Add transaction
     const gangguan = {
@@ -550,6 +559,10 @@ app.post('/api/save-gangguan', async (c) => {
     
     gangguanTransactions.push(gangguan)
     
+    console.log('✅ Gangguan saved successfully')
+    console.log('📊 Total gangguan now:', gangguanTransactions.length)
+    console.log('🗂️ Last 3 items:', gangguanTransactions.slice(-3).map(g => g.nomorLH05))
+    
     return c.json({ 
       success: true, 
       message: 'Form gangguan saved successfully',
@@ -557,12 +570,22 @@ app.post('/api/save-gangguan', async (c) => {
       data: gangguan 
     })
   } catch (error) {
+    console.error('❌ Error saving gangguan:', error)
     return c.json({ error: 'Failed to save gangguan' }, 500)
   }
 })
 
 // API: Get all gangguan transactions
 app.get('/api/gangguan-transactions', (c) => {
+  console.log('🔍 GET /api/gangguan-transactions called')
+  console.log('📊 Total gangguan:', gangguanTransactions.length)
+  console.log('🗂️ Gangguan list:', gangguanTransactions.map(g => ({
+    nomor: g.nomorLH05,
+    unit: g.unitULD,
+    kelompok: g.kelompokSPD,
+    materials: g.materials?.length || 0
+  })))
+  
   return c.json({ gangguanTransactions })
 })
 
