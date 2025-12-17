@@ -535,6 +535,3 @@ function exportAllLH05() {
   alert('Export All LH05\n\nFungsi export semua BA akan diimplementasikan dengan format Excel atau CSV')
   // TODO: Implement export all functionality
 }
- dengan format Excel atau CSV')
-  // TODO: Implement export all functionality
-}
