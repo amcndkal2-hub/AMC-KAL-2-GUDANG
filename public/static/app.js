@@ -291,13 +291,23 @@ function displaySearchResults(resultsDiv, results, materialDiv) {
         return;
     }
     
-    resultsDiv.innerHTML = results.map(item => `
+    console.log('Search results:', results); // Debug log
+    
+    resultsDiv.innerHTML = results.map(item => {
+        const jenisBarang = item.JENIS_BARANG || '-';
+        const material = item.MATERIAL || '-';
+        const mesin = item.MESIN || '-';
+        
+        return `
         <div class="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 search-result-item" 
             data-part='${JSON.stringify(item)}'>
             <div class="font-semibold text-sm">${item.PART_NUMBER}</div>
-            <div class="text-xs text-gray-600">${item.MATERIAL || '-'} | ${item.MESIN || '-'}</div>
+            <div class="text-xs text-gray-600">
+                <span class="font-medium text-blue-600">${jenisBarang}</span> | ${material} | ${mesin}
+            </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
     
     resultsDiv.classList.remove('hidden');
     
@@ -313,10 +323,20 @@ function displaySearchResults(resultsDiv, results, materialDiv) {
 
 // Fill material data from selected part
 function fillMaterialData(materialDiv, data) {
-    materialDiv.querySelector('.part-number-search').value = data.PART_NUMBER || '';
-    materialDiv.querySelector('.jenis-barang').value = data.JENIS_BARANG || '-';
-    materialDiv.querySelector('.material').value = data.MATERIAL || '-';
-    materialDiv.querySelector('.mesin').value = data.MESIN || '-';
+    console.log('Filling material data:', data); // Debug log
+    
+    // Convert PART_NUMBER to string if it's a number
+    const partNumber = data.PART_NUMBER ? String(data.PART_NUMBER) : '';
+    const jenisBarang = data.JENIS_BARANG || '-';
+    const material = data.MATERIAL || '-';
+    const mesin = data.MESIN || '-';
+    
+    materialDiv.querySelector('.part-number-search').value = partNumber;
+    materialDiv.querySelector('.jenis-barang').value = jenisBarang;
+    materialDiv.querySelector('.material').value = material;
+    materialDiv.querySelector('.mesin').value = mesin;
+    
+    console.log('Filled values:', { partNumber, jenisBarang, material, mesin }); // Debug log
 }
 
 // Handle form submit
