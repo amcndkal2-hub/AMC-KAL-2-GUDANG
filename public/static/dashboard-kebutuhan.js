@@ -27,25 +27,33 @@ async function populateFilters() {
     
     // Populate Unit filter
     const unitSelect = document.getElementById('filterUnit')
+    // Clear existing options except the first one
+    unitSelect.innerHTML = '<option value="">Semua Unit</option>'
     data.units.forEach(unit => {
       const option = document.createElement('option')
       option.value = unit
       option.textContent = unit
       unitSelect.appendChild(option)
     })
-    
-    // Extract unique mesin from all materials
-    const uniqueMesins = [...new Set(allMaterials.map(m => m.mesin))].filter(m => m).sort()
-    const mesinSelect = document.getElementById('filterMesin')
-    uniqueMesins.forEach(mesin => {
-      const option = document.createElement('option')
-      option.value = mesin
-      option.textContent = mesin
-      mesinSelect.appendChild(option)
-    })
   } catch (error) {
     console.error('Failed to load filters:', error)
   }
+}
+
+function populateMesinFilter() {
+  // Extract unique mesin from all materials
+  const uniqueMesins = [...new Set(allMaterials.map(m => m.mesin))].filter(m => m).sort()
+  const mesinSelect = document.getElementById('filterMesin')
+  
+  // Clear existing options except the first one
+  mesinSelect.innerHTML = '<option value="">Semua Mesin</option>'
+  
+  uniqueMesins.forEach(mesin => {
+    const option = document.createElement('option')
+    option.value = mesin
+    option.textContent = mesin
+    mesinSelect.appendChild(option)
+  })
 }
 
 async function loadKebutuhanMaterial() {
@@ -55,6 +63,9 @@ async function loadKebutuhanMaterial() {
     
     allMaterials = data.materials || []
     filteredMaterials = [...allMaterials]
+    
+    // Populate mesin filter after data is loaded
+    populateMesinFilter()
     
     updateStatistics()
     renderTable()
@@ -85,15 +96,32 @@ function updateStatistics() {
 
 function applyFilters() {
   const statusFilter = document.getElementById('filterStatus').value
+  const mesinFilter = document.getElementById('filterMesin').value
+  const unitFilter = document.getElementById('filterUnit').value
   const searchNomor = document.getElementById('searchNomor').value.toLowerCase()
   
   filteredMaterials = allMaterials.filter(item => {
     let match = true
     
+    // Filter by Status
     if (statusFilter && item.status !== statusFilter) {
       match = false
     }
     
+    // Filter by Mesin
+    if (mesinFilter && item.mesin !== mesinFilter) {
+      match = false
+    }
+    
+    // Filter by Unit (check both unitULD and lokasiTujuan)
+    if (unitFilter) {
+      const itemUnit = item.lokasiTujuan || item.unitULD || ''
+      if (itemUnit !== unitFilter) {
+        match = false
+      }
+    }
+    
+    // Filter by Nomor LH05
     if (searchNomor && !item.nomorLH05.toLowerCase().includes(searchNomor)) {
       match = false
     }
