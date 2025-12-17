@@ -68,11 +68,19 @@ function updateStatistics() {
   const pengadaan = allMaterials.filter(m => m.status === 'Pengadaan').length
   const tunda = allMaterials.filter(m => m.status === 'Tunda').length
   const reject = allMaterials.filter(m => m.status === 'Reject').length
+  const terkirim = allMaterials.filter(m => m.status === 'Terkirim').length
+  const tersedia = allMaterials.filter(m => m.status === 'Tersedia').length
   
   document.getElementById('totalMaterial').textContent = total
   document.getElementById('totalPengadaan').textContent = pengadaan
   document.getElementById('totalTunda').textContent = tunda
   document.getElementById('totalReject').textContent = reject
+  
+  // Update statistik baru jika elemen ada
+  const terkirimEl = document.getElementById('totalTerkirim')
+  const tersediaEl = document.getElementById('totalTersedia')
+  if (terkirimEl) terkirimEl.textContent = terkirim
+  if (tersediaEl) tersediaEl.textContent = tersedia
 }
 
 function applyFilters() {
@@ -112,7 +120,7 @@ function renderTable() {
   if (filteredMaterials.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
           ${allMaterials.length === 0 ? 'Belum ada data kebutuhan material' : 'Tidak ada data yang sesuai filter'}
         </td>
       </tr>
@@ -122,6 +130,7 @@ function renderTable() {
   
   tbody.innerHTML = filteredMaterials.map((item, index) => {
     const statusColor = getStatusColor(item.status)
+    const lokasiTujuan = item.lokasiTujuan || item.unitULD || '-'
     
     return `
       <tr class="border-b hover:bg-gray-50">
@@ -135,6 +144,7 @@ function renderTable() {
         <td class="px-4 py-3">${item.material}</td>
         <td class="px-4 py-3">${item.mesin}</td>
         <td class="px-4 py-3 text-center font-semibold">${item.jumlah}</td>
+        <td class="px-4 py-3">${lokasiTujuan}</td>
         <td class="px-4 py-3 text-center">
           <select 
             onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
@@ -142,6 +152,8 @@ function renderTable() {
             <option value="Pengadaan" ${item.status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
             <option value="Tunda" ${item.status === 'Tunda' ? 'selected' : ''}>Tunda</option>
             <option value="Reject" ${item.status === 'Reject' ? 'selected' : ''}>Reject</option>
+            <option value="Terkirim" ${item.status === 'Terkirim' ? 'selected' : ''}>Terkirim</option>
+            <option value="Tersedia" ${item.status === 'Tersedia' ? 'selected' : ''}>Tersedia</option>
           </select>
         </td>
       </tr>
@@ -153,7 +165,9 @@ function getStatusColor(status) {
   const colors = {
     'Pengadaan': 'bg-blue-100 text-blue-800 border-blue-300',
     'Tunda': 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    'Reject': 'bg-red-100 text-red-800 border-red-300'
+    'Reject': 'bg-red-100 text-red-800 border-red-300',
+    'Terkirim': 'bg-green-100 text-green-800 border-green-300',
+    'Tersedia': 'bg-purple-100 text-purple-800 border-purple-300'
   }
   return colors[status] || 'bg-gray-100 text-gray-800'
 }
@@ -216,10 +230,11 @@ function showNotification(message, type) {
 
 function exportExcel() {
   // Prepare CSV data
-  let csv = 'No,Nomor LH05,Part Number,Material,Mesin,Jumlah,Status\n'
+  let csv = 'No,Nomor LH05,Part Number,Material,Mesin,Jumlah,Unit/Lokasi Tujuan,Status\n'
   
   filteredMaterials.forEach((item, index) => {
-    csv += `${index + 1},"${item.nomorLH05}","${item.partNumber}","${item.material}","${item.mesin}",${item.jumlah},"${item.status}"\n`
+    const lokasiTujuan = item.lokasiTujuan || item.unitULD || '-'
+    csv += `${index + 1},"${item.nomorLH05}","${item.partNumber}","${item.material}","${item.mesin}",${item.jumlah},"${lokasiTujuan}","${item.status}"\n`
   })
   
   // Download

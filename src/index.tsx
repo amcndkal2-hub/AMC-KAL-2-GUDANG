@@ -611,6 +611,7 @@ app.get('/api/kebutuhan-material', (c) => {
           ...mat,
           nomorLH05: gangguan.nomorLH05,
           unitULD: gangguan.unitULD,
+          lokasiTujuan: gangguan.unitULD, // Tambah kolom lokasi tujuan
           tanggalGangguan: gangguan.hariTanggal,
           kelompokSPD: gangguan.kelompokSPD,
           status: mat.status || 'Pengadaan' // Default status
@@ -1850,6 +1851,8 @@ function getDashboardKebutuhanMaterialHTML() {
                             <option value="Pengadaan">Pengadaan</option>
                             <option value="Tunda">Tunda</option>
                             <option value="Reject">Reject</option>
+                            <option value="Terkirim">Terkirim</option>
+                            <option value="Tersedia">Tersedia</option>
                         </select>
                     </div>
                     
@@ -1904,6 +1907,14 @@ function getDashboardKebutuhanMaterialHTML() {
                             <span>Reject:</span>
                             <span id="totalReject" class="font-bold text-red-600">0</span>
                         </div>
+                        <div class="flex justify-between">
+                            <span>Terkirim:</span>
+                            <span id="totalTerkirim" class="font-bold text-green-600">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Tersedia:</span>
+                            <span id="totalTersedia" class="font-bold text-purple-600">0</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1932,12 +1943,13 @@ function getDashboardKebutuhanMaterialHTML() {
                                 <th class="px-4 py-3 text-left">Material</th>
                                 <th class="px-4 py-3 text-left">Mesin</th>
                                 <th class="px-4 py-3 text-center">Jumlah</th>
+                                <th class="px-4 py-3 text-left">Unit/Lokasi Tujuan</th>
                                 <th class="px-4 py-3 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody id="kebutuhanTable">
                             <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                                     Belum ada data kebutuhan material
                                 </td>
                             </tr>

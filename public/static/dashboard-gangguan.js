@@ -7,22 +7,31 @@ let filteredData = []
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Dashboard Gangguan Initialized')
+  console.log('📍 Current URL:', window.location.href)
+  
   // Check if coming from form submission (has timestamp parameter)
   const urlParams = new URLSearchParams(window.location.search)
   const fromForm = urlParams.get('t')
   
   if (fromForm) {
     // Coming from form submission - force immediate load
-    console.log('Loading fresh data from form submission...')
+    console.log('✨ Loading fresh data from form submission...')
     // Remove timestamp from URL to clean it up
     window.history.replaceState({}, document.title, window.location.pathname)
   }
   
+  console.log('⏳ Starting data load...')
   loadDashboardData()
   populateUnitFilter()
   
   // Auto refresh every 30 seconds
-  setInterval(loadDashboardData, 30000)
+  setInterval(() => {
+    console.log('🔄 Auto-refresh triggered')
+    loadDashboardData()
+  }, 30000)
+  
+  console.log('✅ Dashboard initialization complete')
 })
 
 async function populateUnitFilter() {
@@ -119,18 +128,32 @@ function resetFilters() {
 }
 
 function renderTable() {
+  console.log('🎨 renderTable() called')
+  console.log('📊 allGangguanData.length:', allGangguanData.length)
+  console.log('🔍 filteredData.length:', filteredData.length)
+  
   const tbody = document.getElementById('gangguanTable')
   
+  if (!tbody) {
+    console.error('❌ Element gangguanTable not found!')
+    return
+  }
+  
   if (filteredData.length === 0) {
+    const message = allGangguanData.length === 0 ? 'Belum ada data gangguan' : 'Tidak ada data yang sesuai filter'
+    console.warn('⚠️ No data to display:', message)
     tbody.innerHTML = `
       <tr>
         <td colspan="8" class="px-4 py-8 text-center text-gray-500">
-          ${allGangguanData.length === 0 ? 'Belum ada data gangguan' : 'Tidak ada data yang sesuai filter'}
+          ${message}
+          ${allGangguanData.length === 0 ? '<br><small class="text-red-500">DEBUG: API returned empty data</small>' : ''}
         </td>
       </tr>
     `
     return
   }
+  
+  console.log('✅ Rendering', filteredData.length, 'rows')
   
   tbody.innerHTML = filteredData.map(item => {
     const tanggal = new Date(item.hariTanggal).toLocaleString('id-ID', {
