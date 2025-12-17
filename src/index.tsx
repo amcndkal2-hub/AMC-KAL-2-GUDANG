@@ -1165,12 +1165,12 @@ function getDashboardUmurHTML() {
                     </div>
 
                     <!-- Status Legend -->
-                    <div class="mt-8 p-4 bg-gray-800 rounded-lg">
-                        <h3 class="font-bold text-sm mb-3 text-gray-700">
+                    <div class="mt-8 p-4 bg-white rounded-lg shadow-md">
+                        <h3 class="font-semibold text-pink-800 mb-3">
                             <i class="fas fa-info-circle mr-2"></i>
                             Keterangan Status
                         </h3>
-                        <div class="space-y-2 text-sm">
+                        <div class="space-y-2 text-sm text-gray-700">
                             <div class="flex items-center">
                                 <span class="inline-block w-4 h-4 bg-red-100 border-2 border-red-500 rounded mr-2"></span>
                                 <span>Perlu Diganti (Lewat Target)</span>
@@ -1315,12 +1315,12 @@ function getDashboardMutasiHTML() {
                     </div>
 
                     <!-- Info Box -->
-                    <div class="mt-8 p-4 bg-gray-800 rounded-lg">
-                        <h3 class="font-bold text-sm mb-3 text-gray-700">
+                    <div class="mt-8 p-4 bg-white rounded-lg shadow-md">
+                        <h3 class="font-semibold text-cyan-800 mb-3">
                             <i class="fas fa-info-circle mr-2"></i>
                             Informasi
                         </h3>
-                        <div class="space-y-2 text-sm text-gray-600">
+                        <div class="space-y-2 text-sm text-gray-700">
                             <p>• Klik Nomor BA untuk melihat detail</p>
                             <p>• Status Terkirim untuk export BA</p>
                             <p>• Filter berdasarkan tanggal dan BA</p>
