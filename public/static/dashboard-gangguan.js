@@ -54,17 +54,39 @@ async function populateUnitFilter() {
 async function loadDashboardData() {
   try {
     console.log('🔄 Loading gangguan data from API...')
+    console.log('🎯 API URL: /api/gangguan-transactions')
+    
     const response = await fetch('/api/gangguan-transactions')
+    console.log('📡 Response status:', response.status, response.statusText)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
     const data = await response.json()
     
     console.log('✅ API Response:', data)
     console.log('📊 Total gangguan:', data.gangguanTransactions ? data.gangguanTransactions.length : 0)
     
-    allGangguanData = data.gangguanTransactions || []
+    if (!data.gangguanTransactions) {
+      console.error('❌ gangguanTransactions is undefined!')
+      allGangguanData = []
+    } else if (!Array.isArray(data.gangguanTransactions)) {
+      console.error('❌ gangguanTransactions is not an array!', typeof data.gangguanTransactions)
+      allGangguanData = []
+    } else {
+      allGangguanData = data.gangguanTransactions
+      console.log('✅ gangguanTransactions is valid array')
+    }
+    
     filteredData = [...allGangguanData]
     
     console.log('📋 allGangguanData:', allGangguanData.length, 'items')
     console.log('🔍 filteredData:', filteredData.length, 'items')
+    
+    if (allGangguanData.length > 0) {
+      console.log('🗂️ First item:', JSON.stringify(allGangguanData[0]).substring(0, 200))
+    }
     
     updateStatistics()
     renderTable()
@@ -72,6 +94,21 @@ async function loadDashboardData() {
     console.log('✅ Dashboard data loaded successfully')
   } catch (error) {
     console.error('❌ Load data error:', error)
+    console.error('❌ Error stack:', error.stack)
+    
+    // Show error in UI
+    const tbody = document.getElementById('gangguanTable')
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" class="px-4 py-8 text-center text-red-500">
+            <i class="fas fa-exclamation-triangle text-3xl mb-2"></i><br>
+            <strong>Error loading data:</strong> ${error.message}<br>
+            <small>Check browser console for details</small>
+          </td>
+        </tr>
+      `
+    }
   }
 }
 

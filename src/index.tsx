@@ -2154,7 +2154,21 @@ function getDashboardGangguanHTML() {
         </div>
 
         <script src="/static/auth-check.js"></script>
-        <script src="/static/dashboard-gangguan.js?v=3.9"></script>
+        <script src="/static/dashboard-gangguan.js"></script>
+        <script>
+          // Force load data after auth check completes
+          window.addEventListener('load', function() {
+            console.log('🔥 FORCE LOADING dashboard gangguan data...')
+            setTimeout(function() {
+              if (typeof loadDashboardData === 'function') {
+                console.log('✅ Calling loadDashboardData() manually')
+                loadDashboardData()
+              } else {
+                console.error('❌ loadDashboardData function not found!')
+              }
+            }, 1000)
+          })
+        </script>
     </body>
     </html>
   `
