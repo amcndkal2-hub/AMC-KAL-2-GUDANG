@@ -5,10 +5,32 @@
 let allGangguanData = []
 let filteredData = []
 
+// Visual debug helper
+function updateDebugInfo(message, type = 'info') {
+  const debugEl = document.getElementById('debugInfo')
+  if (debugEl) {
+    const colors = {
+      info: 'text-blue-600',
+      success: 'text-green-600',
+      error: 'text-red-600',
+      warning: 'text-yellow-600'
+    }
+    const icons = {
+      info: 'fa-info-circle',
+      success: 'fa-check-circle',
+      error: 'fa-exclamation-circle',
+      warning: 'fa-exclamation-triangle'
+    }
+    debugEl.innerHTML = `<p class="${colors[type]}"><i class="fas ${icons[type]} mr-2"></i>${message}</p>`
+  }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Dashboard Gangguan Initialized')
   console.log('📍 Current URL:', window.location.href)
+  
+  updateDebugInfo('🚀 Inisialisasi dashboard...', 'info')
   
   // Check if coming from form submission (has timestamp parameter)
   const urlParams = new URLSearchParams(window.location.search)
@@ -17,11 +39,14 @@ document.addEventListener('DOMContentLoaded', function() {
   if (fromForm) {
     // Coming from form submission - force immediate load
     console.log('✨ Loading fresh data from form submission...')
+    updateDebugInfo('✨ Memuat data baru dari form...', 'info')
     // Remove timestamp from URL to clean it up
     window.history.replaceState({}, document.title, window.location.pathname)
   }
   
   console.log('⏳ Starting data load...')
+  updateDebugInfo('⏳ Memuat data dari server...', 'info')
+  
   loadDashboardData()
   populateUnitFilter()
   
@@ -92,19 +117,33 @@ async function loadDashboardData() {
     renderTable()
     
     console.log('✅ Dashboard data loaded successfully')
+    updateDebugInfo(`✅ Data loaded: ${allGangguanData.length} gangguan`, 'success')
   } catch (error) {
     console.error('❌ Load data error:', error)
     console.error('❌ Error stack:', error.stack)
+    
+    updateDebugInfo(`❌ Error: ${error.message}`, 'error')
     
     // Show error in UI
     const tbody = document.getElementById('gangguanTable')
     if (tbody) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="8" class="px-4 py-8 text-center text-red-500">
-            <i class="fas fa-exclamation-triangle text-3xl mb-2"></i><br>
-            <strong>Error loading data:</strong> ${error.message}<br>
-            <small>Check browser console for details</small>
+          <td colspan="8" class="px-4 py-8 text-center">
+            <div class="mb-4">
+              <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-3"></i>
+              <p class="text-lg font-semibold text-red-600">Error Memuat Data</p>
+              <p class="text-gray-600 mt-2">${error.message}</p>
+            </div>
+            <div class="mt-4 p-4 bg-red-50 border-l-4 border-red-400 text-left max-w-2xl mx-auto">
+              <p class="font-semibold mb-2 text-red-800"><i class="fas fa-bug mr-2"></i>Detail Error:</p>
+              <pre class="text-xs bg-white p-2 rounded overflow-x-auto">${error.stack || error.message}</pre>
+              <div class="mt-3">
+                <button onclick="location.reload()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                  <i class="fas fa-sync mr-2"></i>Coba Lagi (Refresh)
+                </button>
+              </div>
+            </div>
           </td>
         </tr>
       `
@@ -179,16 +218,45 @@ function renderTable() {
   if (filteredData.length === 0) {
     const message = allGangguanData.length === 0 ? 'Belum ada data gangguan' : 'Tidak ada data yang sesuai filter'
     console.warn('⚠️ No data to display:', message)
+    
+    updateDebugInfo(
+      allGangguanData.length === 0 
+        ? '⚠️ API mengembalikan data kosong. Coba refresh (F5) atau submit form gangguan baru.' 
+        : '⚠️ Data ada tapi tersaring oleh filter. Reset filter untuk melihat semua data.',
+      'warning'
+    )
+    
     tbody.innerHTML = `
       <tr>
         <td colspan="8" class="px-4 py-8 text-center text-gray-500">
-          ${message}
-          ${allGangguanData.length === 0 ? '<br><small class="text-red-500">DEBUG: API returned empty data</small>' : ''}
+          <div class="mb-4">
+            <i class="fas fa-inbox text-6xl text-gray-300 mb-3"></i>
+            <p class="text-lg font-semibold">${message}</p>
+          </div>
+          <div class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-left max-w-2xl mx-auto">
+            <p class="font-semibold mb-2"><i class="fas fa-lightbulb mr-2 text-yellow-600"></i>Kemungkinan Penyebab:</p>
+            <ul class="list-disc list-inside text-sm space-y-1">
+              <li>Data gangguan belum ada (silakan submit form gangguan)</li>
+              <li>Service baru restart (data in-memory hilang)</li>
+              <li>Filter terlalu ketat (coba reset filter)</li>
+              <li>JavaScript error (tekan F12 untuk debug)</li>
+            </ul>
+            <div class="mt-3 flex gap-2">
+              <button onclick="location.href='/form-gangguan'" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                <i class="fas fa-plus mr-2"></i>Submit Form Gangguan
+              </button>
+              <button onclick="location.reload()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                <i class="fas fa-sync mr-2"></i>Refresh Halaman
+              </button>
+            </div>
+          </div>
         </td>
       </tr>
     `
     return
   }
+  
+  updateDebugInfo(`✅ Berhasil memuat ${filteredData.length} data gangguan`, 'success')
   
   console.log('✅ Rendering', filteredData.length, 'rows')
   

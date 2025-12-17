@@ -2144,7 +2144,15 @@ function getDashboardGangguanHTML() {
                         <tbody id="gangguanTable">
                             <tr>
                                 <td colspan="8" class="px-4 py-8 text-center text-gray-500">
-                                    Belum ada data gangguan
+                                    <div class="mb-4">
+                                        <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-3"></i>
+                                        <p class="text-lg font-semibold">Memuat data gangguan...</p>
+                                        <p class="text-sm text-gray-400 mt-2">Jika data tidak muncul dalam 5 detik, refresh halaman (F5)</p>
+                                    </div>
+                                    <div id="debugInfo" class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-left text-sm">
+                                        <p class="font-semibold mb-2"><i class="fas fa-info-circle mr-2"></i>Debug Info:</p>
+                                        <p>⏳ Loading... mohon tunggu</p>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
