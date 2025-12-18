@@ -33,7 +33,7 @@ function filterData() {
     
     if (nomorBA) {
         filtered = filtered.filter(tx => 
-            tx.nomorBA.toLowerCase().includes(nomorBA)
+            tx.nomor_ba.toLowerCase().includes(nomorBA)
         );
     }
     
@@ -58,11 +58,11 @@ function renderMutasiTable(data = transactions) {
     
     data.forEach(tx => {
         tx.materials.forEach((mat, idx) => {
-            const jenisClass = tx.jenisTransaksi.includes('Masuk') 
+            const jenisClass = tx.jenis_transaksi.includes('Masuk') 
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-red-100 text-red-800';
             
-            const jenisIcon = tx.jenisTransaksi.includes('Masuk') 
+            const jenisIcon = tx.jenis_transaksi.includes('Masuk') 
                 ? 'arrow-down' 
                 : 'arrow-up';
             
@@ -70,8 +70,8 @@ function renderMutasiTable(data = transactions) {
                 <tr class="border-b hover:bg-gray-50">
                     ${idx === 0 ? `
                         <td class="px-4 py-3 font-bold" rowspan="${tx.materials.length}">
-                            <a href="#" onclick="viewBA('${tx.nomorBA}')" class="text-blue-600 hover:underline">
-                                ${tx.nomorBA}
+                            <a href="#" onclick="viewBA('${tx.nomor_ba}')" class="text-blue-600 hover:underline">
+                                ${tx.nomor_ba}
                             </a>
                         </td>
                         <td class="px-4 py-3" rowspan="${tx.materials.length}">
@@ -80,19 +80,19 @@ function renderMutasiTable(data = transactions) {
                         <td class="px-4 py-3" rowspan="${tx.materials.length}">
                             <span class="inline-block ${jenisClass} px-3 py-1 rounded-full text-sm">
                                 <i class="fas fa-${jenisIcon} mr-1"></i>
-                                ${tx.jenisTransaksi}
+                                ${tx.jenis_transaksi}
                             </span>
                         </td>
                     ` : ''}
-                    <td class="px-4 py-3">${mat.partNumber}</td>
+                    <td class="px-4 py-3">${mat.partNumber || mat.part_number}</td>
                     <td class="px-4 py-3 text-center font-semibold">${mat.jumlah}</td>
                     ${idx === 0 ? `
-                        <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.lokasiAsal}</td>
-                        <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.lokasiTujuan}</td>
+                        <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.lokasi_asal}</td>
+                        <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.lokasi_tujuan}</td>
                         <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.pemeriksa}</td>
                         <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.penerima}</td>
                         <td class="px-4 py-3 text-center" rowspan="${tx.materials.length}">
-                            <button onclick="exportBA('${tx.nomorBA}')" 
+                            <button onclick="exportBA('${tx.nomor_ba}')" 
                                 class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">
                                 <i class="fas fa-download mr-1"></i>Terkirim
                             </button>
