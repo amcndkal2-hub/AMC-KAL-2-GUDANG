@@ -32,7 +32,7 @@ Aplikasi web lengkap untuk mengelola:
 
 ### URL Aplikasi
 - **Development (Sandbox)**: https://3000-irn02uyopd6uubfd4q48x-b237eb32.sandbox.novita.ai
-- **Production**: (akan diisi setelah deployment)
+- **Production: https://amc-material-system.pages.dev
 - **GitHub Repository**: (akan diisi setelah setup)
 
 ### Kredensial Login
