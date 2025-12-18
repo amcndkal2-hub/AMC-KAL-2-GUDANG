@@ -7,13 +7,13 @@
     "nodejs_compat"
   ],
   // D1 Database Configuration
-  // IMPORTANT: After creating D1 database, replace "YOUR_DATABASE_ID_HERE" with actual database_id
-  // Create database: npx wrangler d1 create amc-material-db
+  // Database ID: a2bfde17-bc2d-4971-b3ab-c589f1bd746e
+  // Created: 2025-12-18
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "amc-material-db",
-      "database_id": "YOUR_DATABASE_ID_HERE"
+      "database_id": "a2bfde17-bc2d-4971-b3ab-c589f1bd746e"
     }
   ]
 }

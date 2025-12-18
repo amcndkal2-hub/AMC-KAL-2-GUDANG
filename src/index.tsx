@@ -1,8 +1,14 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-workers'
+import * as DB from './db'
 
-const app = new Hono()
+// Type untuk Cloudflare bindings
+type Bindings = {
+  DB: D1Database;
+}
+
+const app = new Hono<{ Bindings: Bindings }>()
 
 // Enable CORS for API routes
 app.use('/api/*', cors())
@@ -309,35 +315,53 @@ app.get('/api/dropdown-values', async (c) => {
 // API: Save transaction
 app.post('/api/save-transaction', async (c) => {
   try {
+    const { env } = c
     const body = await c.req.json()
     
-    // Generate Nomor BA
-    const nomorBA = generateNomorBA()
+    // Generate Nomor BA dari D1 Database
+    const nomorBA = await DB.getNextBANumber(env.DB)
     
-    // Add transaction
+    // Save ke D1 Database (persistent storage)
+    const result = await DB.saveTransaction(env.DB, {
+      nomorBA,
+      ...body
+    })
+    
+    // Fallback: juga simpan ke in-memory untuk backward compatibility
     const transaction = {
       id: Date.now().toString(),
       nomorBA,
       ...body,
       createdAt: new Date().toISOString()
     }
-    
     transactions.push(transaction)
     
     return c.json({ 
       success: true, 
-      message: 'Transaction saved successfully',
+      message: 'Transaction saved successfully (D1 Database)',
       nomorBA,
       data: transaction 
     })
-  } catch (error) {
-    return c.json({ error: 'Failed to save transaction' }, 500)
+  } catch (error: any) {
+    console.error('Failed to save transaction:', error)
+    return c.json({ error: error.message || 'Failed to save transaction' }, 500)
   }
 })
 
 // API: Get transactions
-app.get('/api/transactions', (c) => {
-  return c.json({ transactions })
+app.get('/api/transactions', async (c) => {
+  try {
+    const { env } = c
+    // Get from D1 Database (persistent storage)
+    const dbTransactions = await DB.getAllTransactions(env.DB)
+    // Merge dengan in-memory untuk backward compatibility
+    const allTransactions = [...dbTransactions, ...transactions]
+    return c.json({ transactions: allTransactions })
+  } catch (error: any) {
+    console.error('Failed to get transactions:', error)
+    // Fallback to in-memory if D1 fails
+    return c.json({ transactions })
+  }
 })
 
 // API: Get stock dashboard
