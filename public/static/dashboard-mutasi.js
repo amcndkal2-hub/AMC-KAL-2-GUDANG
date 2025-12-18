@@ -125,7 +125,7 @@ function showBAModal(ba) {
     modal.innerHTML = `
         <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Berita Acara - ${ba.nomorBA}</h2>
+                <h2 class="text-2xl font-bold">Berita Acara - ${ba.nomor_ba}</h2>
                 <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
@@ -134,19 +134,19 @@ function showBAModal(ba) {
             <div class="border-2 border-gray-300 p-6 rounded-lg mb-6">
                 <div class="text-center mb-6">
                     <h3 class="text-xl font-bold">DAFTAR PENGELUARAN (MUTASI) BARANG-BARANG</h3>
-                    <p class="text-sm text-gray-600 mt-2">Nomor: ${ba.nomorBA}</p>
+                    <p class="text-sm text-gray-600 mt-2">Nomor: ${ba.nomor_ba}</p>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <p><strong>Tanggal:</strong> ${formatDate(ba.tanggal)}</p>
-                        <p><strong>Lokasi Awal:</strong> ${ba.lokasiAsal}</p>
-                        <p><strong>Jenis Input:</strong> ${ba.jenisTransaksi}</p>
+                        <p><strong>Lokasi Awal:</strong> ${ba.lokasi_asal}</p>
+                        <p><strong>Jenis Input:</strong> ${ba.jenis_transaksi}</p>
                     </div>
                     <div>
                         <p><strong>Tanggal Keluar:</strong> ${formatDate(ba.tanggal)}</p>
                         <p><strong>Dasar Pengeluaran:</strong> LH 02</p>
-                        <p><strong>Unit/ULD Tujuan:</strong> ${ba.lokasiTujuan}</p>
+                        <p><strong>Unit/ULD Tujuan:</strong> ${ba.lokasi_tujuan}</p>
                     </div>
                 </div>
                 
@@ -163,11 +163,11 @@ function showBAModal(ba) {
                     <tbody>
                         ${ba.materials.map(mat => `
                             <tr>
-                                <td class="border border-gray-300 px-3 py-2">${mat.partNumber}</td>
+                                <td class="border border-gray-300 px-3 py-2">${mat.partNumber || mat.part_number}</td>
                                 <td class="border border-gray-300 px-3 py-2">${mat.material}</td>
                                 <td class="border border-gray-300 px-3 py-2">${mat.mesin}</td>
                                 <td class="border border-gray-300 px-3 py-2 text-center">${mat.jumlah}</td>
-                                <td class="border border-gray-300 px-3 py-2">${mat.snMesin || '-'}</td>
+                                <td class="border border-gray-300 px-3 py-2">${mat.snMesin || mat.sn_mesin || '-'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -177,13 +177,13 @@ function showBAModal(ba) {
                     <div class="text-center">
                         <p class="font-semibold mb-2">Diperiksa oleh</p>
                         <p class="mb-16">Diterima</p>
-                        ${ba.ttdPemeriksa ? `<img src="${ba.ttdPemeriksa}" class="mx-auto h-20 mb-2">` : '<div class="h-20"></div>'}
+                        ${ba.ttd_pemeriksa ? `<img src="${ba.ttd_pemeriksa}" class="mx-auto h-20 mb-2">` : '<div class="h-20"></div>'}
                         <p class="font-bold">${ba.pemeriksa}</p>
                     </div>
                     <div class="text-center">
                         <p class="font-semibold mb-2">Penerima</p>
                         <p class="mb-16">Diterima Unit</p>
-                        ${ba.ttdPenerima ? `<img src="${ba.ttdPenerima}" class="mx-auto h-20 mb-2">` : '<div class="h-20"></div>'}
+                        ${ba.ttd_penerima ? `<img src="${ba.ttd_penerima}" class="mx-auto h-20 mb-2">` : '<div class="h-20"></div>'}
                         <p class="font-bold">${ba.penerima}</p>
                     </div>
                 </div>
