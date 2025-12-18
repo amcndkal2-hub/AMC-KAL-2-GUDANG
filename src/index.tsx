@@ -365,57 +365,157 @@ app.get('/api/transactions', async (c) => {
 })
 
 // API: Get stock dashboard
-app.get('/api/dashboard/stock', (c) => {
-  const jenisBarang = c.req.query('jenis') || ''
-  const mesin = c.req.query('mesin') || ''
-  
-  let stock = calculateStock()
-  
-  if (jenisBarang) {
-    stock = stock.filter((s: any) => s.jenisBarang === jenisBarang)
+app.get('/api/dashboard/stock', async (c) => {
+  try {
+    const { env } = c
+    const jenisBarang = c.req.query('jenis') || ''
+    const mesin = c.req.query('mesin') || ''
+    
+    // Get transactions from D1 Database first
+    const dbTransactions = await DB.getAllTransactions(env.DB)
+    
+    // Calculate stock from D1 data
+    const stockMap: any = {}
+    
+    dbTransactions.forEach((tx: any) => {
+      tx.materials.forEach((mat: any) => {
+        const key = mat.partNumber
+        
+        if (!stockMap[key]) {
+          stockMap[key] = {
+            partNumber: mat.partNumber,
+            jenisBarang: mat.jenisBarang,
+            material: mat.material,
+            mesin: mat.mesin,
+            stokMasuk: 0,
+            stokKeluar: 0,
+            stokAkhir: 0,
+            unit: tx.lokasi_tujuan
+          }
+        }
+        
+        if (tx.jenis_transaksi.includes('Masuk')) {
+          stockMap[key].stokMasuk += mat.jumlah
+        } else {
+          stockMap[key].stokKeluar += mat.jumlah
+        }
+        
+        stockMap[key].stokAkhir = stockMap[key].stokMasuk - stockMap[key].stokKeluar
+      })
+    })
+    
+    let stock = Object.values(stockMap)
+    
+    if (jenisBarang) {
+      stock = stock.filter((s: any) => s.jenisBarang === jenisBarang)
+    }
+    
+    if (mesin) {
+      stock = stock.filter((s: any) => s.mesin === mesin)
+    }
+    
+    // Add stock status
+    stock = stock.map((s: any) => ({
+      ...s,
+      status: s.stokAkhir === 0 ? 'Habis' : s.stokAkhir <= 10 ? 'Hampir Habis' : 'Tersedia'
+    }))
+    
+    return c.json({ stock })
+  } catch (error: any) {
+    console.error('Failed to get stock:', error)
+    return c.json({ stock: [] }, 500)
   }
-  
-  if (mesin) {
-    stock = stock.filter((s: any) => s.mesin === mesin)
-  }
-  
-  // Add stock status
-  stock = stock.map((s: any) => ({
-    ...s,
-    status: s.stokAkhir === 0 ? 'Habis' : s.stokAkhir <= 10 ? 'Hampir Habis' : 'Tersedia'
-  }))
-  
-  return c.json({ stock })
 })
 
 // API: Get material age dashboard
-app.get('/api/dashboard/umur-material', (c) => {
-  const lokasi = c.req.query('lokasi') || ''
-  const material = c.req.query('material') || ''
-  
-  let ageData = calculateMaterialAge()
-  
-  if (lokasi) {
-    ageData = ageData.filter((a: any) => a.lokasi === lokasi)
+app.get('/api/dashboard/umur-material', async (c) => {
+  try {
+    const { env } = c
+    const lokasi = c.req.query('lokasi') || ''
+    const material = c.req.query('material') || ''
+    
+    // Get transactions from D1 Database first
+    const dbTransactions = await DB.getAllTransactions(env.DB)
+    
+    // Calculate material age from D1 data
+    const ageMap: any = {}
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    dbTransactions
+      .filter((tx: any) => tx.jenis_transaksi.includes('Keluar'))
+      .sort((a: any, b: any) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime())
+      .forEach((tx: any) => {
+        tx.materials.forEach((mat: any) => {
+          if (!mat.snMesin) return // Skip if no S/N
+          
+          const key = `${mat.snMesin}_${mat.partNumber}`
+          
+          // Current material (last transaction)
+          const tanggalPasang = new Date(tx.tanggal)
+          tanggalPasang.setHours(0, 0, 0, 0)
+          
+          // Calculate umur dari tanggal pasang sampai hari ini
+          const umurMs = today.getTime() - tanggalPasang.getTime()
+          const umurHari = Math.floor(umurMs / (1000 * 60 * 60 * 24))
+          
+          // Update ageMap with latest entry for this material
+          ageMap[key] = {
+            partNumber: mat.partNumber,
+            material: mat.material,
+            mesin: mat.mesin,
+            snMesin: mat.snMesin,
+            lokasi: tx.lokasi_tujuan,
+            tanggalPasang: tx.tanggal,
+            umurHari: umurHari,
+            nomorBA: tx.nomor_ba,
+            pemeriksa: tx.pemeriksa,
+            penerima: tx.penerima
+          }
+        })
+      })
+    
+    let ageData = Object.values(ageMap)
+    
+    if (lokasi) {
+      ageData = ageData.filter((a: any) => a.lokasi === lokasi)
+    }
+    
+    if (material) {
+      ageData = ageData.filter((a: any) => a.material.includes(material))
+    }
+    
+    return c.json({ ageData })
+  } catch (error: any) {
+    console.error('Failed to get material age:', error)
+    return c.json({ ageData: [] }, 500)
   }
-  
-  if (material) {
-    ageData = ageData.filter((a: any) => a.material.includes(material))
-  }
-  
-  return c.json({ ageData })
 })
 
 // API: Get BA by Nomor
-app.get('/api/ba/:nomor', (c) => {
-  const nomor = c.req.param('nomor')
-  const ba = transactions.find(tx => tx.nomorBA === nomor)
-  
-  if (!ba) {
-    return c.json({ error: 'BA not found' }, 404)
+app.get('/api/ba/:nomor', async (c) => {
+  try {
+    const { env } = c
+    const nomor = c.req.param('nomor')
+    
+    // Get from D1 Database
+    const dbTransactions = await DB.getAllTransactions(env.DB)
+    const ba = dbTransactions.find((tx: any) => tx.nomor_ba === nomor)
+    
+    if (!ba) {
+      // Fallback to in-memory for backward compatibility
+      const memoryBA = transactions.find(tx => tx.nomorBA === nomor)
+      if (!memoryBA) {
+        return c.json({ error: 'BA not found' }, 404)
+      }
+      return c.json({ ba: memoryBA })
+    }
+    
+    return c.json({ ba })
+  } catch (error: any) {
+    console.error('Failed to get BA:', error)
+    return c.json({ error: 'Failed to get BA' }, 500)
   }
-  
-  return c.json({ ba })
 })
 
 // API: Get material history by S/N and Part Number

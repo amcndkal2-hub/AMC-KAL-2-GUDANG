@@ -190,11 +190,11 @@ function showBAModal(ba) {
             </div>
             
             <div class="flex justify-end gap-4">
-                <button onclick="printBA('${ba.nomorBA}')" 
+                <button onclick="printBA('${ba.nomor_ba}')" 
                     class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                     <i class="fas fa-print mr-2"></i>Print
                 </button>
-                <button onclick="downloadBA('${ba.nomorBA}')" 
+                <button onclick="downloadBA('${ba.nomor_ba}')" 
                     class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                     <i class="fas fa-download mr-2"></i>Download PDF
                 </button>
