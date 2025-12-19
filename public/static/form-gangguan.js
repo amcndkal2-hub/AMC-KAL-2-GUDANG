@@ -237,11 +237,20 @@ function setupMaterialSearch(rowId) {
 function selectMaterial(rowId, item) {
   const row = document.getElementById(rowId)
   
-  // Fill autofill fields
-  row.querySelector('.part-number-search').value = item.PART_NUMBER
-  row.querySelector('.jenis-barang').value = item.JENIS_BARANG || ''
-  row.querySelector('.material').value = item.MATERIAL || ''
-  row.querySelector('.mesin').value = item.MESIN || ''
+  console.log('Selecting material:', item) // Debug log
+  
+  // Fill autofill fields with fallback to '-' if empty
+  row.querySelector('.part-number-search').value = item.PART_NUMBER || ''
+  row.querySelector('.jenis-barang').value = item.JENIS_BARANG || '-'
+  row.querySelector('.material').value = item.MATERIAL || '-'
+  row.querySelector('.mesin').value = item.MESIN || '-'
+  
+  console.log('Filled values:', {
+    partNumber: item.PART_NUMBER,
+    jenisBarang: item.JENIS_BARANG || '-',
+    material: item.MATERIAL || '-',
+    mesin: item.MESIN || '-'
+  }) // Debug log
   
   // Clear search results
   row.querySelector('.search-results').innerHTML = ''
