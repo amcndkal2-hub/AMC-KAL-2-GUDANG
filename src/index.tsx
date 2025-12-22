@@ -352,15 +352,35 @@ app.post('/api/save-transaction', async (c) => {
 app.get('/api/transactions', async (c) => {
   try {
     const { env } = c
+    
+    // Debug: Check DB binding
+    if (!env.DB) {
+      console.error('❌ D1 Database binding (DB) not found!')
+      return c.json({ 
+        error: 'Database not configured', 
+        transactions: [],
+        help: 'Check wrangler.jsonc d1_databases binding' 
+      }, 500)
+    }
+    
     // Get from D1 Database (persistent storage)
+    console.log('🔄 Fetching transactions from D1...')
     const dbTransactions = await DB.getAllTransactions(env.DB)
-    // Merge dengan in-memory untuk backward compatibility
-    const allTransactions = [...dbTransactions, ...transactions]
-    return c.json({ transactions: allTransactions })
+    console.log(`✅ Fetched ${dbTransactions.length} transactions from D1`)
+    
+    // Return ONLY from D1 (no in-memory merge)
+    return c.json({ 
+      transactions: dbTransactions,
+      source: 'D1 Database',
+      count: dbTransactions.length 
+    })
   } catch (error: any) {
-    console.error('Failed to get transactions:', error)
-    // Fallback to in-memory if D1 fails
-    return c.json({ transactions })
+    console.error('❌ Failed to get transactions:', error.message, error.stack)
+    return c.json({ 
+      error: `Database query failed: ${error.message}`,
+      transactions: [],
+      details: 'Check Cloudflare Pages logs for full error trace' 
+    }, 500)
   }
 })
 

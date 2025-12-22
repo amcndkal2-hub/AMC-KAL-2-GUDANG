@@ -29,15 +29,28 @@ export async function saveTransaction(db: D1Database, data: any) {
 
     const transactionId = txResult.meta.last_row_id
 
-    // Insert materials
+    // Insert materials with auto-fill jenisBarang
     for (const material of data.materials) {
+      // Auto-fill jenisBarang jika kosong atau "-"
+      let jenisBarang = material.jenisBarang
+      if (!jenisBarang || jenisBarang === '-' || jenisBarang.trim() === '') {
+        // Coba ambil dari master_material berdasarkan partNumber
+        const masterResult = await db.prepare(`
+          SELECT JENIS_BARANG FROM master_material 
+          WHERE PART_NUMBER = ? LIMIT 1
+        `).bind(material.partNumber).first()
+        
+        jenisBarang = masterResult?.JENIS_BARANG || 'MATERIAL HANDAL'
+        console.log(`🔄 Auto-filled jenisBarang for ${material.partNumber}: ${jenisBarang}`)
+      }
+      
       await db.prepare(`
         INSERT INTO materials (transaction_id, part_number, jenis_barang, material, mesin, sn_mesin, jumlah)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).bind(
         transactionId,
         material.partNumber,
-        material.jenisBarang,
+        jenisBarang,  // Use auto-filled value
         material.material,
         material.mesin,
         material.snMesin,
