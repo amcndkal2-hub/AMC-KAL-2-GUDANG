@@ -1928,7 +1928,9 @@ function getLoginHTML() {
                 button.classList.add('bg-green-600')
                 
                 setTimeout(() => {
+                  // Force reload to clear cache and load fresh data
                   window.location.href = '/'
+                  window.location.reload(true)
                 }, 500)
               } else {
                 // Show error

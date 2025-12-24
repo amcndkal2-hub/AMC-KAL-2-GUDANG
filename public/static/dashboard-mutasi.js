@@ -1,18 +1,64 @@
 let transactions = [];
 
-document.addEventListener('DOMContentLoaded', async () => {
+// Wait for auth check before loading data
+async function initDashboard() {
+    // Check if user is authenticated
+    const sessionToken = localStorage.getItem('sessionToken');
+    if (!sessionToken) {
+        console.log('No session token, redirecting to login');
+        window.location.href = '/login';
+        return;
+    }
+    
+    // Load transactions after auth check
     await loadTransactions();
     setupFilters();
-});
+}
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', initDashboard);
 
 async function loadTransactions() {
     try {
+        console.log('🔄 Loading transactions from D1...');
         const response = await fetch('/api/transactions');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        
+        // Check if data has expected structure
+        if (!data.transactions || !Array.isArray(data.transactions)) {
+            console.error('❌ Invalid response structure:', data);
+            throw new Error('Invalid response structure');
+        }
+        
         transactions = data.transactions;
+        console.log(`✅ Loaded ${transactions.length} transactions from ${data.source || 'unknown source'}`);
         renderMutasiTable();
     } catch (error) {
-        console.error('Failed to load transactions:', error);
+        console.error('❌ Failed to load transactions:', error);
+        
+        // Show error message to user
+        const tbody = document.getElementById('mutasiTable');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="px-4 py-8 text-center">
+                        <div class="text-red-600">
+                            <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+                            <p class="font-semibold">Gagal memuat data transaksi</p>
+                            <p class="text-sm mt-2">${error.message}</p>
+                            <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                <i class="fas fa-sync-alt mr-2"></i>Coba Lagi
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
     }
 }
 
