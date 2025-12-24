@@ -67,23 +67,46 @@ function resetInactivityTimer() {
   startInactivityTimer()
 }
 
-// Track user activity
-const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
-
-activityEvents.forEach(event => {
-  document.addEventListener(event, resetInactivityTimer, true)
+// Run auth check on page load
+document.addEventListener('DOMContentLoaded', async function() {
+  // First check authentication
+  const authResult = await checkAuth()
+  
+  // Only set up activity tracking if auth succeeded
+  if (authResult) {
+    setupActivityTracking()
+  }
 })
 
-function updateUIBasedOnRole(role) {
-  // Show delete buttons only for admin users
-  const deleteButtons = document.querySelectorAll('.admin-only, .btn-delete')
-  deleteButtons.forEach(btn => {
-    if (role === 'admin') {
-      btn.style.display = 'inline-block'
-    } else {
-      btn.style.display = 'none'
-    }
+// Setup activity tracking
+function setupActivityTracking() {
+  // Track user activity
+  const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+  
+  activityEvents.forEach(event => {
+    document.addEventListener(event, resetInactivityTimer, true)
   })
+  
+  console.log('✅ Activity tracking enabled')
+}
+
+function updateUIBasedOnRole(role) {
+  try {
+    // Show delete buttons only for admin users
+    const deleteButtons = document.querySelectorAll('.admin-only, .btn-delete')
+    if (deleteButtons && deleteButtons.length > 0) {
+      deleteButtons.forEach(btn => {
+        if (role === 'admin') {
+          btn.style.display = 'inline-block'
+        } else {
+          btn.style.display = 'none'
+        }
+      })
+    }
+  } catch (error) {
+    // Silently handle error - some pages don't have admin-only elements
+    console.log('No admin-only elements on this page')
+  }
 }
 
 function isAdmin() {
@@ -121,8 +144,3 @@ async function logout() {
   localStorage.removeItem('username')
   window.location.href = '/login'
 }
-
-// Run auth check on page load
-document.addEventListener('DOMContentLoaded', async function() {
-  await checkAuth()
-})
