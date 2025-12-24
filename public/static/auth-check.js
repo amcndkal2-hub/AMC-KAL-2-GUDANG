@@ -1,6 +1,10 @@
 // =============================================
 // Authentication Check for Protected Pages
+// With Auto-Logout after 10 minutes inactivity
 // =============================================
+
+let inactivityTimer = null;
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 async function checkAuth() {
   const sessionToken = localStorage.getItem('sessionToken')
@@ -34,6 +38,9 @@ async function checkAuth() {
     // Show/hide admin features based on role
     updateUIBasedOnRole(data.role)
     
+    // Start inactivity timer
+    startInactivityTimer()
+    
     return true
   } catch (error) {
     console.error('Auth check error:', error)
@@ -41,6 +48,31 @@ async function checkAuth() {
     return false
   }
 }
+
+function startInactivityTimer() {
+  // Clear existing timer
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer)
+  }
+  
+  // Set new timer
+  inactivityTimer = setTimeout(() => {
+    console.log('⏰ Auto-logout: 10 minutes inactivity')
+    alert('⏰ Sesi Anda telah berakhir karena tidak ada aktivitas selama 10 menit.\n\nSilakan login kembali.')
+    logout()
+  }, INACTIVITY_TIMEOUT)
+}
+
+function resetInactivityTimer() {
+  startInactivityTimer()
+}
+
+// Track user activity
+const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+
+activityEvents.forEach(event => {
+  document.addEventListener(event, resetInactivityTimer, true)
+})
 
 function updateUIBasedOnRole(role) {
   // Show delete buttons only for admin users
@@ -65,6 +97,11 @@ function redirectToLogin() {
 // Logout function
 async function logout() {
   const sessionToken = localStorage.getItem('sessionToken')
+  
+  // Clear inactivity timer
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer)
+  }
   
   if (sessionToken) {
     try {

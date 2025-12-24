@@ -552,7 +552,8 @@ async function deleteGangguan(nomorLH05) {
     try {
         const sessionToken = localStorage.getItem('sessionToken');
         
-        const response = await fetch(`/api/gangguan/${encodeURIComponent(nomorLH05)}`, {
+        // Use query param to handle "/" in nomor LH05
+        const response = await fetch(`/api/gangguan?nomor=${encodeURIComponent(nomorLH05)}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${sessionToken}`

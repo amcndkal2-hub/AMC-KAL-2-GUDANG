@@ -680,7 +680,8 @@ app.delete('/api/transaction/:nomorBA', async (c) => {
 })
 
 // API: Delete gangguan by Nomor LH05 (ADMIN ONLY)
-app.delete('/api/gangguan/:nomorLH05', async (c) => {
+// Using query param to handle "/" characters in nomor LH05
+app.delete('/api/gangguan', async (c) => {
   try {
     // Check admin access
     if (!isAdmin(c)) {
@@ -691,7 +692,16 @@ app.delete('/api/gangguan/:nomorLH05', async (c) => {
     }
     
     const { env } = c
-    const nomorLH05 = c.req.param('nomorLH05')
+    const nomorLH05 = c.req.query('nomor')
+    
+    if (!nomorLH05) {
+      return c.json({
+        success: false,
+        error: 'Nomor LH05 is required'
+      }, 400)
+    }
+    
+    console.log('🗑️ Deleting gangguan:', nomorLH05)
     
     // Delete from D1 Database
     const result = await DB.deleteGangguan(env.DB, nomorLH05)
