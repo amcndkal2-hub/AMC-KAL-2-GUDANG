@@ -327,3 +327,57 @@ export async function getNextLH05Number(db: D1Database) {
     return '0001/ND KAL 2/LH05/2025'
   }
 }
+
+// ====================================
+// DELETE OPERATIONS (ADMIN ONLY)
+// ====================================
+
+export async function deleteTransaction(db: D1Database, nomorBA: string) {
+  try {
+    // Get transaction ID first
+    const tx = await getTransactionByBA(db, nomorBA)
+    if (!tx) {
+      throw new Error('Transaction not found')
+    }
+
+    // Delete materials first (foreign key constraint)
+    await db.prepare(`
+      DELETE FROM materials WHERE transaction_id = ?
+    `).bind(tx.id).run()
+
+    // Delete transaction
+    await db.prepare(`
+      DELETE FROM transactions WHERE nomor_ba = ?
+    `).bind(nomorBA).run()
+
+    return { success: true, message: 'Transaction deleted successfully' }
+  } catch (error: any) {
+    console.error('Failed to delete transaction:', error)
+    throw new Error(`Delete failed: ${error.message}`)
+  }
+}
+
+export async function deleteGangguan(db: D1Database, nomorLH05: string) {
+  try {
+    // Get gangguan ID first
+    const gangguan = await getGangguanByLH05(db, nomorLH05)
+    if (!gangguan) {
+      throw new Error('Gangguan not found')
+    }
+
+    // Delete materials first (foreign key constraint)
+    await db.prepare(`
+      DELETE FROM material_gangguan WHERE gangguan_id = ?
+    `).bind(gangguan.id).run()
+
+    // Delete gangguan
+    await db.prepare(`
+      DELETE FROM gangguan WHERE nomor_lh05 = ?
+    `).bind(nomorLH05).run()
+
+    return { success: true, message: 'Gangguan deleted successfully' }
+  } catch (error: any) {
+    console.error('Failed to delete gangguan:', error)
+    throw new Error(`Delete failed: ${error.message}`)
+  }
+}

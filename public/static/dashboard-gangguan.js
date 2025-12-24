@@ -260,6 +260,8 @@ function renderTable() {
   
   console.log('✅ Rendering', filteredData.length, 'rows')
   
+  const isAdminUser = isAdmin();
+  
   tbody.innerHTML = filteredData.map(item => {
     const tanggal = new Date(item.hariTanggal).toLocaleString('id-ID', {
       day: '2-digit',
@@ -297,9 +299,15 @@ function renderTable() {
         </td>
         <td class="px-4 py-3 text-center">
           <button onclick="viewLH05('${item.nomorLH05}')" 
-            class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">
+            class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm mr-2">
             <i class="fas fa-eye mr-1"></i>Detail
           </button>
+          ${isAdminUser ? `
+            <button onclick="deleteGangguan('${item.nomorLH05}')" 
+              class="admin-only btn-delete bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">
+              <i class="fas fa-trash mr-1"></i>Hapus
+            </button>
+          ` : ''}
         </td>
       </tr>
     `
@@ -534,4 +542,34 @@ function exportLH05PDF(nomorLH05) {
 function exportAllLH05() {
   alert('Export All LH05\n\nFungsi export semua BA akan diimplementasikan dengan format Excel atau CSV')
   // TODO: Implement export all functionality
+}
+
+async function deleteGangguan(nomorLH05) {
+    if (!confirm(`⚠️ PERINGATAN!\n\nAnda akan menghapus form gangguan:\n${nomorLH05}\n\nData yang terhapus TIDAK BISA dikembalikan!\n\nLanjutkan hapus?`)) {
+        return;
+    }
+    
+    try {
+        const sessionToken = localStorage.getItem('sessionToken');
+        
+        const response = await fetch(`/api/gangguan/${encodeURIComponent(nomorLH05)}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${sessionToken}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`✅ Form gangguan ${nomorLH05} berhasil dihapus!`);
+            // Reload data
+            await loadDashboardData();
+        } else {
+            alert(`❌ Gagal menghapus form gangguan:\n${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert('❌ Terjadi kesalahan saat menghapus form gangguan');
+    }
 }

@@ -21,9 +21,18 @@ async function checkAuth() {
     
     if (!data.valid) {
       localStorage.removeItem('sessionToken')
+      localStorage.removeItem('userRole')
+      localStorage.removeItem('username')
       redirectToLogin()
       return false
     }
+    
+    // Store user role and username for UI control
+    localStorage.setItem('userRole', data.role)
+    localStorage.setItem('username', data.username)
+    
+    // Show/hide admin features based on role
+    updateUIBasedOnRole(data.role)
     
     return true
   } catch (error) {
@@ -31,6 +40,22 @@ async function checkAuth() {
     redirectToLogin()
     return false
   }
+}
+
+function updateUIBasedOnRole(role) {
+  // Show delete buttons only for admin users
+  const deleteButtons = document.querySelectorAll('.admin-only, .btn-delete')
+  deleteButtons.forEach(btn => {
+    if (role === 'admin') {
+      btn.style.display = 'inline-block'
+    } else {
+      btn.style.display = 'none'
+    }
+  })
+}
+
+function isAdmin() {
+  return localStorage.getItem('userRole') === 'admin'
 }
 
 function redirectToLogin() {
@@ -55,6 +80,8 @@ async function logout() {
   }
   
   localStorage.removeItem('sessionToken')
+  localStorage.removeItem('userRole')
+  localStorage.removeItem('username')
   window.location.href = '/login'
 }
 

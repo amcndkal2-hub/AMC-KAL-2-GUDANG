@@ -94,10 +94,18 @@ let targetUmurMaterial: Map<string, any> = new Map()
 let materialHistory: Map<string, any[]> = new Map()
 
 // Authentication storage
-const VALID_CREDENTIALS = {
-  username: 'AMC@12345',
-  password: '12345@AMC'
-}
+const VALID_CREDENTIALS = [
+  {
+    username: 'AMC@12345',
+    password: '12345@AMC',
+    role: 'user'  // User biasa: bisa input, tidak bisa hapus
+  },
+  {
+    username: 'Andalcekatan',
+    password: 'Password@123',
+    role: 'admin'  // Admin: bisa input DAN hapus data
+  }
+]
 let activeSessions: Map<string, any> = new Map()
 
 // Cache untuk data
@@ -629,6 +637,75 @@ app.get('/api/target-umur/:partNumber', (c) => {
   return c.json({ ...target, isDefault: false })
 })
 
+// ==================== ADMIN DELETE OPERATIONS ====================
+
+// Helper: Check if user is admin
+function isAdmin(c: any): boolean {
+  const authHeader = c.req.header('Authorization')
+  const sessionToken = authHeader?.replace('Bearer ', '')
+  
+  if (!sessionToken || !activeSessions.has(sessionToken)) {
+    return false
+  }
+  
+  const session = activeSessions.get(sessionToken)
+  return session.role === 'admin'
+}
+
+// API: Delete transaction by Nomor BA (ADMIN ONLY)
+app.delete('/api/transaction/:nomorBA', async (c) => {
+  try {
+    // Check admin access
+    if (!isAdmin(c)) {
+      return c.json({ 
+        success: false, 
+        error: 'Access denied. Admin privileges required.' 
+      }, 403)
+    }
+    
+    const { env } = c
+    const nomorBA = c.req.param('nomorBA')
+    
+    // Delete from D1 Database
+    const result = await DB.deleteTransaction(env.DB, nomorBA)
+    
+    return c.json(result)
+  } catch (error: any) {
+    console.error('Failed to delete transaction:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to delete transaction' 
+    }, 500)
+  }
+})
+
+// API: Delete gangguan by Nomor LH05 (ADMIN ONLY)
+app.delete('/api/gangguan/:nomorLH05', async (c) => {
+  try {
+    // Check admin access
+    if (!isAdmin(c)) {
+      return c.json({ 
+        success: false, 
+        error: 'Access denied. Admin privileges required.' 
+      }, 403)
+    }
+    
+    const { env } = c
+    const nomorLH05 = c.req.param('nomorLH05')
+    
+    // Delete from D1 Database
+    const result = await DB.deleteGangguan(env.DB, nomorLH05)
+    
+    return c.json(result)
+  } catch (error: any) {
+    console.error('Failed to delete gangguan:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to delete gangguan' 
+    }, 500)
+  }
+})
+
 // ==================== API AUTHENTICATION ====================
 
 // API: Login
@@ -636,12 +713,18 @@ app.post('/api/login', async (c) => {
   try {
     const { username, password } = await c.req.json()
     
-    if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
+    // Find matching user credentials
+    const user = VALID_CREDENTIALS.find(
+      cred => cred.username === username && cred.password === password
+    )
+    
+    if (user) {
       // Generate session token
       const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`
       
       activeSessions.set(sessionToken, {
-        username,
+        username: user.username,
+        role: user.role,
         loginTime: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() // 8 hours
       })
@@ -649,7 +732,9 @@ app.post('/api/login', async (c) => {
       return c.json({
         success: true,
         message: 'Login successful',
-        sessionToken
+        sessionToken,
+        role: user.role,
+        username: user.username
       })
     } else {
       return c.json({
@@ -699,6 +784,7 @@ app.get('/api/check-session', (c) => {
   return c.json({ 
     valid: true, 
     username: session.username,
+    role: session.role,
     expiresAt: session.expiresAt
   })
 })
@@ -1514,11 +1600,12 @@ function getDashboardMutasiHTML() {
                                     <th class="px-4 py-3 text-left">Pemeriksa</th>
                                     <th class="px-4 py-3 text-left">Penerima</th>
                                     <th class="px-4 py-3 text-center">Status BA</th>
+                                    <th class="px-4 py-3 text-center admin-only">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="mutasiTable">
                                 <tr>
-                                    <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                    <td colspan="11" class="px-4 py-8 text-center text-gray-500">
                                         <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
                                         <p>Memuat data...</p>
                                     </td>
@@ -1943,8 +2030,10 @@ function getLoginHTML() {
               const data = await response.json()
               
               if (data.success) {
-                // Save session token
+                // Save session token, role, and username
                 localStorage.setItem('sessionToken', data.sessionToken)
+                localStorage.setItem('userRole', data.role)
+                localStorage.setItem('username', data.username)
                 
                 // Show success and redirect
                 button.innerHTML = '<i class="fas fa-check mr-2"></i>Login Berhasil!'

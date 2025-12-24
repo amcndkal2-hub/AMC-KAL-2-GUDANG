@@ -92,7 +92,7 @@ function renderMutasiTable(data = transactions) {
     if (data.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                <td colspan="11" class="px-4 py-8 text-center text-gray-500">
                     Tidak ada data mutasi
                 </td>
             </tr>
@@ -100,6 +100,7 @@ function renderMutasiTable(data = transactions) {
         return;
     }
     
+    const isAdminUser = isAdmin();
     let html = '';
     
     data.forEach(tx => {
@@ -142,6 +143,14 @@ function renderMutasiTable(data = transactions) {
                                 class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">
                                 <i class="fas fa-download mr-1"></i>Terkirim
                             </button>
+                        </td>
+                        <td class="px-4 py-3 text-center" rowspan="${tx.materials.length}">
+                            ${isAdminUser ? `
+                                <button onclick="deleteTransaction('${tx.nomor_ba}')" 
+                                    class="admin-only btn-delete bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">
+                                    <i class="fas fa-trash mr-1"></i>Hapus
+                                </button>
+                            ` : ''}
                         </td>
                     ` : ''}
                 </tr>
@@ -270,6 +279,36 @@ function printBA(nomorBA) {
 
 function downloadBA(nomorBA) {
     alert(`Download BA ${nomorBA} sebagai PDF - Fitur akan segera tersedia`);
+}
+
+async function deleteTransaction(nomorBA) {
+    if (!confirm(`⚠️ PERINGATAN!\n\nAnda akan menghapus transaksi:\n${nomorBA}\n\nData yang terhapus TIDAK BISA dikembalikan!\n\nLanjutkan hapus?`)) {
+        return;
+    }
+    
+    try {
+        const sessionToken = localStorage.getItem('sessionToken');
+        
+        const response = await fetch(`/api/transaction/${encodeURIComponent(nomorBA)}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${sessionToken}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`✅ Transaksi ${nomorBA} berhasil dihapus!`);
+            // Reload data
+            await loadTransactions();
+        } else {
+            alert(`❌ Gagal menghapus transaksi:\n${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert('❌ Terjadi kesalahan saat menghapus transaksi');
+    }
 }
 
 function formatDate(dateString) {
