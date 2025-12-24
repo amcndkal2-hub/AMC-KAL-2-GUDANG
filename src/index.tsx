@@ -352,35 +352,15 @@ app.post('/api/save-transaction', async (c) => {
 app.get('/api/transactions', async (c) => {
   try {
     const { env } = c
-    
-    // Debug: Check DB binding
-    if (!env.DB) {
-      console.error('❌ D1 Database binding (DB) not found!')
-      return c.json({ 
-        error: 'Database not configured', 
-        transactions: [],
-        help: 'Check wrangler.jsonc d1_databases binding' 
-      }, 500)
-    }
-    
     // Get from D1 Database (persistent storage)
-    console.log('🔄 Fetching transactions from D1...')
     const dbTransactions = await DB.getAllTransactions(env.DB)
-    console.log(`✅ Fetched ${dbTransactions.length} transactions from D1`)
-    
-    // Return ONLY from D1 (no in-memory merge)
-    return c.json({ 
-      transactions: dbTransactions,
-      source: 'D1 Database',
-      count: dbTransactions.length 
-    })
+    // Merge dengan in-memory untuk backward compatibility
+    const allTransactions = [...dbTransactions, ...transactions]
+    return c.json({ transactions: allTransactions })
   } catch (error: any) {
-    console.error('❌ Failed to get transactions:', error.message, error.stack)
-    return c.json({ 
-      error: `Database query failed: ${error.message}`,
-      transactions: [],
-      details: 'Check Cloudflare Pages logs for full error trace' 
-    }, 500)
+    console.error('Failed to get transactions:', error)
+    // Fallback to in-memory if D1 fails
+    return c.json({ transactions })
   }
 })
 
@@ -457,10 +437,13 @@ app.get('/api/dashboard/umur-material', async (c) => {
     // Get transactions from D1 Database first
     const dbTransactions = await DB.getAllTransactions(env.DB)
     
-    // Calculate material age from D1 data
+    // Calculate material age from D1 data with full enrichment
     const ageMap: any = {}
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+    
+    // Material history tracking
+    const materialHistory: Map<string, any[]> = new Map()
     
     dbTransactions
       .filter((tx: any) => tx.jenis_transaksi.includes('Keluar'))
@@ -470,6 +453,25 @@ app.get('/api/dashboard/umur-material', async (c) => {
           if (!mat.snMesin) return // Skip if no S/N
           
           const key = `${mat.snMesin}_${mat.partNumber}`
+          const historyKey = key
+          
+          // Initialize history if not exists
+          if (!materialHistory.has(historyKey)) {
+            materialHistory.set(historyKey, [])
+          }
+          
+          const history = materialHistory.get(historyKey)!
+          
+          // Add to history
+          history.push({
+            tanggal: tx.tanggal,
+            nomorBA: tx.nomor_ba,
+            lokasi: tx.lokasi_tujuan,
+            jumlah: mat.jumlah,
+            pemeriksa: tx.pemeriksa,
+            penerima: tx.penerima,
+            penggantianKe: history.length + 1
+          })
           
           // Current material (last transaction)
           const tanggalPasang = new Date(tx.tanggal)
@@ -479,15 +481,37 @@ app.get('/api/dashboard/umur-material', async (c) => {
           const umurMs = today.getTime() - tanggalPasang.getTime()
           const umurHari = Math.floor(umurMs / (1000 * 60 * 60 * 24))
           
+          // Get target umur for this part number
+          const targetUmur = targetUmurMaterial.get(mat.partNumber)
+          const targetUmurHari = targetUmur?.targetUmurHari || 365 // Default 365 hari
+          
+          // Determine status based on target
+          let status = 'Terpasang'
+          let statusClass = 'green'
+          
+          if (umurHari >= targetUmurHari) {
+            status = 'Perlu Diganti'
+            statusClass = 'red'
+          } else if (umurHari >= (targetUmurHari - 20)) {
+            status = 'Mendekati Batas'
+            statusClass = 'yellow'
+          }
+          
           // Update ageMap with latest entry for this material
           ageMap[key] = {
+            snMesin: mat.snMesin,
             partNumber: mat.partNumber,
+            jenisBarang: mat.jenisBarang || mat.jenis_barang || '-',
             material: mat.material,
             mesin: mat.mesin,
-            snMesin: mat.snMesin,
             lokasi: tx.lokasi_tujuan,
             tanggalPasang: tx.tanggal,
             umurHari: umurHari,
+            targetUmurHari: targetUmurHari,
+            sisaHari: targetUmurHari - umurHari,
+            status: status,
+            statusClass: statusClass,
+            totalPenggantian: history.length,
             nomorBA: tx.nomor_ba,
             pemeriksa: tx.pemeriksa,
             penerima: tx.penerima
