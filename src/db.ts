@@ -396,3 +396,60 @@ export async function deleteGangguan(db: D1Database, nomorLH05: string) {
     throw new Error(`Delete failed: ${error.message}`)
   }
 }
+
+// ====================================
+// SESSION MANAGEMENT (PERSISTENT)
+// ====================================
+
+export async function saveSession(db: D1Database, sessionToken: string, username: string, role: string, expiresAt: string) {
+  try {
+    await db.prepare(`
+      INSERT INTO sessions (session_token, username, role, expires_at)
+      VALUES (?, ?, ?, ?)
+    `).bind(sessionToken, username, role, expiresAt).run()
+
+    return { success: true }
+  } catch (error: any) {
+    console.error('Failed to save session:', error)
+    throw new Error(`Save session failed: ${error.message}`)
+  }
+}
+
+export async function getSession(db: D1Database, sessionToken: string) {
+  try {
+    const { results } = await db.prepare(`
+      SELECT * FROM sessions WHERE session_token = ? AND expires_at > datetime('now')
+    `).bind(sessionToken).all()
+
+    return results.length > 0 ? results[0] : null
+  } catch (error: any) {
+    console.error('Failed to get session:', error)
+    return null
+  }
+}
+
+export async function deleteSession(db: D1Database, sessionToken: string) {
+  try {
+    await db.prepare(`
+      DELETE FROM sessions WHERE session_token = ?
+    `).bind(sessionToken).run()
+
+    return { success: true }
+  } catch (error: any) {
+    console.error('Failed to delete session:', error)
+    throw new Error(`Delete session failed: ${error.message}`)
+  }
+}
+
+export async function cleanExpiredSessions(db: D1Database) {
+  try {
+    await db.prepare(`
+      DELETE FROM sessions WHERE expires_at < datetime('now')
+    `).run()
+
+    return { success: true }
+  } catch (error: any) {
+    console.error('Failed to clean expired sessions:', error)
+    return { success: false }
+  }
+}

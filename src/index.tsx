@@ -811,6 +811,7 @@ app.delete('/api/gangguan', async (c) => {
 // API: Login
 app.post('/api/login', async (c) => {
   try {
+    const { env } = c
     const { username, password } = await c.req.json()
     
     // Find matching user credentials
@@ -821,13 +822,20 @@ app.post('/api/login', async (c) => {
     if (user) {
       // Generate session token
       const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`
+      const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() // 8 hours
       
+      // Save session to D1 Database (PERSISTENT)
+      await DB.saveSession(env.DB, sessionToken, user.username, user.role, expiresAt)
+      
+      // Also keep in-memory for backward compatibility (will be deprecated)
       activeSessions.set(sessionToken, {
         username: user.username,
         role: user.role,
         loginTime: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() // 8 hours
+        expiresAt
       })
+      
+      console.log('✅ Session saved to D1:', sessionToken.substring(0, 20) + '...')
       
       return c.json({
         success: true,
@@ -843,6 +851,7 @@ app.post('/api/login', async (c) => {
       }, 401)
     }
   } catch (error) {
+    console.error('Login error:', error)
     return c.json({ error: 'Login failed' }, 500)
   }
 })
@@ -850,43 +859,77 @@ app.post('/api/login', async (c) => {
 // API: Logout
 app.post('/api/logout', async (c) => {
   try {
+    const { env } = c
     const authHeader = c.req.header('Authorization')
     const sessionToken = authHeader?.replace('Bearer ', '')
     
     if (sessionToken) {
+      // Delete from D1 Database
+      await DB.deleteSession(env.DB, sessionToken)
+      
+      // Also delete from in-memory (backward compatibility)
       activeSessions.delete(sessionToken)
+      
+      console.log('✅ Session deleted from D1:', sessionToken.substring(0, 20) + '...')
     }
     
     return c.json({ success: true, message: 'Logout successful' })
   } catch (error) {
+    console.error('Logout error:', error)
     return c.json({ error: 'Logout failed' }, 500)
   }
 })
 
 // API: Check session
-app.get('/api/check-session', (c) => {
-  const authHeader = c.req.header('Authorization')
-  const sessionToken = authHeader?.replace('Bearer ', '')
-  
-  if (!sessionToken || !activeSessions.has(sessionToken)) {
-    return c.json({ valid: false }, 401)
+app.get('/api/check-session', async (c) => {
+  try {
+    const { env } = c
+    const authHeader = c.req.header('Authorization')
+    const sessionToken = authHeader?.replace('Bearer ', '')
+    
+    if (!sessionToken) {
+      return c.json({ valid: false }, 401)
+    }
+    
+    // First try D1 Database (PERSISTENT)
+    const dbSession: any = await DB.getSession(env.DB, sessionToken)
+    
+    if (dbSession) {
+      console.log('✅ Session found in D1:', sessionToken.substring(0, 20) + '...')
+      return c.json({ 
+        valid: true, 
+        username: dbSession.username,
+        role: dbSession.role,
+        expiresAt: dbSession.expires_at
+      })
+    }
+    
+    // Fallback: Check in-memory (backward compatibility)
+    if (activeSessions.has(sessionToken)) {
+      const session = activeSessions.get(sessionToken)
+      const now = new Date()
+      const expiresAt = new Date(session.expiresAt)
+      
+      if (now > expiresAt) {
+        activeSessions.delete(sessionToken)
+        return c.json({ valid: false, message: 'Session expired' }, 401)
+      }
+      
+      console.log('⚠️  Session found in in-memory (fallback):', sessionToken.substring(0, 20) + '...')
+      return c.json({ 
+        valid: true, 
+        username: session.username,
+        role: session.role,
+        expiresAt: session.expiresAt
+      })
+    }
+    
+    // Not found in either
+    return c.json({ valid: false, message: 'Session not found' }, 401)
+  } catch (error) {
+    console.error('Check session error:', error)
+    return c.json({ valid: false, message: 'Session check failed' }, 500)
   }
-  
-  const session = activeSessions.get(sessionToken)
-  const now = new Date()
-  const expiresAt = new Date(session.expiresAt)
-  
-  if (now > expiresAt) {
-    activeSessions.delete(sessionToken)
-    return c.json({ valid: false, message: 'Session expired' }, 401)
-  }
-  
-  return c.json({ 
-    valid: true, 
-    username: session.username,
-    role: session.role,
-    expiresAt: session.expiresAt
-  })
 })
 
 // ==================== API FORM GANGGUAN LH05 ====================
