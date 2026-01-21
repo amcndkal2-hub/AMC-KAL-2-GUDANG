@@ -804,53 +804,71 @@ app.get('/api/check-session', (c) => {
 // API: Save Form Gangguan LH05
 app.post('/api/save-gangguan', async (c) => {
   try {
+    const { env } = c
     const body = await c.req.json()
     
     console.log('💾 Saving gangguan form...')
     console.log('📋 Form data received:', JSON.stringify(body).substring(0, 200) + '...')
     
-    // Generate Nomor LH05
-    const nomorLH05 = generateNomorLH05()
+    // Generate Nomor LH05 dari D1 Database
+    const nomorLH05 = await DB.getNextLH05Number(env.DB)
     console.log('🏷️ Generated Nomor LH05:', nomorLH05)
     
-    // Add transaction
+    // Save ke D1 Database (persistent storage)
+    const result = await DB.saveGangguan(env.DB, {
+      nomorLH05,
+      ...body
+    })
+    
+    console.log('✅ Gangguan saved to D1 Database successfully')
+    console.log('📊 Database ID:', result.id)
+    
+    // Fallback: juga simpan ke in-memory untuk backward compatibility
     const gangguan = {
-      id: Date.now().toString(),
+      id: result.id.toString(),
       nomorLH05,
       ...body,
       createdAt: new Date().toISOString()
     }
-    
     gangguanTransactions.push(gangguan)
-    
-    console.log('✅ Gangguan saved successfully')
-    console.log('📊 Total gangguan now:', gangguanTransactions.length)
-    console.log('🗂️ Last 3 items:', gangguanTransactions.slice(-3).map(g => g.nomorLH05))
     
     return c.json({ 
       success: true, 
-      message: 'Form gangguan saved successfully',
+      message: 'Form gangguan saved successfully (D1 Database)',
       nomorLH05,
       data: gangguan 
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error saving gangguan:', error)
-    return c.json({ error: 'Failed to save gangguan' }, 500)
+    return c.json({ error: error.message || 'Failed to save gangguan' }, 500)
   }
 })
 
 // API: Get all gangguan transactions
-app.get('/api/gangguan-transactions', (c) => {
-  console.log('🔍 GET /api/gangguan-transactions called')
-  console.log('📊 Total gangguan:', gangguanTransactions.length)
-  console.log('🗂️ Gangguan list:', gangguanTransactions.map(g => ({
-    nomor: g.nomorLH05,
-    unit: g.unitULD,
-    kelompok: g.kelompokSPD,
-    materials: g.materials?.length || 0
-  })))
-  
-  return c.json({ gangguanTransactions })
+app.get('/api/gangguan-transactions', async (c) => {
+  try {
+    const { env } = c
+    console.log('🔍 GET /api/gangguan-transactions called')
+    
+    // Get from D1 Database (persistent storage)
+    const dbGangguan = await DB.getAllGangguan(env.DB)
+    console.log('📊 Total gangguan from D1:', dbGangguan.length)
+    
+    // Merge dengan in-memory untuk backward compatibility
+    const allGangguan = [...dbGangguan, ...gangguanTransactions]
+    
+    console.log('🗂️ Gangguan list:', allGangguan.slice(0, 5).map(g => ({
+      nomor: g.nomor_lh05 || g.nomorLH05,
+      unit: g.lokasi_gangguan || g.unitULD,
+      kelompok: g.jenis_gangguan || g.kelompokSPD
+    })))
+    
+    return c.json({ gangguanTransactions: allGangguan })
+  } catch (error: any) {
+    console.error('Failed to get gangguan:', error)
+    // Fallback to in-memory if D1 fails
+    return c.json({ gangguanTransactions })
+  }
 })
 
 // API: Get gangguan by Nomor LH05
@@ -866,57 +884,79 @@ app.get('/api/gangguan/:nomor', (c) => {
 })
 
 // API: Get gangguan dashboard with filters
-app.get('/api/dashboard/gangguan', (c) => {
-  const kelompok = c.req.query('kelompok') || ''
-  const tanggal = c.req.query('tanggal') || ''
-  
-  let data = gangguanTransactions
-  
-  if (kelompok) {
-    data = data.filter((g: any) => g.kelompokSPD === kelompok)
+app.get('/api/dashboard/gangguan', async (c) => {
+  try {
+    const { env } = c
+    const kelompok = c.req.query('kelompok') || ''
+    const tanggal = c.req.query('tanggal') || ''
+    
+    // Get from D1 Database
+    let data = await DB.getAllGangguan(env.DB)
+    
+    if (kelompok) {
+      data = data.filter((g: any) => g.jenis_gangguan === kelompok)
+    }
+    
+    if (tanggal) {
+      data = data.filter((g: any) => g.tanggal_laporan?.includes(tanggal))
+    }
+    
+    return c.json({ data })
+  } catch (error: any) {
+    console.error('Failed to get dashboard gangguan:', error)
+    // Fallback to in-memory
+    let data = gangguanTransactions
+    if (kelompok) data = data.filter((g: any) => g.kelompokSPD === kelompok)
+    if (tanggal) data = data.filter((g: any) => g.hariTanggal?.includes(tanggal))
+    return c.json({ data })
   }
-  
-  if (tanggal) {
-    data = data.filter((g: any) => g.hariTanggal?.includes(tanggal))
-  }
-  
-  return c.json({ data })
 })
 
-// API: Get kebutuhan material (flattened dari gangguan transactions)
-app.get('/api/kebutuhan-material', (c) => {
-  const status = c.req.query('status') || ''
-  const nomorLH05 = c.req.query('nomor') || ''
-  
-  let materials: any[] = []
-  
-  // Flatten materials from all gangguan transactions
-  gangguanTransactions.forEach(gangguan => {
-    if (gangguan.materials && Array.isArray(gangguan.materials)) {
-      gangguan.materials.forEach((mat: any) => {
-        materials.push({
-          ...mat,
-          nomorLH05: gangguan.nomorLH05,
-          unitULD: gangguan.unitULD,
-          lokasiTujuan: gangguan.unitULD, // Tambah kolom lokasi tujuan
-          tanggalGangguan: gangguan.hariTanggal,
-          kelompokSPD: gangguan.kelompokSPD,
-          status: mat.status || 'Pengadaan' // Default status
-        })
-      })
+// API: Get kebutuhan material (dari D1 Database)
+app.get('/api/kebutuhan-material', async (c) => {
+  try {
+    const { env } = c
+    const status = c.req.query('status') || ''
+    const nomorLH05 = c.req.query('nomor') || ''
+    
+    // Get from D1 Database
+    let materials = await DB.getAllMaterialKebutuhan(env.DB)
+    
+    // Apply filters
+    if (status) {
+      materials = materials.filter((m: any) => m.status === status)
     }
-  })
-  
-  // Apply filters
-  if (status) {
-    materials = materials.filter(m => m.status === status)
+    
+    if (nomorLH05) {
+      materials = materials.filter((m: any) => m.nomor_lh05?.includes(nomorLH05))
+    }
+    
+    return c.json({ materials })
+  } catch (error: any) {
+    console.error('Failed to get kebutuhan material:', error)
+    // Fallback to in-memory
+    let materials: any[] = []
+    gangguanTransactions.forEach(gangguan => {
+      if (gangguan.materials && Array.isArray(gangguan.materials)) {
+        gangguan.materials.forEach((mat: any) => {
+          materials.push({
+            ...mat,
+            nomorLH05: gangguan.nomorLH05,
+            unitULD: gangguan.unitULD,
+            lokasiTujuan: gangguan.unitULD,
+            tanggalGangguan: gangguan.hariTanggal,
+            kelompokSPD: gangguan.kelompokSPD,
+            status: mat.status || 'Pengadaan'
+          })
+        })
+      }
+    })
+    
+    if (status) materials = materials.filter(m => m.status === status)
+    if (nomorLH05) materials = materials.filter(m => m.nomorLH05.includes(nomorLH05))
+    
+    return c.json({ materials })
   }
-  
-  if (nomorLH05) {
-    materials = materials.filter(m => m.nomorLH05.includes(nomorLH05))
-  }
-  
-  return c.json({ materials })
 })
 
 // API: Update status material
