@@ -985,7 +985,7 @@ app.post('/api/save-gangguan', async (c) => {
       success: true, 
       message: 'Form gangguan saved successfully (D1 Database)',
       nomorLH05,
-      data: gangguan 
+      id: result.id
     })
   } catch (error: any) {
     console.error('❌ Error saving gangguan:', error)
