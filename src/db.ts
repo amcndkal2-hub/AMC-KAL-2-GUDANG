@@ -311,8 +311,11 @@ export async function getNextBANumber(db: D1Database) {
 
 export async function getNextLH05Number(db: D1Database) {
   try {
+    // Get only LH05 numbers that match pattern: XXXX/ND KAL 2/LH05/YYYY
     const { results } = await db.prepare(`
-      SELECT nomor_lh05 FROM gangguan ORDER BY created_at DESC LIMIT 1
+      SELECT nomor_lh05 FROM gangguan 
+      WHERE nomor_lh05 LIKE '%/ND KAL 2/LH05/%'
+      ORDER BY id DESC LIMIT 1
     `).all()
 
     if (results.length === 0) {
@@ -320,10 +323,22 @@ export async function getNextLH05Number(db: D1Database) {
     }
 
     const lastLH05: any = results[0]
-    const lastNumber = parseInt(lastLH05.nomor_lh05.split('/')[0])
+    const parts = lastLH05.nomor_lh05.split('/')
+    
+    // Extract number from first part (remove non-digits)
+    const numberPart = parts[0].replace(/\D/g, '')
+    const lastNumber = parseInt(numberPart)
+    
+    // Validate number is valid
+    if (isNaN(lastNumber) || lastNumber === 0) {
+      console.warn('Invalid LH05 number format:', lastLH05.nomor_lh05, '- using 0001')
+      return '0001/ND KAL 2/LH05/2025'
+    }
+    
     const nextNumber = (lastNumber + 1).toString().padStart(4, '0')
     return `${nextNumber}/ND KAL 2/LH05/2025`
   } catch (error) {
+    console.error('Error generating LH05 number:', error)
     return '0001/ND KAL 2/LH05/2025'
   }
 }

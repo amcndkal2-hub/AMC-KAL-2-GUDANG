@@ -80,7 +80,8 @@ function initializeSampleGangguanData() {
 }
 
 // Initialize sample data saat app start
-initializeSampleGangguanData()
+// DISABLED: Sekarang menggunakan D1 Database untuk persistent storage
+// initializeSampleGangguanData()
 
 // Counter untuk LH05 (mulai dari 1 atau dari sample data count + 1)
 let lh05Counter = gangguanTransactions.length + 1
@@ -943,16 +944,16 @@ app.get('/api/gangguan-transactions', async (c) => {
     const dbGangguan = await DB.getAllGangguan(env.DB)
     console.log('📊 Total gangguan from D1:', dbGangguan.length)
     
-    // Merge dengan in-memory untuk backward compatibility
-    const allGangguan = [...dbGangguan, ...gangguanTransactions]
+    // NOTE: Tidak lagi merge dengan in-memory, hanya gunakan D1 Database
+    // const allGangguan = [...dbGangguan, ...gangguanTransactions]
     
-    console.log('🗂️ Gangguan list:', allGangguan.slice(0, 5).map(g => ({
-      nomor: g.nomor_lh05 || g.nomorLH05,
-      unit: g.lokasi_gangguan || g.unitULD,
-      kelompok: g.jenis_gangguan || g.kelompokSPD
+    console.log('🗂️ Gangguan list:', dbGangguan.slice(0, 5).map(g => ({
+      nomor: g.nomor_lh05,
+      unit: g.lokasi_gangguan,
+      kelompok: g.jenis_gangguan
     })))
     
-    return c.json({ gangguanTransactions: allGangguan })
+    return c.json({ gangguanTransactions: dbGangguan })
   } catch (error: any) {
     console.error('Failed to get gangguan:', error)
     // Fallback to in-memory if D1 fails
@@ -961,15 +962,23 @@ app.get('/api/gangguan-transactions', async (c) => {
 })
 
 // API: Get gangguan by Nomor LH05
-app.get('/api/gangguan/:nomor', (c) => {
-  const nomor = c.req.param('nomor')
-  const gangguan = gangguanTransactions.find(tx => tx.nomorLH05 === nomor)
-  
-  if (!gangguan) {
-    return c.json({ error: 'LH05 not found' }, 404)
+app.get('/api/gangguan/:nomor', async (c) => {
+  try {
+    const { env } = c
+    const nomor = c.req.param('nomor')
+    
+    // Get from D1 Database
+    const gangguan = await DB.getGangguanByLH05(env.DB, nomor)
+    
+    if (!gangguan) {
+      return c.json({ error: 'LH05 not found' }, 404)
+    }
+    
+    return c.json({ gangguan })
+  } catch (error: any) {
+    console.error('Failed to get gangguan:', error)
+    return c.json({ error: 'Failed to fetch gangguan' }, 500)
   }
-  
-  return c.json({ gangguan })
 })
 
 // API: Get gangguan dashboard with filters
