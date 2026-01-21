@@ -9,11 +9,13 @@
   // D1 Database Configuration
   // Database ID: a2bfde17-bc2d-4971-b3ab-c589f1bd746e
   // Created: 2025-12-18
+  // IMPORTANT: For local dev, use database_name for binding
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "amc-material-db",
-      "database_id": "a2bfde17-bc2d-4971-b3ab-c589f1bd746e"
+      "database_id": "a2bfde17-bc2d-4971-b3ab-c589f1bd746e",
+      "preview_database_id": "a2bfde17-bc2d-4971-b3ab-c589f1bd746e"
     }
   ]
 }
