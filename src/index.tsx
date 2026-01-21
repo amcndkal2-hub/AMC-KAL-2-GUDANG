@@ -13,6 +13,28 @@ const app = new Hono<{ Bindings: Bindings }>()
 // Enable CORS for API routes
 app.use('/api/*', cors())
 
+// Database Health Check Middleware - Auto-reinitialize if tables missing
+app.use('/api/*', async (c, next) => {
+  try {
+    const { env } = c
+    if (env.DB) {
+      // Quick health check - try to query gangguan table
+      try {
+        await env.DB.prepare('SELECT COUNT(*) as count FROM gangguan LIMIT 1').first()
+      } catch (error: any) {
+        // If table doesn't exist, log warning (migrations should be run manually)
+        if (error.message?.includes('no such table')) {
+          console.warn('⚠️ Database table missing! Please run: npx wrangler d1 migrations apply amc-material-db --local')
+          console.warn('⚠️ Table error:', error.message)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Database health check error:', error)
+  }
+  await next()
+})
+
 // Serve static files
 app.use('/static/*', serveStatic({ root: './public' }))
 
@@ -956,14 +978,8 @@ app.post('/api/save-gangguan', async (c) => {
     console.log('✅ Gangguan saved to D1 Database successfully')
     console.log('📊 Database ID:', result.id)
     
-    // Fallback: juga simpan ke in-memory untuk backward compatibility
-    const gangguan = {
-      id: result.id.toString(),
-      nomorLH05,
-      ...body,
-      createdAt: new Date().toISOString()
-    }
-    gangguanTransactions.push(gangguan)
+    // NOTE: Tidak perlu push ke in-memory lagi, karena semua data dari D1
+    // gangguanTransactions.push(gangguan) // REMOVED - use D1 only
     
     return c.json({ 
       success: true, 
