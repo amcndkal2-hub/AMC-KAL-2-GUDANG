@@ -435,6 +435,95 @@ app.get('/api/dashboard/stock', async (c) => {
   }
 })
 
+// API: Dashboard Utama - Analytics
+app.get('/api/dashboard/main', async (c) => {
+  try {
+    const { env } = c
+    
+    // Get transactions from D1 Database
+    const dbTransactions = await DB.getAllTransactions(env.DB)
+    
+    // 1. ANALISIS: Material Sering Keluar (Top 10)
+    const materialFrequency: any = {}
+    
+    dbTransactions
+      .filter((tx: any) => tx.jenis_transaksi.includes('Keluar'))
+      .forEach((tx: any) => {
+        tx.materials.forEach((mat: any) => {
+          const key = mat.partNumber
+          
+          if (!materialFrequency[key]) {
+            materialFrequency[key] = {
+              partNumber: mat.partNumber,
+              material: mat.material,
+              mesin: mat.mesin,
+              jenisBarang: mat.jenisBarang,
+              totalKeluar: 0,
+              frekuensi: 0
+            }
+          }
+          
+          materialFrequency[key].totalKeluar += mat.jumlah
+          materialFrequency[key].frekuensi += 1
+        })
+      })
+    
+    const topMaterials = Object.values(materialFrequency)
+      .sort((a: any, b: any) => b.frekuensi - a.frekuensi)
+      .slice(0, 10)
+    
+    // 2. ANALISIS: Material Stok Kritis (≤ 5 buah)
+    const stockMap: any = {}
+    
+    dbTransactions.forEach((tx: any) => {
+      tx.materials.forEach((mat: any) => {
+        const key = mat.partNumber
+        
+        if (!stockMap[key]) {
+          stockMap[key] = {
+            partNumber: mat.partNumber,
+            material: mat.material,
+            mesin: mat.mesin,
+            jenisBarang: mat.jenisBarang,
+            stokMasuk: 0,
+            stokKeluar: 0,
+            stokAkhir: 0
+          }
+        }
+        
+        if (tx.jenis_transaksi.includes('Masuk')) {
+          stockMap[key].stokMasuk += mat.jumlah
+        } else {
+          stockMap[key].stokKeluar += mat.jumlah
+        }
+        
+        stockMap[key].stokAkhir = stockMap[key].stokMasuk - stockMap[key].stokKeluar
+      })
+    })
+    
+    const criticalStock = Object.values(stockMap)
+      .filter((s: any) => s.stokAkhir <= 5 && s.stokAkhir >= 0)
+      .sort((a: any, b: any) => a.stokAkhir - b.stokAkhir)
+    
+    return c.json({ 
+      topMaterials,
+      criticalStock,
+      summary: {
+        totalTransactions: dbTransactions.length,
+        totalTopMaterials: topMaterials.length,
+        totalCriticalStock: criticalStock.length
+      }
+    })
+  } catch (error: any) {
+    console.error('Failed to get main dashboard:', error)
+    return c.json({ 
+      topMaterials: [], 
+      criticalStock: [],
+      summary: { totalTransactions: 0, totalTopMaterials: 0, totalCriticalStock: 0 }
+    }, 500)
+  }
+})
+
 // API: Get material age dashboard
 app.get('/api/dashboard/umur-material', async (c) => {
   try {
@@ -996,6 +1085,11 @@ app.get('/', (c) => {
   return c.html(getInputFormHTML())
 })
 
+// Dashboard Utama (PROTECTED - auth required)
+app.get('/dashboard/main', (c) => {
+  return c.html(getDashboardMainHTML())
+})
+
 // Dashboard Stok Material
 app.get('/dashboard/stok', (c) => {
   return c.html(getDashboardStokHTML())
@@ -1032,6 +1126,182 @@ app.get('/dashboard/kebutuhan-material', (c) => {
 })
 
 // HTML Templates
+function getDashboardMainHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard Utama - Sistem Manajemen Material</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+    <body class="bg-gray-50">
+        <!-- Navigation -->
+        <nav class="bg-blue-600 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-tachometer-alt text-2xl"></i>
+                    <span class="text-xl font-bold">Dashboard Utama</span>
+                </div>
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/main" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                        <i class="fas fa-home mr-1"></i>Dashboard
+                    </a>
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-plus mr-1"></i>Input Material
+                    </a>
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                    </a>
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                    </a>
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="min-h-screen p-6">
+            <div class="max-w-7xl mx-auto">
+                <!-- Header -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                        <i class="fas fa-tachometer-alt text-blue-600 mr-3"></i>
+                        Dashboard Analitik Material
+                    </h1>
+                    <p class="text-gray-600">Monitoring dan Analisis Stok Material Real-Time</p>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Total Transaksi</p>
+                                <h3 id="totalTransactions" class="text-3xl font-bold text-blue-600">-</h3>
+                            </div>
+                            <div class="bg-blue-100 p-4 rounded-full">
+                                <i class="fas fa-exchange-alt text-3xl text-blue-600"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Material Populer</p>
+                                <h3 id="totalTopMaterials" class="text-3xl font-bold text-green-600">-</h3>
+                            </div>
+                            <div class="bg-green-100 p-4 rounded-full">
+                                <i class="fas fa-fire text-3xl text-green-600"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Stok Kritis (≤5)</p>
+                                <h3 id="totalCriticalStock" class="text-3xl font-bold text-red-600">-</h3>
+                            </div>
+                            <div class="bg-red-100 p-4 rounded-full">
+                                <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 1: Material Sering Keluar -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-fire text-red-600 mr-3"></i>
+                        Top 10 Material Sering Keluar
+                    </h2>
+                    <p class="text-gray-600 mb-4">Material dengan frekuensi pengeluaran tertinggi</p>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gradient-to-r from-red-500 to-orange-500 text-white">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Rank</th>
+                                    <th class="px-4 py-3 text-left">Part Number</th>
+                                    <th class="px-4 py-3 text-left">Nama Material</th>
+                                    <th class="px-4 py-3 text-left">Mesin</th>
+                                    <th class="px-4 py-3 text-center">Frekuensi Keluar</th>
+                                    <th class="px-4 py-3 text-center">Total Qty Keluar</th>
+                                    <th class="px-4 py-3 text-left">Jenis Barang</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topMaterialsTable">
+                                <tr>
+                                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                                        <p>Memuat data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section 2: Material Stok Kritis -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-exclamation-triangle text-orange-600 mr-3"></i>
+                        Material Stok Kritis (≤ 5 buah)
+                    </h2>
+                    <p class="text-gray-600 mb-4">Material dengan stok rendah yang memerlukan perhatian</p>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Part Number</th>
+                                    <th class="px-4 py-3 text-left">Nama Material</th>
+                                    <th class="px-4 py-3 text-left">Mesin</th>
+                                    <th class="px-4 py-3 text-center">Stok Akhir</th>
+                                    <th class="px-4 py-3 text-center">Status</th>
+                                    <th class="px-4 py-3 text-left">Jenis Barang</th>
+                                </tr>
+                            </thead>
+                            <tbody id="criticalStockTable">
+                                <tr>
+                                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                                        <p>Memuat data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/dashboard-main.js"></script>
+    </body>
+    </html>
+  `
+}
+
 function getInputFormHTML() {
   return `
     <!DOCTYPE html>
@@ -1062,6 +1332,9 @@ function getInputFormHTML() {
                     <span class="text-xl font-bold">Sistem Manajemen Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-home mr-1"></i>Dashboard
+                    </a>
                     <a href="/" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
