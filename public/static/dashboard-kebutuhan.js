@@ -61,7 +61,14 @@ async function loadKebutuhanMaterial() {
     const response = await fetch('/api/kebutuhan-material')
     const data = await response.json()
     
-    allMaterials = data.materials || []
+    // Map snake_case API fields to camelCase for frontend compatibility
+    allMaterials = (data.materials || []).map(item => ({
+      ...item,
+      nomorLH05: item.nomor_lh05,
+      partNumber: item.part_number,
+      lokasiTujuan: item.lokasi_tujuan || item.unit_uld,
+      unitULD: item.unit_uld
+    }))
     filteredMaterials = [...allMaterials]
     
     // Populate mesin filter after data is loaded
