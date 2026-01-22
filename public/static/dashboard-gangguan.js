@@ -370,6 +370,7 @@ async function viewLH05(nomorLH05) {
         jenisGangguan: data.gangguan.jenis_gangguan,
         lokasiGangguan: data.gangguan.lokasi_gangguan,
         userLaporan: data.gangguan.user_laporan,
+        namaPelapor: data.gangguan.user_laporan, // Nama pelapor dari user_laporan
         komponenRusak: data.gangguan.komponen_rusak,
         gejala: data.gangguan.gejala,
         uraianKejadian: data.gangguan.uraian_kejadian,
@@ -383,6 +384,7 @@ async function viewLH05(nomorLH05) {
         tindakanPenanggulangan: data.gangguan.catatan_tindakan, // Use catatan_tindakan as fallback
         rencanaPerbaikan: data.gangguan.rencana_perbaikan,
         ttdTeknisi: data.gangguan.ttd_teknisi,
+        ttdPelapor: data.gangguan.ttd_teknisi, // TTD pelapor dari ttd_teknisi
         ttdSupervisor: data.gangguan.ttd_supervisor,
         unitULD: data.gangguan.lokasi_gangguan,
         materials: data.gangguan.materials || []
@@ -550,8 +552,8 @@ function showLH05Modal(gangguan) {
         <div class="pt-6 border-t">
           <div class="text-center max-w-md mx-auto">
             <p class="text-sm text-gray-600 mb-2">Tanda Tangan Pelapor</p>
-            <img src="${gangguan.ttdPelapor}" alt="TTD Pelapor" class="mx-auto border rounded-lg shadow" style="max-width: 300px; height: 150px;">
-            <p class="font-semibold text-gray-800 mt-3 text-lg">${gangguan.namaPelapor}</p>
+            <img src="${gangguan.ttdPelapor || ''}" alt="TTD Pelapor" class="mx-auto border rounded-lg shadow" style="max-width: 300px; height: 150px;">
+            <p class="font-semibold text-gray-800 mt-3 text-lg">${gangguan.namaPelapor || gangguan.userLaporan || '-'}</p>
             <p class="text-sm text-gray-500">Pelapor</p>
           </div>
         </div>
