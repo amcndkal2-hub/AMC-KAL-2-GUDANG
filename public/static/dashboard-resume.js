@@ -189,7 +189,7 @@ function renderTopMaterials(materials) {
   if (materials.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="px-4 py-8 text-center text-gray-500 border">
+        <td colspan="7" class="px-4 py-8 text-center text-gray-500 border">
           <i class="fas fa-inbox text-4xl mb-2"></i>
           <p>Belum ada data material keluar</p>
         </td>
@@ -219,9 +219,125 @@ function renderTopMaterials(materials) {
           ${item.total_keluar || 0}x
         </span>
       </td>
+      <td class="px-4 py-3 text-center border">
+        <button 
+          onclick="viewMaterialDetail('${item.part_number}')"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-colors">
+          <i class="fas fa-eye mr-1"></i>View
+        </button>
+      </td>
     </tr>
   `
   }).join('')
+}
+
+// Function to view material detail
+async function viewMaterialDetail(partNumber) {
+  try {
+    console.log('📋 Viewing material detail:', partNumber)
+    
+    // Show modal
+    const modal = document.getElementById('modalMaterialDetail')
+    modal.classList.remove('hidden')
+    modal.classList.add('flex')
+    
+    // Show loading
+    const content = document.getElementById('materialDetailContent')
+    content.innerHTML = `
+      <div class="text-center py-8">
+        <i class="fas fa-spinner fa-spin text-4xl text-blue-600"></i>
+        <p class="mt-4 text-gray-600">Memuat detail material...</p>
+      </div>
+    `
+    
+    // Fetch detail
+    const response = await fetch(\`/api/material-detail/\${partNumber}\`)
+    const data = await response.json()
+    
+    if (!data.success || data.transactions.length === 0) {
+      content.innerHTML = `
+        <div class="text-center py-8">
+          <i class="fas fa-inbox text-4xl text-gray-400 mb-4"></i>
+          <p class="text-gray-600">Tidak ada data transaksi keluar untuk material ini</p>
+        </div>
+      `
+      return
+    }
+    
+    // Render detail table
+    const totalJumlah = data.transactions.reduce((sum, t) => sum + (t.jumlah || 0), 0)
+    
+    content.innerHTML = `
+      <div class="mb-6">
+        <div class="bg-blue-50 border-l-4 border-blue-600 p-4 mb-4">
+          <h4 class="text-lg font-bold text-gray-800 mb-2">
+            <i class="fas fa-cube text-blue-600 mr-2"></i>
+            ${partNumber}
+          </h4>
+          <p class="text-sm text-gray-600">
+            <i class="fas fa-box mr-2"></i>
+            Material: <span class="font-semibold">${data.transactions[0]?.material || '-'}</span>
+          </p>
+          <p class="text-sm text-gray-600 mt-1">
+            <i class="fas fa-chart-line mr-2"></i>
+            Total Keluar: <span class="font-bold text-blue-600">${totalJumlah} unit</span> dari ${data.total} transaksi
+          </p>
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto max-h-[400px] border rounded-lg">
+        <table class="w-full border-collapse">
+          <thead class="sticky top-0 z-10">
+            <tr class="bg-gray-100">
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border">No</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border">Part Number</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border">Material</th>
+              <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border">Jumlah Keluar</th>
+              <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border">Tanggal Keluar</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border">Lokasi Tujuan</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.transactions.map((item, index) => `
+              <tr class="hover:bg-gray-50 border-b">
+                <td class="px-4 py-3 text-center text-sm border">${index + 1}</td>
+                <td class="px-4 py-3 text-sm font-mono border">${item.part_number || '-'}</td>
+                <td class="px-4 py-3 text-sm border">${item.material || '-'}</td>
+                <td class="px-4 py-3 text-center border">
+                  <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-semibold text-sm">
+                    ${item.jumlah || 0}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-center text-sm border">${formatDate(item.tanggal)}</td>
+                <td class="px-4 py-3 text-sm border">${item.lokasi_tujuan || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr class="bg-blue-50 font-bold">
+              <td colspan="3" class="px-4 py-3 text-right border">Total:</td>
+              <td class="px-4 py-3 text-center border">
+                <span class="px-3 py-1 bg-blue-600 text-white rounded-full font-bold">
+                  ${totalJumlah}
+                </span>
+              </td>
+              <td colspan="2" class="px-4 py-3 border"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    `
+  } catch (error) {
+    console.error('Failed to load material detail:', error)
+    const content = document.getElementById('materialDetailContent')
+    content.innerHTML = `
+      <div class="text-center py-8">
+        <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+        <p class="text-red-600 font-semibold">Gagal memuat detail material</p>
+        <p class="text-gray-500 text-sm mt-2">${error.message}</p>
+      </div>
+    `
+  }
 }
 
 function renderStokKritis(materials) {

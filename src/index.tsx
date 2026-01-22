@@ -1197,6 +1197,44 @@ app.get('/api/dashboard/resume', async (c) => {
   }
 })
 
+// API: Get material detail (all keluar transactions for specific part_number)
+app.get('/api/material-detail/:partNumber', async (c) => {
+  try {
+    const { env } = c
+    const partNumber = c.req.param('partNumber')
+    
+    console.log('📋 Fetching material detail for:', partNumber)
+    
+    // Get all keluar transactions for this part_number
+    const detailQuery = await env.DB.prepare(`
+      SELECT 
+        m.part_number,
+        m.material,
+        m.jumlah,
+        t.tanggal,
+        t.lokasi_tujuan,
+        t.nomor_ba
+      FROM materials m
+      JOIN transactions t ON m.transaction_id = t.id
+      WHERE m.part_number = ? 
+        AND t.jenis_transaksi LIKE '%Keluar%'
+      ORDER BY t.tanggal DESC
+    `).bind(partNumber).all()
+    
+    const transactions = detailQuery.results || []
+    
+    return c.json({
+      success: true,
+      partNumber,
+      transactions,
+      total: transactions.length
+    })
+  } catch (error: any) {
+    console.error('Failed to get material detail:', error)
+    return c.json({ error: 'Failed to fetch material detail' }, 500)
+  }
+})
+
 // API: Update status material
 app.post('/api/update-material-status', async (c) => {
   try {
@@ -3207,9 +3245,9 @@ function getDashboardResumeHTML() {
                         <span class="ml-3 text-sm font-normal text-gray-500">(🔴 Merah = Top 5 Prioritas)</span>
                     </h2>
                     
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto max-h-[600px]">
                         <table class="w-full border-collapse">
-                            <thead>
+                            <thead class="sticky top-0 z-10">
                                 <tr class="bg-blue-600 text-white">
                                     <th class="px-4 py-3 text-left text-sm font-semibold border">Peringkat</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold border">Part Number</th>
@@ -3217,11 +3255,12 @@ function getDashboardResumeHTML() {
                                     <th class="px-4 py-3 text-left text-sm font-semibold border">Material</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold border">Mesin</th>
                                     <th class="px-4 py-3 text-center text-sm font-semibold border">Total Keluar</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold border">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="topMaterialsTable" class="text-sm">
                                 <tr>
-                                    <td colspan="6" class="px-4 py-8 text-center text-gray-400 border">
+                                    <td colspan="7" class="px-4 py-8 text-center text-gray-400 border">
                                         <i class="fas fa-spinner fa-spin text-2xl"></i>
                                         <p class="mt-2">Memuat data...</p>
                                     </td>
@@ -3248,9 +3287,9 @@ function getDashboardResumeHTML() {
                         <span class="ml-3 text-sm font-normal text-gray-500">(🔴 Merah = Top 5 Prioritas)</span>
                     </h2>
                     
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto max-h-[600px]">
                         <table class="w-full border-collapse">
-                            <thead>
+                            <thead class="sticky top-0 z-10">
                                 <tr class="bg-blue-600 text-white">
                                     <th class="px-4 py-3 text-left text-sm font-semibold border">No</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold border">Part Number</th>
@@ -3282,6 +3321,30 @@ function getDashboardResumeHTML() {
             </div>
         </div>
 
+        <!-- Modal: Detail Material Keluar -->
+        <div id="modalMaterialDetail" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-hidden">
+                <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
+                    <h3 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Detail Transaksi Material Keluar
+                    </h3>
+                    <button onclick="closeMaterialDetailModal()" class="text-white hover:text-gray-200 text-2xl font-bold">
+                        &times;
+                    </button>
+                </div>
+                
+                <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                    <div id="materialDetailContent">
+                        <div class="text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-4xl text-blue-600"></i>
+                            <p class="mt-4 text-gray-600">Memuat detail material...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script>
             function logout() {
                 if (confirm('Apakah Anda yakin ingin logout?')) {
@@ -3289,6 +3352,11 @@ function getDashboardResumeHTML() {
                         .then(() => window.location.href = '/login')
                         .catch(() => window.location.href = '/login')
                 }
+            }
+            
+            function closeMaterialDetailModal() {
+                document.getElementById('modalMaterialDetail').classList.add('hidden')
+                document.getElementById('modalMaterialDetail').classList.remove('flex')
             }
         </script>
         <script src="/static/auth-check.js"></script>
