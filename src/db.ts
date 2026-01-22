@@ -136,17 +136,31 @@ export async function getTransactionByBA(db: D1Database, nomorBA: string) {
 
 export async function saveGangguan(db: D1Database, data: any) {
   try {
-    // Insert gangguan
+    // Insert gangguan dengan semua kolom
     const gangguanResult = await db.prepare(`
-      INSERT INTO gangguan (nomor_lh05, tanggal_laporan, jenis_gangguan, lokasi_gangguan, user_laporan, status, catatan_tindakan, rencana_perbaikan, ttd_teknisi, ttd_supervisor)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO gangguan (
+        nomor_lh05, tanggal_laporan, jenis_gangguan, lokasi_gangguan, user_laporan, status,
+        komponen_rusak, gejala, uraian_kejadian, analisa_penyebab, kesimpulan,
+        beban_puncak, daya_mampu, pemadaman, kelompok_spd,
+        catatan_tindakan, rencana_perbaikan, ttd_teknisi, ttd_supervisor
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       data.nomorLH05,
       data.hariTanggal,
-      data.komponenRusak,
+      data.kelompokSPD || 'MEKANIK',
       data.unitULD,
       data.namaPelapor,
       'Open',
+      data.komponenRusak,
+      data.gejala,
+      data.uraianKejadian,
+      data.analisaPenyebab,
+      data.kesimpulan,
+      data.bebanPuncak ? parseFloat(data.bebanPuncak) : null,
+      data.dayaMampu ? parseFloat(data.dayaMampu) : null,
+      data.pemadaman,
+      data.kelompokSPD || 'MEKANIK',
       data.tindakanPenanggulangan,
       data.rencanaPerbaikan,
       data.ttdPelapor,

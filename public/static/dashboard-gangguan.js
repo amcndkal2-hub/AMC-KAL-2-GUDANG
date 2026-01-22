@@ -113,8 +113,17 @@ async function loadDashboardData() {
         ttdTeknisi: item.ttd_teknisi,
         ttdSupervisor: item.ttd_supervisor,
         createdAt: item.created_at,
+        // NEW: Map form fields
+        komponenRusak: item.komponen_rusak,
+        gejala: item.gejala,
+        uraianKejadian: item.uraian_kejadian,
+        analisaPenyebab: item.analisa_penyebab,
+        kesimpulan: item.kesimpulan,
+        bebanPuncak: item.beban_puncak,
+        dayaMampu: item.daya_mampu,
+        pemadaman: item.pemadaman,
+        kelompokSPD: item.kelompok_spd || item.jenis_gangguan,
         // For backward compatibility with old field names
-        kelompokSPD: item.jenis_gangguan,
         unitULD: item.lokasi_gangguan
       }))
       console.log('✅ gangguanTransactions is valid array with field mapping')
