@@ -10,9 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Auto-refresh every 60 seconds
   setInterval(loadResumeData, 60000)
-  
-  // Setup collapse/expand handlers
-  setupCollapseHandlers()
 })
 
 async function loadResumeData() {
@@ -163,63 +160,6 @@ function showError(message) {
   // You can implement a toast notification here
   console.error(message)
   alert(message)
-}
-
-// Setup collapse/expand handlers
-function setupCollapseHandlers() {
-  // Top Materials collapse
-  const topMaterialsToggle = document.getElementById('toggleTopMaterials')
-  const topMaterialsContent = document.getElementById('topMaterialsContent')
-  
-  if (topMaterialsToggle && topMaterialsContent) {
-    topMaterialsToggle.addEventListener('click', () => {
-      const isHidden = topMaterialsContent.classList.contains('hidden')
-      topMaterialsContent.classList.toggle('hidden')
-      
-      // Update icon
-      const icon = topMaterialsToggle.querySelector('i')
-      if (icon) {
-        icon.classList.toggle('fa-chevron-down')
-        icon.classList.toggle('fa-chevron-up')
-      }
-    })
-  }
-  
-  // Stok Kritis collapse
-  const stokKritisToggle = document.getElementById('toggleStokKritis')
-  const stokKritisContent = document.getElementById('stokKritisContent')
-  
-  if (stokKritisToggle && stokKritisContent) {
-    stokKritisToggle.addEventListener('click', () => {
-      const isHidden = stokKritisContent.classList.contains('hidden')
-      stokKritisContent.classList.toggle('hidden')
-      
-      // Update icon
-      const icon = stokKritisToggle.querySelector('i.fa-chevron-down, i.fa-chevron-up')
-      if (icon) {
-        icon.classList.toggle('fa-chevron-down')
-        icon.classList.toggle('fa-chevron-up')
-      }
-    })
-  }
-  
-  // Status Kebutuhan collapse
-  const statusToggle = document.getElementById('toggleStatus')
-  const statusContent = document.getElementById('statusContent')
-  
-  if (statusToggle && statusContent) {
-    statusToggle.addEventListener('click', () => {
-      const isHidden = statusContent.classList.contains('hidden')
-      statusContent.classList.toggle('hidden')
-      
-      // Update icon
-      const icon = statusToggle.querySelector('i.fa-chevron-down, i.fa-chevron-up')
-      if (icon) {
-        icon.classList.toggle('fa-chevron-down')
-        icon.classList.toggle('fa-chevron-up')
-      }
-    })
-  }
 }
 
 // Show detail modal for status kebutuhan

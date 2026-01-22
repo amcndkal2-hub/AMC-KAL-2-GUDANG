@@ -2959,173 +2959,177 @@ function getDashboardResumeHTML() {
             </div>
         </nav>
 
-        <div class="flex">
-            <!-- Sidebar -->
-            <div class="w-64 bg-white shadow-lg min-h-screen p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-list text-blue-600 mr-2"></i>
-                    Menu Navigasi
-                </h3>
-                <nav class="space-y-2">
-                    <a href="#status-kebutuhan" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors cursor-pointer">
-                        <i class="fas fa-tasks w-5 mr-3"></i>
-                        <span>Status Kebutuhan Material</span>
-                    </a>
-                    <a href="#top-material" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors cursor-pointer">
-                        <i class="fas fa-trophy w-5 mr-3"></i>
-                        <span>Top 5 Material Sering Keluar</span>
-                    </a>
-                    <a href="#stok-kritis" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors cursor-pointer">
-                        <i class="fas fa-exclamation-triangle w-5 mr-3"></i>
-                        <span>Top 5 Stok Kritis</span>
-                    </a>
-                </nav>
+        <div class="flex min-h-screen bg-gray-50">
+            <!-- Sidebar Filter (Style Dashboard Stok) -->
+            <div class="w-64 bg-white shadow-md p-6">
+                <div class="mb-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-filter text-blue-600 mr-2"></i>
+                        Filter Data
+                    </h3>
+                    
+                    <!-- Dropdown Pilih Tampilan -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih Tampilan</label>
+                        <select id="filterTampilan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="status-kebutuhan">Status Kebutuhan Material</option>
+                            <option value="top-material">Top 5 Material Sering Keluar</option>
+                            <option value="stok-kritis">Top 5 Stok Kritis</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Tombol Filter -->
+                    <button onclick="applyFilter()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg mb-2 transition-colors">
+                        <i class="fas fa-search mr-2"></i>Filter
+                    </button>
+                    
+                    <!-- Tombol Reset -->
+                    <button onclick="resetFilter()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                        <i class="fas fa-redo mr-2"></i>Reset
+                    </button>
+                </div>
             </div>
 
-            <!-- Main Content -->
+            <!-- Main Content Area -->
             <div class="flex-1 p-6">
                 <!-- Page Header -->
-                <div class="mb-8">
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800 flex items-center">
                         <i class="fas fa-chart-line text-blue-600 mr-3"></i>
-                        Resume & Analisis Material
+                        Dashboard Resume Material
                     </h1>
-                    <p class="text-gray-600">Ringkasan data material, stok kritis, dan status kebutuhan</p>
+                    <p class="text-gray-600 mt-2">Ringkasan data material, stok kritis, dan status kebutuhan</p>
                 </div>
 
-            <!-- Status Kebutuhan Material Cards -->
-            <div id="status-kebutuhan" class="mb-8 bg-white rounded-lg shadow-lg p-6 scroll-mt-6">
-                <button id="toggleStatus" class="w-full flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                    <h2 class="text-2xl font-bold text-gray-800">
+            <!-- Section: Status Kebutuhan Material -->
+            <div id="status-kebutuhan" class="section-content">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-tasks text-blue-600 mr-2"></i>
                         Status Kebutuhan Material
                     </h2>
-                    <i class="fas fa-chevron-down text-gray-600 text-xl"></i>
-                </button>
-                <div id="statusContent">
-                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    <!-- Total -->
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6 cursor-not-allowed opacity-90">
-                        <div class="flex items-center justify-between mb-2">
-                            <i class="fas fa-clipboard-list text-3xl opacity-80"></i>
-                            <span class="text-4xl font-bold" id="totalKebutuhan">0</span>
-                        </div>
-                        <p class="text-sm opacity-90">Total Kebutuhan</p>
-                    </div>
                     
-                    <!-- Pengadaan -->
-                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Pengadaan')">
-                        <div class="flex items-center justify-between mb-2">
-                            <i class="fas fa-shopping-cart text-3xl opacity-80"></i>
-                            <span class="text-4xl font-bold" id="totalPengadaan">0</span>
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <!-- Total -->
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-clipboard-list text-2xl opacity-80"></i>
+                                <span class="text-3xl font-bold" id="totalKebutuhan">0</span>
+                            </div>
+                            <p class="text-sm opacity-90">Total Kebutuhan</p>
                         </div>
-                        <p class="text-sm opacity-90">Pengadaan 👆</p>
-                    </div>
-                    
-                    <!-- Tunda -->
-                    <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Tunda')">
-                        <div class="flex items-center justify-between mb-2">
-                            <i class="fas fa-clock text-3xl opacity-80"></i>
-                            <span class="text-4xl font-bold" id="totalTunda">0</span>
+                        
+                        <!-- Pengadaan -->
+                        <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Pengadaan')">
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-shopping-cart text-2xl opacity-80"></i>
+                                <span class="text-3xl font-bold" id="totalPengadaan">0</span>
+                            </div>
+                            <p class="text-sm opacity-90">Pengadaan 👆</p>
                         </div>
-                        <p class="text-sm opacity-90">Tunda 👆</p>
-                    </div>
-                    
-                    <!-- Terkirim -->
-                    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Terkirim')">
-                        <div class="flex items-center justify-between mb-2">
-                            <i class="fas fa-check-circle text-3xl opacity-80"></i>
-                            <span class="text-4xl font-bold" id="totalTerkirim">0</span>
+                        
+                        <!-- Tunda -->
+                        <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Tunda')">
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-clock text-2xl opacity-80"></i>
+                                <span class="text-3xl font-bold" id="totalTunda">0</span>
+                            </div>
+                            <p class="text-sm opacity-90">Tunda 👆</p>
                         </div>
-                        <p class="text-sm opacity-90">Terkirim 👆</p>
-                    </div>
-                    
-                    <!-- Reject -->
-                    <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Reject')">
-                        <div class="flex items-center justify-between mb-2">
-                            <i class="fas fa-times-circle text-3xl opacity-80"></i>
-                            <span class="text-4xl font-bold" id="totalReject">0</span>
+                        
+                        <!-- Terkirim -->
+                        <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Terkirim')">
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-check-circle text-2xl opacity-80"></i>
+                                <span class="text-3xl font-bold" id="totalTerkirim">0</span>
+                            </div>
+                            <p class="text-sm opacity-90">Terkirim 👆</p>
                         </div>
-                        <p class="text-sm opacity-90">Reject 👆</p>
-                    </div>
-                    
-                    <!-- Tersedia -->
-                    <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Tersedia')">
-                        <div class="flex items-center justify-between mb-2">
-                            <i class="fas fa-box text-3xl opacity-80"></i>
-                            <span class="text-4xl font-bold" id="totalTersedia">0</span>
+                        
+                        <!-- Reject -->
+                        <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Reject')">
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-times-circle text-2xl opacity-80"></i>
+                                <span class="text-3xl font-bold" id="totalReject">0</span>
+                            </div>
+                            <p class="text-sm opacity-90">Reject 👆</p>
                         </div>
-                        <p class="text-sm opacity-90">Tersedia 👆</p>
+                        
+                        <!-- Tersedia -->
+                        <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Tersedia')">
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-box text-2xl opacity-80"></i>
+                                <span class="text-3xl font-bold" id="totalTersedia">0</span>
+                            </div>
+                            <p class="text-sm opacity-90">Tersedia 👆</p>
+                        </div>
                     </div>
-                </div>
                 </div>
             </div>
 
-            <!-- Top 5 Material Keluar -->
-            <div id="top-material" class="mb-8 bg-white rounded-lg shadow-lg p-6 scroll-mt-6">
-                <button id="toggleTopMaterials" class="w-full flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                    <h2 class="text-2xl font-bold text-gray-800">
+            <!-- Section: Top 5 Material Sering Keluar -->
+            <div id="top-material" class="section-content" style="display: none;">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-trophy text-yellow-500 mr-2"></i>
                         Top 5 Material Sering Keluar
                     </h2>
-                    <i class="fas fa-chevron-down text-gray-600 text-xl"></i>
-                </button>
-                
-                <div id="topMaterialsContent" class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gradient-to-r from-yellow-50 to-orange-50">
-                            <tr class="border-b border-gray-200">
-                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Peringkat</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Part Number</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Jenis Barang</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Material</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Mesin</th>
-                                <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Total Keluar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="topMaterialsTable">
-                            <tr>
-                                <td colspan="6" class="px-4 py-8 text-center text-gray-400">
-                                    <i class="fas fa-spinner fa-spin text-2xl"></i>
-                                    <p>Loading...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-blue-600 text-white">
+                                    <th class="px-4 py-3 text-left text-sm font-semibold border">Peringkat</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold border">Part Number</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold border">Jenis Barang</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold border">Material</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold border">Mesin</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold border">Total Keluar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topMaterialsTable" class="text-sm">
+                                <tr>
+                                    <td colspan="6" class="px-4 py-8 text-center text-gray-400 border">
+                                        <i class="fas fa-spinner fa-spin text-2xl"></i>
+                                        <p class="mt-2">Memuat data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <!-- Top 5 Stok Kritis -->
-            <div id="stok-kritis" class="bg-white rounded-lg shadow-lg p-6 scroll-mt-6">
-                <button id="toggleStokKritis" class="w-full flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                    <h2 class="text-2xl font-bold text-gray-800">
+            <!-- Section: Top 5 Stok Kritis -->
+            <div id="stok-kritis" class="section-content" style="display: none;">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
                         Top 5 Stok Kritis (< 5 Parts)
                     </h2>
-                    <i class="fas fa-chevron-down text-gray-600 text-xl"></i>
-                </button>
-                
-                <div id="stokKritisContent" class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gradient-to-r from-red-50 to-orange-50">
-                            <tr class="border-b border-gray-200">
-                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">No</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Part Number</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Jenis Barang</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Material</th>
-                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Mesin</th>
-                                <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Stok Akhir</th>
-                            </tr>
-                        </thead>
-                        <tbody id="stokKritisTable">
-                            <tr>
-                                <td colspan="6" class="px-4 py-8 text-center text-gray-400">
-                                    <i class="fas fa-spinner fa-spin text-2xl"></i>
-                                    <p>Loading...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-blue-600 text-white">
+                                    <th class="px-4 py-3 text-left text-sm font-semibold border">No</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold border">Part Number</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold border">Jenis Barang</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold border">Material</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold border">Mesin</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold border">Stok Akhir</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stokKritisTable" class="text-sm">
+                                <tr>
+                                    <td colspan="6" class="px-4 py-8 text-center text-gray-400 border">
+                                        <i class="fas fa-spinner fa-spin text-2xl"></i>
+                                        <p class="mt-2">Memuat data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             </div>
@@ -3140,22 +3144,37 @@ function getDashboardResumeHTML() {
                 }
             }
             
-            // Smooth scroll untuk sidebar links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const targetId = this.getAttribute('href').substring(1);
-                    const targetElement = document.getElementById(targetId);
-                    if (targetElement) {
-                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        // Expand section jika collapsed
-                        const button = targetElement.querySelector('[id^="toggle"]');
-                        const content = targetElement.querySelector('[id$="Content"]');
-                        if (button && content && content.style.display === 'none') {
-                            button.click();
-                        }
-                    }
+            // Function untuk apply filter - show only selected section
+            function applyFilter() {
+                const selectedSection = document.getElementById('filterTampilan').value;
+                
+                // Hide all sections
+                document.querySelectorAll('.section-content').forEach(section => {
+                    section.style.display = 'none';
                 });
+                
+                // Show selected section
+                const targetSection = document.getElementById(selectedSection);
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                }
+            }
+            
+            // Function untuk reset filter - show Status Kebutuhan (default)
+            function resetFilter() {
+                document.getElementById('filterTampilan').value = 'status-kebutuhan';
+                applyFilter();
+            }
+            
+            // Auto-apply filter saat dropdown berubah
+            document.addEventListener('DOMContentLoaded', function() {
+                const dropdown = document.getElementById('filterTampilan');
+                if (dropdown) {
+                    dropdown.addEventListener('change', applyFilter);
+                }
+                
+                // Show default section (Status Kebutuhan)
+                applyFilter();
             });
         </script>
         <script src="/static/dashboard-resume.js"></script>
