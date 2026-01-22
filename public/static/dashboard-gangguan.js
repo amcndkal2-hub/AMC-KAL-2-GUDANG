@@ -362,7 +362,32 @@ async function viewLH05(nomorLH05) {
     const data = await response.json()
     
     if (data.gangguan) {
-      showLH05Modal(data.gangguan)
+      // Map snake_case API fields to camelCase for modal
+      const mappedGangguan = {
+        ...data.gangguan,
+        nomorLH05: data.gangguan.nomor_lh05,
+        tanggalLaporan: data.gangguan.tanggal_laporan,
+        jenisGangguan: data.gangguan.jenis_gangguan,
+        lokasiGangguan: data.gangguan.lokasi_gangguan,
+        userLaporan: data.gangguan.user_laporan,
+        komponenRusak: data.gangguan.komponen_rusak,
+        gejala: data.gangguan.gejala,
+        uraianKejadian: data.gangguan.uraian_kejadian,
+        analisaPenyebab: data.gangguan.analisa_penyebab,
+        kesimpulan: data.gangguan.kesimpulan,
+        bebanPuncak: data.gangguan.beban_puncak,
+        dayaMampu: data.gangguan.daya_mampu,
+        pemadaman: data.gangguan.pemadaman,
+        kelompokSPD: data.gangguan.kelompok_spd,
+        catatanTindakan: data.gangguan.catatan_tindakan,
+        tindakanPenanggulangan: data.gangguan.catatan_tindakan, // Use catatan_tindakan as fallback
+        rencanaPerbaikan: data.gangguan.rencana_perbaikan,
+        ttdTeknisi: data.gangguan.ttd_teknisi,
+        ttdSupervisor: data.gangguan.ttd_supervisor,
+        unitULD: data.gangguan.lokasi_gangguan,
+        materials: data.gangguan.materials || []
+      }
+      showLH05Modal(mappedGangguan)
     } else {
       alert('Data tidak ditemukan')
     }
@@ -439,27 +464,27 @@ function showLH05Modal(gangguan) {
         <div class="space-y-4">
           <div class="border-l-4 border-red-500 pl-4">
             <p class="text-sm text-gray-600 mb-1">Komponen yang Rusak</p>
-            <p class="font-semibold text-gray-800">${gangguan.komponenRusak}</p>
+            <p class="font-semibold text-gray-800">${gangguan.komponenRusak || '-'}</p>
           </div>
           
           <div class="border-l-4 border-yellow-500 pl-4">
             <p class="text-sm text-gray-600 mb-1">Gejala yang Timbul</p>
-            <p class="text-gray-800">${gangguan.gejala}</p>
+            <p class="text-gray-800">${gangguan.gejala || '-'}</p>
           </div>
           
           <div class="border-l-4 border-blue-500 pl-4">
             <p class="text-sm text-gray-600 mb-1">Uraian Kejadian</p>
-            <p class="text-gray-800">${gangguan.uraianKejadian}</p>
+            <p class="text-gray-800">${gangguan.uraianKejadian || '-'}</p>
           </div>
           
           <div class="border-l-4 border-purple-500 pl-4">
             <p class="text-sm text-gray-600 mb-1">Analisa Penyebab</p>
-            <p class="text-gray-800">${gangguan.analisaPenyebab}</p>
+            <p class="text-gray-800">${gangguan.analisaPenyebab || '-'}</p>
           </div>
           
           <div class="border-l-4 border-green-500 pl-4">
             <p class="text-sm text-gray-600 mb-1">Kesimpulan Kerusakan</p>
-            <p class="text-gray-800">${gangguan.kesimpulan}</p>
+            <p class="text-gray-800">${gangguan.kesimpulan || '-'}</p>
           </div>
         </div>
         
@@ -472,15 +497,15 @@ function showLH05Modal(gangguan) {
           <div class="grid grid-cols-3 gap-4">
             <div>
               <p class="text-sm text-gray-600 mb-1">Beban Puncak</p>
-              <p class="font-semibold text-gray-800">${gangguan.bebanPuncak} MW</p>
+              <p class="font-semibold text-gray-800">${gangguan.bebanPuncak || '-'} MW</p>
             </div>
             <div>
               <p class="text-sm text-gray-600 mb-1">Daya Mampu</p>
-              <p class="font-semibold text-gray-800">${gangguan.dayaMampu} MW</p>
+              <p class="font-semibold text-gray-800">${gangguan.dayaMampu || '-'} MW</p>
             </div>
             <div>
               <p class="text-sm text-gray-600 mb-1">Status</p>
-              <p class="font-semibold text-gray-800">${getStatusBadge(gangguan.pemadaman)}</p>
+              <p class="font-semibold text-gray-800">${getStatusBadge(gangguan.pemadaman || 'NORMAL')}</p>
             </div>
           </div>
         </div>
@@ -489,11 +514,11 @@ function showLH05Modal(gangguan) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="border-l-4 border-orange-500 pl-4">
             <p class="text-sm text-gray-600 mb-1">Tindakan Penanggulangan</p>
-            <p class="text-gray-800">${gangguan.tindakanPenanggulangan}</p>
+            <p class="text-gray-800">${gangguan.tindakanPenanggulangan || '-'}</p>
           </div>
           <div class="border-l-4 border-cyan-500 pl-4">
             <p class="text-sm text-gray-600 mb-1">Rencana Perbaikan</p>
-            <p class="text-gray-800">${gangguan.rencanaPerbaikan}</p>
+            <p class="text-gray-800">${gangguan.rencanaPerbaikan || '-'}</p>
           </div>
         </div>
         
