@@ -1325,6 +1325,9 @@ function getDashboardMainHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
@@ -1507,6 +1510,12 @@ function getInputFormHTML() {
                     <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
@@ -1681,6 +1690,9 @@ function getDashboardStokHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
@@ -1847,6 +1859,9 @@ function getDashboardUmurHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
@@ -1999,6 +2014,9 @@ function getDashboardMutasiHTML() {
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
@@ -2587,6 +2605,9 @@ function getDashboardKebutuhanMaterialHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
@@ -2764,6 +2785,9 @@ function getDashboardGangguanHTML() {
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
