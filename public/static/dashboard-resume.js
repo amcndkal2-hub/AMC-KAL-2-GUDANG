@@ -191,6 +191,11 @@ function resetFilter() {
     updateStatusKebutuhanUI(currentResumeData.statusKebutuhan)
   }
   
+  // Reset Detail Material table to all data
+  if (allKebutuhanDetail && allKebutuhanDetail.length > 0) {
+    renderDetailMaterialTable(allKebutuhanDetail)
+  }
+  
   console.log('Filter reset to default')
 }
 
@@ -839,6 +844,9 @@ async function loadKebutuhanDetail() {
       
       // Populate Unit/ULD dropdown
       populateUnitULDDropdown(data.uniqueUnits || [])
+      
+      // Render initial table (all data, no filter)
+      renderDetailMaterialTable(allKebutuhanDetail)
     }
   } catch (error) {
     console.error('Failed to load kebutuhan detail:', error)
@@ -906,6 +914,9 @@ function applyStatusKebutuhanFilter() {
   // Update UI with filtered data
   updateStatusKebutuhanUI(statusSummary)
   
+  // Update Detail Material Kebutuhan table with filtered data
+  renderDetailMaterialTable(filteredData)
+  
   console.log('✅ Filtered kebutuhan:', filteredData.length, 'items')
 }
 
@@ -929,4 +940,57 @@ function updateStatusKebutuhanUI(statusData) {
   }
   
   console.log('✅ Status Kebutuhan UI updated')
+}
+
+// Render Detail Material Kebutuhan table with filtered data
+function renderDetailMaterialTable(materials) {
+  const tbody = document.getElementById('detailMaterialTable')
+  if (!tbody) return
+  
+  if (materials.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="px-4 py-8 text-center text-gray-400 border">
+          <i class="fas fa-inbox text-2xl"></i>
+          <p class="mt-2">Tidak ada material yang sesuai dengan filter</p>
+        </td>
+      </tr>
+    `
+    return
+  }
+  
+  tbody.innerHTML = materials.map((item, index) => {
+    const nomorLH05 = item.nomor_lh05 || '-'
+    const partNumber = item.part_number || '-'
+    const material = item.material || '-'
+    const mesin = item.mesin || '-'
+    const jumlah = item.jumlah || 0
+    const lokasiTujuan = item.lokasi_tujuan || '-'
+    const status = item.status || 'Pending'
+    
+    return `
+      <tr class="hover:bg-gray-50 border-b">
+        <td class="px-4 py-3 border">${index + 1}</td>
+        <td class="px-4 py-3 border">
+          <a href="#" onclick="viewLH05('${nomorLH05}'); return false;" 
+             class="text-blue-600 hover:text-blue-800 hover:underline font-semibold">
+            ${nomorLH05}
+          </a>
+        </td>
+        <td class="px-4 py-3 border font-mono">${partNumber}</td>
+        <td class="px-4 py-3 border">${material}</td>
+        <td class="px-4 py-3 border">${mesin}</td>
+        <td class="px-4 py-3 text-center border font-semibold">${jumlah}</td>
+        <td class="px-4 py-3 border">${lokasiTujuan}</td>
+        <td class="px-4 py-3 border">${lokasiTujuan}</td>
+        <td class="px-4 py-3 text-center border">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(status)}">
+            ${status}
+          </span>
+        </td>
+      </tr>
+    `
+  }).join('')
+  
+  console.log('✅ Detail Material table rendered with', materials.length, 'items')
 }
