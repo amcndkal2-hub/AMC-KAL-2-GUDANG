@@ -1860,24 +1860,23 @@ function getDashboardStokHTML() {
                     </h2>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div class="overflow-x-auto max-h-[600px]">
-                        <table class="w-full">
-                            <thead class="bg-blue-500 text-white sticky top-0 z-10">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">Part Number</th>
-                                    <th class="px-4 py-3 text-left">Jenis Barang</th>
-                                    <th class="px-4 py-3 text-left">Material</th>
-                                    <th class="px-4 py-3 text-left">Mesin</th>
-                                    <th class="px-4 py-3 text-center">Stok Masuk</th>
-                                    <th class="px-4 py-3 text-center">Stok Keluar</th>
-                                    <th class="px-4 py-3 text-center">Stok Akhir</th>
-                                    <th class="px-4 py-3 text-left">Unit</th>
-                                </tr>
-                            </thead>
-                            <tbody id="stockTable">
-                                <tr>
-                                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="max-height: 600px; overflow-y: auto;">
+                    <table class="w-full">
+                        <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Part Number</th>
+                                <th class="px-4 py-3 text-left">Jenis Barang</th>
+                                <th class="px-4 py-3 text-left">Material</th>
+                                <th class="px-4 py-3 text-left">Mesin</th>
+                                <th class="px-4 py-3 text-center">Stok Masuk</th>
+                                <th class="px-4 py-3 text-center">Stok Keluar</th>
+                                <th class="px-4 py-3 text-center">Stok Akhir</th>
+                                <th class="px-4 py-3 text-left">Unit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTable">
+                            <tr>
+                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                                     Belum ada data transaksi
                                 </td>
                             </tr>
@@ -2012,33 +2011,31 @@ function getDashboardUmurHTML() {
 
             <!-- Main Content Area -->
             <main class="flex-1 p-6">
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-blue-500 text-white">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">S/N Mesin</th>
-                                    <th class="px-4 py-3 text-left">Part Number</th>
-                                    <th class="px-4 py-3 text-left">Material</th>
-                                    <th class="px-4 py-3 text-left">Tanggal Pasang</th>
-                                    <th class="px-4 py-3 text-center">Umur (Hari)</th>
-                                    <th class="px-4 py-3 text-center">Target (Hari)</th>
-                                    <th class="px-4 py-3 text-center">Sisa (Hari)</th>
-                                    <th class="px-4 py-3 text-left">Lokasi</th>
-                                    <th class="px-4 py-3 text-center">Status</th>
-                                    <th class="px-4 py-3 text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ageTable">
-                                <tr>
-                                    <td colspan="10" class="px-4 py-8 text-center text-gray-500">
-                                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
-                                        <p>Memuat data...</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="max-height: 600px; overflow-y: auto;">
+                    <table class="w-full">
+                        <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
+                            <tr>
+                                <th class="px-4 py-3 text-left">S/N Mesin</th>
+                                <th class="px-4 py-3 text-left">Part Number</th>
+                                <th class="px-4 py-3 text-left">Material</th>
+                                <th class="px-4 py-3 text-left">Tanggal Pasang</th>
+                                <th class="px-4 py-3 text-center">Umur (Hari)</th>
+                                <th class="px-4 py-3 text-center">Target (Hari)</th>
+                                <th class="px-4 py-3 text-center">Sisa (Hari)</th>
+                                <th class="px-4 py-3 text-left">Lokasi</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ageTable">
+                            <tr>
+                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                                    <p>Memuat data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </main>
         </div>
