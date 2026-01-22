@@ -2970,14 +2970,18 @@ function getDashboardResumeHTML() {
             </div>
 
             <!-- Status Kebutuhan Material Cards -->
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">
-                    <i class="fas fa-tasks text-blue-600 mr-2"></i>
-                    Status Kebutuhan Material
-                </h2>
+            <div class="mb-8 bg-white rounded-lg shadow-lg p-6">
+                <button id="toggleStatus" class="w-full flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-tasks text-blue-600 mr-2"></i>
+                        Status Kebutuhan Material
+                    </h2>
+                    <i class="fas fa-chevron-down text-gray-600 text-xl"></i>
+                </button>
+                <div id="statusContent">
                 <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     <!-- Total -->
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6 cursor-not-allowed opacity-90">
                         <div class="flex items-center justify-between mb-2">
                             <i class="fas fa-clipboard-list text-3xl opacity-80"></i>
                             <span class="text-4xl font-bold" id="totalKebutuhan">0</span>
@@ -2986,66 +2990,64 @@ function getDashboardResumeHTML() {
                     </div>
                     
                     <!-- Pengadaan -->
-                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow-lg p-6">
+                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Pengadaan')">
                         <div class="flex items-center justify-between mb-2">
                             <i class="fas fa-shopping-cart text-3xl opacity-80"></i>
                             <span class="text-4xl font-bold" id="totalPengadaan">0</span>
                         </div>
-                        <p class="text-sm opacity-90">Pengadaan</p>
+                        <p class="text-sm opacity-90">Pengadaan 👆</p>
                     </div>
                     
                     <!-- Tunda -->
-                    <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-lg shadow-lg p-6">
+                    <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Tunda')">
                         <div class="flex items-center justify-between mb-2">
                             <i class="fas fa-clock text-3xl opacity-80"></i>
                             <span class="text-4xl font-bold" id="totalTunda">0</span>
                         </div>
-                        <p class="text-sm opacity-90">Tunda</p>
+                        <p class="text-sm opacity-90">Tunda 👆</p>
                     </div>
                     
                     <!-- Terkirim -->
-                    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6">
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Terkirim')">
                         <div class="flex items-center justify-between mb-2">
                             <i class="fas fa-check-circle text-3xl opacity-80"></i>
                             <span class="text-4xl font-bold" id="totalTerkirim">0</span>
                         </div>
-                        <p class="text-sm opacity-90">Terkirim</p>
+                        <p class="text-sm opacity-90">Terkirim 👆</p>
                     </div>
                     
                     <!-- Reject -->
-                    <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg shadow-lg p-6">
+                    <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Reject')">
                         <div class="flex items-center justify-between mb-2">
                             <i class="fas fa-times-circle text-3xl opacity-80"></i>
                             <span class="text-4xl font-bold" id="totalReject">0</span>
                         </div>
-                        <p class="text-sm opacity-90">Reject</p>
+                        <p class="text-sm opacity-90">Reject 👆</p>
                     </div>
                     
                     <!-- Tersedia -->
-                    <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg shadow-lg p-6">
+                    <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg shadow-lg p-6 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Tersedia')">
                         <div class="flex items-center justify-between mb-2">
                             <i class="fas fa-box text-3xl opacity-80"></i>
                             <span class="text-4xl font-bold" id="totalTersedia">0</span>
                         </div>
-                        <p class="text-sm opacity-90">Tersedia</p>
+                        <p class="text-sm opacity-90">Tersedia 👆</p>
                     </div>
+                </div>
                 </div>
             </div>
 
             <!-- Top 5 Material Keluar -->
             <div class="mb-8 bg-white rounded-lg shadow-lg p-6">
-                <div class="flex items-center justify-between mb-4">
+                <button id="toggleTopMaterials" class="w-full flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <h2 class="text-2xl font-bold text-gray-800">
                         <i class="fas fa-trophy text-yellow-500 mr-2"></i>
                         Top 5 Material Sering Keluar
                     </h2>
-                    <span class="text-sm text-gray-500">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Material dengan frekuensi keluar tertinggi
-                    </span>
-                </div>
+                    <i class="fas fa-chevron-down text-gray-600 text-xl"></i>
+                </button>
                 
-                <div class="overflow-x-auto">
+                <div id="topMaterialsContent" class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-gradient-to-r from-yellow-50 to-orange-50">
                             <tr class="border-b border-gray-200">
@@ -3071,18 +3073,15 @@ function getDashboardResumeHTML() {
 
             <!-- Top 10 Stok Kritis -->
             <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="flex items-center justify-between mb-4">
+                <button id="toggleStokKritis" class="w-full flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <h2 class="text-2xl font-bold text-gray-800">
                         <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
                         Top 10 Stok Kritis (< 5 Parts)
                     </h2>
-                    <span class="text-sm text-gray-500">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Material dengan stok paling rendah
-                    </span>
-                </div>
+                    <i class="fas fa-chevron-down text-gray-600 text-xl"></i>
+                </button>
                 
-                <div class="overflow-x-auto">
+                <div id="stokKritisContent" class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-gradient-to-r from-red-50 to-orange-50">
                             <tr class="border-b border-gray-200">

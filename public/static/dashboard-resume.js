@@ -1,6 +1,8 @@
 // Dashboard Resume - AMC Material System
 console.log('Dashboard Resume loaded')
 
+let currentResumeData = null
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing dashboard resume...')
@@ -8,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Auto-refresh every 60 seconds
   setInterval(loadResumeData, 60000)
+  
+  // Setup collapse/expand handlers
+  setupCollapseHandlers()
 })
 
 async function loadResumeData() {
@@ -21,6 +26,9 @@ async function loadResumeData() {
     
     const data = await response.json()
     console.log('Resume data loaded:', data)
+    
+    // Store data globally for drill-down
+    currentResumeData = data
     
     // Render each section
     renderTopMaterials(data.topMaterials || [])
@@ -155,6 +163,198 @@ function showError(message) {
   // You can implement a toast notification here
   console.error(message)
   alert(message)
+}
+
+// Setup collapse/expand handlers
+function setupCollapseHandlers() {
+  // Top Materials collapse
+  const topMaterialsToggle = document.getElementById('toggleTopMaterials')
+  const topMaterialsContent = document.getElementById('topMaterialsContent')
+  
+  if (topMaterialsToggle && topMaterialsContent) {
+    topMaterialsToggle.addEventListener('click', () => {
+      const isHidden = topMaterialsContent.classList.contains('hidden')
+      topMaterialsContent.classList.toggle('hidden')
+      
+      // Update icon
+      const icon = topMaterialsToggle.querySelector('i')
+      if (icon) {
+        icon.classList.toggle('fa-chevron-down')
+        icon.classList.toggle('fa-chevron-up')
+      }
+    })
+  }
+  
+  // Stok Kritis collapse
+  const stokKritisToggle = document.getElementById('toggleStokKritis')
+  const stokKritisContent = document.getElementById('stokKritisContent')
+  
+  if (stokKritisToggle && stokKritisContent) {
+    stokKritisToggle.addEventListener('click', () => {
+      const isHidden = stokKritisContent.classList.contains('hidden')
+      stokKritisContent.classList.toggle('hidden')
+      
+      // Update icon
+      const icon = stokKritisToggle.querySelector('i.fa-chevron-down, i.fa-chevron-up')
+      if (icon) {
+        icon.classList.toggle('fa-chevron-down')
+        icon.classList.toggle('fa-chevron-up')
+      }
+    })
+  }
+  
+  // Status Kebutuhan collapse
+  const statusToggle = document.getElementById('toggleStatus')
+  const statusContent = document.getElementById('statusContent')
+  
+  if (statusToggle && statusContent) {
+    statusToggle.addEventListener('click', () => {
+      const isHidden = statusContent.classList.contains('hidden')
+      statusContent.classList.toggle('hidden')
+      
+      // Update icon
+      const icon = statusToggle.querySelector('i.fa-chevron-down, i.fa-chevron-up')
+      if (icon) {
+        icon.classList.toggle('fa-chevron-down')
+        icon.classList.toggle('fa-chevron-up')
+      }
+    })
+  }
+}
+
+// Show detail modal for status kebutuhan
+async function showStatusDetail(status) {
+  try {
+    console.log(`Loading ${status} materials...`)
+    
+    // Fetch materials by status
+    const response = await fetch(`/api/kebutuhan-material?status=${encodeURIComponent(status)}`)
+    const data = await response.json()
+    
+    const materials = data.materials || []
+    console.log(`Found ${materials.length} materials with status: ${status}`)
+    
+    // Create modal
+    const modal = document.createElement('div')
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto'
+    modal.innerHTML = `
+      <div class="bg-white rounded-lg max-w-6xl w-full my-8 shadow-2xl">
+        <!-- Header -->
+        <div class="bg-gradient-to-r ${getStatusGradient(status)} text-white p-6 rounded-t-lg">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-2xl font-bold">
+                ${getStatusIcon(status)}
+                Detail Material - Status: ${status}
+              </h2>
+              <p class="text-white text-opacity-90 mt-1">Total: ${materials.length} item</p>
+            </div>
+            <button onclick="this.closest('.fixed').remove()" 
+              class="text-white hover:text-gray-200 text-3xl">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-6">
+          ${materials.length === 0 ? `
+            <div class="text-center py-12 text-gray-500">
+              <i class="fas fa-inbox text-5xl mb-4"></i>
+              <p class="text-lg">Tidak ada material dengan status <strong>${status}</strong></p>
+            </div>
+          ` : `
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-gray-50">
+                  <tr class="border-b">
+                    <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">No</th>
+                    <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Nomor LH05</th>
+                    <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Part Number</th>
+                    <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Material</th>
+                    <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Mesin</th>
+                    <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Jumlah</th>
+                    <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Unit ULD</th>
+                    <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${materials.map((item, index) => `
+                    <tr class="border-b hover:bg-gray-50">
+                      <td class="px-4 py-3 text-center text-gray-600">${index + 1}</td>
+                      <td class="px-4 py-3">
+                        <a href="/dashboard/gangguan?nomor=${encodeURIComponent(item.nomor_lh05 || item.nomorLH05 || '')}" 
+                           class="text-blue-600 hover:underline font-mono text-sm">
+                          ${item.nomor_lh05 || item.nomorLH05 || '-'}
+                        </a>
+                      </td>
+                      <td class="px-4 py-3 font-mono text-sm">${item.part_number || item.partNumber || '-'}</td>
+                      <td class="px-4 py-3">${item.material || '-'}</td>
+                      <td class="px-4 py-3 text-sm text-gray-600">${item.mesin || '-'}</td>
+                      <td class="px-4 py-3 text-center font-bold">${item.jumlah || 0}</td>
+                      <td class="px-4 py-3">${item.unit_uld || item.unitULD || '-'}</td>
+                      <td class="px-4 py-3 text-center">
+                        <span class="px-2 py-1 ${getStatusColor(status)} rounded-full text-xs font-semibold">
+                          ${status}
+                        </span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `}
+        </div>
+        
+        <!-- Footer -->
+        <div class="bg-gray-100 p-4 rounded-b-lg flex justify-end">
+          <button onclick="this.closest('.fixed').remove()" 
+            class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+            <i class="fas fa-times mr-2"></i>Tutup
+          </button>
+        </div>
+      </div>
+    `
+    
+    document.body.appendChild(modal)
+    
+  } catch (error) {
+    console.error('Failed to load status detail:', error)
+    alert('Gagal memuat detail material')
+  }
+}
+
+function getStatusGradient(status) {
+  switch(status.toLowerCase()) {
+    case 'pengadaan': return 'from-orange-500 to-orange-600'
+    case 'tunda': return 'from-yellow-500 to-yellow-600'
+    case 'terkirim': return 'from-green-500 to-green-600'
+    case 'reject': return 'from-red-500 to-red-600'
+    case 'tersedia': return 'from-cyan-500 to-cyan-600'
+    default: return 'from-blue-500 to-blue-600'
+  }
+}
+
+function getStatusIcon(status) {
+  switch(status.toLowerCase()) {
+    case 'pengadaan': return '<i class="fas fa-shopping-cart mr-2"></i>'
+    case 'tunda': return '<i class="fas fa-clock mr-2"></i>'
+    case 'terkirim': return '<i class="fas fa-check-circle mr-2"></i>'
+    case 'reject': return '<i class="fas fa-times-circle mr-2"></i>'
+    case 'tersedia': return '<i class="fas fa-box mr-2"></i>'
+    default: return '<i class="fas fa-list mr-2"></i>'
+  }
+}
+
+function getStatusColor(status) {
+  switch(status.toLowerCase()) {
+    case 'pengadaan': return 'bg-orange-100 text-orange-700'
+    case 'tunda': return 'bg-yellow-100 text-yellow-700'
+    case 'terkirim': return 'bg-green-100 text-green-700'
+    case 'reject': return 'bg-red-100 text-red-700'
+    case 'tersedia': return 'bg-cyan-100 text-cyan-700'
+    default: return 'bg-gray-100 text-gray-700'
+  }
 }
 
 // Export PDF function (optional)
