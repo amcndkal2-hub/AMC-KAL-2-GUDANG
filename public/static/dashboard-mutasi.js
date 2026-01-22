@@ -65,11 +65,15 @@ async function loadTransactions() {
 function setupFilters() {
     document.getElementById('filterTanggal').addEventListener('change', filterData);
     document.getElementById('filterNomorBA').addEventListener('input', filterData);
+    document.getElementById('filterPartNumber').addEventListener('input', filterData);
+    document.getElementById('filterUnitTujuan').addEventListener('input', filterData);
 }
 
 function filterData() {
     const tanggal = document.getElementById('filterTanggal').value;
     const nomorBA = document.getElementById('filterNomorBA').value.toLowerCase();
+    const partNumber = document.getElementById('filterPartNumber').value.toLowerCase();
+    const unitTujuan = document.getElementById('filterUnitTujuan').value.toLowerCase();
     
     let filtered = transactions;
     
@@ -83,7 +87,29 @@ function filterData() {
         );
     }
     
+    if (partNumber) {
+        filtered = filtered.filter(tx => 
+            tx.materials.some(mat => 
+                (mat.partNumber || mat.part_number || '').toLowerCase().includes(partNumber)
+            )
+        );
+    }
+    
+    if (unitTujuan) {
+        filtered = filtered.filter(tx => 
+            tx.lokasi_tujuan.toLowerCase().includes(unitTujuan)
+        );
+    }
+    
     renderMutasiTable(filtered);
+}
+
+function resetFilter() {
+    document.getElementById('filterTanggal').value = '';
+    document.getElementById('filterNomorBA').value = '';
+    document.getElementById('filterPartNumber').value = '';
+    document.getElementById('filterUnitTujuan').value = '';
+    renderMutasiTable(transactions);
 }
 
 function renderMutasiTable(data = transactions) {

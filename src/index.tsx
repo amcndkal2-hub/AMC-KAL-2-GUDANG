@@ -2054,6 +2054,28 @@ function getDashboardMutasiHTML() {
                         <input type="text" id="filterNomorBA" placeholder="Cari Nomor BA..." 
                             class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
+                    
+                    <!-- Filter Part Number -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-300 mb-3">
+                            <i class="fas fa-barcode mr-2 text-cyan-600"></i>
+                            Part Number
+                        </label>
+                        <input type="text" id="filterPartNumber" placeholder="Cari Part Number..." 
+                            class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
+                    </div>
+                    
+                    <!-- Filter Unit Tujuan -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-300 mb-3">
+                            <i class="fas fa-map-marker-alt mr-2 text-cyan-600"></i>
+                            Unit Tujuan
+                        </label>
+                        <select id="filterUnitTujuan" 
+                            class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
+                            <option value="">Semua Unit</option>
+                        </select>
+                    </div>
 
                     <!-- Export Button -->
                     <div class="mt-8">
@@ -2072,7 +2094,7 @@ function getDashboardMutasiHTML() {
                         <div class="space-y-2 text-sm text-gray-700">
                             <p>• Klik Nomor BA untuk melihat detail</p>
                             <p>• Status Terkirim untuk export BA</p>
-                            <p>• Filter berdasarkan tanggal dan BA</p>
+                            <p>• Filter: Tanggal, BA, Part Number, Unit</p>
                         </div>
                     </div>
                 </div>
