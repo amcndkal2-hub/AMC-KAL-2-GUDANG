@@ -1235,6 +1235,43 @@ app.get('/api/material-detail/:partNumber', async (c) => {
   }
 })
 
+// API: Get kebutuhan material with details (for Status Kebutuhan filtering)
+app.get('/api/kebutuhan-detail', async (c) => {
+  try {
+    const { env } = c
+    
+    // Get all material_gangguan with gangguan details
+    const kebutuhanQuery = await env.DB.prepare(`
+      SELECT 
+        mg.id,
+        mg.part_number,
+        mg.material,
+        mg.mesin,
+        mg.jumlah,
+        mg.status,
+        mg.unit_uld as lokasi_tujuan,
+        g.nomor_lh05
+      FROM material_gangguan mg
+      LEFT JOIN gangguan g ON mg.gangguan_id = g.id
+      ORDER BY mg.created_at DESC
+    `).all()
+    
+    const kebutuhanList = kebutuhanQuery.results || []
+    
+    // Get unique unit_uld for filter dropdown
+    const uniqueUnits = [...new Set(kebutuhanList.map((item: any) => item.lokasi_tujuan).filter(Boolean))]
+    
+    return c.json({
+      success: true,
+      kebutuhanList,
+      uniqueUnits
+    })
+  } catch (error: any) {
+    console.error('Failed to get kebutuhan detail:', error)
+    return c.json({ error: 'Failed to fetch kebutuhan detail' }, 500)
+  }
+})
+
 // API: Update status material
 app.post('/api/update-material-status', async (c) => {
   try {
@@ -3114,6 +3151,32 @@ function getDashboardResumeHTML() {
                         <select id="filterMesin" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Semua Mesin</option>
                         </select>
+                    </div>
+                    
+                    <!-- Filter Part Number & Unit/ULD (untuk Status Kebutuhan Material) -->
+                    <div id="filterStatusKebutuhanSection" class="space-y-4" style="display:none;">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-barcode text-gray-600 mr-1"></i>
+                                Cari Part Number
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filterPartNumber" 
+                                placeholder="Ketik Part Number..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt text-gray-600 mr-1"></i>
+                                Filter Unit/ULD
+                            </label>
+                            <select id="filterUnitULD" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Semua Unit/ULD</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>

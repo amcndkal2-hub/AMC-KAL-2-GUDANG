@@ -4,14 +4,19 @@ console.log('Dashboard Resume loaded')
 let currentResumeData = null
 let allTopMaterials = []  // Store original data
 let allStokKritis = []     // Store original data
+let allKebutuhanDetail = [] // Store kebutuhan detail data
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing dashboard resume...')
   loadResumeData()
+  loadKebutuhanDetail() // Load kebutuhan detail for filtering
   
   // Auto-refresh every 60 seconds
-  setInterval(loadResumeData, 60000)
+  setInterval(() => {
+    loadResumeData()
+    loadKebutuhanDetail()
+  }, 60000)
   
   // Setup filter handlers
   setupFilterHandlers()
@@ -21,12 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupFilterHandlers() {
   const dropdown = document.getElementById('filterTampilan')
   const filterMesin = document.getElementById('filterMesin')
+  const filterPartNumber = document.getElementById('filterPartNumber')
+  const filterUnitULD = document.getElementById('filterUnitULD')
   
   if (dropdown) {
     // Auto-apply filter saat dropdown berubah
     dropdown.addEventListener('change', () => {
       applyFilter()
-      toggleMesinFilter()
+      toggleFilterSections()
     })
     console.log('Filter dropdown handler attached')
   }
@@ -36,25 +43,49 @@ function setupFilterHandlers() {
     console.log('Filter Mesin handler attached')
   }
   
+  if (filterPartNumber) {
+    filterPartNumber.addEventListener('input', applyStatusKebutuhanFilter)
+    console.log('Filter Part Number handler attached')
+  }
+  
+  if (filterUnitULD) {
+    filterUnitULD.addEventListener('change', applyStatusKebutuhanFilter)
+    console.log('Filter Unit/ULD handler attached')
+  }
+  
   // Show default section (Status Kebutuhan)
   applyFilter()
 }
 
-// Toggle visibility of MESIN filter based on selected section
-function toggleMesinFilter() {
+// Toggle visibility of filter sections based on selected view
+function toggleFilterSections() {
   const dropdown = document.getElementById('filterTampilan')
   const mesinSection = document.getElementById('filterMesinSection')
+  const statusKebutuhanSection = document.getElementById('filterStatusKebutuhanSection')
   
-  if (!dropdown || !mesinSection) return
+  if (!dropdown) return
   
   const selectedSection = dropdown.value
   
   // Show MESIN filter only for top-material and stok-kritis
   if (selectedSection === 'top-material' || selectedSection === 'stok-kritis') {
-    mesinSection.style.display = 'block'
-  } else {
-    mesinSection.style.display = 'none'
+    if (mesinSection) mesinSection.style.display = 'block'
+    if (statusKebutuhanSection) statusKebutuhanSection.style.display = 'none'
+  } 
+  // Show Part Number & Unit/ULD filter only for status-kebutuhan
+  else if (selectedSection === 'status-kebutuhan') {
+    if (mesinSection) mesinSection.style.display = 'none'
+    if (statusKebutuhanSection) statusKebutuhanSection.style.display = 'block'
   }
+  else {
+    if (mesinSection) mesinSection.style.display = 'none'
+    if (statusKebutuhanSection) statusKebutuhanSection.style.display = 'none'
+  }
+}
+
+// Toggle visibility of MESIN filter based on selected section (legacy)
+function toggleMesinFilter() {
+  toggleFilterSections() // Use new function
 }
 
 // Populate MESIN dropdown with unique values
@@ -133,6 +164,8 @@ function applyFilter() {
 function resetFilter() {
   const dropdown = document.getElementById('filterTampilan')
   const filterMesin = document.getElementById('filterMesin')
+  const filterPartNumber = document.getElementById('filterPartNumber')
+  const filterUnitULD = document.getElementById('filterUnitULD')
   
   if (dropdown) {
     dropdown.value = 'status-kebutuhan'
@@ -142,8 +175,22 @@ function resetFilter() {
     filterMesin.value = ''
   }
   
+  if (filterPartNumber) {
+    filterPartNumber.value = ''
+  }
+  
+  if (filterUnitULD) {
+    filterUnitULD.value = ''
+  }
+  
   applyFilter()
-  toggleMesinFilter()
+  toggleFilterSections()
+  
+  // Reset status kebutuhan to original data
+  if (currentResumeData && currentResumeData.statusKebutuhan) {
+    updateStatusKebutuhanUI(currentResumeData.statusKebutuhan)
+  }
+  
   console.log('Filter reset to default')
 }
 
@@ -772,4 +819,114 @@ function downloadCSV(csvContent, filename) {
   document.body.removeChild(link)
   
   console.log(`Exported: ${filename}`)
+}
+
+// Load kebutuhan detail data for filtering
+async function loadKebutuhanDetail() {
+  try {
+    console.log('Loading kebutuhan detail from API...')
+    const response = await fetch('/api/kebutuhan-detail')
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    console.log('Kebutuhan detail loaded:', data)
+    
+    if (data.success) {
+      allKebutuhanDetail = data.kebutuhanList || []
+      
+      // Populate Unit/ULD dropdown
+      populateUnitULDDropdown(data.uniqueUnits || [])
+    }
+  } catch (error) {
+    console.error('Failed to load kebutuhan detail:', error)
+  }
+}
+
+// Populate Unit/ULD dropdown with unique values
+function populateUnitULDDropdown(uniqueUnits) {
+  const filterUnitULD = document.getElementById('filterUnitULD')
+  if (!filterUnitULD) return
+  
+  const options = uniqueUnits.map(unit => 
+    `<option value="${unit}">${unit}</option>`
+  ).join('')
+  
+  filterUnitULD.innerHTML = `<option value="">Semua Unit/ULD</option>${options}`
+  console.log('📍 Unit/ULD dropdown populated with', uniqueUnits.length, 'unique values')
+}
+
+// Apply Part Number & Unit/ULD filter for Status Kebutuhan
+function applyStatusKebutuhanFilter() {
+  const filterPartNumber = document.getElementById('filterPartNumber')
+  const filterUnitULD = document.getElementById('filterUnitULD')
+  
+  if (!filterPartNumber || !filterUnitULD) return
+  
+  const partNumberSearch = filterPartNumber.value.toLowerCase().trim()
+  const selectedUnit = filterUnitULD.value
+  
+  console.log('🔍 Filtering Status Kebutuhan:', { partNumberSearch, selectedUnit })
+  
+  // Filter data
+  let filteredData = allKebutuhanDetail
+  
+  if (partNumberSearch) {
+    filteredData = filteredData.filter(item => 
+      (item.part_number || '').toLowerCase().includes(partNumberSearch)
+    )
+  }
+  
+  if (selectedUnit) {
+    filteredData = filteredData.filter(item => 
+      item.lokasi_tujuan === selectedUnit
+    )
+  }
+  
+  // Calculate status summary
+  const statusSummary = {
+    pengadaan: 0,
+    tunda: 0,
+    terkirim: 0,
+    reject: 0,
+    tersedia: 0
+  }
+  
+  filteredData.forEach(item => {
+    const status = (item.status || '').toLowerCase()
+    if (status === 'pengadaan') statusSummary.pengadaan++
+    else if (status === 'tunda') statusSummary.tunda++
+    else if (status === 'terkirim') statusSummary.terkirim++
+    else if (status === 'reject') statusSummary.reject++
+    else if (status === 'tersedia') statusSummary.tersedia++
+  })
+  
+  // Update UI with filtered data
+  updateStatusKebutuhanUI(statusSummary)
+  
+  console.log('✅ Filtered kebutuhan:', filteredData.length, 'items')
+}
+
+// Update Status Kebutuhan UI with filtered data
+function updateStatusKebutuhanUI(statusData) {
+  const total = statusData.pengadaan + statusData.tunda + statusData.terkirim + statusData.reject + statusData.tersedia
+  
+  // Update cards
+  const cards = {
+    'statusTotal': total,
+    'statusPengadaan': statusData.pengadaan,
+    'statusTunda': statusData.tunda,
+    'statusTerkirim': statusData.terkirim,
+    'statusReject': statusData.reject,
+    'statusTersedia': statusData.tersedia
+  }
+  
+  for (const [id, value] of Object.entries(cards)) {
+    const el = document.getElementById(id)
+    if (el) el.textContent = value
+  }
+  
+  console.log('✅ Status Kebutuhan UI updated')
 }
