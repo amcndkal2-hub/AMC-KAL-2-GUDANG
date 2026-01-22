@@ -2,6 +2,8 @@
 console.log('Dashboard Resume loaded')
 
 let currentResumeData = null
+let allTopMaterials = []  // Store original data
+let allStokKritis = []     // Store original data
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,14 +20,85 @@ document.addEventListener('DOMContentLoaded', () => {
 // Setup filter dropdown handlers
 function setupFilterHandlers() {
   const dropdown = document.getElementById('filterTampilan')
+  const filterMesin = document.getElementById('filterMesin')
+  
   if (dropdown) {
     // Auto-apply filter saat dropdown berubah
-    dropdown.addEventListener('change', applyFilter)
+    dropdown.addEventListener('change', () => {
+      applyFilter()
+      toggleMesinFilter()
+    })
     console.log('Filter dropdown handler attached')
+  }
+  
+  if (filterMesin) {
+    filterMesin.addEventListener('change', applyMesinFilter)
+    console.log('Filter Mesin handler attached')
   }
   
   // Show default section (Status Kebutuhan)
   applyFilter()
+}
+
+// Toggle visibility of MESIN filter based on selected section
+function toggleMesinFilter() {
+  const dropdown = document.getElementById('filterTampilan')
+  const mesinSection = document.getElementById('filterMesinSection')
+  
+  if (!dropdown || !mesinSection) return
+  
+  const selectedSection = dropdown.value
+  
+  // Show MESIN filter only for top-material and stok-kritis
+  if (selectedSection === 'top-material' || selectedSection === 'stok-kritis') {
+    mesinSection.style.display = 'block'
+  } else {
+    mesinSection.style.display = 'none'
+  }
+}
+
+// Populate MESIN dropdown with unique values
+function populateMesinDropdown(materials) {
+  const filterMesin = document.getElementById('filterMesin')
+  if (!filterMesin) return
+  
+  // Extract unique mesin values
+  const uniqueMesins = [...new Set(materials.map(m => m.mesin).filter(Boolean))].sort()
+  
+  // Build options HTML
+  const options = uniqueMesins.map(mesin => 
+    `<option value="${mesin}">${mesin}</option>`
+  ).join('')
+  
+  filterMesin.innerHTML = `<option value="">Semua Mesin</option>${options}`
+  console.log('📍 Mesin dropdown populated with', uniqueMesins.length, 'unique values')
+}
+
+// Apply MESIN filter to current section
+function applyMesinFilter() {
+  const dropdown = document.getElementById('filterTampilan')
+  const filterMesin = document.getElementById('filterMesin')
+  
+  if (!dropdown || !filterMesin) return
+  
+  const selectedSection = dropdown.value
+  const selectedMesin = filterMesin.value
+  
+  console.log('Applying MESIN filter:', selectedMesin)
+  
+  if (selectedSection === 'top-material') {
+    // Filter top materials
+    const filtered = selectedMesin 
+      ? allTopMaterials.filter(m => m.mesin === selectedMesin)
+      : allTopMaterials
+    renderTopMaterials(filtered)
+  } else if (selectedSection === 'stok-kritis') {
+    // Filter stok kritis
+    const filtered = selectedMesin 
+      ? allStokKritis.filter(m => m.mesin === selectedMesin)
+      : allStokKritis
+    renderStokKritis(filtered)
+  }
 }
 
 // Function untuk apply filter - show only selected section
@@ -47,16 +120,31 @@ function applyFilter() {
     targetSection.style.display = 'block'
     console.log('Section displayed:', selectedSection)
   }
+  
+  // Reset MESIN filter when switching sections
+  const filterMesin = document.getElementById('filterMesin')
+  if (filterMesin) {
+    filterMesin.value = ''
+    applyMesinFilter()
+  }
 }
 
 // Function untuk reset filter - show Status Kebutuhan (default)
 function resetFilter() {
   const dropdown = document.getElementById('filterTampilan')
+  const filterMesin = document.getElementById('filterMesin')
+  
   if (dropdown) {
     dropdown.value = 'status-kebutuhan'
-    applyFilter()
-    console.log('Filter reset to default')
   }
+  
+  if (filterMesin) {
+    filterMesin.value = ''
+  }
+  
+  applyFilter()
+  toggleMesinFilter()
+  console.log('Filter reset to default')
 }
 
 async function loadResumeData() {
@@ -71,13 +159,22 @@ async function loadResumeData() {
     const data = await response.json()
     console.log('Resume data loaded:', data)
     
-    // Store data globally for drill-down
+    // Store data globally for drill-down and filtering
     currentResumeData = data
+    allTopMaterials = data.topMaterials || []
+    allStokKritis = data.stokKritis || []
+    
+    // Populate MESIN dropdown with combined data
+    const allMaterials = [...allTopMaterials, ...allStokKritis]
+    populateMesinDropdown(allMaterials)
     
     // Render each section
-    renderTopMaterials(data.topMaterials || [])
-    renderStokKritis(data.stokKritis || [])
+    renderTopMaterials(allTopMaterials)
+    renderStokKritis(allStokKritis)
     renderStatusKebutuhan(data.statusKebutuhan || {})
+    
+    // Toggle MESIN filter visibility based on current section
+    toggleMesinFilter()
     
   } catch (error) {
     console.error('Failed to load resume data:', error)

@@ -1121,14 +1121,14 @@ app.get('/api/dashboard/resume', async (c) => {
   try {
     const { env } = c
     
-    // 1. Get Top 15 Material Keluar (most frequent, highlight top 5)
+    // 1. Get Top 15 Material Keluar (by total quantity, highlight top 5)
     const topMaterialsQuery = await env.DB.prepare(`
       SELECT 
         m.part_number,
         m.jenis_barang,
         m.material,
         m.mesin,
-        COUNT(*) as total_keluar
+        SUM(m.jumlah) as total_keluar
       FROM materials m
       JOIN transactions t ON m.transaction_id = t.id
       WHERE t.jenis_transaksi LIKE '%Keluar%'
@@ -3067,9 +3067,20 @@ function getDashboardResumeHTML() {
                     </button>
                     
                     <!-- Tombol Reset -->
-                    <button onclick="resetFilter()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <button onclick="resetFilter()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg mb-4 transition-colors">
                         <i class="fas fa-redo mr-2"></i>Reset
                     </button>
+                    
+                    <!-- Filter MESIN (untuk Top Material & Stok Kritis) -->
+                    <div id="filterMesinSection" class="mb-4" style="display:none;">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-cog text-gray-600 mr-1"></i>
+                            Filter Mesin
+                        </label>
+                        <select id="filterMesin" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Semua Mesin</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
