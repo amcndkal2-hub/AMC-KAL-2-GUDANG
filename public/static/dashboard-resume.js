@@ -251,7 +251,7 @@ async function viewMaterialDetail(partNumber) {
     `
     
     // Fetch detail
-    const response = await fetch(\`/api/material-detail/\${partNumber}\`)
+    const response = await fetch(`/api/material-detail/${partNumber}`)
     const data = await response.json()
     
     if (!data.success || data.transactions.length === 0) {
