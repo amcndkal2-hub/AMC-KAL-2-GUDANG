@@ -1861,22 +1861,23 @@ function getDashboardStokHTML() {
                 </div>
 
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <table class="w-full">
-                        <thead class="bg-blue-500 text-white">
-                            <tr>
-                                <th class="px-4 py-3 text-left">Part Number</th>
-                                <th class="px-4 py-3 text-left">Jenis Barang</th>
-                                <th class="px-4 py-3 text-left">Material</th>
-                                <th class="px-4 py-3 text-left">Mesin</th>
-                                <th class="px-4 py-3 text-center">Stok Masuk</th>
-                                <th class="px-4 py-3 text-center">Stok Keluar</th>
-                                <th class="px-4 py-3 text-center">Stok Akhir</th>
-                                <th class="px-4 py-3 text-left">Unit</th>
-                            </tr>
-                        </thead>
-                        <tbody id="stockTable">
-                            <tr>
-                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                    <div class="overflow-x-auto max-h-[600px]">
+                        <table class="w-full">
+                            <thead class="bg-blue-500 text-white sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Part Number</th>
+                                    <th class="px-4 py-3 text-left">Jenis Barang</th>
+                                    <th class="px-4 py-3 text-left">Material</th>
+                                    <th class="px-4 py-3 text-left">Mesin</th>
+                                    <th class="px-4 py-3 text-center">Stok Masuk</th>
+                                    <th class="px-4 py-3 text-center">Stok Keluar</th>
+                                    <th class="px-4 py-3 text-center">Stok Akhir</th>
+                                    <th class="px-4 py-3 text-left">Unit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stockTable">
+                                <tr>
+                                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                                     Belum ada data transaksi
                                 </td>
                             </tr>
@@ -2178,9 +2179,9 @@ function getDashboardMutasiHTML() {
             <!-- Main Content Area -->
             <main class="flex-1 p-6">
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto max-h-[600px]">
                         <table class="w-full">
-                            <thead class="bg-blue-500 text-white">
+                            <thead class="bg-blue-500 text-white sticky top-0 z-10">
                                 <tr>
                                     <th class="px-4 py-3 text-left">Nomor BA</th>
                                     <th class="px-4 py-3 text-left">Tanggal</th>
@@ -2810,9 +2811,9 @@ function getDashboardKebutuhanMaterialHTML() {
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="max-height: 600px; overflow-y: auto;">
                     <table class="w-full">
-                        <thead class="bg-blue-500 text-white">
+                        <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
                                 <th class="px-4 py-3 text-center">No</th>
                                 <th class="px-4 py-3 text-left">Nomor LH05</th>
@@ -2984,9 +2985,9 @@ function getDashboardGangguanHTML() {
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="max-height: 600px; overflow-y: auto;">
                     <table class="w-full">
-                        <thead class="bg-blue-500 text-white">
+                        <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
                                 <th class="px-4 py-3 text-left">Nomor LH05</th>
                                 <th class="px-4 py-3 text-left">Tanggal Kejadian</th>
