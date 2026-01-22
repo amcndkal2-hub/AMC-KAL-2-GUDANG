@@ -1200,32 +1200,56 @@ app.get('/api/dashboard/resume', async (c) => {
 // API: Update status material
 app.post('/api/update-material-status', async (c) => {
   try {
+    const { env } = c
     const { nomorLH05, partNumber, status } = await c.req.json()
     
-    // Find gangguan transaction
-    const gangguan = gangguanTransactions.find(g => g.nomorLH05 === nomorLH05)
+    console.log('📝 Updating material status:', { nomorLH05, partNumber, status })
     
-    if (!gangguan) {
-      return c.json({ error: 'Gangguan not found' }, 404)
-    }
+    // Find material_gangguan record in database
+    const result = await env.DB.prepare(`
+      SELECT * FROM material_gangguan 
+      WHERE nomor_lh05 = ? AND part_number = ?
+    `).bind(nomorLH05, partNumber).first()
     
-    // Update material status
-    const material = gangguan.materials?.find((m: any) => m.partNumber === partNumber)
-    
-    if (!material) {
+    if (!result) {
+      console.error('❌ Material not found:', { nomorLH05, partNumber })
       return c.json({ error: 'Material not found' }, 404)
     }
     
-    material.status = status
-    material.updatedAt = new Date().toISOString()
+    // Update status in database
+    const updateResult = await env.DB.prepare(`
+      UPDATE material_gangguan 
+      SET status = ?
+      WHERE nomor_lh05 = ? AND part_number = ?
+    `).bind(status, nomorLH05, partNumber).run()
+    
+    if (!updateResult.success) {
+      console.error('❌ Failed to update status in DB')
+      return c.json({ error: 'Database update failed' }, 500)
+    }
+    
+    console.log('✅ Status updated successfully in DB')
+    
+    // Also update in-memory cache for backward compatibility
+    const gangguan = gangguanTransactions.find(g => g.nomorLH05 === nomorLH05)
+    if (gangguan && gangguan.materials) {
+      const material = gangguan.materials.find((m: any) => m.partNumber === partNumber)
+      if (material) {
+        material.status = status
+        material.updatedAt = new Date().toISOString()
+      }
+    }
     
     return c.json({ 
       success: true, 
-      message: 'Status updated',
-      material 
+      message: 'Status updated successfully',
+      nomorLH05,
+      partNumber,
+      status
     })
   } catch (error) {
-    return c.json({ error: 'Failed to update status' }, 500)
+    console.error('❌ Update status error:', error)
+    return c.json({ error: 'Failed to update status: ' + (error as Error).message }, 500)
   }
 })
 
