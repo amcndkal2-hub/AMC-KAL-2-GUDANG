@@ -10,7 +10,54 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Auto-refresh every 60 seconds
   setInterval(loadResumeData, 60000)
+  
+  // Setup filter handlers
+  setupFilterHandlers()
 })
+
+// Setup filter dropdown handlers
+function setupFilterHandlers() {
+  const dropdown = document.getElementById('filterTampilan')
+  if (dropdown) {
+    // Auto-apply filter saat dropdown berubah
+    dropdown.addEventListener('change', applyFilter)
+    console.log('Filter dropdown handler attached')
+  }
+  
+  // Show default section (Status Kebutuhan)
+  applyFilter()
+}
+
+// Function untuk apply filter - show only selected section
+function applyFilter() {
+  const dropdown = document.getElementById('filterTampilan')
+  if (!dropdown) return
+  
+  const selectedSection = dropdown.value
+  console.log('Applying filter:', selectedSection)
+  
+  // Hide all sections
+  document.querySelectorAll('.section-content').forEach(section => {
+    section.style.display = 'none'
+  })
+  
+  // Show selected section
+  const targetSection = document.getElementById(selectedSection)
+  if (targetSection) {
+    targetSection.style.display = 'block'
+    console.log('Section displayed:', selectedSection)
+  }
+}
+
+// Function untuk reset filter - show Status Kebutuhan (default)
+function resetFilter() {
+  const dropdown = document.getElementById('filterTampilan')
+  if (dropdown) {
+    dropdown.value = 'status-kebutuhan'
+    applyFilter()
+    console.log('Filter reset to default')
+  }
+}
 
 async function loadResumeData() {
   try {

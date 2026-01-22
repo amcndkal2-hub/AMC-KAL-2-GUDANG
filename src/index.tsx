@@ -3143,40 +3143,8 @@ function getDashboardResumeHTML() {
                         .catch(() => window.location.href = '/login')
                 }
             }
-            
-            // Function untuk apply filter - show only selected section
-            function applyFilter() {
-                const selectedSection = document.getElementById('filterTampilan').value;
-                
-                // Hide all sections
-                document.querySelectorAll('.section-content').forEach(section => {
-                    section.style.display = 'none';
-                });
-                
-                // Show selected section
-                const targetSection = document.getElementById(selectedSection);
-                if (targetSection) {
-                    targetSection.style.display = 'block';
-                }
-            }
-            
-            // Function untuk reset filter - show Status Kebutuhan (default)
-            function resetFilter() {
-                document.getElementById('filterTampilan').value = 'status-kebutuhan';
-                applyFilter();
-            }
-            
-            // Auto-apply filter saat dropdown berubah
-            document.addEventListener('DOMContentLoaded', function() {
-                const dropdown = document.getElementById('filterTampilan');
-                if (dropdown) {
-                    dropdown.addEventListener('change', applyFilter);
-                }
-                
-                // Show default section (Status Kebutuhan)
-                applyFilter();
-            });
         </script>
+        <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-resume.js"></script>
     </body>
     </html>
