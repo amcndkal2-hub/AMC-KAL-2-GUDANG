@@ -1116,6 +1116,87 @@ app.get('/api/kebutuhan-material', async (c) => {
   }
 })
 
+// API: Get dashboard resume data
+app.get('/api/dashboard/resume', async (c) => {
+  try {
+    const { env } = c
+    
+    // 1. Get Top 5 Material Keluar (most frequent)
+    const topMaterialsQuery = await env.DB.prepare(`
+      SELECT 
+        m.part_number,
+        m.jenis_barang,
+        m.material,
+        m.mesin,
+        COUNT(*) as total_keluar
+      FROM materials m
+      JOIN transactions t ON m.transaction_id = t.id
+      WHERE t.jenis_transaksi LIKE '%Keluar%'
+      GROUP BY m.part_number, m.jenis_barang, m.material, m.mesin
+      ORDER BY total_keluar DESC
+      LIMIT 5
+    `).all()
+    
+    const topMaterials = topMaterialsQuery.results || []
+    
+    // 2. Get Top 10 Stok Kritis (< 5 parts)
+    const stokKritisQuery = await env.DB.prepare(`
+      SELECT 
+        m.part_number,
+        m.jenis_barang,
+        m.material,
+        m.mesin,
+        SUM(CASE WHEN t.jenis_transaksi LIKE '%Masuk%' THEN m.jumlah ELSE 0 END) as stok_masuk,
+        SUM(CASE WHEN t.jenis_transaksi LIKE '%Keluar%' THEN m.jumlah ELSE 0 END) as stok_keluar,
+        (SUM(CASE WHEN t.jenis_transaksi LIKE '%Masuk%' THEN m.jumlah ELSE 0 END) - 
+         SUM(CASE WHEN t.jenis_transaksi LIKE '%Keluar%' THEN m.jumlah ELSE 0 END)) as stok_akhir
+      FROM materials m
+      JOIN transactions t ON m.transaction_id = t.id
+      GROUP BY m.part_number, m.jenis_barang, m.material, m.mesin
+      HAVING stok_akhir < 5
+      ORDER BY stok_akhir ASC
+      LIMIT 10
+    `).all()
+    
+    const stokKritis = stokKritisQuery.results || []
+    
+    // 3. Get Status Kebutuhan Material (statistics)
+    const statusQuery = await env.DB.prepare(`
+      SELECT 
+        status,
+        COUNT(*) as total
+      FROM material_gangguan
+      GROUP BY status
+    `).all()
+    
+    const statusKebutuhan = {
+      pengadaan: 0,
+      tunda: 0,
+      terkirim: 0,
+      reject: 0,
+      tersedia: 0
+    }
+    
+    statusQuery.results?.forEach((row: any) => {
+      const status = row.status?.toLowerCase() || ''
+      if (status === 'pengadaan') statusKebutuhan.pengadaan = row.total
+      else if (status === 'tunda') statusKebutuhan.tunda = row.total
+      else if (status === 'terkirim') statusKebutuhan.terkirim = row.total
+      else if (status === 'reject') statusKebutuhan.reject = row.total
+      else if (status === 'tersedia') statusKebutuhan.tersedia = row.total
+    })
+    
+    return c.json({
+      topMaterials,
+      stokKritis,
+      statusKebutuhan
+    })
+  } catch (error: any) {
+    console.error('Failed to get resume data:', error)
+    return c.json({ error: 'Failed to fetch resume data' }, 500)
+  }
+})
+
 // API: Update status material
 app.post('/api/update-material-status', async (c) => {
   try {
@@ -1191,6 +1272,11 @@ app.get('/dashboard/gangguan', (c) => {
 // Dashboard Kebutuhan Material (PROTECTED - auth required)
 app.get('/dashboard/kebutuhan-material', (c) => {
   return c.html(getDashboardKebutuhanMaterialHTML())
+})
+
+// Dashboard Resume (PROTECTED - auth required)
+app.get('/dashboard/resume', (c) => {
+  return c.html(getDashboardResumeHTML())
 })
 
 // HTML Templates
@@ -2827,6 +2913,210 @@ function getDashboardGangguanHTML() {
             }, 1000)
           })
         </script>
+    </body>
+    </html>
+  `
+}
+
+function getDashboardResumeHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard Resume - Sistem Material</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-gray-50">
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                    <span class="text-xl font-bold">Dashboard Resume Material</span>
+                </div>
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-plus mr-1"></i>Input Material
+                    </a>
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/resume" class="px-3 py-2 bg-blue-800 rounded">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    </a>
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto p-6">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                    <i class="fas fa-chart-line text-blue-600 mr-3"></i>
+                    Resume & Analisis Material
+                </h1>
+                <p class="text-gray-600">Ringkasan data material, stok kritis, dan status kebutuhan</p>
+            </div>
+
+            <!-- Status Kebutuhan Material Cards -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-tasks text-blue-600 mr-2"></i>
+                    Status Kebutuhan Material
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <!-- Total -->
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-clipboard-list text-3xl opacity-80"></i>
+                            <span class="text-4xl font-bold" id="totalKebutuhan">0</span>
+                        </div>
+                        <p class="text-sm opacity-90">Total Kebutuhan</p>
+                    </div>
+                    
+                    <!-- Pengadaan -->
+                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-shopping-cart text-3xl opacity-80"></i>
+                            <span class="text-4xl font-bold" id="totalPengadaan">0</span>
+                        </div>
+                        <p class="text-sm opacity-90">Pengadaan</p>
+                    </div>
+                    
+                    <!-- Tunda -->
+                    <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-lg shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-clock text-3xl opacity-80"></i>
+                            <span class="text-4xl font-bold" id="totalTunda">0</span>
+                        </div>
+                        <p class="text-sm opacity-90">Tunda</p>
+                    </div>
+                    
+                    <!-- Terkirim -->
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-check-circle text-3xl opacity-80"></i>
+                            <span class="text-4xl font-bold" id="totalTerkirim">0</span>
+                        </div>
+                        <p class="text-sm opacity-90">Terkirim</p>
+                    </div>
+                    
+                    <!-- Reject -->
+                    <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-times-circle text-3xl opacity-80"></i>
+                            <span class="text-4xl font-bold" id="totalReject">0</span>
+                        </div>
+                        <p class="text-sm opacity-90">Reject</p>
+                    </div>
+                    
+                    <!-- Tersedia -->
+                    <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <i class="fas fa-box text-3xl opacity-80"></i>
+                            <span class="text-4xl font-bold" id="totalTersedia">0</span>
+                        </div>
+                        <p class="text-sm opacity-90">Tersedia</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top 5 Material Keluar -->
+            <div class="mb-8 bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                        Top 5 Material Sering Keluar
+                    </h2>
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Material dengan frekuensi keluar tertinggi
+                    </span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gradient-to-r from-yellow-50 to-orange-50">
+                            <tr class="border-b border-gray-200">
+                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Peringkat</th>
+                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Part Number</th>
+                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Jenis Barang</th>
+                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Material</th>
+                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Mesin</th>
+                                <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Total Keluar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topMaterialsTable">
+                            <tr>
+                                <td colspan="6" class="px-4 py-8 text-center text-gray-400">
+                                    <i class="fas fa-spinner fa-spin text-2xl"></i>
+                                    <p>Loading...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top 10 Stok Kritis -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                        Top 10 Stok Kritis (< 5 Parts)
+                    </h2>
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Material dengan stok paling rendah
+                    </span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gradient-to-r from-red-50 to-orange-50">
+                            <tr class="border-b border-gray-200">
+                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">No</th>
+                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Part Number</th>
+                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Jenis Barang</th>
+                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Material</th>
+                                <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Mesin</th>
+                                <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Stok Akhir</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stokKritisTable">
+                            <tr>
+                                <td colspan="6" class="px-4 py-8 text-center text-gray-400">
+                                    <i class="fas fa-spinner fa-spin text-2xl"></i>
+                                    <p>Loading...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function logout() {
+                if (confirm('Apakah Anda yakin ingin logout?')) {
+                    fetch('/logout', { method: 'POST' })
+                        .then(() => window.location.href = '/login')
+                        .catch(() => window.location.href = '/login')
+                }
+            }
+        </script>
+        <script src="/static/dashboard-resume.js"></script>
     </body>
     </html>
   `
