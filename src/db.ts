@@ -304,36 +304,59 @@ export async function getAllMaterialKebutuhan(db: D1Database) {
 // UTILITY FUNCTIONS
 // ====================================
 
-export async function getNextBANumber(db: D1Database) {
+export async function getNextBANumber(db: D1Database, tanggal?: string) {
   try {
+    // Extract year from tanggal, default to current year
+    let year = new Date().getFullYear()
+    if (tanggal) {
+      const dateObj = new Date(tanggal)
+      if (!isNaN(dateObj.getTime())) {
+        year = dateObj.getFullYear()
+      }
+    }
+    
+    // Get last BA number for the specific year
     const { results } = await db.prepare(`
-      SELECT nomor_ba FROM transactions ORDER BY created_at DESC LIMIT 1
-    `).all()
+      SELECT nomor_ba FROM transactions 
+      WHERE nomor_ba LIKE ?
+      ORDER BY created_at DESC LIMIT 1
+    `).bind(`BA-${year}-%`).all()
 
     if (results.length === 0) {
-      return 'BA-2025-0001'
+      return `BA-${year}-0001`
     }
 
     const lastBA: any = results[0]
     const lastNumber = parseInt(lastBA.nomor_ba.split('-')[2])
     const nextNumber = (lastNumber + 1).toString().padStart(4, '0')
-    return `BA-2025-${nextNumber}`
+    return `BA-${year}-${nextNumber}`
   } catch (error) {
-    return 'BA-2025-0001'
+    // Default to current year if error
+    const year = new Date().getFullYear()
+    return `BA-${year}-0001`
   }
 }
 
-export async function getNextLH05Number(db: D1Database) {
+export async function getNextLH05Number(db: D1Database, tanggal?: string) {
   try {
-    // Get only LH05 numbers that match pattern: XXXX/ND KAL 2/LH05/YYYY
+    // Extract year from tanggal, default to current year
+    let year = new Date().getFullYear()
+    if (tanggal) {
+      const dateObj = new Date(tanggal)
+      if (!isNaN(dateObj.getTime())) {
+        year = dateObj.getFullYear()
+      }
+    }
+    
+    // Get only LH05 numbers that match pattern for the specific year: XXXX/ND KAL 2/LH05/YYYY
     const { results } = await db.prepare(`
       SELECT nomor_lh05 FROM gangguan 
-      WHERE nomor_lh05 LIKE '%/ND KAL 2/LH05/%'
+      WHERE nomor_lh05 LIKE ?
       ORDER BY id DESC LIMIT 1
-    `).all()
+    `).bind(`%/ND KAL 2/LH05/${year}`).all()
 
     if (results.length === 0) {
-      return '0001/ND KAL 2/LH05/2025'
+      return `0001/ND KAL 2/LH05/${year}`
     }
 
     const lastLH05: any = results[0]
@@ -346,14 +369,15 @@ export async function getNextLH05Number(db: D1Database) {
     // Validate number is valid
     if (isNaN(lastNumber) || lastNumber === 0) {
       console.warn('Invalid LH05 number format:', lastLH05.nomor_lh05, '- using 0001')
-      return '0001/ND KAL 2/LH05/2025'
+      return `0001/ND KAL 2/LH05/${year}`
     }
     
     const nextNumber = (lastNumber + 1).toString().padStart(4, '0')
-    return `${nextNumber}/ND KAL 2/LH05/2025`
+    return `${nextNumber}/ND KAL 2/LH05/${year}`
   } catch (error) {
     console.error('Error generating LH05 number:', error)
-    return '0001/ND KAL 2/LH05/2025'
+    const year = new Date().getFullYear()
+    return `0001/ND KAL 2/LH05/${year}`
   }
 }
 

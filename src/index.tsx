@@ -166,10 +166,20 @@ async function fetchGoogleSheetsData() {
 }
 
 // Helper: Generate Nomor BA
-function generateNomorBA() {
-  const paddedNumber = String(baCounter).padStart(3, '0')
+function generateNomorBA(tanggal?: string) {
+  // Extract year from tanggal if provided, otherwise use current year
+  let year = new Date().getFullYear()
+  
+  if (tanggal) {
+    const dateObj = new Date(tanggal)
+    if (!isNaN(dateObj.getTime())) {
+      year = dateObj.getFullYear()
+    }
+  }
+  
+  const paddedNumber = String(baCounter).padStart(4, '0')
   baCounter++
-  return `BA${new Date().getFullYear()}${paddedNumber}`
+  return `BA-${year}-${paddedNumber}`
 }
 
 // Helper: Generate Nomor BA LH05
@@ -349,8 +359,8 @@ app.post('/api/save-transaction', async (c) => {
     const { env } = c
     const body = await c.req.json()
     
-    // Generate Nomor BA dari D1 Database
-    const nomorBA = await DB.getNextBANumber(env.DB)
+    // Generate Nomor BA dari D1 Database with year from tanggal
+    const nomorBA = await DB.getNextBANumber(env.DB, body.tanggal)
     
     // Save ke D1 Database (persistent storage)
     const result = await DB.saveTransaction(env.DB, {
@@ -965,8 +975,8 @@ app.post('/api/save-gangguan', async (c) => {
     console.log('💾 Saving gangguan form...')
     console.log('📋 Form data received:', JSON.stringify(body).substring(0, 200) + '...')
     
-    // Generate Nomor LH05 dari D1 Database
-    const nomorLH05 = await DB.getNextLH05Number(env.DB)
+    // Generate Nomor LH05 dari D1 Database with year from tanggal_kejadian
+    const nomorLH05 = await DB.getNextLH05Number(env.DB, body.tanggal_kejadian)
     console.log('🏷️ Generated Nomor LH05:', nomorLH05)
     
     // Save ke D1 Database (persistent storage)
