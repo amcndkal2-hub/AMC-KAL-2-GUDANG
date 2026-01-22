@@ -399,28 +399,39 @@ async function populateDetailTable(status) {
       return
     }
     
-    tbody.innerHTML = materials.map((item, index) => `
+    tbody.innerHTML = materials.map((item, index) => {
+      // Map snake_case to camelCase
+      const nomorLH05 = item.nomor_lh05 || item.nomorLH05 || '-'
+      const partNumber = item.part_number || item.partNumber || '-'
+      const material = item.material || '-'
+      const mesin = item.mesin || '-'
+      const jumlah = item.jumlah || 0
+      const unitULD = item.unit_uld || item.unitULD || '-'
+      const lokasiTujuan = item.lokasi_tujuan || item.lokasiTujuan || '-'
+      const status = item.status || 'Pending'
+      
+      return `
       <tr class="hover:bg-gray-50 border-b">
         <td class="px-4 py-3 border">${index + 1}</td>
         <td class="px-4 py-3 border">
-          <a href="#" onclick="viewLH05('${item.nomorLH05 || '-'}'); return false;" 
+          <a href="#" onclick="viewLH05('${nomorLH05}'); return false;" 
              class="text-blue-600 hover:text-blue-800 hover:underline font-semibold">
-            ${item.nomorLH05 || '-'}
+            ${nomorLH05}
           </a>
         </td>
-        <td class="px-4 py-3 border font-mono">${item.partNumber || '-'}</td>
-        <td class="px-4 py-3 border">${item.material || '-'}</td>
-        <td class="px-4 py-3 border">${item.mesin || '-'}</td>
-        <td class="px-4 py-3 text-center border font-semibold">${item.jumlah || 0}</td>
-        <td class="px-4 py-3 border">${item.unitULD || '-'}</td>
-        <td class="px-4 py-3 border">${item.lokasiTujuan || '-'}</td>
+        <td class="px-4 py-3 border font-mono">${partNumber}</td>
+        <td class="px-4 py-3 border">${material}</td>
+        <td class="px-4 py-3 border">${mesin}</td>
+        <td class="px-4 py-3 text-center border font-semibold">${jumlah}</td>
+        <td class="px-4 py-3 border">${unitULD}</td>
+        <td class="px-4 py-3 border">${lokasiTujuan}</td>
         <td class="px-4 py-3 text-center border">
-          <span class="px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(item.status || 'Pending')}">
-            ${item.status || 'Pending'}
+          <span class="px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(status)}">
+            ${status}
           </span>
         </td>
       </tr>
-    `).join('')
+    `}).join('')
     
   } catch (error) {
     console.error('Failed to load detail materials:', error)
@@ -461,13 +472,13 @@ function exportStatusToExcel() {
     headers.join(','),
     ...currentDetailMaterials.map((item, index) => [
       index + 1,
-      item.nomorLH05 || '-',
-      item.partNumber || '-',
+      item.nomor_lh05 || item.nomorLH05 || '-',
+      item.part_number || item.partNumber || '-',
       item.material || '-',
       item.mesin || '-',
       item.jumlah || 0,
-      item.unitULD || '-',
-      item.lokasiTujuan || '-',
+      item.unit_uld || item.unitULD || '-',
+      item.lokasi_tujuan || item.lokasiTujuan || '-',
       item.status || 'Pending'
     ].map(cell => `"${cell}"`).join(','))
   ].join('\n')
