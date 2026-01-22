@@ -1860,7 +1860,7 @@ function getDashboardStokHTML() {
                     </h2>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="max-height: 600px; overflow-y: auto;">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="height: calc(100vh - 200px); overflow-y: auto;">
                     <table class="w-full">
                         <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
@@ -2011,7 +2011,7 @@ function getDashboardUmurHTML() {
 
             <!-- Main Content Area -->
             <main class="flex-1 p-6">
-                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="max-height: 600px; overflow-y: auto;">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="height: calc(100vh - 200px); overflow-y: auto;">
                     <table class="w-full">
                         <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
@@ -2175,34 +2175,32 @@ function getDashboardMutasiHTML() {
 
             <!-- Main Content Area -->
             <main class="flex-1 p-6">
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div class="overflow-x-auto max-h-[600px]">
-                        <table class="w-full">
-                            <thead class="bg-blue-500 text-white sticky top-0 z-10">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">Nomor BA</th>
-                                    <th class="px-4 py-3 text-left">Tanggal</th>
-                                    <th class="px-4 py-3 text-left">Jenis Transaksi</th>
-                                    <th class="px-4 py-3 text-left">Part Number</th>
-                                    <th class="px-4 py-3 text-center">Jumlah</th>
-                                    <th class="px-4 py-3 text-left">Lokasi Keluar</th>
-                                    <th class="px-4 py-3 text-left">Lokasi Tujuan</th>
-                                    <th class="px-4 py-3 text-left">Pemeriksa</th>
-                                    <th class="px-4 py-3 text-left">Penerima</th>
-                                    <th class="px-4 py-3 text-center">Status BA</th>
-                                    <th class="px-4 py-3 text-center admin-only">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mutasiTable">
-                                <tr>
-                                    <td colspan="11" class="px-4 py-8 text-center text-gray-500">
-                                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
-                                        <p>Memuat data...</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="height: calc(100vh - 200px); overflow-y: auto;">
+                    <table class="w-full">
+                        <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Nomor BA</th>
+                                <th class="px-4 py-3 text-left">Tanggal</th>
+                                <th class="px-4 py-3 text-left">Jenis Transaksi</th>
+                                <th class="px-4 py-3 text-left">Part Number</th>
+                                <th class="px-4 py-3 text-center">Jumlah</th>
+                                <th class="px-4 py-3 text-left">Lokasi Keluar</th>
+                                <th class="px-4 py-3 text-left">Lokasi Tujuan</th>
+                                <th class="px-4 py-3 text-left">Pemeriksa</th>
+                                <th class="px-4 py-3 text-left">Penerima</th>
+                                <th class="px-4 py-3 text-center">Status BA</th>
+                                <th class="px-4 py-3 text-center admin-only">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mutasiTable">
+                            <tr>
+                                <td colspan="11" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                                    <p>Memuat data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </main>
         </div>
@@ -2808,7 +2806,7 @@ function getDashboardKebutuhanMaterialHTML() {
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="max-height: 600px; overflow-y: auto;">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="height: calc(100vh - 200px); overflow-y: auto;">
                     <table class="w-full">
                         <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
@@ -2982,7 +2980,7 @@ function getDashboardGangguanHTML() {
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="max-height: 600px; overflow-y: auto;">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden" style="height: calc(100vh - 200px); overflow-y: auto;">
                     <table class="w-full">
                         <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
