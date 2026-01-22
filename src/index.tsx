@@ -1139,7 +1139,7 @@ app.get('/api/dashboard/resume', async (c) => {
     
     const topMaterials = topMaterialsQuery.results || []
     
-    // 2. Get Top 10 Stok Kritis (< 5 parts)
+    // 2. Get Top 5 Stok Kritis (< 5 parts)
     const stokKritisQuery = await env.DB.prepare(`
       SELECT 
         m.part_number,
@@ -1155,7 +1155,7 @@ app.get('/api/dashboard/resume', async (c) => {
       GROUP BY m.part_number, m.jenis_barang, m.material, m.mesin
       HAVING stok_akhir < 5
       ORDER BY stok_akhir ASC
-      LIMIT 10
+      LIMIT 5
     `).all()
     
     const stokKritis = stokKritisQuery.results || []
@@ -2959,18 +2959,42 @@ function getDashboardResumeHTML() {
             </div>
         </nav>
 
-        <div class="max-w-7xl mx-auto p-6">
-            <!-- Page Header -->
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                    <i class="fas fa-chart-line text-blue-600 mr-3"></i>
-                    Resume & Analisis Material
-                </h1>
-                <p class="text-gray-600">Ringkasan data material, stok kritis, dan status kebutuhan</p>
+        <div class="flex">
+            <!-- Sidebar -->
+            <div class="w-64 bg-white shadow-lg min-h-screen p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-list text-blue-600 mr-2"></i>
+                    Menu Navigasi
+                </h3>
+                <nav class="space-y-2">
+                    <a href="#status-kebutuhan" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors cursor-pointer">
+                        <i class="fas fa-tasks w-5 mr-3"></i>
+                        <span>Status Kebutuhan Material</span>
+                    </a>
+                    <a href="#top-material" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors cursor-pointer">
+                        <i class="fas fa-trophy w-5 mr-3"></i>
+                        <span>Top 5 Material Sering Keluar</span>
+                    </a>
+                    <a href="#stok-kritis" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors cursor-pointer">
+                        <i class="fas fa-exclamation-triangle w-5 mr-3"></i>
+                        <span>Top 5 Stok Kritis</span>
+                    </a>
+                </nav>
             </div>
 
+            <!-- Main Content -->
+            <div class="flex-1 p-6">
+                <!-- Page Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                        <i class="fas fa-chart-line text-blue-600 mr-3"></i>
+                        Resume & Analisis Material
+                    </h1>
+                    <p class="text-gray-600">Ringkasan data material, stok kritis, dan status kebutuhan</p>
+                </div>
+
             <!-- Status Kebutuhan Material Cards -->
-            <div class="mb-8 bg-white rounded-lg shadow-lg p-6">
+            <div id="status-kebutuhan" class="mb-8 bg-white rounded-lg shadow-lg p-6 scroll-mt-6">
                 <button id="toggleStatus" class="w-full flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <h2 class="text-2xl font-bold text-gray-800">
                         <i class="fas fa-tasks text-blue-600 mr-2"></i>
@@ -3038,7 +3062,7 @@ function getDashboardResumeHTML() {
             </div>
 
             <!-- Top 5 Material Keluar -->
-            <div class="mb-8 bg-white rounded-lg shadow-lg p-6">
+            <div id="top-material" class="mb-8 bg-white rounded-lg shadow-lg p-6 scroll-mt-6">
                 <button id="toggleTopMaterials" class="w-full flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <h2 class="text-2xl font-bold text-gray-800">
                         <i class="fas fa-trophy text-yellow-500 mr-2"></i>
@@ -3071,12 +3095,12 @@ function getDashboardResumeHTML() {
                 </div>
             </div>
 
-            <!-- Top 10 Stok Kritis -->
-            <div class="bg-white rounded-lg shadow-lg p-6">
+            <!-- Top 5 Stok Kritis -->
+            <div id="stok-kritis" class="bg-white rounded-lg shadow-lg p-6 scroll-mt-6">
                 <button id="toggleStokKritis" class="w-full flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <h2 class="text-2xl font-bold text-gray-800">
                         <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
-                        Top 10 Stok Kritis (< 5 Parts)
+                        Top 5 Stok Kritis (< 5 Parts)
                     </h2>
                     <i class="fas fa-chevron-down text-gray-600 text-xl"></i>
                 </button>
@@ -3104,6 +3128,7 @@ function getDashboardResumeHTML() {
                     </table>
                 </div>
             </div>
+            </div>
         </div>
 
         <script>
@@ -3114,6 +3139,24 @@ function getDashboardResumeHTML() {
                         .catch(() => window.location.href = '/login')
                 }
             }
+            
+            // Smooth scroll untuk sidebar links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Expand section jika collapsed
+                        const button = targetElement.querySelector('[id^="toggle"]');
+                        const content = targetElement.querySelector('[id$="Content"]');
+                        if (button && content && content.style.display === 'none') {
+                            button.click();
+                        }
+                    }
+                });
+            });
         </script>
         <script src="/static/dashboard-resume.js"></script>
     </body>
