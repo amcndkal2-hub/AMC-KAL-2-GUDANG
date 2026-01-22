@@ -92,7 +92,7 @@ function renderTopMaterials(materials) {
   if (materials.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="6" class="px-4 py-8 text-center text-gray-500 border">
           <i class="fas fa-inbox text-4xl mb-2"></i>
           <p>Belum ada data material keluar</p>
         </td>
@@ -101,24 +101,30 @@ function renderTopMaterials(materials) {
     return
   }
   
-  tbody.innerHTML = materials.map((item, index) => `
-    <tr class="border-b hover:bg-gray-50">
-      <td class="px-4 py-3 text-center">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${getRankColor(index + 1)} text-white font-bold">
-          ${index + 1}
+  tbody.innerHTML = materials.map((item, index) => {
+    const rank = index + 1
+    const isTopFive = rank <= 5
+    const rowClass = isTopFive ? 'bg-red-50 border-red-200' : 'hover:bg-gray-50'
+    
+    return `
+    <tr class="border-b ${rowClass}">
+      <td class="px-4 py-3 text-center border">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${getRankColor(rank)} text-white font-bold">
+          ${rank}
         </span>
       </td>
-      <td class="px-4 py-3 font-mono text-sm">${item.part_number || '-'}</td>
-      <td class="px-4 py-3">${item.jenis_barang || '-'}</td>
-      <td class="px-4 py-3">${item.material || '-'}</td>
-      <td class="px-4 py-3 text-sm text-gray-600">${item.mesin || '-'}</td>
-      <td class="px-4 py-3 text-center">
-        <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full font-bold">
+      <td class="px-4 py-3 font-mono text-sm border">${item.part_number || '-'}</td>
+      <td class="px-4 py-3 border">${item.jenis_barang || '-'}</td>
+      <td class="px-4 py-3 border">${item.material || '-'}</td>
+      <td class="px-4 py-3 text-sm text-gray-600 border">${item.mesin || '-'}</td>
+      <td class="px-4 py-3 text-center border">
+        <span class="px-3 py-1 ${isTopFive ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'} rounded-full font-bold">
           ${item.total_keluar || 0}x
         </span>
       </td>
     </tr>
-  `).join('')
+  `
+  }).join('')
 }
 
 function renderStokKritis(materials) {
@@ -128,7 +134,7 @@ function renderStokKritis(materials) {
   if (materials.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="6" class="px-4 py-8 text-center text-gray-500 border">
           <i class="fas fa-check-circle text-4xl mb-2 text-green-500"></i>
           <p>Tidak ada stok kritis (< 5)</p>
           <p class="text-sm">Semua material memiliki stok yang cukup</p>
@@ -140,16 +146,19 @@ function renderStokKritis(materials) {
   
   tbody.innerHTML = materials.map((item, index) => {
     const stokAkhir = item.stok_akhir || 0
-    const alertLevel = getStokAlertLevel(stokAkhir)
+    const rank = index + 1
+    const isTopFive = rank <= 5
+    const alertLevel = getStokAlertLevel(stokAkhir, isTopFive)
+    const rowClass = isTopFive ? 'bg-red-50 border-red-200' : 'hover:bg-gray-50'
     
     return `
-      <tr class="border-b hover:bg-gray-50">
-        <td class="px-4 py-3 text-center text-gray-600">${index + 1}</td>
-        <td class="px-4 py-3 font-mono text-sm">${item.part_number || '-'}</td>
-        <td class="px-4 py-3">${item.jenis_barang || '-'}</td>
-        <td class="px-4 py-3">${item.material || '-'}</td>
-        <td class="px-4 py-3 text-sm text-gray-600">${item.mesin || '-'}</td>
-        <td class="px-4 py-3 text-center">
+      <tr class="border-b ${rowClass}">
+        <td class="px-4 py-3 text-center text-gray-600 border">${rank}</td>
+        <td class="px-4 py-3 font-mono text-sm border">${item.part_number || '-'}</td>
+        <td class="px-4 py-3 border">${item.jenis_barang || '-'}</td>
+        <td class="px-4 py-3 border">${item.material || '-'}</td>
+        <td class="px-4 py-3 text-sm text-gray-600 border">${item.mesin || '-'}</td>
+        <td class="px-4 py-3 text-center border">
           <span class="px-3 py-1 ${alertLevel.bgColor} ${alertLevel.textColor} rounded-full font-bold">
             ${stokAkhir} ${alertLevel.icon}
           </span>
@@ -181,23 +190,33 @@ function getRankColor(rank) {
   }
 }
 
-function getStokAlertLevel(stok) {
-  if (stok === 0) {
+function getStokAlertLevel(stok, isTopFive = false) {
+  // Jika top 5, force red color
+  if (isTopFive) {
     return {
       bgColor: 'bg-red-100',
       textColor: 'text-red-700',
       icon: '<i class="fas fa-exclamation-triangle ml-1"></i>'
     }
-  } else if (stok <= 2) {
+  }
+  
+  // For rank 6-15, use normal alert levels
+  if (stok === 0) {
     return {
       bgColor: 'bg-orange-100',
       textColor: 'text-orange-700',
+      icon: '<i class="fas fa-exclamation-triangle ml-1"></i>'
+    }
+  } else if (stok <= 2) {
+    return {
+      bgColor: 'bg-yellow-100',
+      textColor: 'text-yellow-700',
       icon: '<i class="fas fa-exclamation-circle ml-1"></i>'
     }
   } else {
     return {
-      bgColor: 'bg-yellow-100',
-      textColor: 'text-yellow-700',
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-700',
       icon: '<i class="fas fa-info-circle ml-1"></i>'
     }
   }

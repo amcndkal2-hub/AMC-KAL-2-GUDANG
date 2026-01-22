@@ -1121,7 +1121,7 @@ app.get('/api/dashboard/resume', async (c) => {
   try {
     const { env } = c
     
-    // 1. Get Top 5 Material Keluar (most frequent)
+    // 1. Get Top 15 Material Keluar (most frequent, highlight top 5)
     const topMaterialsQuery = await env.DB.prepare(`
       SELECT 
         m.part_number,
@@ -1134,12 +1134,12 @@ app.get('/api/dashboard/resume', async (c) => {
       WHERE t.jenis_transaksi LIKE '%Keluar%'
       GROUP BY m.part_number, m.jenis_barang, m.material, m.mesin
       ORDER BY total_keluar DESC
-      LIMIT 5
+      LIMIT 15
     `).all()
     
     const topMaterials = topMaterialsQuery.results || []
     
-    // 2. Get Top 5 Stok Kritis (< 5 parts)
+    // 2. Get Top 15 Stok Kritis (< 5 parts, highlight top 5)
     const stokKritisQuery = await env.DB.prepare(`
       SELECT 
         m.part_number,
@@ -1155,7 +1155,7 @@ app.get('/api/dashboard/resume', async (c) => {
       GROUP BY m.part_number, m.jenis_barang, m.material, m.mesin
       HAVING stok_akhir < 5
       ORDER BY stok_akhir ASC
-      LIMIT 5
+      LIMIT 15
     `).all()
     
     const stokKritis = stokKritisQuery.results || []
@@ -2997,8 +2997,8 @@ function getDashboardResumeHTML() {
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih Tampilan</label>
                         <select id="filterTampilan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="status-kebutuhan">Status Kebutuhan Material</option>
-                            <option value="top-material">Top 5 Material Sering Keluar</option>
-                            <option value="stok-kritis">Top 5 Stok Kritis</option>
+                            <option value="top-material">Top 15 Material Sering Keluar</option>
+                            <option value="stok-kritis">Top 15 Stok Kritis</option>
                         </select>
                     </div>
                     
@@ -3128,12 +3128,13 @@ function getDashboardResumeHTML() {
                 </div>
             </div>
 
-            <!-- Section: Top 5 Material Sering Keluar -->
+            <!-- Section: Top 15 Material Sering Keluar -->
             <div id="top-material" class="section-content" style="display: none;">
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-trophy text-yellow-500 mr-2"></i>
-                        Top 5 Material Sering Keluar
+                        Top 15 Material Sering Keluar
+                        <span class="ml-3 text-sm font-normal text-gray-500">(🔴 Merah = Top 5 Prioritas)</span>
                     </h2>
                     
                     <div class="overflow-x-auto">
@@ -3168,12 +3169,13 @@ function getDashboardResumeHTML() {
                 </div>
             </div>
 
-            <!-- Section: Top 5 Stok Kritis -->
+            <!-- Section: Top 15 Stok Kritis -->
             <div id="stok-kritis" class="section-content" style="display: none;">
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
-                        Top 5 Stok Kritis (< 5 Parts)
+                        Top 15 Stok Kritis (< 5 Parts)
+                        <span class="ml-3 text-sm font-normal text-gray-500">(🔴 Merah = Top 5 Prioritas)</span>
                     </h2>
                     
                     <div class="overflow-x-auto">
