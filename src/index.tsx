@@ -3088,6 +3088,43 @@ function getDashboardResumeHTML() {
                             <p class="text-sm opacity-90">Tersedia 👆</p>
                         </div>
                     </div>
+                    
+                    <!-- Tabel Detail Material (seperti Dashboard Stok) -->
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Detail Material Kebutuhan</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-blue-600 text-white">
+                                        <th class="px-4 py-3 text-left text-sm font-semibold border">No</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold border">Nomor LH05</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold border">Part Number</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold border">Material</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold border">Mesin</th>
+                                        <th class="px-4 py-3 text-center text-sm font-semibold border">Jumlah</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold border">Unit/ULD</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold border">Tujuan</th>
+                                        <th class="px-4 py-3 text-center text-sm font-semibold border">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailMaterialTable" class="text-sm">
+                                    <tr>
+                                        <td colspan="9" class="px-4 py-8 text-center text-gray-400 border">
+                                            <i class="fas fa-info-circle text-2xl"></i>
+                                            <p class="mt-2">Klik salah satu status card di atas untuk melihat detail material</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Export Button -->
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="exportStatusToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+                                <i class="fas fa-file-excel mr-2"></i>Export to Excel
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -3121,6 +3158,13 @@ function getDashboardResumeHTML() {
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Export Button -->
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="exportTopMaterialToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+                            <i class="fas fa-file-excel mr-2"></i>Export to Excel
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -3153,6 +3197,13 @@ function getDashboardResumeHTML() {
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <!-- Export Button -->
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="exportStokKritisToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+                            <i class="fas fa-file-excel mr-2"></i>Export to Excel
+                        </button>
                     </div>
                 </div>
             </div>

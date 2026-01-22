@@ -348,3 +348,174 @@ function getStatusColor(status) {
 function exportResumeAsPDF() {
   window.print()
 }
+
+// Global variable untuk store current materials
+let currentDetailMaterials = []
+
+// Modified showStatusDetail untuk populate table instead of modal
+async function populateDetailTable(status) {
+  try {
+    console.log(`Loading ${status} materials for table...`)
+    
+    // Fetch materials by status
+    const response = await fetch(`/api/kebutuhan-material?status=${encodeURIComponent(status)}`)
+    const data = await response.json()
+    
+    const materials = data.materials || []
+    currentDetailMaterials = materials // Store for export
+    console.log(`Found ${materials.length} materials with status: ${status}`)
+    
+    const tbody = document.getElementById('detailMaterialTable')
+    if (!tbody) return
+    
+    if (materials.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="9" class="px-4 py-8 text-center text-gray-400 border">
+            <i class="fas fa-inbox text-2xl"></i>
+            <p class="mt-2">Tidak ada material dengan status <strong>${status}</strong></p>
+          </td>
+        </tr>
+      `
+      return
+    }
+    
+    tbody.innerHTML = materials.map((item, index) => `
+      <tr class="hover:bg-gray-50 border-b">
+        <td class="px-4 py-3 border">${index + 1}</td>
+        <td class="px-4 py-3 border">
+          <a href="#" onclick="viewLH05('${item.nomorLH05 || '-'}'); return false;" 
+             class="text-blue-600 hover:text-blue-800 hover:underline font-semibold">
+            ${item.nomorLH05 || '-'}
+          </a>
+        </td>
+        <td class="px-4 py-3 border font-mono">${item.partNumber || '-'}</td>
+        <td class="px-4 py-3 border">${item.material || '-'}</td>
+        <td class="px-4 py-3 border">${item.mesin || '-'}</td>
+        <td class="px-4 py-3 text-center border font-semibold">${item.jumlah || 0}</td>
+        <td class="px-4 py-3 border">${item.unitULD || '-'}</td>
+        <td class="px-4 py-3 border">${item.lokasiTujuan || '-'}</td>
+        <td class="px-4 py-3 text-center border">
+          <span class="px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(item.status || 'Pending')}">
+            ${item.status || 'Pending'}
+          </span>
+        </td>
+      </tr>
+    `).join('')
+    
+  } catch (error) {
+    console.error('Failed to load detail materials:', error)
+    const tbody = document.getElementById('detailMaterialTable')
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="9" class="px-4 py-8 text-center text-red-500 border">
+            <i class="fas fa-exclamation-triangle text-2xl"></i>
+            <p class="mt-2">Gagal memuat data material</p>
+          </td>
+        </tr>
+      `
+    }
+  }
+}
+
+// Override showStatusDetail untuk call populateDetailTable
+const originalShowStatusDetail = showStatusDetail
+showStatusDetail = async function(status) {
+  // Populate table
+  await populateDetailTable(status)
+  
+  // Also show modal (original behavior)
+  await originalShowStatusDetail(status)
+}
+
+// Export Status Kebutuhan to Excel
+function exportStatusToExcel() {
+  if (currentDetailMaterials.length === 0) {
+    alert('Tidak ada data untuk di-export. Silakan klik salah satu status card terlebih dahulu.')
+    return
+  }
+  
+  // Create CSV content
+  const headers = ['No', 'Nomor LH05', 'Part Number', 'Material', 'Mesin', 'Jumlah', 'Unit/ULD', 'Tujuan', 'Status']
+  const csvContent = [
+    headers.join(','),
+    ...currentDetailMaterials.map((item, index) => [
+      index + 1,
+      item.nomorLH05 || '-',
+      item.partNumber || '-',
+      item.material || '-',
+      item.mesin || '-',
+      item.jumlah || 0,
+      item.unitULD || '-',
+      item.lokasiTujuan || '-',
+      item.status || 'Pending'
+    ].map(cell => `"${cell}"`).join(','))
+  ].join('\n')
+  
+  // Download CSV
+  downloadCSV(csvContent, 'Status_Kebutuhan_Material.csv')
+}
+
+// Export Top 5 Material to Excel
+function exportTopMaterialToExcel() {
+  if (!currentResumeData || !currentResumeData.topMaterials || currentResumeData.topMaterials.length === 0) {
+    alert('Tidak ada data Top 5 Material untuk di-export.')
+    return
+  }
+  
+  const headers = ['Peringkat', 'Part Number', 'Jenis Barang', 'Material', 'Mesin', 'Total Keluar']
+  const csvContent = [
+    headers.join(','),
+    ...currentResumeData.topMaterials.map((item, index) => [
+      index + 1,
+      item.part_number || '-',
+      item.jenis_barang || '-',
+      item.material || '-',
+      item.mesin || '-',
+      item.total_keluar || 0
+    ].map(cell => `"${cell}"`).join(','))
+  ].join('\n')
+  
+  downloadCSV(csvContent, 'Top_5_Material_Sering_Keluar.csv')
+}
+
+// Export Stok Kritis to Excel
+function exportStokKritisToExcel() {
+  if (!currentResumeData || !currentResumeData.stokKritis || currentResumeData.stokKritis.length === 0) {
+    alert('Tidak ada data Stok Kritis untuk di-export.')
+    return
+  }
+  
+  const headers = ['No', 'Part Number', 'Jenis Barang', 'Material', 'Mesin', 'Stok Akhir']
+  const csvContent = [
+    headers.join(','),
+    ...currentResumeData.stokKritis.map((item, index) => [
+      index + 1,
+      item.part_number || '-',
+      item.jenis_barang || '-',
+      item.material || '-',
+      item.mesin || '-',
+      item.stok_akhir || 0
+    ].map(cell => `"${cell}"`).join(','))
+  ].join('\n')
+  
+  downloadCSV(csvContent, 'Top_5_Stok_Kritis.csv')
+}
+
+// Helper function to download CSV
+function downloadCSV(csvContent, filename) {
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  
+  link.setAttribute('href', url)
+  link.setAttribute('download', filename)
+  link.style.visibility = 'hidden'
+  
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  
+  console.log(`Exported: ${filename}`)
+}
