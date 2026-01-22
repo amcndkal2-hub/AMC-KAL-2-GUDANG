@@ -199,7 +199,7 @@ function applyFilters() {
       match = false
     }
     
-    if (tanggal && !item.hariTanggal.includes(tanggal)) {
+    if (tanggal && !item.tanggalLaporan.includes(tanggal)) {
       match = false
     }
     
@@ -288,7 +288,7 @@ function renderTable() {
   const isAdminUser = isAdmin();
   
   tbody.innerHTML = filteredData.map(item => {
-    const tanggal = new Date(item.hariTanggal).toLocaleString('id-ID', {
+    const tanggal = new Date(item.tanggalLaporan).toLocaleString('id-ID', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -373,7 +373,7 @@ async function viewLH05(nomorLH05) {
 }
 
 function showLH05Modal(gangguan) {
-  const tanggal = new Date(gangguan.hariTanggal).toLocaleString('id-ID', {
+  const tanggal = new Date(gangguan.tanggalLaporan).toLocaleString('id-ID', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
