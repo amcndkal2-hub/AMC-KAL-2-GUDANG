@@ -100,8 +100,24 @@ async function loadDashboardData() {
       console.error('❌ gangguanTransactions is not an array!', typeof data.gangguanTransactions)
       allGangguanData = []
     } else {
-      allGangguanData = data.gangguanTransactions
-      console.log('✅ gangguanTransactions is valid array')
+      // Map snake_case API fields to camelCase for frontend compatibility
+      allGangguanData = data.gangguanTransactions.map(item => ({
+        ...item,
+        nomorLH05: item.nomor_lh05,
+        tanggalLaporan: item.tanggal_laporan,
+        jenisGangguan: item.jenis_gangguan,
+        lokasiGangguan: item.lokasi_gangguan,
+        userLaporan: item.user_laporan,
+        catatanTindakan: item.catatan_tindakan,
+        rencanaPerbaikan: item.rencana_perbaikan,
+        ttdTeknisi: item.ttd_teknisi,
+        ttdSupervisor: item.ttd_supervisor,
+        createdAt: item.created_at,
+        // For backward compatibility with old field names
+        kelompokSPD: item.jenis_gangguan,
+        unitULD: item.lokasi_gangguan
+      }))
+      console.log('✅ gangguanTransactions is valid array with field mapping')
     }
     
     filteredData = [...allGangguanData]
