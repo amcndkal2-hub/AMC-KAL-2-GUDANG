@@ -1205,23 +1205,33 @@ app.post('/api/update-material-status', async (c) => {
     
     console.log('📝 Updating material status:', { nomorLH05, partNumber, status })
     
-    // Find material_gangguan record in database
-    const result = await env.DB.prepare(`
-      SELECT * FROM material_gangguan 
-      WHERE nomor_lh05 = ? AND part_number = ?
-    `).bind(nomorLH05, partNumber).first()
+    // Find gangguan by nomor_lh05
+    const gangguan = await env.DB.prepare(`
+      SELECT id FROM gangguan WHERE nomor_lh05 = ?
+    `).bind(nomorLH05).first()
     
-    if (!result) {
-      console.error('❌ Material not found:', { nomorLH05, partNumber })
+    if (!gangguan) {
+      console.error('❌ Gangguan not found:', nomorLH05)
+      return c.json({ error: 'Gangguan not found' }, 404)
+    }
+    
+    // Find material_gangguan record
+    const material = await env.DB.prepare(`
+      SELECT * FROM material_gangguan 
+      WHERE gangguan_id = ? AND part_number = ?
+    `).bind(gangguan.id, partNumber).first()
+    
+    if (!material) {
+      console.error('❌ Material not found:', { gangguan_id: gangguan.id, partNumber })
       return c.json({ error: 'Material not found' }, 404)
     }
     
     // Update status in database
     const updateResult = await env.DB.prepare(`
       UPDATE material_gangguan 
-      SET status = ?
-      WHERE nomor_lh05 = ? AND part_number = ?
-    `).bind(status, nomorLH05, partNumber).run()
+      SET status = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE gangguan_id = ? AND part_number = ?
+    `).bind(status, gangguan.id, partNumber).run()
     
     if (!updateResult.success) {
       console.error('❌ Failed to update status in DB')
@@ -1231,25 +1241,28 @@ app.post('/api/update-material-status', async (c) => {
     console.log('✅ Status updated successfully in DB')
     
     // Also update in-memory cache for backward compatibility
-    const gangguan = gangguanTransactions.find(g => g.nomorLH05 === nomorLH05)
-    if (gangguan && gangguan.materials) {
-      const material = gangguan.materials.find((m: any) => m.partNumber === partNumber)
-      if (material) {
-        material.status = status
-        material.updatedAt = new Date().toISOString()
+    const gangguanCache = gangguanTransactions.find(g => g.nomorLH05 === nomorLH05)
+    if (gangguanCache && gangguanCache.materials) {
+      const materialCache = gangguanCache.materials.find((m: any) => m.partNumber === partNumber)
+      if (materialCache) {
+        materialCache.status = status
+        materialCache.updatedAt = new Date().toISOString()
       }
     }
     
     return c.json({ 
       success: true, 
-      message: 'Status updated successfully',
+      message: 'Status berhasil diupdate!',
       nomorLH05,
       partNumber,
       status
     })
   } catch (error) {
     console.error('❌ Update status error:', error)
-    return c.json({ error: 'Failed to update status: ' + (error as Error).message }, 500)
+    return c.json({ 
+      success: false,
+      error: 'Failed to update status: ' + (error as Error).message 
+    }, 500)
   }
 })
 
