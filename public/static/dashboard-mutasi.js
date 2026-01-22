@@ -37,6 +37,10 @@ async function loadTransactions() {
         
         transactions = data.transactions;
         console.log(`✅ Loaded ${transactions.length} transactions from ${data.source || 'unknown source'}`);
+        
+        // Populate dynamic dropdowns
+        populateUnitTujuanDropdown();
+        
         renderMutasiTable();
     } catch (error) {
         console.error('❌ Failed to load transactions:', error);
@@ -60,6 +64,29 @@ async function loadTransactions() {
             `;
         }
     }
+}
+
+function populateUnitTujuanDropdown() {
+    const dropdown = document.getElementById('filterUnitTujuan');
+    if (!dropdown) {
+        console.warn('⚠️ filterUnitTujuan dropdown not found!');
+        return;
+    }
+    
+    // Extract unique lokasi_tujuan values
+    const uniqueLocations = [...new Set(transactions.map(tx => tx.lokasi_tujuan))].filter(Boolean);
+    
+    // Sort alphabetically
+    uniqueLocations.sort();
+    
+    // Build dropdown options
+    let html = '<option value="">Semua Unit</option>';
+    uniqueLocations.forEach(location => {
+        html += `<option value="${location}">${location}</option>`;
+    });
+    
+    dropdown.innerHTML = html;
+    console.log(`📍 Loaded ${uniqueLocations.length} unique Unit Tujuan:`, uniqueLocations);
 }
 
 function setupFilters() {
