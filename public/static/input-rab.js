@@ -282,9 +282,28 @@ function resetRABForm() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ DOM Content Loaded - Input RAB script initialized');
+    
     // Initialize signature pads
     initRABSignaturePads();
     
-    // Load RAB materials
-    loadRABMaterials();
+    // Make loadRABMaterials globally accessible for debugging
+    window.loadRABMaterials = loadRABMaterials;
+    window.rabDebug = {
+        materials: rabMaterials,
+        selected: selectedMaterials,
+        reload: loadRABMaterials
+    };
+    
+    console.log('🔍 Debug: window.loadRABMaterials is available');
+    console.log('🔍 Debug: Try calling loadRABMaterials() manually');
+    
+    // Load materials on page load (in case user is already on RAB tab)
+    const rabTab = document.getElementById('contentRAB');
+    if (rabTab && !rabTab.classList.contains('hidden')) {
+        console.log('📦 RAB tab is visible, loading materials...');
+        loadRABMaterials();
+    } else {
+        console.log('⏳ RAB tab is hidden, waiting for user to click...');
+    }
 });
