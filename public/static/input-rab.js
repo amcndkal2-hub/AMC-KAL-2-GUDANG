@@ -3,6 +3,48 @@ let rabMaterials = [];
 let allRABMaterials = []; // Store all materials
 let selectedMaterials = [];
 let rabList = []; // Store unique RAB list
+let dropdownDataRAB = { pemeriksa: [], penerima: [] }; // Store dropdown data
+
+// Load dropdown data for RAB input
+async function loadRABDropdownData() {
+    try {
+        const response = await fetch('/api/dropdown-values');
+        const data = await response.json();
+        
+        dropdownDataRAB = data;
+        
+        // Populate dropdowns
+        populateRABDropdown('rabPemeriksa', data.pemeriksa);
+        populateRABDropdown('rabPenerima', data.penerima);
+        
+        console.log('✅ RAB dropdown data loaded');
+    } catch (error) {
+        console.error('❌ Failed to load RAB dropdown data:', error);
+    }
+}
+
+// Populate dropdown with options
+function populateRABDropdown(selectId, options) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    
+    const firstOption = select.querySelector('option:first-child');
+    
+    // Clear existing options except the first one
+    select.innerHTML = '';
+    if (firstOption) {
+        select.appendChild(firstOption);
+    }
+    
+    // Add new options
+    options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option;
+        optionElement.textContent = option;
+        select.appendChild(optionElement);
+    });
+}
+
 
 // Load RAB materials with status Tersedia
 async function loadRABMaterials() {
@@ -349,6 +391,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize signature pads
     initRABSignaturePads();
+    
+    // Load dropdown data for Pemeriksa & Penerima
+    loadRABDropdownData();
     
     // Make loadRABMaterials globally accessible for debugging
     window.loadRABMaterials = loadRABMaterials;

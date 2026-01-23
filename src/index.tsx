@@ -2113,18 +2113,24 @@ function getInputFormHTML() {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <!-- Pemeriksa -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Pemeriksa</label>
-                                    <input type="text" id="rabPemeriksa" required
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                           placeholder="Nama pemeriksa">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Pemeriksa <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="rabPemeriksa" required
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="">-- Pilih Pemeriksa --</option>
+                                    </select>
                                 </div>
                                 
                                 <!-- Penerima -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Penerima</label>
-                                    <input type="text" id="rabPenerima" required
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                           placeholder="Nama penerima">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Penerima <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="rabPenerima" required
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="">-- Pilih Penerima --</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
