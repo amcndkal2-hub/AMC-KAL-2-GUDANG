@@ -2162,21 +2162,44 @@ function getInputFormHTML() {
         <script>
           // Tab switching
           function switchTab(tab) {
+            console.log('🔄 Switching to tab:', tab);
+            
             const tabs = ['manual', 'rab']
             tabs.forEach(t => {
-              const content = document.getElementById('content' + t.charAt(0).toUpperCase() + t.slice(1))
-              const button = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1))
+              const contentId = 'content' + t.charAt(0).toUpperCase() + t.slice(1);
+              const buttonId = 'tab' + t.charAt(0).toUpperCase() + t.slice(1);
+              
+              const content = document.getElementById(contentId);
+              const button = document.getElementById(buttonId);
+              
+              if (!content) {
+                console.error('❌ Content element not found:', contentId);
+                return;
+              }
+              
+              if (!button) {
+                console.error('❌ Button element not found:', buttonId);
+                return;
+              }
               
               if (t === tab) {
-                content.classList.remove('hidden')
-                button.classList.add('text-blue-600', 'border-b-2', 'border-blue-600')
-                button.classList.remove('text-gray-500')
+                content.classList.remove('hidden');
+                button.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+                button.classList.remove('text-gray-500');
+                
+                // Load RAB materials when switching to RAB tab
+                if (tab === 'rab' && typeof loadRABMaterials === 'function') {
+                  console.log('📦 Loading RAB materials...');
+                  loadRABMaterials();
+                }
               } else {
-                content.classList.add('hidden')
-                button.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600')
-                button.classList.add('text-gray-500')
+                content.classList.add('hidden');
+                button.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                button.classList.add('text-gray-500');
               }
             })
+            
+            console.log('✅ Tab switched to:', tab);
           }
         </script>
     </body>
