@@ -1354,6 +1354,79 @@ app.post('/api/update-material-status', async (c) => {
   }
 })
 
+// ====================================
+// RAB (Rencana Anggaran Biaya) APIs
+// ====================================
+
+// API: Get material pengadaan (status = Pengadaan)
+app.get('/api/material-pengadaan', async (c) => {
+  try {
+    const { env } = c
+    const materials = await DB.getMaterialPengadaan(env.DB)
+    return c.json(materials)
+  } catch (error) {
+    console.error('Failed to get material pengadaan:', error)
+    return c.json({ error: 'Failed to fetch material pengadaan' }, 500)
+  }
+})
+
+// API: Create RAB
+app.post('/api/create-rab', async (c) => {
+  try {
+    const { env } = c
+    const data = await c.req.json()
+    
+    console.log('📝 Creating RAB:', data)
+    
+    // Validate data
+    if (!data.tanggal_rab || !data.items || data.items.length === 0) {
+      return c.json({ error: 'Invalid RAB data' }, 400)
+    }
+    
+    // Save RAB
+    const result = await DB.saveRAB(env.DB, data)
+    
+    return c.json({
+      success: true,
+      ...result
+    })
+  } catch (error: any) {
+    console.error('Failed to create RAB:', error)
+    return c.json({ error: 'Failed to create RAB: ' + error.message }, 500)
+  }
+})
+
+// API: Get all RAB
+app.get('/api/rab', async (c) => {
+  try {
+    const { env } = c
+    const rabList = await DB.getAllRAB(env.DB)
+    return c.json(rabList)
+  } catch (error) {
+    console.error('Failed to get RAB list:', error)
+    return c.json({ error: 'Failed to fetch RAB list' }, 500)
+  }
+})
+
+// API: Get RAB by ID
+app.get('/api/rab/:id', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    
+    const rab = await DB.getRABById(env.DB, rabId)
+    
+    if (!rab) {
+      return c.json({ error: 'RAB not found' }, 404)
+    }
+    
+    return c.json(rab)
+  } catch (error) {
+    console.error('Failed to get RAB:', error)
+    return c.json({ error: 'Failed to fetch RAB' }, 500)
+  }
+})
+
 // Main page - Input Form
 app.get('/', (c) => {
   return c.html(getInputFormHTML())
@@ -1397,6 +1470,11 @@ app.get('/dashboard/gangguan', (c) => {
 // Dashboard Kebutuhan Material (PROTECTED - auth required)
 app.get('/dashboard/kebutuhan-material', (c) => {
   return c.html(getDashboardKebutuhanMaterialHTML())
+})
+
+// Dashboard Create RAB (PROTECTED - auth required)
+app.get('/dashboard/create-rab', (c) => {
+  return c.html(getDashboardCreateRABHTML())
 })
 
 // Dashboard Resume (PROTECTED - auth required)
@@ -2745,9 +2823,21 @@ function getDashboardKebutuhanMaterialHTML() {
                     <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
-                    </a>
+                    <!-- Dropdown Kebutuhan -->
+                    <div class="relative inline-block text-left">
+                        <button onclick="toggleKebutuhanDropdown()" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800 flex items-center">
+                            <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                            <i class="fas fa-caret-down ml-1"></i>
+                        </button>
+                        <div id="kebutuhanDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                            <a href="/dashboard/kebutuhan-material" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
+                                <i class="fas fa-list mr-2"></i>Kebutuhan Material
+                            </a>
+                            <a href="/dashboard/create-rab" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
+                                <i class="fas fa-calculator mr-2"></i>Create RAB
+                            </a>
+                        </div>
+                    </div>
                     <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
@@ -2885,6 +2975,23 @@ function getDashboardKebutuhanMaterialHTML() {
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-kebutuhan.js"></script>
+        <script>
+          // Toggle dropdown kebutuhan
+          function toggleKebutuhanDropdown() {
+            const dropdown = document.getElementById('kebutuhanDropdown')
+            dropdown.classList.toggle('hidden')
+          }
+          
+          // Close dropdown when clicking outside
+          document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('kebutuhanDropdown')
+            const button = event.target.closest('button')
+            if (button && button.textContent.includes('Kebutuhan')) return
+            if (!dropdown.contains(event.target)) {
+              dropdown.classList.add('hidden')
+            }
+          })
+        </script>
     </body>
     </html>
   `
@@ -3443,6 +3550,161 @@ function getDashboardResumeHTML() {
         </script>
         <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-resume.js"></script>
+    </body>
+    </html>
+  `
+}
+
+function getDashboardCreateRABHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Create RAB - Rencana Anggaran Biaya</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-gray-100">
+        <!-- Navbar -->
+        <nav class="bg-blue-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-calculator text-2xl"></i>
+                    <span class="text-xl font-bold">Create RAB</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/form-gangguan" class="hover:text-blue-200"><i class="fas fa-wrench mr-2"></i>Form Gangguan</a>
+                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
+                    <a href="/dashboard/stok" class="hover:text-blue-200"><i class="fas fa-boxes mr-2"></i>Stok
+                    <a href="/dashboard/mutasi" class="hover:text-blue-200"><i class="fas fa-exchange-alt mr-2"></i>Mutasi</a>
+                    <a href="/dashboard/umur" class="hover:text-blue-200"><i class="fas fa-calendar-alt mr-2"></i>Umur</a>
+                    <a href="/dashboard/gangguan" class="hover:text-blue-200"><i class="fas fa-exclamation-triangle mr-2"></i>Gangguan</a>
+                    <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
+                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mx-auto px-4 py-6">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-calculator text-blue-600 mr-3"></i>
+                    Create RAB (Rencana Anggaran Biaya)
+                </h1>
+                <p class="text-gray-600 mt-2">Buat RAB dari material dengan status Pengadaan</p>
+            </div>
+
+            <!-- Form RAB -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <!-- Tanggal RAB -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar mr-2"></i>Tanggal RAB
+                        </label>
+                        <input type="date" id="tanggalRAB" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               required>
+                    </div>
+                    
+                    <!-- Nomor RAB (auto-generated) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-hashtag mr-2"></i>Nomor RAB
+                        </label>
+                        <input type="text" id="nomorRAB" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                               placeholder="Auto-generated"
+                               readonly>
+                    </div>
+                </div>
+
+                <!-- Material Pengadaan List -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-list mr-2"></i>Pilih Material dari Kebutuhan (Status: Pengadaan)
+                    </h3>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full border">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 border text-left">Pilih</th>
+                                    <th class="px-4 py-2 border text-left">Nomor LH05</th>
+                                    <th class="px-4 py-2 border text-left">Part Number</th>
+                                    <th class="px-4 py-2 border text-left">Material</th>
+                                    <th class="px-4 py-2 border text-left">Mesin</th>
+                                    <th class="px-4 py-2 border text-center">Jumlah</th>
+                                    <th class="px-4 py-2 border text-left">Unit/ULD</th>
+                                    <th class="px-4 py-2 border text-right">Harga Satuan (Rp)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materialPengadaanTable">
+                                <tr>
+                                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
+                                        <p>Memuat data material...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Selected Materials for RAB -->
+                <div id="selectedMaterialsSection" class="hidden">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-check-circle mr-2 text-green-600"></i>Material Terpilih untuk RAB
+                    </h3>
+                    
+                    <div class="overflow-x-auto mb-4">
+                        <table class="min-w-full border">
+                            <thead class="bg-blue-50">
+                                <tr>
+                                    <th class="px-4 py-2 border text-center">No</th>
+                                    <th class="px-4 py-2 border text-left">Nomor LH05</th>
+                                    <th class="px-4 py-2 border text-left">Part Number</th>
+                                    <th class="px-4 py-2 border text-left">Material</th>
+                                    <th class="px-4 py-2 border text-left">Mesin</th>
+                                    <th class="px-4 py-2 border text-center">Jumlah</th>
+                                    <th class="px-4 py-2 border text-left">Unit/ULD</th>
+                                    <th class="px-4 py-2 border text-right">Harga Satuan</th>
+                                    <th class="px-4 py-2 border text-right">Subtotal</th>
+                                    <th class="px-4 py-2 border text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="selectedMaterialsTable">
+                            </tbody>
+                            <tfoot class="bg-gray-100 font-bold">
+                                <tr>
+                                    <td colspan="8" class="px-4 py-3 border text-right">TOTAL HARGA:</td>
+                                    <td class="px-4 py-3 border text-right text-lg text-blue-600" id="totalHarga">Rp 0</td>
+                                    <td class="px-4 py-3 border"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end space-x-4">
+                        <button onclick="resetRAB()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                            <i class="fas fa-redo mr-2"></i>Reset
+                        </button>
+                        <button onclick="createRAB()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                            <i class="fas fa-save mr-2"></i>Create RAB
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/dashboard-rab.js"></script>
     </body>
     </html>
   `

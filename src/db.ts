@@ -491,3 +491,174 @@ export async function cleanExpiredSessions(db: D1Database) {
     return { success: false }
   }
 }
+
+// ====================================
+// RAB (Rencana Anggaran Biaya) TABLE
+// ====================================
+
+export async function getNextRABNumber(db: D1Database, tanggal?: string): Promise<string> {
+  try {
+    const date = tanggal ? new Date(tanggal) : new Date()
+    const year = date.getFullYear()
+    
+    // Get last RAB number for current year
+    const result = await db.prepare(`
+      SELECT nomor_rab 
+      FROM rab 
+      WHERE nomor_rab LIKE 'RAB-${year}-%'
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `).first()
+    
+    if (!result || !result.nomor_rab) {
+      return `RAB-${year}-0001`
+    }
+    
+    // Extract number from RAB-YYYY-NNNN
+    const parts = (result.nomor_rab as string).split('-')
+    const lastNumber = parseInt(parts[2] || '0')
+    const nextNumber = lastNumber + 1
+    
+    return `RAB-${year}-${nextNumber.toString().padStart(4, '0')}`
+  } catch (error) {
+    console.error('Error generating RAB number:', error)
+    const year = tanggal ? new Date(tanggal).getFullYear() : new Date().getFullYear()
+    return `RAB-${year}-0001`
+  }
+}
+
+export async function saveRAB(db: D1Database, data: any) {
+  try {
+    console.log('💾 Saving RAB:', data)
+    
+    // Generate nomor RAB
+    const nomorRAB = await getNextRABNumber(db, data.tanggal_rab)
+    
+    // Calculate total harga from items
+    const totalHarga = data.items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
+    
+    // Insert RAB header
+    const rabResult = await db.prepare(`
+      INSERT INTO rab (nomor_rab, tanggal_rab, total_harga, status, created_by)
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(
+      nomorRAB,
+      data.tanggal_rab,
+      totalHarga,
+      data.status || 'Draft',
+      data.created_by || 'System'
+    ).run()
+    
+    const rabId = rabResult.meta.last_row_id
+    console.log('✅ RAB header saved with ID:', rabId, 'Nomor:', nomorRAB)
+    
+    // Insert RAB items
+    for (const item of data.items) {
+      await db.prepare(`
+        INSERT INTO rab_items (
+          rab_id, nomor_lh05, part_number, material, mesin, jumlah, unit_uld, harga_satuan, subtotal
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        rabId,
+        item.nomor_lh05,
+        item.part_number,
+        item.material,
+        item.mesin || '',
+        item.jumlah,
+        item.unit_uld || '',
+        item.harga_satuan,
+        item.subtotal
+      ).run()
+    }
+    
+    console.log(`✅ ${data.items.length} RAB items saved`)
+    
+    return {
+      success: true,
+      id: rabId,
+      nomor_rab: nomorRAB,
+      total_harga: totalHarga
+    }
+  } catch (error: any) {
+    console.error('Failed to save RAB:', error)
+    throw new Error(`Database error: ${error.message}`)
+  }
+}
+
+export async function getAllRAB(db: D1Database) {
+  try {
+    const result = await db.prepare(`
+      SELECT 
+        r.id,
+        r.nomor_rab,
+        r.tanggal_rab,
+        r.total_harga,
+        r.status,
+        r.created_by,
+        r.created_at,
+        COUNT(ri.id) as item_count
+      FROM rab r
+      LEFT JOIN rab_items ri ON r.id = ri.rab_id
+      GROUP BY r.id
+      ORDER BY r.created_at DESC
+    `).all()
+    
+    return result.results || []
+  } catch (error) {
+    console.error('Failed to get RAB list:', error)
+    return []
+  }
+}
+
+export async function getRABById(db: D1Database, rabId: number) {
+  try {
+    // Get RAB header
+    const rab = await db.prepare(`
+      SELECT * FROM rab WHERE id = ?
+    `).bind(rabId).first()
+    
+    if (!rab) {
+      return null
+    }
+    
+    // Get RAB items
+    const items = await db.prepare(`
+      SELECT * FROM rab_items WHERE rab_id = ? ORDER BY id
+    `).bind(rabId).all()
+    
+    return {
+      ...rab,
+      items: items.results || []
+    }
+  } catch (error) {
+    console.error('Failed to get RAB by ID:', error)
+    return null
+  }
+}
+
+export async function getMaterialPengadaan(db: D1Database) {
+  try {
+    const result = await db.prepare(`
+      SELECT 
+        mg.id,
+        mg.gangguan_id,
+        g.nomor_lh05,
+        mg.part_number,
+        mg.material,
+        mg.mesin,
+        mg.jumlah,
+        mg.unit_uld as lokasi_tujuan,
+        mg.status
+      FROM material_gangguan mg
+      JOIN gangguan g ON mg.gangguan_id = g.id
+      WHERE UPPER(mg.status) = 'PENGADAAN'
+      ORDER BY g.created_at DESC
+    `).all()
+    
+    return result.results || []
+  } catch (error) {
+    console.error('Failed to get material pengadaan:', error)
+    return []
+  }
+}
