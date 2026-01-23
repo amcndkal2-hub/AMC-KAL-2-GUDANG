@@ -180,7 +180,7 @@ export async function saveGangguan(db: D1Database, data: any) {
         material.material,
         material.mesin,
         material.jumlah,
-        material.status || 'Pengadaan',
+        material.status || 'N/A',
         data.unitULD,
         data.unitULD
       ).run()

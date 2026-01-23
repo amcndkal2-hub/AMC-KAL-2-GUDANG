@@ -1180,6 +1180,7 @@ app.get('/api/dashboard/resume', async (c) => {
     `).all()
     
     const statusKebutuhan = {
+      na: 0,
       pengadaan: 0,
       tunda: 0,
       terkirim: 0,
@@ -1189,7 +1190,8 @@ app.get('/api/dashboard/resume', async (c) => {
     
     statusQuery.results?.forEach((row: any) => {
       const status = row.status?.toLowerCase() || ''
-      if (status === 'pengadaan') statusKebutuhan.pengadaan = row.total
+      if (status === 'n/a') statusKebutuhan.na = row.total
+      else if (status === 'pengadaan') statusKebutuhan.pengadaan = row.total
       else if (status === 'tunda') statusKebutuhan.tunda = row.total
       else if (status === 'terkirim') statusKebutuhan.terkirim = row.total
       else if (status === 'reject') statusKebutuhan.reject = row.total
@@ -2768,6 +2770,7 @@ function getDashboardKebutuhanMaterialHTML() {
                         <label class="block text-sm font-medium mb-2 text-gray-300">Filter Status</label>
                         <select id="filterStatus" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
                             <option value="">Semua Status</option>
+                            <option value="N/A">N/A</option>
                             <option value="Pengadaan">Pengadaan</option>
                             <option value="Tunda">Tunda</option>
                             <option value="Reject">Reject</option>
@@ -3210,21 +3213,30 @@ function getDashboardResumeHTML() {
                         Status Kebutuhan Material
                     </h2>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
                         <!-- Total -->
                         <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow p-4">
                             <div class="flex items-center justify-between mb-2">
                                 <i class="fas fa-clipboard-list text-2xl opacity-80"></i>
-                                <span class="text-3xl font-bold" id="totalKebutuhan">0</span>
+                                <span class="text-3xl font-bold" id="statusTotal">0</span>
                             </div>
                             <p class="text-sm opacity-90">Total Kebutuhan</p>
+                        </div>
+                        
+                        <!-- N/A -->
+                        <div class="bg-gradient-to-br from-gray-500 to-gray-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('N/A')">
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-question-circle text-2xl opacity-80"></i>
+                                <span class="text-3xl font-bold" id="statusNA">0</span>
+                            </div>
+                            <p class="text-sm opacity-90">N/A 👆</p>
                         </div>
                         
                         <!-- Pengadaan -->
                         <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Pengadaan')">
                             <div class="flex items-center justify-between mb-2">
                                 <i class="fas fa-shopping-cart text-2xl opacity-80"></i>
-                                <span class="text-3xl font-bold" id="totalPengadaan">0</span>
+                                <span class="text-3xl font-bold" id="statusPengadaan">0</span>
                             </div>
                             <p class="text-sm opacity-90">Pengadaan 👆</p>
                         </div>
@@ -3233,7 +3245,7 @@ function getDashboardResumeHTML() {
                         <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Tunda')">
                             <div class="flex items-center justify-between mb-2">
                                 <i class="fas fa-clock text-2xl opacity-80"></i>
-                                <span class="text-3xl font-bold" id="totalTunda">0</span>
+                                <span class="text-3xl font-bold" id="statusTunda">0</span>
                             </div>
                             <p class="text-sm opacity-90">Tunda 👆</p>
                         </div>
@@ -3242,7 +3254,7 @@ function getDashboardResumeHTML() {
                         <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Terkirim')">
                             <div class="flex items-center justify-between mb-2">
                                 <i class="fas fa-check-circle text-2xl opacity-80"></i>
-                                <span class="text-3xl font-bold" id="totalTerkirim">0</span>
+                                <span class="text-3xl font-bold" id="statusTerkirim">0</span>
                             </div>
                             <p class="text-sm opacity-90">Terkirim 👆</p>
                         </div>
@@ -3251,7 +3263,7 @@ function getDashboardResumeHTML() {
                         <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Reject')">
                             <div class="flex items-center justify-between mb-2">
                                 <i class="fas fa-times-circle text-2xl opacity-80"></i>
-                                <span class="text-3xl font-bold" id="totalReject">0</span>
+                                <span class="text-3xl font-bold" id="statusReject">0</span>
                             </div>
                             <p class="text-sm opacity-90">Reject 👆</p>
                         </div>
@@ -3260,7 +3272,7 @@ function getDashboardResumeHTML() {
                         <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg shadow p-4 cursor-pointer hover:scale-105 transition-transform" onclick="showStatusDetail('Tersedia')">
                             <div class="flex items-center justify-between mb-2">
                                 <i class="fas fa-box text-2xl opacity-80"></i>
-                                <span class="text-3xl font-bold" id="totalTersedia">0</span>
+                                <span class="text-3xl font-bold" id="statusTersedia">0</span>
                             </div>
                             <p class="text-sm opacity-90">Tersedia 👆</p>
                         </div>

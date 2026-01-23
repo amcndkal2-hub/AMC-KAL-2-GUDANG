@@ -895,6 +895,7 @@ function applyStatusKebutuhanFilter() {
   
   // Calculate status summary
   const statusSummary = {
+    na: 0,
     pengadaan: 0,
     tunda: 0,
     terkirim: 0,
@@ -904,7 +905,8 @@ function applyStatusKebutuhanFilter() {
   
   filteredData.forEach(item => {
     const status = (item.status || '').toLowerCase()
-    if (status === 'pengadaan') statusSummary.pengadaan++
+    if (status === 'n/a') statusSummary.na++
+    else if (status === 'pengadaan') statusSummary.pengadaan++
     else if (status === 'tunda') statusSummary.tunda++
     else if (status === 'terkirim') statusSummary.terkirim++
     else if (status === 'reject') statusSummary.reject++
@@ -922,11 +924,12 @@ function applyStatusKebutuhanFilter() {
 
 // Update Status Kebutuhan UI with filtered data
 function updateStatusKebutuhanUI(statusData) {
-  const total = statusData.pengadaan + statusData.tunda + statusData.terkirim + statusData.reject + statusData.tersedia
+  const total = (statusData.na || 0) + statusData.pengadaan + statusData.tunda + statusData.terkirim + statusData.reject + statusData.tersedia
   
   // Update cards
   const cards = {
     'statusTotal': total,
+    'statusNA': statusData.na || 0,
     'statusPengadaan': statusData.pengadaan,
     'statusTunda': statusData.tunda,
     'statusTerkirim': statusData.terkirim,

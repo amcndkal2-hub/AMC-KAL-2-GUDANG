@@ -184,6 +184,7 @@ function renderTable() {
           <select 
             onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
             class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm">
+            <option value="N/A" ${item.status === 'N/A' ? 'selected' : ''}>N/A</option>
             <option value="Pengadaan" ${item.status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
             <option value="Tunda" ${item.status === 'Tunda' ? 'selected' : ''}>Tunda</option>
             <option value="Reject" ${item.status === 'Reject' ? 'selected' : ''}>Reject</option>
@@ -198,6 +199,7 @@ function renderTable() {
 
 function getStatusColor(status) {
   const colors = {
+    'N/A': 'bg-gray-100 text-gray-800 border-gray-300',
     'Pengadaan': 'bg-blue-100 text-blue-800 border-blue-300',
     'Tunda': 'bg-yellow-100 text-yellow-800 border-yellow-300',
     'Reject': 'bg-red-100 text-red-800 border-red-300',
