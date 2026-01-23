@@ -27,7 +27,7 @@ async function loadRABMaterials() {
         if (tbody) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="9" class="px-4 py-8 text-center text-red-500">
+                    <td colspan="8" class="px-4 py-8 text-center text-red-500">
                         <i class="fas fa-exclamation-triangle text-4xl mb-2"></i>
                         <p class="font-semibold">Gagal memuat data</p>
                         <p class="text-sm mt-2">${error.message}</p>
@@ -54,7 +54,7 @@ function renderRABMaterialsTable() {
     if (rabMaterials.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="9" class="px-4 py-12 text-center text-gray-500">
+                <td colspan="8" class="px-4 py-12 text-center text-gray-500">
                     <i class="fas fa-inbox text-6xl mb-4 text-gray-300"></i>
                     <p class="text-lg font-semibold mb-2">Belum ada material dari RAB dengan status Tersedia</p>
                     <p class="text-sm text-gray-400 mb-4">
@@ -77,7 +77,7 @@ function renderRABMaterialsTable() {
             <td class="px-4 py-3 border text-center">
                 <input type="checkbox" 
                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                       data-material-id="${item.material_gangguan_id || item.id}"
+                       data-material-id="${item.id}"
                        data-index="${index}"
                        onchange="toggleRABMaterialSelection(this)">
             </td>
