@@ -23,16 +23,22 @@
 
 ### Tujuan Aplikasi
 Aplikasi web lengkap untuk mengelola:
-- 📝 Transaksi material (Masuk/Keluar)
+- 📝 Transaksi material (Masuk/Keluar) dengan 2 mode input:
+  - Input Manual (keyboard)
+  - Input dari RAB Tersedia (checkbox selection) ✨ NEW!
 - 📊 Stok material real-time
 - ⏱️ Umur material terpasang
 - 🔄 Mutasi material dengan BA
 - ⚠️ Gangguan dan Permintaan Material (LH05)
 - 📈 Dashboard Kebutuhan Material
+- 📋 Manajemen RAB (Rencana Anggaran Biaya) ✨ NEW!
+  - Create RAB dari material Pengadaan
+  - Track status RAB (Draft → Pengadaan → Tersedia)
+  - Auto-sync dengan Input Material
 
 ### URL Aplikasi
+- **Production (Latest)**: https://9fafd664.amc-kal-2-gudang.pages.dev ✨
 - **Development (Sandbox)**: https://3000-irn02uyopd6uubfd4q48x-b237eb32.sandbox.novita.ai
-- **Production: https://amc-material-system.pages.dev
 - **GitHub Repository**: (akan diisi setelah setup)
 
 ### Kredensial Login
@@ -47,7 +53,7 @@ Aplikasi web lengkap untuk mengelola:
 ### 1. ✅ Form Input Transaksi Material (`/`)
 **Akses**: Perlu Login
 
-**Fitur:**
+**Tab 1: Input Manual**
 - Input tanggal dan jenis transaksi (Masuk/Keluar)
 - Lokasi asal dan tujuan (dropdown dari Google Sheets)
 - **Multiple Material Items** - tambah unlimited material dalam 1 transaksi
@@ -56,13 +62,34 @@ Aplikasi web lengkap untuk mengelola:
   - Material auto-fill ✨
   - Mesin auto-fill ✨
 - Input manual: S/N Mesin dan Jumlah
+- **Dropdown Pemeriksa & Penerima** (dari Google Sheets)
 - **Signature Pad** untuk Pemeriksa dan Penerima (touchscreen compatible)
 - **Auto-generate Nomor BA** (BA2025001, BA2025002, ...)
 
+**Tab 2: Input dari RAB Tersedia** ✨ **NEW!**
+- **Pilih Nomor RAB** dari dropdown (menampilkan jumlah materials)
+- **Tabel Materials** dengan checkbox untuk select:
+  - Nomor LH05
+  - Part Number
+  - Material
+  - Mesin
+  - Jumlah
+  - Unit/ULD
+- **Select All** checkbox untuk pilih semua material
+- **Material Terpilih Summary** (real-time count)
+- **Dropdown Pemeriksa & Penerima** (sama seperti Input Manual)
+- **Signature Pad** untuk TTD Pemeriksa & Penerima
+- **Auto-generate Nomor BA** dengan format `BA-YYYY-NNNN`
+- **Auto-save to:**
+  - Tabel `transaksi` (jenis: Masuk)
+  - Tabel `materials` (detail per material)
+  - Update `material_gangguan` (status → Tersedia)
+
 **Business Rules:**
 - Jika 2+ material di input dalam 1 waktu → Nomor BA sama
-- Nomor BA format: `BA[YEAR][NUMBER]` (contoh: BA2025001)
-- Validasi: minimal 1 material, kedua tanda tangan harus ada
+- Nomor BA format: `BA[YEAR][NUMBER]` (contoh: BA2025001, BA-2026-0001)
+- Validasi: minimal 1 material, pemeriksa/penerima terisi, kedua tanda tangan harus ada
+- RAB Input: hanya material dengan status "Tersedia" yang tampil
 
 ---
 
@@ -283,6 +310,64 @@ Sisa Hari = Target - Umur
 
 **Export:**
 - Export Excel dengan semua kolom termasuk Unit/Lokasi Tujuan
+
+---
+
+### 8. 📋 Manajemen RAB (Rencana Anggaran Biaya) ✨ **NEW!**
+**Akses**: Perlu Login
+
+#### **8.1 Create RAB (`/create-rab`)**
+**Fungsi:** Membuat RAB dari material yang statusnya "Pengadaan"
+
+**Fitur:**
+- **Auto-generate Nomor RAB** dengan format `RAB-YYYY-NNNN` (contoh: RAB-2026-0001)
+- **Pilih Material** dari Dashboard Kebutuhan (status: Pengadaan)
+- **Tabel Material Terpilih:**
+  - Nomor LH05
+  - Part Number
+  - Material
+  - Mesin
+  - Jumlah
+  - Unit/ULD
+  - Input: Harga Satuan (Rp)
+  - Auto-calculate: Subtotal (Jumlah × Harga)
+- **Total Harga RAB** (auto-calculate)
+- **Status RAB:** Draft (default saat dibuat)
+- **Validasi:** Minimal 1 material, semua harga terisi
+
+**Business Rules:**
+- Hanya material dengan status "Pengadaan" yang bisa dimasukkan ke RAB
+- Satu material bisa masuk ke beberapa RAB berbeda
+- Nomor RAB auto-increment per tahun
+
+#### **8.2 List RAB (`/list-rab`)**
+**Fungsi:** Menampilkan semua RAB yang pernah dibuat
+
+**Fitur:**
+- **Tabel RAB:**
+  - Nomor RAB
+  - Tanggal RAB
+  - Total Harga (format Rupiah)
+  - Status (Draft/Pengadaan/Tersedia)
+  - Jumlah Items
+  - Actions: View, Edit Status
+- **View Detail RAB Modal:**
+  - Header: Nomor RAB, Tanggal, Total Harga
+  - Tabel Material lengkap dengan harga
+  - Created by & timestamp
+- **Update Status RAB:**
+  - Draft → Pengadaan → Tersedia
+  - Dropdown untuk ubah status
+  - Sinkronisasi status material di Dashboard Kebutuhan
+
+**Status RAB:**
+- 🔵 **Draft** - RAB baru dibuat, belum diproses
+- 🟡 **Pengadaan** - Sedang dalam proses pengadaan material
+- 🟢 **Tersedia** - Material sudah tersedia di gudang, siap diinput ke sistem
+
+**Business Rules:**
+- Saat status RAB = "Tersedia", material akan muncul di tab "Input dari RAB Tersedia"
+- Update status RAB otomatis update status material di `material_gangguan`
 
 ---
 
