@@ -1907,7 +1907,7 @@ function getInputFormHTML() {
                                     class="tab-button px-4 py-2 font-semibold text-blue-600 border-b-2 border-blue-600">
                                 <i class="fas fa-keyboard mr-2"></i>Input Manual
                             </button>
-                            <button onclick="switchTab('rab'); setTimeout(() => { if (typeof loadRABMaterials === 'function') loadRABMaterials(); }, 100);" id="tabRAB" 
+                            <button onclick="switchTab('rab')" id="tabRAB" 
                                     class="tab-button px-4 py-2 font-semibold text-gray-500 hover:text-blue-600">
                                 <i class="fas fa-file-invoice mr-2"></i>Input dari RAB Tersedia
                             </button>
@@ -2160,44 +2160,53 @@ function getInputFormHTML() {
         <script src="/static/app.js"></script>
         <script src="/static/input-rab.js"></script>
         <script>
-          // Tab switching
+          // Simple tab switching without complex logic
           function switchTab(tab) {
             console.log('🔄 Switching to tab:', tab);
             
-            const tabs = ['manual', 'rab']
-            tabs.forEach(t => {
-              const contentId = 'content' + t.charAt(0).toUpperCase() + t.slice(1);
-              const buttonId = 'tab' + t.charAt(0).toUpperCase() + t.slice(1);
+            // Hide all tabs
+            const contentManual = document.getElementById('contentManual');
+            const contentRAB = document.getElementById('contentRAB');
+            const tabManual = document.getElementById('tabManual');
+            const tabRAB = document.getElementById('tabRAB');
+            
+            if (!contentManual || !contentRAB || !tabManual || !tabRAB) {
+              console.error('❌ One or more elements not found:', {
+                contentManual: !!contentManual,
+                contentRAB: !!contentRAB,
+                tabManual: !!tabManual,
+                tabRAB: !!tabRAB
+              });
+              return;
+            }
+            
+            if (tab === 'rab') {
+              // Show RAB tab
+              contentManual.classList.add('hidden');
+              contentRAB.classList.remove('hidden');
+              tabManual.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+              tabManual.classList.add('text-gray-500');
+              tabRAB.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+              tabRAB.classList.remove('text-gray-500');
               
-              const content = document.getElementById(contentId);
-              const button = document.getElementById(buttonId);
-              
-              if (!content) {
-                console.error('❌ Content element not found:', contentId);
-                return;
-              }
-              
-              if (!button) {
-                console.error('❌ Button element not found:', buttonId);
-                return;
-              }
-              
-              if (t === tab) {
-                content.classList.remove('hidden');
-                button.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
-                button.classList.remove('text-gray-500');
-                
-                // Load RAB materials when switching to RAB tab
-                if (tab === 'rab' && typeof loadRABMaterials === 'function') {
-                  console.log('📦 Loading RAB materials...');
+              // Load RAB materials
+              console.log('📦 Loading RAB materials...');
+              setTimeout(() => {
+                if (typeof loadRABMaterials === 'function') {
                   loadRABMaterials();
+                } else {
+                  console.error('❌ loadRABMaterials function not found');
                 }
-              } else {
-                content.classList.add('hidden');
-                button.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-                button.classList.add('text-gray-500');
-              }
-            })
+              }, 100);
+            } else {
+              // Show Manual tab
+              contentRAB.classList.add('hidden');
+              contentManual.classList.remove('hidden');
+              tabRAB.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+              tabRAB.classList.add('text-gray-500');
+              tabManual.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+              tabManual.classList.remove('text-gray-500');
+            }
             
             console.log('✅ Tab switched to:', tab);
           }
