@@ -1189,13 +1189,14 @@ app.get('/api/dashboard/resume', async (c) => {
     }
     
     statusQuery.results?.forEach((row: any) => {
-      const status = row.status?.toLowerCase() || ''
-      if (status === 'n/a') statusKebutuhan.na = row.total
-      else if (status === 'pengadaan') statusKebutuhan.pengadaan = row.total
-      else if (status === 'tunda') statusKebutuhan.tunda = row.total
-      else if (status === 'terkirim') statusKebutuhan.terkirim = row.total
-      else if (status === 'reject') statusKebutuhan.reject = row.total
-      else if (status === 'tersedia') statusKebutuhan.tersedia = row.total
+      const status = (row.status || '').trim()
+      // Case-insensitive matching for status
+      if (status.toUpperCase() === 'N/A') statusKebutuhan.na = row.total
+      else if (status.toLowerCase() === 'pengadaan') statusKebutuhan.pengadaan = row.total
+      else if (status.toLowerCase() === 'tunda') statusKebutuhan.tunda = row.total
+      else if (status.toLowerCase() === 'terkirim') statusKebutuhan.terkirim = row.total
+      else if (status.toLowerCase() === 'reject') statusKebutuhan.reject = row.total
+      else if (status.toLowerCase() === 'tersedia') statusKebutuhan.tersedia = row.total
     })
     
     return c.json({

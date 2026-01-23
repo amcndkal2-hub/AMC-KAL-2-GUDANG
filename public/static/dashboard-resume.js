@@ -904,13 +904,14 @@ function applyStatusKebutuhanFilter() {
   }
   
   filteredData.forEach(item => {
-    const status = (item.status || '').toLowerCase()
-    if (status === 'n/a') statusSummary.na++
-    else if (status === 'pengadaan') statusSummary.pengadaan++
-    else if (status === 'tunda') statusSummary.tunda++
-    else if (status === 'terkirim') statusSummary.terkirim++
-    else if (status === 'reject') statusSummary.reject++
-    else if (status === 'tersedia') statusSummary.tersedia++
+    const status = (item.status || '').trim()
+    // Case-insensitive matching
+    if (status.toUpperCase() === 'N/A') statusSummary.na++
+    else if (status.toLowerCase() === 'pengadaan') statusSummary.pengadaan++
+    else if (status.toLowerCase() === 'tunda') statusSummary.tunda++
+    else if (status.toLowerCase() === 'terkirim') statusSummary.terkirim++
+    else if (status.toLowerCase() === 'reject') statusSummary.reject++
+    else if (status.toLowerCase() === 'tersedia') statusSummary.tersedia++
   })
   
   // Update UI with filtered data
