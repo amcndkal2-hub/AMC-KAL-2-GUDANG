@@ -1408,26 +1408,7 @@ app.get('/api/rab', async (c) => {
   }
 })
 
-// API: Get RAB by ID
-app.get('/api/rab/:id', async (c) => {
-  try {
-    const { env } = c
-    const rabId = parseInt(c.req.param('id'))
-    
-    const rab = await DB.getRABById(env.DB, rabId)
-    
-    if (!rab) {
-      return c.json({ error: 'RAB not found' }, 404)
-    }
-    
-    return c.json(rab)
-  } catch (error) {
-    console.error('Failed to get RAB:', error)
-    return c.json({ error: 'Failed to fetch RAB' }, 500)
-  }
-})
-
-// API: Get materials from RAB with status Tersedia
+// API: Get materials from RAB with status Tersedia (MUST be before /:id route)
 app.get('/api/rab/materials-tersedia', async (c) => {
   try {
     const { env } = c
@@ -1445,7 +1426,6 @@ app.get('/api/rab/materials-tersedia', async (c) => {
         ri.mesin,
         ri.jumlah,
         ri.unit_uld,
-        ri.material_gangguan_id,
         r.nomor_rab,
         r.status as rab_status
       FROM rab_items ri
@@ -1470,6 +1450,25 @@ app.get('/api/rab/materials-tersedia', async (c) => {
       error: error.message || 'Failed to fetch materials',
       materials: []
     }, 500)
+  }
+})
+
+// API: Get RAB by ID (MUST be after specific routes)
+app.get('/api/rab/:id', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    
+    const rab = await DB.getRABById(env.DB, rabId)
+    
+    if (!rab) {
+      return c.json({ error: 'RAB not found' }, 404)
+    }
+    
+    return c.json(rab)
+  } catch (error) {
+    console.error('Failed to get RAB:', error)
+    return c.json({ error: 'Failed to fetch RAB' }, 500)
   }
 })
 
@@ -1584,48 +1583,6 @@ app.post('/api/rab/:id/update-status', async (c) => {
   } catch (error: any) {
     console.error('Failed to update RAB status:', error)
     return c.json({ error: 'Failed to update status: ' + error.message }, 500)
-  }
-})
-
-// API: Get materials from RAB with status Tersedia
-app.get('/api/rab/materials-tersedia', async (c) => {
-  try {
-    const { env } = c
-    
-    // Get all RAB with status Tersedia
-    const rabList = await env.DB.prepare(`
-      SELECT id, nomor_rab, tanggal_rab 
-      FROM rab 
-      WHERE status = 'Tersedia'
-      ORDER BY created_at DESC
-    `).all()
-    
-    if (!rabList.results || rabList.results.length === 0) {
-      return c.json([])
-    }
-    
-    // Get all items from these RAB
-    const materials = []
-    for (const rab of rabList.results) {
-      const items = await env.DB.prepare(`
-        SELECT 
-          ri.*,
-          r.nomor_rab,
-          r.tanggal_rab
-        FROM rab_items ri
-        JOIN rab r ON ri.rab_id = r.id
-        WHERE ri.rab_id = ?
-      `).bind(rab.id).all()
-      
-      if (items.results) {
-        materials.push(...items.results)
-      }
-    }
-    
-    return c.json(materials)
-  } catch (error) {
-    console.error('Failed to get materials tersedia:', error)
-    return c.json({ error: 'Failed to fetch materials' }, 500)
   }
 })
 
