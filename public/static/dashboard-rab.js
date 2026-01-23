@@ -103,6 +103,7 @@ function toggleMaterial(materialId) {
     
     selectedMaterials.push({
       id: materialId,
+      material_gangguan_id: materialId, // Add this for tracking
       nomor_lh05: material.nomor_lh05,
       part_number: material.part_number,
       material: material.material,

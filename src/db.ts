@@ -552,8 +552,9 @@ export async function saveRAB(db: D1Database, data: any) {
     const rabId = rabResult.meta.last_row_id
     console.log('✅ RAB header saved with ID:', rabId, 'Nomor:', nomorRAB)
     
-    // Insert RAB items
+    // Insert RAB items and mark material as RAB created
     for (const item of data.items) {
+      // Insert RAB item
       await db.prepare(`
         INSERT INTO rab_items (
           rab_id, nomor_lh05, part_number, material, mesin, jumlah, unit_uld, harga_satuan, subtotal
@@ -570,9 +571,26 @@ export async function saveRAB(db: D1Database, data: any) {
         item.harga_satuan,
         item.subtotal
       ).run()
+      
+      // Mark material_gangguan as RAB created (using material_gangguan_id if available, or find by part_number + nomor_lh05)
+      if (item.material_gangguan_id) {
+        await db.prepare(`
+          UPDATE material_gangguan 
+          SET is_rab_created = 1 
+          WHERE id = ?
+        `).bind(item.material_gangguan_id).run()
+      } else {
+        // Fallback: find by nomor_lh05 and part_number
+        await db.prepare(`
+          UPDATE material_gangguan 
+          SET is_rab_created = 1 
+          WHERE part_number = ? 
+          AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
+        `).bind(item.part_number, item.nomor_lh05).run()
+      }
     }
     
-    console.log(`✅ ${data.items.length} RAB items saved`)
+    console.log(`✅ ${data.items.length} RAB items saved and materials marked as RAB created`)
     
     return {
       success: true,
@@ -649,10 +667,12 @@ export async function getMaterialPengadaan(db: D1Database) {
         mg.mesin,
         mg.jumlah,
         mg.unit_uld as lokasi_tujuan,
-        mg.status
+        mg.status,
+        mg.is_rab_created
       FROM material_gangguan mg
       JOIN gangguan g ON mg.gangguan_id = g.id
       WHERE UPPER(mg.status) = 'PENGADAAN'
+      AND (mg.is_rab_created IS NULL OR mg.is_rab_created = 0)
       ORDER BY g.created_at DESC
     `).all()
     

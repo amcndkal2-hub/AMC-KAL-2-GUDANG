@@ -1477,6 +1477,11 @@ app.get('/dashboard/create-rab', (c) => {
   return c.html(getDashboardCreateRABHTML())
 })
 
+// Dashboard List RAB (PROTECTED - auth required)
+app.get('/dashboard/list-rab', (c) => {
+  return c.html(getDashboardListRABHTML())
+})
+
 // Dashboard Resume (PROTECTED - auth required)
 app.get('/dashboard/resume', (c) => {
   return c.html(getDashboardResumeHTML())
@@ -2834,7 +2839,10 @@ function getDashboardKebutuhanMaterialHTML() {
                                 <i class="fas fa-list mr-2"></i>Kebutuhan Material
                             </a>
                             <a href="/dashboard/create-rab" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
-                                <i class="fas fa-calculator mr-2"></i>Create RAB
+                                <i class="fas fa-plus-circle mr-2"></i>Create RAB
+                            </a>
+                            <a href="/dashboard/list-rab" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
+                                <i class="fas fa-list-alt mr-2"></i>List RAB
                             </a>
                         </div>
                     </div>
@@ -3711,3 +3719,112 @@ function getDashboardCreateRABHTML() {
 }
 
 export default app
+
+function getDashboardListRABHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Daftar RAB - Rencana Anggaran Biaya</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    </head>
+    <body class="bg-gray-100">
+        <!-- Navbar -->
+        <nav class="bg-blue-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-list-alt text-2xl"></i>
+                    <span class="text-xl font-bold">Daftar RAB</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
+                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
+                    <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
+                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mx-auto px-4 py-6">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 flex items-center justify-between">
+                    <span>
+                        <i class="fas fa-list-alt text-blue-600 mr-3"></i>
+                        Daftar RAB (Rencana Anggaran Biaya)
+                    </span>
+                </h1>
+                <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
+            </div>
+
+            <!-- RAB List -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border">
+                        <thead class="bg-blue-50">
+                            <tr>
+                                <th class="px-4 py-3 border text-center">No</th>
+                                <th class="px-4 py-3 border text-left">Nomor RAB</th>
+                                <th class="px-4 py-3 border text-center">Tanggal</th>
+                                <th class="px-4 py-3 border text-center">Jumlah Item</th>
+                                <th class="px-4 py-3 border text-right">Total Harga</th>
+                                <th class="px-4 py-3 border text-center">Status</th>
+                                <th class="px-4 py-3 border text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rabListTable">
+                            <tr>
+                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
+                                    <p>Memuat data RAB...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- View RAB Modal -->
+        <div id="viewRABModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto m-4">
+                <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
+                        Detail RAB
+                    </h2>
+                    <button onclick="closeViewRABModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <div id="rabDetailContent" class="p-6">
+                    <!-- Content will be loaded here -->
+                </div>
+                <div class="p-6 border-t bg-gray-50 flex justify-end space-x-4 sticky bottom-0">
+                    <button onclick="exportRABToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-file-excel mr-2"></i>Export Excel
+                    </button>
+                    <button onclick="exportRABToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                    </button>
+                    <button onclick="closeViewRABModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/dashboard-list-rab.js"></script>
+    </body>
+    </html>
+  `
+}
