@@ -1907,7 +1907,7 @@ function getInputFormHTML() {
                                     class="tab-button px-4 py-2 font-semibold text-blue-600 border-b-2 border-blue-600">
                                 <i class="fas fa-keyboard mr-2"></i>Input Manual
                             </button>
-                            <button onclick="switchTab('rab')" id="tabRAB" 
+                            <button onclick="switchTab('rab'); setTimeout(() => { if (typeof loadRABMaterials === 'function') loadRABMaterials(); }, 100);" id="tabRAB" 
                                     class="tab-button px-4 py-2 font-semibold text-gray-500 hover:text-blue-600">
                                 <i class="fas fa-file-invoice mr-2"></i>Input dari RAB Tersedia
                             </button>
