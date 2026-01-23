@@ -4,12 +4,21 @@ let selectedMaterials = [];
 
 // Load RAB materials with status Tersedia
 async function loadRABMaterials() {
+    console.log('🔄 Loading RAB materials...');
+    
     try {
         const response = await fetch('/api/rab/materials-tersedia');
-        if (!response.ok) throw new Error('Failed to fetch RAB materials');
+        console.log('📡 Response status:', response.status);
         
         const data = await response.json();
+        console.log('📦 Response data:', data);
+        
+        if (data.success === false) {
+            throw new Error(data.error || 'Failed to load materials');
+        }
+        
         rabMaterials = data.materials || [];
+        console.log(`✅ Loaded ${rabMaterials.length} materials`);
         
         renderRABMaterialsTable();
     } catch (error) {
@@ -18,9 +27,13 @@ async function loadRABMaterials() {
         if (tbody) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="px-4 py-8 text-center text-red-500">
+                    <td colspan="9" class="px-4 py-8 text-center text-red-500">
                         <i class="fas fa-exclamation-triangle text-4xl mb-2"></i>
-                        <p>Gagal memuat data: ${error.message}</p>
+                        <p class="font-semibold">Gagal memuat data</p>
+                        <p class="text-sm mt-2">${error.message}</p>
+                        <button onclick="loadRABMaterials()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                            <i class="fas fa-refresh mr-2"></i>Coba Lagi
+                        </button>
                     </td>
                 </tr>
             `;
@@ -31,14 +44,28 @@ async function loadRABMaterials() {
 // Render RAB materials table
 function renderRABMaterialsTable() {
     const tbody = document.getElementById('rabMaterialsTable');
-    if (!tbody) return;
+    if (!tbody) {
+        console.error('❌ Element rabMaterialsTable not found!');
+        return;
+    }
+    
+    console.log(`🎨 Rendering ${rabMaterials.length} materials...`);
     
     if (rabMaterials.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
-                    <i class="fas fa-inbox text-4xl mb-2"></i>
-                    <p>Belum ada material dari RAB dengan status Tersedia</p>
+                <td colspan="9" class="px-4 py-12 text-center text-gray-500">
+                    <i class="fas fa-inbox text-6xl mb-4 text-gray-300"></i>
+                    <p class="text-lg font-semibold mb-2">Belum ada material dari RAB dengan status Tersedia</p>
+                    <p class="text-sm text-gray-400 mb-4">
+                        Untuk menggunakan fitur ini:
+                    </p>
+                    <ol class="text-sm text-left inline-block text-gray-600">
+                        <li>1. Buat RAB di menu <strong>Create RAB</strong></li>
+                        <li>2. Buka <strong>List RAB</strong></li>
+                        <li>3. Ubah status RAB menjadi <strong>Tersedia</strong></li>
+                        <li>4. Material akan muncul di sini</li>
+                    </ol>
                 </td>
             </tr>
         `;
@@ -50,7 +77,7 @@ function renderRABMaterialsTable() {
             <td class="px-4 py-3 border text-center">
                 <input type="checkbox" 
                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                       data-material-id="${item.material_gangguan_id}"
+                       data-material-id="${item.material_gangguan_id || item.id}"
                        data-index="${index}"
                        onchange="toggleRABMaterialSelection(this)">
             </td>
@@ -63,6 +90,8 @@ function renderRABMaterialsTable() {
             <td class="px-4 py-3 border text-sm text-gray-900">${item.unit_uld || '-'}</td>
         </tr>
     `).join('');
+    
+    console.log('✅ Table rendered successfully');
 }
 
 // Toggle select all

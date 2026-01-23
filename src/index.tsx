@@ -1432,29 +1432,44 @@ app.get('/api/rab/materials-tersedia', async (c) => {
   try {
     const { env } = c
     
+    console.log('📦 Fetching RAB materials with status Tersedia...')
+    
     // Get all RAB items where RAB status is Tersedia
     const query = `
       SELECT 
-        ri.*,
+        ri.id,
+        ri.rab_id,
+        ri.nomor_lh05,
+        ri.part_number,
+        ri.material,
+        ri.mesin,
+        ri.jumlah,
+        ri.unit_uld,
+        ri.material_gangguan_id,
         r.nomor_rab,
-        r.status as rab_status,
-        mg.nomor_lh05
+        r.status as rab_status
       FROM rab_items ri
       JOIN rab r ON ri.rab_id = r.id
-      LEFT JOIN material_gangguan mg ON mg.id = ri.material_gangguan_id
       WHERE r.status = 'Tersedia'
       ORDER BY r.tanggal_rab DESC, ri.id ASC
     `
     
     const result = await env.DB.prepare(query).all()
     
+    console.log(`✅ Found ${result.results?.length || 0} materials from RAB Tersedia`)
+    
     return c.json({
       success: true,
-      materials: result.results || []
+      materials: result.results || [],
+      count: result.results?.length || 0
     })
   } catch (error) {
-    console.error('Failed to get RAB materials tersedia:', error)
-    return c.json({ error: 'Failed to fetch materials' }, 500)
+    console.error('❌ Failed to get RAB materials tersedia:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to fetch materials',
+      materials: []
+    }, 500)
   }
 })
 
