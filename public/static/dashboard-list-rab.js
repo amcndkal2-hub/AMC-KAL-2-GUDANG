@@ -61,9 +61,12 @@ function renderRABList(rabList) {
       </td>
       <td class="px-4 py-3 border text-right font-semibold">${formatRupiah(rab.total_harga)}</td>
       <td class="px-4 py-3 border text-center">
-        <span class="px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(rab.status)}">
-          ${rab.status || 'Draft'}
-        </span>
+        <select onchange="updateRABStatus(${rab.id}, this.value)" 
+                class="px-3 py-1 rounded text-xs font-semibold border-0 cursor-pointer ${getStatusColorSelect(rab.status)}">
+          <option value="Draft" ${rab.status === 'Draft' ? 'selected' : ''}>Draft</option>
+          <option value="Pengadaan" ${rab.status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
+          <option value="Tersedia" ${rab.status === 'Tersedia' ? 'selected' : ''}>Tersedia</option>
+        </select>
       </td>
       <td class="px-4 py-3 border text-center">
         <button onclick="viewRABDetail(${rab.id})" 
@@ -95,10 +98,85 @@ function formatRupiah(number) {
 function getStatusColor(status) {
   const colors = {
     'Draft': 'bg-gray-100 text-gray-700',
-    'Approved': 'bg-green-100 text-green-700',
-    'Rejected': 'bg-red-100 text-red-700'
+    'Pengadaan': 'bg-orange-100 text-orange-700',
+    'Tersedia': 'bg-green-100 text-green-700'
   }
   return colors[status] || 'bg-gray-100 text-gray-700'
+}
+
+// Get status color for select dropdown
+function getStatusColorSelect(status) {
+  const colors = {
+    'Draft': 'bg-gray-100 text-gray-700',
+    'Pengadaan': 'bg-orange-100 text-orange-700',
+    'Tersedia': 'bg-green-100 text-green-700'
+  }
+  return colors[status] || 'bg-gray-100 text-gray-700'
+}
+
+// Update RAB status
+async function updateRABStatus(rabId, newStatus) {
+  try {
+    // Confirmation message based on status
+    let confirmMessage = ''
+    if (newStatus === 'Pengadaan') {
+      confirmMessage = `Ubah status menjadi Pengadaan?\n\n` +
+                      `⚠️ PERHATIAN:\n` +
+                      `- Status material di Menu Kebutuhan akan otomatis berubah menjadi PENGADAAN\n` +
+                      `- Status material TIDAK BISA DIUBAH LAGI setelah ini\n\n` +
+                      `Lanjutkan?`
+    } else if (newStatus === 'Tersedia') {
+      confirmMessage = `Ubah status menjadi Tersedia?\n\n` +
+                      `✅ Status material di Menu Kebutuhan akan otomatis berubah menjadi TERSEDIA\n\n` +
+                      `Lanjutkan?`
+    } else {
+      confirmMessage = `Ubah status menjadi Draft?\n\n` +
+                      `Status material di Menu Kebutuhan masih bisa diubah manual.\n\n` +
+                      `Lanjutkan?`
+    }
+    
+    if (!confirm(confirmMessage)) {
+      // Reset dropdown to previous value
+      loadRABList()
+      return
+    }
+    
+    console.log('Updating RAB status:', { rabId, newStatus })
+    
+    const response = await fetch(`/api/rab/${rabId}/update-status`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status: newStatus })
+    })
+    
+    const result = await response.json()
+    
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Failed to update status')
+    }
+    
+    console.log('Status updated:', result)
+    
+    // Success message
+    let successMessage = '✅ Status RAB berhasil diupdate!'
+    if (newStatus === 'Pengadaan' || newStatus === 'Tersedia') {
+      successMessage += `\n\n📋 Status material di Menu Kebutuhan telah diupdate menjadi ${newStatus}`
+    }
+    
+    alert(successMessage)
+    
+    // Reload list
+    loadRABList()
+    
+  } catch (error) {
+    console.error('Failed to update RAB status:', error)
+    alert('❌ Gagal update status: ' + error.message)
+    
+    // Reset dropdown to previous value
+    loadRABList()
+  }
 }
 
 // View RAB detail

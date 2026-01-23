@@ -183,7 +183,8 @@ function renderTable() {
         <td class="px-4 py-3 text-center">
           <select 
             onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
-            class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm">
+            ${(item.status === 'Pengadaan' || item.status === 'Tersedia') ? 'disabled' : ''}
+            class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm ${(item.status === 'Pengadaan' || item.status === 'Tersedia') ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}">
             <option value="N/A" ${item.status === 'N/A' ? 'selected' : ''}>N/A</option>
             <option value="Pengadaan" ${item.status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
             <option value="Tunda" ${item.status === 'Tunda' ? 'selected' : ''}>Tunda</option>
@@ -191,6 +192,7 @@ function renderTable() {
             <option value="Terkirim" ${item.status === 'Terkirim' ? 'selected' : ''}>Terkirim</option>
             <option value="Tersedia" ${item.status === 'Tersedia' ? 'selected' : ''}>Tersedia</option>
           </select>
+          ${(item.status === 'Pengadaan' || item.status === 'Tersedia') ? '<p class="text-xs text-gray-500 mt-1">🔒 Status dari RAB</p>' : ''}
         </td>
       </tr>
     `

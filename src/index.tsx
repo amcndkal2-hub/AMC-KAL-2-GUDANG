@@ -1427,6 +1427,62 @@ app.get('/api/rab/:id', async (c) => {
   }
 })
 
+// API: Update RAB status
+app.post('/api/rab/:id/update-status', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    const { status } = await c.req.json()
+    
+    console.log('📝 Updating RAB status:', { rabId, status })
+    
+    // Validate status
+    const validStatuses = ['Draft', 'Pengadaan', 'Tersedia']
+    if (!validStatuses.includes(status)) {
+      return c.json({ error: 'Invalid status' }, 400)
+    }
+    
+    // Get RAB items to update material_gangguan status
+    const rab = await DB.getRABById(env.DB, rabId)
+    if (!rab) {
+      return c.json({ error: 'RAB not found' }, 404)
+    }
+    
+    // Update RAB status
+    await env.DB.prepare(`
+      UPDATE rab 
+      SET status = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(status, rabId).run()
+    
+    // Sync status to material_gangguan if status is Pengadaan or Tersedia
+    if (status === 'Pengadaan' || status === 'Tersedia') {
+      const items = rab.items || []
+      
+      for (const item of items) {
+        // Find material_gangguan by part_number and nomor_lh05
+        await env.DB.prepare(`
+          UPDATE material_gangguan 
+          SET status = ?
+          WHERE part_number = ? 
+          AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
+        `).bind(status, item.part_number, item.nomor_lh05).run()
+        
+        console.log(`✅ Synced status ${status} to material ${item.part_number}`)
+      }
+    }
+    
+    return c.json({
+      success: true,
+      message: 'Status RAB berhasil diupdate!',
+      status
+    })
+  } catch (error: any) {
+    console.error('Failed to update RAB status:', error)
+    return c.json({ error: 'Failed to update status: ' + error.message }, 500)
+  }
+})
+
 // Main page - Input Form
 app.get('/', (c) => {
   return c.html(getInputFormHTML())
