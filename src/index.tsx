@@ -2034,36 +2034,62 @@ function getInputFormHTML() {
                             Material dari RAB (Status: Tersedia)
                         </h2>
                         <p class="text-gray-600 text-sm mb-4">
-                            Pilih material yang akan diinput sebagai material masuk (Penerimaan Gudang)
+                            Pilih Nomor RAB terlebih dahulu, lalu pilih material yang akan diinput sebagai material masuk
                         </p>
 
+                        <!-- RAB Selector -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-list-alt mr-2"></i>Pilih Nomor RAB:
+                            </label>
+                            <select id="rabSelector" onchange="filterMaterialsByRAB()" 
+                                    class="w-full md:w-1/2 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800 font-medium">
+                                <option value="">-- Pilih Nomor RAB --</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Hanya menampilkan RAB dengan status "Tersedia"
+                            </p>
+                        </div>
+
                         <!-- Materials Table -->
-                        <div class="overflow-x-auto mb-6">
-                            <table class="min-w-full border">
-                                <thead class="bg-green-50">
-                                    <tr>
-                                        <th class="px-4 py-3 border text-center">
-                                            <input type="checkbox" id="selectAllRAB" onchange="toggleSelectAllRAB()" 
-                                                   class="w-5 h-5 cursor-pointer">
-                                        </th>
-                                        <th class="px-4 py-3 border text-left">Nomor RAB</th>
-                                        <th class="px-4 py-3 border text-left">Nomor LH05</th>
-                                        <th class="px-4 py-3 border text-left">Part Number</th>
-                                        <th class="px-4 py-3 border text-left">Material</th>
-                                        <th class="px-4 py-3 border text-left">Mesin</th>
-                                        <th class="px-4 py-3 border text-center">Jumlah</th>
-                                        <th class="px-4 py-3 border text-left">Unit/ULD</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rabMaterialsTable">
-                                    <tr>
-                                        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
-                                            <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
-                                            <p>Memuat data material...</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div id="rabMaterialsSection" class="hidden">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800">
+                                    <i class="fas fa-boxes mr-2"></i>
+                                    Rincian Material
+                                </h3>
+                                <span id="materialCountBadge" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                                    0 items
+                                </span>
+                            </div>
+                            
+                            <div class="overflow-x-auto mb-6">
+                                <table class="min-w-full border">
+                                    <thead class="bg-green-50">
+                                        <tr>
+                                            <th class="px-4 py-3 border text-center">
+                                                <input type="checkbox" id="selectAllRAB" onchange="toggleSelectAllRAB()" 
+                                                       class="w-5 h-5 cursor-pointer">
+                                            </th>
+                                            <th class="px-4 py-3 border text-left">Nomor LH05</th>
+                                            <th class="px-4 py-3 border text-left">Part Number</th>
+                                            <th class="px-4 py-3 border text-left">Material</th>
+                                            <th class="px-4 py-3 border text-left">Mesin</th>
+                                            <th class="px-4 py-3 border text-center">Jumlah</th>
+                                            <th class="px-4 py-3 border text-left">Unit/ULD</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rabMaterialsTable">
+                                        <tr>
+                                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                                <i class="fas fa-arrow-up text-4xl mb-2"></i>
+                                                <p>Pilih Nomor RAB di atas untuk melihat material</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         <!-- Selected Materials Summary -->

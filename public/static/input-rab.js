@@ -1,6 +1,8 @@
 // Input Material dari RAB Tersedia
 let rabMaterials = [];
+let allRABMaterials = []; // Store all materials
 let selectedMaterials = [];
+let rabList = []; // Store unique RAB list
 
 // Load RAB materials with status Tersedia
 async function loadRABMaterials() {
@@ -17,28 +19,98 @@ async function loadRABMaterials() {
             throw new Error(data.error || 'Failed to load materials');
         }
         
-        rabMaterials = data.materials || [];
-        console.log(`✅ Loaded ${rabMaterials.length} materials`);
+        allRABMaterials = data.materials || [];
+        console.log(`✅ Loaded ${allRABMaterials.length} materials`);
         
-        renderRABMaterialsTable();
+        // Extract unique RAB list
+        populateRABSelector();
+        
     } catch (error) {
         console.error('❌ Error loading RAB materials:', error);
-        const tbody = document.getElementById('rabMaterialsTable');
-        if (tbody) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="px-4 py-8 text-center text-red-500">
-                        <i class="fas fa-exclamation-triangle text-4xl mb-2"></i>
-                        <p class="font-semibold">Gagal memuat data</p>
-                        <p class="text-sm mt-2">${error.message}</p>
-                        <button onclick="loadRABMaterials()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                            <i class="fas fa-refresh mr-2"></i>Coba Lagi
-                        </button>
-                    </td>
-                </tr>
+        const selector = document.getElementById('rabSelector');
+        if (selector) {
+            selector.innerHTML = `
+                <option value="">Error: ${error.message}</option>
             `;
         }
     }
+}
+
+// Populate RAB selector dropdown
+function populateRABSelector() {
+    const selector = document.getElementById('rabSelector');
+    if (!selector) {
+        console.error('❌ RAB selector not found');
+        return;
+    }
+    
+    // Get unique RAB numbers
+    const uniqueRABs = [...new Set(allRABMaterials.map(m => m.nomor_rab))].filter(Boolean);
+    rabList = uniqueRABs.map(nomor_rab => {
+        const materials = allRABMaterials.filter(m => m.nomor_rab === nomor_rab);
+        return {
+            nomor_rab,
+            count: materials.length,
+            tanggal: materials[0]?.tanggal_rab || ''
+        };
+    });
+    
+    console.log(`📋 Found ${rabList.length} unique RABs:`, rabList);
+    
+    if (rabList.length === 0) {
+        selector.innerHTML = `
+            <option value="">-- Belum ada RAB dengan status Tersedia --</option>
+        `;
+        return;
+    }
+    
+    // Populate dropdown
+    selector.innerHTML = `
+        <option value="">-- Pilih Nomor RAB (${rabList.length} tersedia) --</option>
+        ${rabList.map(rab => `
+            <option value="${rab.nomor_rab}">
+                ${rab.nomor_rab} (${rab.count} items)
+            </option>
+        `).join('')}
+    `;
+}
+
+// Filter materials by selected RAB
+function filterMaterialsByRAB() {
+    const selector = document.getElementById('rabSelector');
+    const selectedRAB = selector?.value;
+    
+    console.log('🔍 Filtering by RAB:', selectedRAB);
+    
+    if (!selectedRAB) {
+        // Hide materials section
+        const section = document.getElementById('rabMaterialsSection');
+        if (section) section.classList.add('hidden');
+        
+        rabMaterials = [];
+        selectedMaterials = [];
+        updateRABSelectedSummary();
+        return;
+    }
+    
+    // Filter materials by selected RAB
+    rabMaterials = allRABMaterials.filter(m => m.nomor_rab === selectedRAB);
+    console.log(`✅ Filtered ${rabMaterials.length} materials for ${selectedRAB}`);
+    
+    // Show materials section
+    const section = document.getElementById('rabMaterialsSection');
+    if (section) section.classList.remove('hidden');
+    
+    // Update count badge
+    const badge = document.getElementById('materialCountBadge');
+    if (badge) badge.textContent = `${rabMaterials.length} items`;
+    
+    // Render table
+    renderRABMaterialsTable();
+    
+    // Reset selections
+    selectedMaterials = [];
+    updateRABSelectedSummary();
 }
 
 // Render RAB materials table
@@ -54,18 +126,10 @@ function renderRABMaterialsTable() {
     if (rabMaterials.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="px-4 py-12 text-center text-gray-500">
-                    <i class="fas fa-inbox text-6xl mb-4 text-gray-300"></i>
-                    <p class="text-lg font-semibold mb-2">Belum ada material dari RAB dengan status Tersedia</p>
-                    <p class="text-sm text-gray-400 mb-4">
-                        Untuk menggunakan fitur ini:
-                    </p>
-                    <ol class="text-sm text-left inline-block text-gray-600">
-                        <li>1. Buat RAB di menu <strong>Create RAB</strong></li>
-                        <li>2. Buka <strong>List RAB</strong></li>
-                        <li>3. Ubah status RAB menjadi <strong>Tersedia</strong></li>
-                        <li>4. Material akan muncul di sini</li>
-                    </ol>
+                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                    <i class="fas fa-arrow-up text-4xl mb-2 text-gray-300"></i>
+                    <p class="text-lg font-semibold">Pilih Nomor RAB di atas</p>
+                    <p class="text-sm text-gray-400 mt-2">Material akan ditampilkan setelah Anda memilih RAB</p>
                 </td>
             </tr>
         `;
@@ -81,7 +145,6 @@ function renderRABMaterialsTable() {
                        data-index="${index}"
                        onchange="toggleRABMaterialSelection(this)">
             </td>
-            <td class="px-4 py-3 border text-sm text-gray-900">${item.nomor_rab || '-'}</td>
             <td class="px-4 py-3 border text-sm text-gray-900">${item.nomor_lh05 || '-'}</td>
             <td class="px-4 py-3 border text-sm font-medium text-gray-900">${item.part_number || '-'}</td>
             <td class="px-4 py-3 border text-sm text-gray-900">${item.material || '-'}</td>
