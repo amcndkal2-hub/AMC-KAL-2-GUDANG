@@ -1427,6 +1427,95 @@ app.get('/api/rab/:id', async (c) => {
   }
 })
 
+// API: Get materials from RAB with status Tersedia
+app.get('/api/rab/materials-tersedia', async (c) => {
+  try {
+    const { env } = c
+    
+    // Get all RAB items where RAB status is Tersedia
+    const query = `
+      SELECT 
+        ri.*,
+        r.nomor_rab,
+        r.status as rab_status,
+        mg.nomor_lh05
+      FROM rab_items ri
+      JOIN rab r ON ri.rab_id = r.id
+      LEFT JOIN material_gangguan mg ON mg.id = ri.material_gangguan_id
+      WHERE r.status = 'Tersedia'
+      ORDER BY r.tanggal_rab DESC, ri.id ASC
+    `
+    
+    const result = await env.DB.prepare(query).all()
+    
+    return c.json({
+      success: true,
+      materials: result.results || []
+    })
+  } catch (error) {
+    console.error('Failed to get RAB materials tersedia:', error)
+    return c.json({ error: 'Failed to fetch materials' }, 500)
+  }
+})
+
+// API: Save transaction from RAB
+app.post('/api/save-transaction-from-rab', async (c) => {
+  try {
+    const { env } = c
+    const data = await c.req.json()
+    
+    // Validate required fields
+    if (!data.materials || data.materials.length === 0) {
+      return c.json({ error: 'Materials are required' }, 400)
+    }
+    
+    if (!data.pemeriksa || !data.penerima) {
+      return c.json({ error: 'Pemeriksa and Penerima are required' }, 400)
+    }
+    
+    // Save transaction using existing saveTransaction function
+    const transactionData = {
+      jenis: 'Masuk (Penerimaan Gudang)',
+      tanggal: data.tanggal || new Date().toISOString().split('T')[0],
+      lokasi_asal: data.lokasi_asal || 'Supplier/Gudang',
+      lokasi_tujuan: data.lokasi_tujuan || 'Gudang',
+      pemeriksa: data.pemeriksa,
+      penerima: data.penerima,
+      ttd_pemeriksa: data.ttd_pemeriksa,
+      ttd_penerima: data.ttd_penerima,
+      materials: data.materials
+    }
+    
+    const result = await DB.saveTransaction(env.DB, transactionData)
+    
+    // Update material_gangguan status to Tersedia for these materials
+    if (data.materials && data.materials.length > 0) {
+      for (const material of data.materials) {
+        if (material.material_gangguan_id) {
+          await env.DB.prepare(`
+            UPDATE material_gangguan 
+            SET status = 'Tersedia', updated_at = datetime('now')
+            WHERE id = ?
+          `).bind(material.material_gangguan_id).run()
+        }
+      }
+    }
+    
+    return c.json({
+      success: true,
+      message: 'Transaksi berhasil disimpan!',
+      nomor_ba: result.nomor_ba,
+      transaction_id: result.id
+    })
+  } catch (error) {
+    console.error('Failed to save transaction from RAB:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to save transaction' 
+    }, 500)
+  }
+})
+
 // API: Update RAB status
 app.post('/api/rab/:id/update-status', async (c) => {
   try {
@@ -1480,6 +1569,48 @@ app.post('/api/rab/:id/update-status', async (c) => {
   } catch (error: any) {
     console.error('Failed to update RAB status:', error)
     return c.json({ error: 'Failed to update status: ' + error.message }, 500)
+  }
+})
+
+// API: Get materials from RAB with status Tersedia
+app.get('/api/rab/materials-tersedia', async (c) => {
+  try {
+    const { env } = c
+    
+    // Get all RAB with status Tersedia
+    const rabList = await env.DB.prepare(`
+      SELECT id, nomor_rab, tanggal_rab 
+      FROM rab 
+      WHERE status = 'Tersedia'
+      ORDER BY created_at DESC
+    `).all()
+    
+    if (!rabList.results || rabList.results.length === 0) {
+      return c.json([])
+    }
+    
+    // Get all items from these RAB
+    const materials = []
+    for (const rab of rabList.results) {
+      const items = await env.DB.prepare(`
+        SELECT 
+          ri.*,
+          r.nomor_rab,
+          r.tanggal_rab
+        FROM rab_items ri
+        JOIN rab r ON ri.rab_id = r.id
+        WHERE ri.rab_id = ?
+      `).bind(rab.id).all()
+      
+      if (items.results) {
+        materials.push(...items.results)
+      }
+    }
+    
+    return c.json(materials)
+  } catch (error) {
+    console.error('Failed to get materials tersedia:', error)
+    return c.json({ error: 'Failed to fetch materials' }, 500)
   }
 })
 
@@ -1796,8 +1927,24 @@ function getInputFormHTML() {
                         Form Input Transaksi Material
                     </h1>
                     <p class="text-gray-600">Pengeluaran dan Penerimaan Gudang</p>
+                    
+                    <!-- Tabs -->
+                    <div class="mt-6 border-b border-gray-200">
+                        <nav class="flex space-x-4">
+                            <button onclick="switchTab('manual')" id="tabManual" 
+                                    class="tab-button px-4 py-2 font-semibold text-blue-600 border-b-2 border-blue-600">
+                                <i class="fas fa-keyboard mr-2"></i>Input Manual
+                            </button>
+                            <button onclick="switchTab('rab')" id="tabRAB" 
+                                    class="tab-button px-4 py-2 font-semibold text-gray-500 hover:text-blue-600">
+                                <i class="fas fa-file-invoice mr-2"></i>Input dari RAB Tersedia
+                            </button>
+                        </nav>
+                    </div>
                 </div>
 
+                <!-- Tab Content: Manual Input -->
+                <div id="contentManual" class="tab-content">
                 <!-- Form -->
                 <form id="transactionForm" class="space-y-6">
                     <!-- Informasi Umum -->
@@ -1904,11 +2051,162 @@ function getInputFormHTML() {
                         </button>
                     </div>
                 </form>
+                </div>
+                <!-- End Tab Content: Manual Input -->
+
+                <!-- Tab Content: RAB Input -->
+                <div id="contentRAB" class="tab-content hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
+                            Material dari RAB (Status: Tersedia)
+                        </h2>
+                        <p class="text-gray-600 text-sm mb-4">
+                            Pilih material yang akan diinput sebagai material masuk (Penerimaan Gudang)
+                        </p>
+
+                        <!-- Materials Table -->
+                        <div class="overflow-x-auto mb-6">
+                            <table class="min-w-full border">
+                                <thead class="bg-green-50">
+                                    <tr>
+                                        <th class="px-4 py-3 border text-center">
+                                            <input type="checkbox" id="selectAllRAB" onchange="toggleSelectAllRAB()" 
+                                                   class="w-5 h-5 cursor-pointer">
+                                        </th>
+                                        <th class="px-4 py-3 border text-left">Nomor RAB</th>
+                                        <th class="px-4 py-3 border text-left">Nomor LH05</th>
+                                        <th class="px-4 py-3 border text-left">Part Number</th>
+                                        <th class="px-4 py-3 border text-left">Material</th>
+                                        <th class="px-4 py-3 border text-left">Mesin</th>
+                                        <th class="px-4 py-3 border text-center">Jumlah</th>
+                                        <th class="px-4 py-3 border text-left">Unit/ULD</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rabMaterialsTable">
+                                    <tr>
+                                        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                            <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
+                                            <p>Memuat data material...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Selected Materials Summary -->
+                        <div id="selectedRABSummary" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                            <h3 class="font-semibold text-gray-800 mb-2">
+                                <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                Material Terpilih: <span id="selectedRABCount">0</span> items
+                            </h3>
+                            <div id="selectedRABList" class="text-sm text-gray-700"></div>
+                        </div>
+                    </div>
+
+                    <!-- Form Input: Pemeriksa & Penerima -->
+                    <div id="rabInputForm" class="hidden">
+                        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-user-check text-blue-600 mr-2"></i>
+                                Informasi Pemeriksa & Penerima
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Pemeriksa -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Pemeriksa</label>
+                                    <input type="text" id="rabPemeriksa" required
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                           placeholder="Nama pemeriksa">
+                                </div>
+                                
+                                <!-- Penerima -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Penerima</label>
+                                    <input type="text" id="rabPenerima" required
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                           placeholder="Nama penerima">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TTD Section -->
+                        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-signature text-blue-600 mr-2"></i>
+                                Tanda Tangan Digital
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- TTD Pemeriksa -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        TTD Pemeriksa <span class="text-red-500">*</span>
+                                    </label>
+                                    <canvas id="rabCanvasPemeriksa" width="300" height="150" 
+                                            class="signature-pad border rounded-lg w-full bg-gray-50"></canvas>
+                                    <button type="button" onclick="clearRABSignature('rabCanvasPemeriksa')" 
+                                            class="mt-2 text-sm text-red-600 hover:text-red-800">
+                                        <i class="fas fa-eraser mr-1"></i>Clear
+                                    </button>
+                                </div>
+                                
+                                <!-- TTD Penerima -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        TTD Penerima <span class="text-red-500">*</span>
+                                    </label>
+                                    <canvas id="rabCanvasPenerima" width="300" height="150" 
+                                            class="signature-pad border rounded-lg w-full bg-gray-50"></canvas>
+                                    <button type="button" onclick="clearRABSignature('rabCanvasPenerima')" 
+                                            class="mt-2 text-sm text-red-600 hover:text-red-800">
+                                        <i class="fas fa-eraser mr-1"></i>Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex justify-end space-x-4">
+                            <button type="button" onclick="resetRABForm()" 
+                                    class="px-6 py-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                                <i class="fas fa-undo mr-2"></i>Reset
+                            </button>
+                            <button type="button" onclick="saveRABTransaction()" 
+                                    class="px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                <i class="fas fa-save mr-2"></i>Simpan Transaksi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Tab Content: RAB Input -->
             </div>
         </div>
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/app.js"></script>
+        <script src="/static/input-rab.js"></script>
+        <script>
+          // Tab switching
+          function switchTab(tab) {
+            const tabs = ['manual', 'rab']
+            tabs.forEach(t => {
+              const content = document.getElementById('content' + t.charAt(0).toUpperCase() + t.slice(1))
+              const button = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1))
+              
+              if (t === tab) {
+                content.classList.remove('hidden')
+                button.classList.add('text-blue-600', 'border-b-2', 'border-blue-600')
+                button.classList.remove('text-gray-500')
+              } else {
+                content.classList.add('hidden')
+                button.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600')
+                button.classList.add('text-gray-500')
+              }
+            })
+          }
+        </script>
     </body>
     </html>
   `
