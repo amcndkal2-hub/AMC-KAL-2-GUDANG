@@ -445,16 +445,19 @@ function renderStokKritis(materials) {
 }
 
 function renderStatusKebutuhan(status) {
-  // Update statistik cards
-  document.getElementById('totalPengadaan').textContent = status.pengadaan || 0
-  document.getElementById('totalTunda').textContent = status.tunda || 0
-  document.getElementById('totalTerkirim').textContent = status.terkirim || 0
-  document.getElementById('totalReject').textContent = status.reject || 0
-  document.getElementById('totalTersedia').textContent = status.tersedia || 0
+  // Update statistik cards with correct IDs
+  document.getElementById('statusNA').textContent = status.na || 0
+  document.getElementById('statusPengadaan').textContent = status.pengadaan || 0
+  document.getElementById('statusTunda').textContent = status.tunda || 0
+  document.getElementById('statusTerkirim').textContent = status.terkirim || 0
+  document.getElementById('statusReject').textContent = status.reject || 0
+  document.getElementById('statusTersedia').textContent = status.tersedia || 0
   
-  // Calculate total
-  const total = (status.pengadaan || 0) + (status.tunda || 0) + (status.terkirim || 0) + (status.reject || 0) + (status.tersedia || 0)
-  document.getElementById('totalKebutuhan').textContent = total
+  // Calculate total (include N/A)
+  const total = (status.na || 0) + (status.pengadaan || 0) + (status.tunda || 0) + (status.terkirim || 0) + (status.reject || 0) + (status.tersedia || 0)
+  document.getElementById('statusTotal').textContent = total
+  
+  console.log('✅ Status Kebutuhan rendered:', { total, ...status })
 }
 
 function getRankColor(rank) {
