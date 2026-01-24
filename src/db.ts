@@ -44,18 +44,40 @@ export async function saveTransaction(db: D1Database, data: any) {
         console.log(`🔄 Auto-filled jenisBarang for ${material.partNumber}: ${jenisBarang}`)
       }
       
-      await db.prepare(`
-        INSERT INTO materials (transaction_id, part_number, jenis_barang, material, mesin, status, jumlah)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        transactionId,
-        material.partNumber,
-        jenisBarang,  // Use auto-filled value
-        material.material,
-        material.mesin,
-        material.status || material.snMesin || '',  // Use status (renamed from snMesin)
-        material.jumlah
-      ).run()
+      // Try inserting with status column first
+      try {
+        await db.prepare(`
+          INSERT INTO materials (transaction_id, part_number, jenis_barang, material, mesin, status, jumlah)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          transactionId,
+          material.partNumber,
+          jenisBarang,  // Use auto-filled value
+          material.material,
+          material.mesin,
+          material.status || material.snMesin || '',  // Use status (renamed from snMesin)
+          material.jumlah
+        ).run()
+      } catch (insertError: any) {
+        // Fallback to sn_mesin if status column doesn't exist
+        if (insertError.message && insertError.message.includes('no such column: status')) {
+          console.log('⚠️ status column not found, using sn_mesin fallback for insert')
+          await db.prepare(`
+            INSERT INTO materials (transaction_id, part_number, jenis_barang, material, mesin, sn_mesin, jumlah)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            transactionId,
+            material.partNumber,
+            jenisBarang,
+            material.material,
+            material.mesin,
+            material.status || material.snMesin || '',
+            material.jumlah
+          ).run()
+        } else {
+          throw insertError
+        }
+      }
     }
 
     return { success: true, id: transactionId, nomorBA: data.nomorBA }
@@ -67,29 +89,58 @@ export async function saveTransaction(db: D1Database, data: any) {
 
 export async function getAllTransactions(db: D1Database) {
   try {
-    const { results } = await db.prepare(`
-      SELECT 
-        t.*,
-        json_group_array(
-          json_object(
-            'partNumber', m.part_number,
-            'jenisBarang', m.jenis_barang,
-            'material', m.material,
-            'mesin', m.mesin,
-            'status', m.status,
-            'jumlah', m.jumlah
-          )
-        ) as materials
-      FROM transactions t
-      LEFT JOIN materials m ON t.id = m.transaction_id
-      GROUP BY t.id
-      ORDER BY t.created_at DESC
-    `).all()
+    // Try with status column first (after migration)
+    try {
+      const { results } = await db.prepare(`
+        SELECT 
+          t.*,
+          json_group_array(
+            json_object(
+              'partNumber', m.part_number,
+              'jenisBarang', m.jenis_barang,
+              'material', m.material,
+              'mesin', m.mesin,
+              'status', m.status,
+              'jumlah', m.jumlah
+            )
+          ) as materials
+        FROM transactions t
+        LEFT JOIN materials m ON t.id = m.transaction_id
+        GROUP BY t.id
+        ORDER BY t.created_at DESC
+      `).all()
 
-    return results.map((tx: any) => ({
-      ...tx,
-      materials: JSON.parse(tx.materials)
-    }))
+      return results.map((tx: any) => ({
+        ...tx,
+        materials: JSON.parse(tx.materials)
+      }))
+    } catch (statusError) {
+      // Fallback to sn_mesin if status column doesn't exist
+      console.log('⚠️ status column not found, using sn_mesin fallback')
+      const { results } = await db.prepare(`
+        SELECT 
+          t.*,
+          json_group_array(
+            json_object(
+              'partNumber', m.part_number,
+              'jenisBarang', m.jenis_barang,
+              'material', m.material,
+              'mesin', m.mesin,
+              'status', m.sn_mesin,
+              'jumlah', m.jumlah
+            )
+          ) as materials
+        FROM transactions t
+        LEFT JOIN materials m ON t.id = m.transaction_id
+        GROUP BY t.id
+        ORDER BY t.created_at DESC
+      `).all()
+
+      return results.map((tx: any) => ({
+        ...tx,
+        materials: JSON.parse(tx.materials)
+      }))
+    }
   } catch (error: any) {
     console.error('Failed to get transactions:', error)
     return []
@@ -98,31 +149,63 @@ export async function getAllTransactions(db: D1Database) {
 
 export async function getTransactionByBA(db: D1Database, nomorBA: string) {
   try {
-    const { results } = await db.prepare(`
-      SELECT 
-        t.*,
-        json_group_array(
-          json_object(
-            'partNumber', m.part_number,
-            'jenisBarang', m.jenis_barang,
-            'material', m.material,
-            'mesin', m.mesin,
-            'status', m.status,
-            'jumlah', m.jumlah
-          )
-        ) as materials
-      FROM transactions t
-      LEFT JOIN materials m ON t.id = m.transaction_id
-      WHERE t.nomor_ba = ?
-      GROUP BY t.id
-    `).bind(nomorBA).all()
+    // Try with status column first (after migration)
+    try {
+      const { results } = await db.prepare(`
+        SELECT 
+          t.*,
+          json_group_array(
+            json_object(
+              'partNumber', m.part_number,
+              'jenisBarang', m.jenis_barang,
+              'material', m.material,
+              'mesin', m.mesin,
+              'status', m.status,
+              'jumlah', m.jumlah
+            )
+          ) as materials
+        FROM transactions t
+        LEFT JOIN materials m ON t.id = m.transaction_id
+        WHERE t.nomor_ba = ?
+        GROUP BY t.id
+      `).bind(nomorBA).all()
 
-    if (results.length === 0) return null
+      if (results.length === 0) return null
 
-    const tx: any = results[0]
-    return {
-      ...tx,
-      materials: JSON.parse(tx.materials)
+      const tx: any = results[0]
+      return {
+        ...tx,
+        materials: JSON.parse(tx.materials)
+      }
+    } catch (statusError) {
+      // Fallback to sn_mesin if status column doesn't exist
+      console.log('⚠️ status column not found in getTransactionByBA, using sn_mesin fallback')
+      const { results } = await db.prepare(`
+        SELECT 
+          t.*,
+          json_group_array(
+            json_object(
+              'partNumber', m.part_number,
+              'jenisBarang', m.jenis_barang,
+              'material', m.material,
+              'mesin', m.mesin,
+              'status', m.sn_mesin,
+              'jumlah', m.jumlah
+            )
+          ) as materials
+        FROM transactions t
+        LEFT JOIN materials m ON t.id = m.transaction_id
+        WHERE t.nomor_ba = ?
+        GROUP BY t.id
+      `).bind(nomorBA).all()
+
+      if (results.length === 0) return null
+
+      const tx: any = results[0]
+      return {
+        ...tx,
+        materials: JSON.parse(tx.materials)
+      }
     }
   } catch (error: any) {
     console.error('Failed to get transaction by BA:', error)
