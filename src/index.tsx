@@ -771,24 +771,52 @@ app.get('/api/target-umur/:partNumber', (c) => {
 
 // ==================== ADMIN DELETE OPERATIONS ====================
 
-// Helper: Check if user is admin
-function isAdmin(c: any): boolean {
+// Helper: Check if user is admin (check memory + D1)
+async function isAdmin(c: any): Promise<boolean> {
   const authHeader = c.req.header('Authorization')
   const sessionToken = authHeader?.replace('Bearer ', '')
   
-  if (!sessionToken || !activeSessions.has(sessionToken)) {
+  if (!sessionToken) {
     return false
   }
   
-  const session = activeSessions.get(sessionToken)
-  return session.role === 'admin'
+  // Check in-memory first (fast path)
+  if (activeSessions.has(sessionToken)) {
+    const session = activeSessions.get(sessionToken)
+    return session.role === 'admin'
+  }
+  
+  // Check D1 database if not in memory (worker restart scenario)
+  try {
+    const { env } = c
+    const dbSession: any = await DB.getSession(env.DB, sessionToken)
+    
+    if (dbSession && new Date(dbSession.expires_at) > new Date()) {
+      // Restore session to memory
+      activeSessions.set(sessionToken, {
+        username: dbSession.username,
+        role: dbSession.role,
+        expiresAt: dbSession.expires_at
+      })
+      
+      console.log('✅ Session restored from D1 for admin check')
+      return dbSession.role === 'admin'
+    }
+  } catch (error) {
+    console.error('Error checking session in D1:', error)
+  }
+  
+  return false
 }
 
 // API: Delete transaction by Nomor BA (ADMIN ONLY)
 app.delete('/api/transaction/:nomorBA', async (c) => {
   try {
-    // Check admin access
-    if (!isAdmin(c)) {
+    // Check admin access (now async with D1 fallback)
+    const isAdminUser = await isAdmin(c)
+    
+    if (!isAdminUser) {
+      console.log('❌ Delete denied: User is not admin')
       return c.json({ 
         success: false, 
         error: 'Access denied. Admin privileges required.' 
@@ -797,6 +825,8 @@ app.delete('/api/transaction/:nomorBA', async (c) => {
     
     const { env } = c
     const nomorBA = c.req.param('nomorBA')
+    
+    console.log(`✅ Admin confirmed, deleting transaction: ${nomorBA}`)
     
     // Delete from D1 Database
     const result = await DB.deleteTransaction(env.DB, nomorBA)
@@ -815,8 +845,11 @@ app.delete('/api/transaction/:nomorBA', async (c) => {
 // Using query param to handle "/" characters in nomor LH05
 app.delete('/api/gangguan', async (c) => {
   try {
-    // Check admin access
-    if (!isAdmin(c)) {
+    // Check admin access (now async with D1 fallback)
+    const isAdminUser = await isAdmin(c)
+    
+    if (!isAdminUser) {
+      console.log('❌ Delete gangguan denied: User is not admin')
       return c.json({ 
         success: false, 
         error: 'Access denied. Admin privileges required.' 
@@ -833,7 +866,7 @@ app.delete('/api/gangguan', async (c) => {
       }, 400)
     }
     
-    console.log('🗑️ Deleting gangguan:', nomorLH05)
+    console.log('✅ Admin confirmed, deleting gangguan:', nomorLH05)
     
     // Delete from D1 Database
     const result = await DB.deleteGangguan(env.DB, nomorLH05)
