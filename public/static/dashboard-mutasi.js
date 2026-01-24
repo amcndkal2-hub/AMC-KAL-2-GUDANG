@@ -265,7 +265,7 @@ function showBAModal(ba) {
                             <th class="border border-gray-300 px-3 py-2">MATERIAL</th>
                             <th class="border border-gray-300 px-3 py-2">MESIN</th>
                             <th class="border border-gray-300 px-3 py-2">JUMLAH</th>
-                            <th class="border border-gray-300 px-3 py-2">STATUS</th>
+                            <th class="border border-gray-300 px-3 py-2">${ba.jenis_transaksi.includes('Masuk') ? 'STATUS' : 'S/N MESIN'}</th>
                         </tr>
                     </thead>
                     <tbody>
