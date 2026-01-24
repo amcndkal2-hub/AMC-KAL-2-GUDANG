@@ -184,7 +184,7 @@ function renderMutasiTable(data = transactions) {
                             </span>
                         </td>
                     ` : ''}
-                    <td class="px-4 py-3">${mat.partNumber || mat.part_number}</td>
+                    <td class="px-4 py-3">${mat.partNumber || mat.part_number || '-'}</td>
                     <td class="px-4 py-3 text-center font-semibold">${mat.jumlah}</td>
                     ${idx === 0 ? `
                         <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.lokasi_asal}</td>
@@ -271,7 +271,7 @@ function showBAModal(ba) {
                     <tbody>
                         ${ba.materials.map(mat => `
                             <tr>
-                                <td class="border border-gray-300 px-3 py-2">${mat.partNumber || mat.part_number}</td>
+                                <td class="border border-gray-300 px-3 py-2">${mat.partNumber || mat.part_number || '-'}</td>
                                 <td class="border border-gray-300 px-3 py-2">${mat.material}</td>
                                 <td class="border border-gray-300 px-3 py-2">${mat.mesin}</td>
                                 <td class="border border-gray-300 px-3 py-2 text-center">${mat.jumlah}</td>

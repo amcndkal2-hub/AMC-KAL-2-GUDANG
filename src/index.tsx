@@ -587,9 +587,11 @@ app.get('/api/dashboard/umur-material', async (c) => {
       .sort((a: any, b: any) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime())
       .forEach((tx: any) => {
         tx.materials.forEach((mat: any) => {
-          if (!mat.snMesin) return // Skip if no S/N
+          // Check for S/N Mesin in status field (for KELUAR transactions)
+          const snMesin = mat.status || mat.snMesin || mat.sn_mesin
+          if (!snMesin) return // Skip if no S/N
           
-          const key = `${mat.snMesin}_${mat.partNumber}`
+          const key = `${snMesin}_${mat.partNumber || mat.part_number}`
           const historyKey = key
           
           // Initialize history if not exists
@@ -619,25 +621,26 @@ app.get('/api/dashboard/umur-material', async (c) => {
           const umurHari = Math.floor(umurMs / (1000 * 60 * 60 * 24))
           
           // Get target umur for this part number
-          const targetUmur = targetUmurMaterial.get(mat.partNumber)
+          const partNum = mat.partNumber || mat.part_number
+          const targetUmur = targetUmurMaterial.get(partNum)
           const targetUmurHari = targetUmur?.targetUmurHari || 365 // Default 365 hari
           
           // Determine status based on target
-          let status = 'Terpasang'
+          let statusUmur = 'Terpasang'
           let statusClass = 'green'
           
           if (umurHari >= targetUmurHari) {
-            status = 'Perlu Diganti'
+            statusUmur = 'Perlu Diganti'
             statusClass = 'red'
           } else if (umurHari >= (targetUmurHari - 20)) {
-            status = 'Mendekati Batas'
+            statusUmur = 'Mendekati Batas'
             statusClass = 'yellow'
           }
           
           // Update ageMap with latest entry for this material
           ageMap[key] = {
-            snMesin: mat.snMesin,
-            partNumber: mat.partNumber,
+            snMesin: snMesin,
+            partNumber: partNum,
             jenisBarang: mat.jenisBarang || mat.jenis_barang || '-',
             material: mat.material,
             mesin: mat.mesin,
@@ -646,7 +649,7 @@ app.get('/api/dashboard/umur-material', async (c) => {
             umurHari: umurHari,
             targetUmurHari: targetUmurHari,
             sisaHari: targetUmurHari - umurHari,
-            status: status,
+            status: statusUmur,
             statusClass: statusClass,
             totalPenggantian: history.length,
             nomorBA: tx.nomor_ba,
