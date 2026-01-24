@@ -132,6 +132,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Reset button
     document.getElementById('resetForm').addEventListener('click', resetForm);
+    
+    // Update status label based on jenis transaksi
+    document.getElementById('jenisTransaksi').addEventListener('change', updateStatusLabels);
+    
+    // Initialize status labels on page load
+    updateStatusLabels();
 });
 
 // Load dropdown data from API
@@ -170,6 +176,27 @@ function populateDropdown(selectId, options) {
         optionElement.value = option;
         optionElement.textContent = option;
         select.appendChild(optionElement);
+    });
+}
+
+// Update status field labels based on transaction type
+function updateStatusLabels() {
+    const jenisTransaksi = document.getElementById('jenisTransaksi').value;
+    const statusLabels = document.querySelectorAll('.status-label');
+    const statusInputs = document.querySelectorAll('.status');
+    
+    // Determine label and placeholder based on transaction type
+    const isMasuk = jenisTransaksi.includes('Masuk');
+    const label = isMasuk ? 'Status' : 'S/N Mesin';
+    const placeholder = isMasuk ? 'Status material (opsional)' : 'Contoh: SN-EXC-001';
+    
+    // Update all status labels and inputs
+    statusLabels.forEach(labelElement => {
+        labelElement.textContent = label;
+    });
+    
+    statusInputs.forEach(input => {
+        input.placeholder = placeholder;
     });
 }
 
@@ -219,7 +246,7 @@ function addMaterialRow() {
             </div>
             
             <div class="lg:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label class="status-label block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <input type="text" class="status w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                     placeholder="Status material (opsional)">
             </div>
