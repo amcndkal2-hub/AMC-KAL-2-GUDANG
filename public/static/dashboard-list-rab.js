@@ -66,13 +66,20 @@ function renderRABList(rabList) {
           <option value="Draft" ${rab.status === 'Draft' ? 'selected' : ''}>Draft</option>
           <option value="Pengadaan" ${rab.status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
           <option value="Tersedia" ${rab.status === 'Tersedia' ? 'selected' : ''}>Tersedia</option>
+          <option value="Masuk Gudang" ${rab.status === 'Masuk Gudang' ? 'selected' : ''}>Masuk Gudang</option>
         </select>
       </td>
       <td class="px-4 py-3 border text-center">
-        <button onclick="viewRABDetail(${rab.id})" 
-                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs">
-          <i class="fas fa-eye mr-1"></i>View
-        </button>
+        <div class="flex gap-2 justify-center">
+          <button onclick="viewRABDetail(${rab.id})" 
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs">
+            <i class="fas fa-eye mr-1"></i>View
+          </button>
+          <button onclick="viewRABHistory(${rab.id})" 
+                  class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs">
+            <i class="fas fa-history mr-1"></i>History
+          </button>
+        </div>
       </td>
     </tr>
   `).join('')
@@ -109,7 +116,8 @@ function getStatusColorSelect(status) {
   const colors = {
     'Draft': 'bg-gray-100 text-gray-700',
     'Pengadaan': 'bg-orange-100 text-orange-700',
-    'Tersedia': 'bg-green-100 text-green-700'
+    'Tersedia': 'bg-green-100 text-green-700',
+    'Masuk Gudang': 'bg-purple-100 text-purple-700'
   }
   return colors[status] || 'bg-gray-100 text-gray-700'
 }
@@ -418,6 +426,148 @@ function showError(message) {
       </td>
     </tr>
   `
+}
+
+// View RAB History (Timeline)
+async function viewRABHistory(rabId) {
+  try {
+    const response = await fetch(`/api/rab/${rabId}/history`)
+    if (!response.ok) throw new Error('Failed to load history')
+    
+    const data = await response.json()
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to load history')
+    }
+    
+    // Show modal with timeline
+    showRABHistoryModal(data)
+    
+  } catch (error) {
+    console.error('Error loading RAB history:', error)
+    alert('Gagal memuat history: ' + error.message)
+  }
+}
+
+// Show RAB History Modal
+function showRABHistoryModal(data) {
+  const { rab, timeline } = data
+  
+  // Build timeline HTML
+  const timelineHTML = timeline.map((item, index) => {
+    const isLast = index === timeline.length - 1
+    const connectorClass = isLast ? 'hidden' : ''
+    
+    return `
+      <div class="flex gap-4 relative">
+        <!-- Timeline Icon -->
+        <div class="flex flex-col items-center">
+          <div class="w-12 h-12 rounded-full bg-${item.color}-100 flex items-center justify-center text-${item.color}-600 text-2xl z-10">
+            ${item.icon}
+          </div>
+          <!-- Connector Line -->
+          <div class="${connectorClass} w-1 h-full bg-gray-300 absolute top-12"></div>
+        </div>
+        
+        <!-- Timeline Content -->
+        <div class="flex-1 pb-8">
+          <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-${item.color}-500">
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-bold text-lg text-gray-800">${item.status}</h3>
+              <span class="text-sm text-gray-500">${formatDateTime(item.tanggal)}</span>
+            </div>
+            <p class="text-gray-600 text-sm">${item.description}</p>
+          </div>
+        </div>
+      </div>
+    `
+  }).join('')
+  
+  // Create modal
+  const modal = document.createElement('div')
+  modal.id = 'historyModal'
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+  modal.innerHTML = `
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 rounded-t-lg">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold flex items-center">
+              <i class="fas fa-history mr-3"></i>
+              History Timeline
+            </h2>
+            <p class="text-purple-100 mt-1">RAB: ${rab.nomor_rab}</p>
+          </div>
+          <button onclick="closeHistoryModal()" 
+                  class="text-white hover:text-gray-200 text-2xl leading-none">
+            ×
+          </button>
+        </div>
+      </div>
+      
+      <!-- Timeline Content -->
+      <div class="p-6">
+        ${timeline.length > 0 ? timelineHTML : `
+          <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-info-circle text-4xl mb-2"></i>
+            <p>Belum ada history untuk RAB ini</p>
+          </div>
+        `}
+      </div>
+      
+      <!-- Footer -->
+      <div class="sticky bottom-0 bg-gray-50 px-6 py-4 rounded-b-lg border-t flex justify-between items-center">
+        <div class="text-sm text-gray-600">
+          <i class="fas fa-info-circle mr-1"></i>
+          Status saat ini: <span class="font-semibold text-${getStatusColor(rab.status)}-600">${rab.status}</span>
+        </div>
+        <button onclick="closeHistoryModal()" 
+                class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">
+          <i class="fas fa-times mr-2"></i>Tutup
+        </button>
+      </div>
+    </div>
+  `
+  
+  document.body.appendChild(modal)
+  
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeHistoryModal()
+  })
+}
+
+// Close History Modal
+function closeHistoryModal() {
+  const modal = document.getElementById('historyModal')
+  if (modal) {
+    modal.remove()
+  }
+}
+
+// Format date time
+function formatDateTime(dateString) {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return date.toLocaleString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// Get status color
+function getStatusColor(status) {
+  const colors = {
+    'Draft': 'blue',
+    'Pengadaan': 'yellow',
+    'Tersedia': 'green',
+    'Masuk Gudang': 'purple'
+  }
+  return colors[status] || 'gray'
 }
 
 // Logout

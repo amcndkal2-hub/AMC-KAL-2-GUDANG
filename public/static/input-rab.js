@@ -322,6 +322,7 @@ async function saveRABTransaction() {
         penerima: penerima,
         ttd_pemeriksa: rabSignaturePads.pemeriksa.toDataURL(),
         ttd_penerima: rabSignaturePads.penerima.toDataURL(),
+        rab_id: selectedMaterials[0].rab_id, // Add rab_id for status update
         materials: selectedMaterials.map(m => ({
             part_number: m.part_number,
             material: m.material,

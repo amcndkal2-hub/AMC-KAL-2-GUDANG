@@ -1515,6 +1515,20 @@ app.post('/api/save-transaction-from-rab', async (c) => {
       }
     }
     
+    // Update RAB status to "Masuk Gudang" and set tanggal_masuk_gudang
+    // Get rab_id from first material (all materials in one transaction have same RAB)
+    if (data.rab_id) {
+      await env.DB.prepare(`
+        UPDATE rab 
+        SET status = 'Masuk Gudang', 
+            tanggal_masuk_gudang = datetime('now'),
+            updated_at = datetime('now')
+        WHERE id = ?
+      `).bind(data.rab_id).run()
+      
+      console.log(`✅ RAB ${data.rab_id} status updated to "Masuk Gudang"`)
+    }
+    
     return c.json({
       success: true,
       message: 'Transaksi berhasil disimpan!',
@@ -1540,7 +1554,7 @@ app.post('/api/rab/:id/update-status', async (c) => {
     console.log('📝 Updating RAB status:', { rabId, status })
     
     // Validate status
-    const validStatuses = ['Draft', 'Pengadaan', 'Tersedia']
+    const validStatuses = ['Draft', 'Pengadaan', 'Tersedia', 'Masuk Gudang']
     if (!validStatuses.includes(status)) {
       return c.json({ error: 'Invalid status' }, 400)
     }
@@ -1551,10 +1565,20 @@ app.post('/api/rab/:id/update-status', async (c) => {
       return c.json({ error: 'RAB not found' }, 404)
     }
     
-    // Update RAB status
+    // Determine which timestamp field to update based on status
+    let timestampField = 'updated_at'
+    if (status === 'Pengadaan') {
+      timestampField = 'tanggal_pengadaan'
+    } else if (status === 'Tersedia') {
+      timestampField = 'tanggal_tersedia'
+    } else if (status === 'Masuk Gudang') {
+      timestampField = 'tanggal_masuk_gudang'
+    }
+    
+    // Update RAB status with timestamp
     await env.DB.prepare(`
       UPDATE rab 
-      SET status = ?, updated_at = CURRENT_TIMESTAMP
+      SET status = ?, ${timestampField} = datetime('now'), updated_at = datetime('now')
       WHERE id = ?
     `).bind(status, rabId).run()
     
@@ -1583,6 +1607,94 @@ app.post('/api/rab/:id/update-status', async (c) => {
   } catch (error: any) {
     console.error('Failed to update RAB status:', error)
     return c.json({ error: 'Failed to update status: ' + error.message }, 500)
+  }
+})
+
+// API: Get RAB history (timeline)
+app.get('/api/rab/:id/history', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    
+    // Get RAB with all timestamp fields
+    const rab = await env.DB.prepare(`
+      SELECT 
+        id,
+        nomor_rab,
+        status,
+        tanggal_draft,
+        tanggal_pengadaan,
+        tanggal_tersedia,
+        tanggal_masuk_gudang,
+        created_at,
+        updated_at
+      FROM rab
+      WHERE id = ?
+    `).bind(rabId).first()
+    
+    if (!rab) {
+      return c.json({ error: 'RAB not found' }, 404)
+    }
+    
+    // Build timeline array
+    const timeline = []
+    
+    // 1. Draft (created)
+    if (rab.tanggal_draft) {
+      timeline.push({
+        status: 'Draft',
+        tanggal: rab.tanggal_draft,
+        icon: '📝',
+        color: 'blue',
+        description: 'RAB dibuat dan berstatus Draft'
+      })
+    }
+    
+    // 2. Pengadaan
+    if (rab.tanggal_pengadaan) {
+      timeline.push({
+        status: 'Pengadaan',
+        tanggal: rab.tanggal_pengadaan,
+        icon: '🛒',
+        color: 'yellow',
+        description: 'RAB diproses untuk pengadaan material'
+      })
+    }
+    
+    // 3. Tersedia
+    if (rab.tanggal_tersedia) {
+      timeline.push({
+        status: 'Tersedia',
+        tanggal: rab.tanggal_tersedia,
+        icon: '✅',
+        color: 'green',
+        description: 'Material tersedia dan siap diinput'
+      })
+    }
+    
+    // 4. Masuk Gudang
+    if (rab.tanggal_masuk_gudang) {
+      timeline.push({
+        status: 'Masuk Gudang',
+        tanggal: rab.tanggal_masuk_gudang,
+        icon: '📦',
+        color: 'purple',
+        description: 'Material sudah diinput ke sistem gudang'
+      })
+    }
+    
+    return c.json({
+      success: true,
+      rab: {
+        id: rab.id,
+        nomor_rab: rab.nomor_rab,
+        status: rab.status
+      },
+      timeline
+    })
+  } catch (error: any) {
+    console.error('Failed to get RAB history:', error)
+    return c.json({ error: 'Failed to fetch history: ' + error.message }, 500)
   }
 })
 
