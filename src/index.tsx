@@ -1585,7 +1585,7 @@ app.post('/api/save-transaction-from-rab', async (c) => {
       tanggal: data.tanggal || new Date().toISOString().split('T')[0],
       jenisTransaksi: 'Masuk (Penerimaan Gudang)',
       lokasiAsal: data.lokasi_asal || 'Supplier/Gudang',
-      lokasiTujuan: data.lokasi_tujuan || 'Gudang',
+      lokasiTujuan: 'GUDANG KAL 2',  // Fixed destination for all RAB transactions
       pemeriksa: data.pemeriksa,
       penerima: data.penerima,
       ttdPemeriksa: data.ttd_pemeriksa,
