@@ -1489,32 +1489,64 @@ app.post('/api/save-transaction-from-rab', async (c) => {
     
     // Validate required fields
     if (!data.materials || data.materials.length === 0) {
+      console.error('❌ Validation failed: No materials')
       return c.json({ error: 'Materials are required' }, 400)
     }
     
     if (!data.pemeriksa || !data.penerima) {
+      console.error('❌ Validation failed: Missing pemeriksa or penerima')
       return c.json({ error: 'Pemeriksa and Penerima are required' }, 400)
     }
     
     // Get nomor_rab for auto-filling status
     let nomorRAB = null
     if (data.rab_id) {
-      const rab = await env.DB.prepare(`
-        SELECT nomor_rab FROM rab WHERE id = ?
-      `).bind(data.rab_id).first()
-      nomorRAB = rab?.nomor_rab
-      console.log(`📋 Found RAB: ${nomorRAB}`)
+      try {
+        const rab = await env.DB.prepare(`
+          SELECT nomor_rab FROM rab WHERE id = ?
+        `).bind(data.rab_id).first()
+        nomorRAB = rab?.nomor_rab
+        console.log(`📋 Found RAB: ${nomorRAB}`)
+      } catch (rabError) {
+        console.error('❌ Failed to get RAB:', rabError)
+        return c.json({ error: 'Failed to fetch RAB information' }, 500)
+      }
     }
     
     // Generate BA number
-    const tanggal = data.tanggal || new Date().toISOString().split('T')[0]
-    const nomorBA = await DB.getNextBANumber(env.DB, tanggal)
-    console.log(`🔢 Generated BA Number: ${nomorBA}`)
+    let nomorBA
+    try {
+      const tanggal = data.tanggal || new Date().toISOString().split('T')[0]
+      nomorBA = await DB.getNextBANumber(env.DB, tanggal)
+      console.log(`🔢 Generated BA Number: ${nomorBA}`)
+    } catch (baError) {
+      console.error('❌ Failed to generate BA number:', baError)
+      return c.json({ error: 'Failed to generate BA number' }, 500)
+    }
+    
+    // Validate and map materials
+    const mappedMaterials = data.materials.map((m, idx) => {
+      if (!m.part_number || !m.material || !m.jumlah) {
+        console.error(`❌ Material ${idx} missing required fields:`, m)
+        throw new Error(`Material ${idx + 1} is incomplete`)
+      }
+      
+      return {
+        partNumber: m.part_number,
+        jenisBarang: m.jenis_barang || '-',
+        material: m.material,
+        mesin: m.mesin || '-',
+        status: nomorRAB || '',  // Auto-fill status with nomor_rab
+        jumlah: parseInt(m.jumlah)
+      }
+    })
+    
+    console.log(`✅ Mapped ${mappedMaterials.length} materials`)
     
     // Prepare transaction data with correct field names for DB.saveTransaction
     const transactionData = {
       nomorBA: nomorBA,
-      tanggal: tanggal,
+      tanggal: data.tanggal || new Date().toISOString().split('T')[0],
       jenisTransaksi: 'Masuk (Penerimaan Gudang)',
       lokasiAsal: data.lokasi_asal || 'Supplier/Gudang',
       lokasiTujuan: data.lokasi_tujuan || 'Gudang',
@@ -1522,32 +1554,35 @@ app.post('/api/save-transaction-from-rab', async (c) => {
       penerima: data.penerima,
       ttdPemeriksa: data.ttd_pemeriksa,
       ttdPenerima: data.ttd_penerima,
-      materials: data.materials.map(m => ({
-        partNumber: m.part_number,
-        jenisBarang: m.jenis_barang || '-',
-        material: m.material,
-        mesin: m.mesin,
-        status: nomorRAB || '',  // Auto-fill status with nomor_rab
-        jumlah: m.jumlah
-      }))
+      materials: mappedMaterials
     }
     
-    console.log('💾 Saving transaction with data:', JSON.stringify(transactionData, null, 2))
+    console.log('💾 Saving transaction...')
     
-    const result = await DB.saveTransaction(env.DB, transactionData)
-    
-    console.log('✅ Transaction saved:', result)
+    // Save transaction
+    let result
+    try {
+      result = await DB.saveTransaction(env.DB, transactionData)
+      console.log('✅ Transaction saved:', result)
+    } catch (saveError) {
+      console.error('❌ Failed to save transaction:', saveError)
+      return c.json({ error: `Failed to save transaction: ${saveError.message}` }, 500)
+    }
     
     // Update material_gangguan status to Tersedia for these materials
     if (data.materials && data.materials.length > 0) {
       for (const material of data.materials) {
         if (material.material_gangguan_id) {
-          await env.DB.prepare(`
-            UPDATE material_gangguan 
-            SET status = 'Tersedia', updated_at = datetime('now')
-            WHERE id = ?
-          `).bind(material.material_gangguan_id).run()
-          console.log(`✅ Updated material_gangguan ${material.material_gangguan_id} to Tersedia`)
+          try {
+            await env.DB.prepare(`
+              UPDATE material_gangguan 
+              SET status = 'Tersedia', updated_at = datetime('now')
+              WHERE id = ?
+            `).bind(material.material_gangguan_id).run()
+            console.log(`✅ Updated material_gangguan ${material.material_gangguan_id} to Tersedia`)
+          } catch (updateMatError) {
+            console.error(`⚠️ Failed to update material_gangguan ${material.material_gangguan_id}:`, updateMatError)
+          }
         }
       }
     }
@@ -1567,14 +1602,18 @@ app.post('/api/save-transaction-from-rab', async (c) => {
       } catch (updateError) {
         // If tanggal_masuk_gudang column doesn't exist, use basic update
         console.log('⚠️ tanggal_masuk_gudang column not found, using fallback')
-        await env.DB.prepare(`
-          UPDATE rab 
-          SET status = 'Masuk Gudang', 
-              updated_at = datetime('now')
-          WHERE id = ?
-        `).bind(data.rab_id).run()
-        
-        console.log(`✅ RAB ${data.rab_id} status updated to "Masuk Gudang" (fallback)`)
+        try {
+          await env.DB.prepare(`
+            UPDATE rab 
+            SET status = 'Masuk Gudang', 
+                updated_at = datetime('now')
+            WHERE id = ?
+          `).bind(data.rab_id).run()
+          
+          console.log(`✅ RAB ${data.rab_id} status updated to "Masuk Gudang" (fallback)`)
+        } catch (fallbackError) {
+          console.error('⚠️ Failed to update RAB status (fallback):', fallbackError)
+        }
       }
     }
     
