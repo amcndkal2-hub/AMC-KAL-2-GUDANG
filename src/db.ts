@@ -497,27 +497,37 @@ export async function deleteTransaction(db: D1Database, nomorBA: string) {
       for (const nomorRAB of rabNumbers) {
         console.log('🔄 Reverting RAB status to Tersedia:', nomorRAB)
         
-        // Update RAB status back to "Tersedia"
-        // Try with tanggal_masuk_gudang first, fallback if column doesn't exist
+        // Check if tanggal_masuk_gudang column exists
+        let hasTimestampColumn = false
         try {
+          const checkResult = await db.prepare(`
+            SELECT sql FROM sqlite_master 
+            WHERE type='table' AND name='rab'
+          `).first()
+          
+          if (checkResult && checkResult.sql) {
+            hasTimestampColumn = (checkResult.sql as string).includes('tanggal_masuk_gudang')
+          }
+        } catch (e) {
+          console.log('⚠️ Could not check table structure, assuming no timestamp column')
+        }
+        
+        // Update RAB status back to "Tersedia"
+        if (hasTimestampColumn) {
+          console.log('✅ Using UPDATE with tanggal_masuk_gudang')
           await db.prepare(`
             UPDATE rab 
             SET status = 'Tersedia',
                 tanggal_masuk_gudang = NULL
             WHERE nomor_rab = ?
           `).bind(nomorRAB).run()
-        } catch (error: any) {
-          // Fallback if tanggal_masuk_gudang column doesn't exist
-          if (error.message?.includes('tanggal_masuk_gudang') || error.message?.includes('no such column')) {
-            console.log('⚠️ Column tanggal_masuk_gudang not found, updating status only')
-            await db.prepare(`
-              UPDATE rab 
-              SET status = 'Tersedia'
-              WHERE nomor_rab = ?
-            `).bind(nomorRAB).run()
-          } else {
-            throw error
-          }
+        } else {
+          console.log('⚠️ Using UPDATE without tanggal_masuk_gudang (column not found)')
+          await db.prepare(`
+            UPDATE rab 
+            SET status = 'Tersedia'
+            WHERE nomor_rab = ?
+          `).bind(nomorRAB).run()
         }
 
         // Also revert material_gangguan status if exists
