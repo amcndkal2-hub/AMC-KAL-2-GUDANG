@@ -2272,13 +2272,103 @@ function getInputFormHTML() {
                             Detail Material
                         </h2>
                         
-                        <div id="materialList" class="space-y-4"></div>
+                        <!-- Temporary Message -->
+                        <div id="tempMessage" class="hidden"></div>
                         
-                        <button type="button" id="addMaterial" 
-                            class="w-full mt-4 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
-                            <i class="fas fa-plus mr-2"></i>
-                            Tambah Baris Material
-                        </button>
+                        <!-- Single Material Input Form -->
+                        <div class="border-2 border-blue-500 rounded-lg p-4 bg-blue-50 mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-edit mr-2"></i>Input Material
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div class="lg:col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Part Number (Cari) *</label>
+                                    <div class="relative">
+                                        <input type="text" 
+                                            class="part-number-search w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                            placeholder="Ketik atau pilih Part Number"
+                                            data-material-id="1"
+                                            autocomplete="off">
+                                        <div class="search-results absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Barang</label>
+                                    <input type="text" class="jenis-barang w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Material</label>
+                                    <input type="text" class="material w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Mesin</label>
+                                    <input type="text" class="mesin w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                
+                                <div class="lg:col-span-2">
+                                    <label class="status-label block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                    <input type="text" class="status w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                                        placeholder="Status material (opsional)">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah *</label>
+                                    <input type="number" class="jumlah w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                                        value="1" min="1" required>
+                                </div>
+                                
+                                <div class="flex items-end">
+                                    <button type="button" id="addMaterialBtn" 
+                                        class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center">
+                                        <i class="fas fa-plus mr-2"></i>Tambah
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Materials Preview Table -->
+                        <div class="mt-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800">
+                                    <i class="fas fa-list mr-2"></i>
+                                    List Material (<span id="totalMaterialsCount">0</span> item)
+                                </h3>
+                                <button type="button" onclick="resetMaterialsList()" 
+                                    class="text-sm text-red-600 hover:text-red-700">
+                                    <i class="fas fa-trash mr-1"></i>Hapus Semua
+                                </button>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">No</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Part Number</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Jenis Barang</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Material</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Mesin</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Status</th>
+                                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Jumlah</th>
+                                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="materialPreviewBody">
+                                        <tr>
+                                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                                <i class="fas fa-inbox text-4xl mb-2"></i>
+                                                <p>Belum ada material yang ditambahkan.</p>
+                                                <p class="text-sm mt-1">Isi form di atas dan klik "Tambah" untuk menambahkan material.</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Penanggung Jawab -->
@@ -2319,8 +2409,9 @@ function getInputFormHTML() {
 
                     <!-- Submit -->
                     <div class="flex gap-4">
-                        <button type="submit" 
-                            class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 transition text-lg font-semibold">
+                        <button type="submit" id="submitTransactionBtn"
+                            class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 transition text-lg font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            disabled>
                             <i class="fas fa-save mr-2"></i>Simpan Transaksi
                         </button>
                         <button type="button" id="resetForm"
@@ -2495,6 +2586,7 @@ function getInputFormHTML() {
         </div>
 
         <script src="/static/auth-check.js"></script>
+        <script src="/static/app-material-list.js"></script>
         <script src="/static/app.js"></script>
         <script src="/static/input-rab.js"></script>
         <script>
@@ -4520,6 +4612,262 @@ function getDashboardListRABHTML() {
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-list-rab.js"></script>
+    </body>
+    </html>
+  `
+}
+
+// ============================================
+// INPUT MATERIAL V2 - NEW SYSTEM
+// ============================================
+function getInputFormV2HTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Input Material V2 - Sistem Manajemen Material</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <style>
+            .signature-pad { border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: crosshair; }
+        </style>
+    </head>
+    <body class="bg-gray-100">
+        <!-- Navigation -->
+        <nav class="bg-blue-600 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-clipboard-list text-2xl"></i>
+                    <span class="text-xl font-bold">Input Material V2 (Beta)</span>
+                    <span class="bg-yellow-500 text-xs px-2 py-1 rounded">NEW</span>
+                </div>
+                <div class="flex space-x-2">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-arrow-left mr-1"></i>Kembali ke V1
+                    </a>
+                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+                    </a>
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto p-6">
+            <!-- Info Banner -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                    <div>
+                        <h3 class="font-semibold text-blue-800">Sistem Input Material Baru</h3>
+                        <p class="text-sm text-blue-700 mt-1">
+                            Isi data material satu per satu, lalu klik "Tambah ke List". Material akan muncul di tabel preview di bawah.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="inputForm" class="space-y-6">
+                <!-- Header Info -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        Informasi Transaksi
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label>
+                            <input type="date" id="tanggal" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Transaksi</label>
+                            <select id="jenisTransaksi" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">-- Pilih Jenis --</option>
+                                <option value="Masuk (Penerimaan Gudang)">Masuk (Penerimaan Gudang)</option>
+                                <option value="Keluar (Pengeluaran Gudang)">Keluar (Pengeluaran Gudang)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Lokasi Tujuan</label>
+                            <select id="lokasiTujuan" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">-- Pilih Lokasi --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Material Input Form -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-plus-circle text-green-600 mr-2"></i>
+                        Input Material
+                    </h2>
+
+                    <!-- Temp Message -->
+                    <div id="tempMessage" class="hidden bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded mb-4"></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                        <!-- Part Number Search -->
+                        <div class="lg:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Part Number <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="text" id="inputPartNumber" 
+                                    placeholder="Ketik untuk mencari..."
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <div id="searchResults" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"></div>
+                            </div>
+                        </div>
+
+                        <!-- Jenis Barang -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Barang</label>
+                            <input type="text" id="inputJenisBarang" readonly
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                        </div>
+
+                        <!-- Material -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Material</label>
+                            <input type="text" id="inputMaterial" readonly
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                        </div>
+
+                        <!-- Mesin -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Mesin</label>
+                            <input type="text" id="inputMesin" readonly
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                        </div>
+
+                        <!-- Status / S/N -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <span class="status-label">Status</span>
+                            </label>
+                            <input type="text" id="inputStatus"
+                                placeholder="Status material (opsional)"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <!-- Jumlah -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Jumlah <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" id="inputJumlah" min="1"
+                                placeholder="Kuantitas"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Add Button -->
+                    <button type="button" id="btnTambahMaterial"
+                        class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center font-semibold">
+                        <i class="fas fa-plus-circle mr-2"></i>
+                        Tambah ke List Material
+                    </button>
+                </div>
+
+                <!-- Materials Preview Table -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-list text-blue-600 mr-2"></i>
+                        Preview List Material
+                    </h2>
+
+                    <!-- Empty State -->
+                    <div id="materialsEmptyState" class="text-center py-8 text-gray-500">
+                        <i class="fas fa-inbox text-4xl mb-2"></i>
+                        <p>Belum ada material. Silakan tambahkan material di atas.</p>
+                    </div>
+
+                    <!-- Table -->
+                    <div id="materialsTableContainer" class="hidden overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part Number</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jenis Barang</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Material</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mesin</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                        <span class="status-label">Status</span>
+                                    </th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materialsTableBody" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Penanggung Jawab -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-user-check text-blue-600 mr-2"></i>
+                        Penanggung Jawab
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pemeriksa</label>
+                            <select id="pemeriksa" required class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                                <option value="">-- Pilih Pemeriksa --</option>
+                            </select>
+                            
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Pemeriksa</label>
+                            <canvas id="signaturePemeriksa" width="300" height="150" class="signature-pad w-full"></canvas>
+                            <button type="button" id="clearPemeriksa" class="mt-2 text-sm text-red-600 hover:text-red-700">
+                                <i class="fas fa-eraser mr-1"></i>Hapus
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Penerima</label>
+                            <select id="penerima" required class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                                <option value="">-- Pilih Penerima --</option>
+                            </select>
+                            
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Penerima</label>
+                            <canvas id="signaturePenerima" width="300" height="150" class="signature-pad w-full"></canvas>
+                            <button type="button" id="clearPenerima" class="mt-2 text-sm text-red-600 hover:text-red-700">
+                                <i class="fas fa-eraser mr-1"></i>Hapus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="flex gap-4">
+                    <button type="submit" 
+                        class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 transition text-lg font-semibold">
+                        <i class="fas fa-save mr-2"></i>Simpan Transaksi
+                    </button>
+                    <button type="button" onclick="resetForm()" 
+                        class="bg-gray-500 text-white py-4 px-6 rounded-lg hover:bg-gray-600 transition text-lg font-semibold">
+                        <i class="fas fa-undo mr-1"></i>Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/app-material-input.js"></script>
+        <script src="/static/app-v2.js"></script>
     </body>
     </html>
   `

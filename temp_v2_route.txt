@@ -1,0 +1,4 @@
+// Input Material V2 - New material list system
+app.get('/input-material-v2', (c) => {
+  return c.html(getInputFormV2HTML())
+})

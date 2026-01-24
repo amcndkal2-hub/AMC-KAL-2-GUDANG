@@ -121,11 +121,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load dropdown data
     await loadDropdownData();
     
-    // Add first material row
-    addMaterialRow();
-    
-    // Add material button
-    document.getElementById('addMaterial').addEventListener('click', addMaterialRow);
+    // NOTE: No longer adding material rows automatically
+    // Material input now uses single form + table preview (app-material-list.js)
     
     // Form submit
     document.getElementById('transactionForm').addEventListener('submit', handleSubmit);
@@ -394,23 +391,29 @@ async function handleSubmit(e) {
         materials: []
     };
     
-    // Collect material data
-    const materialDivs = document.querySelectorAll('#materialList > div');
-    materialDivs.forEach(div => {
-        const partNumber = div.querySelector('.part-number-search').value;
-        const jumlah = div.querySelector('.jumlah').value;
-        
-        if (partNumber && jumlah) {
-            formData.materials.push({
-                partNumber: partNumber,
-                jenisBarang: div.querySelector('.jenis-barang').value,
-                material: div.querySelector('.material').value,
-                mesin: div.querySelector('.mesin').value,
-                status: div.querySelector('.status').value,
-                jumlah: parseInt(jumlah)
-            });
-        }
-    });
+    // Use new material list system if available (getMaterialsData from app-material-list.js)
+    if (typeof getMaterialsData === 'function' && typeof materialsData !== 'undefined' && materialsData.length > 0) {
+        formData.materials = getMaterialsData();
+        console.log('Using new material list system:', formData.materials);
+    } else {
+        // Fallback to old system (multiple rows)
+        const materialDivs = document.querySelectorAll('#materialList > div');
+        materialDivs.forEach(div => {
+            const partNumber = div.querySelector('.part-number-search').value;
+            const jumlah = div.querySelector('.jumlah').value;
+            
+            if (partNumber && jumlah) {
+                formData.materials.push({
+                    partNumber: partNumber,
+                    jenisBarang: div.querySelector('.jenis-barang').value,
+                    material: div.querySelector('.material').value,
+                    mesin: div.querySelector('.mesin').value,
+                    status: div.querySelector('.status').value,
+                    jumlah: parseInt(jumlah)
+                });
+            }
+        });
+    }
     
     // Validate at least one material
     if (formData.materials.length === 0) {
@@ -522,8 +525,16 @@ function resetForm() {
     signaturePemeriksa.clear();
     signaturePenerima.clear();
     
-    // Reset materials
-    document.getElementById('materialList').innerHTML = '';
-    materialCount = 0;
-    addMaterialRow();
+    // Reset new material list system
+    if (typeof resetMaterialsList === 'function') {
+        materialsData = [];
+        materialIdCounter = 0;
+        updateMaterialPreviewTable();
+        clearMaterialForm();
+    } else {
+        // Fallback to old system
+        document.getElementById('materialList').innerHTML = '';
+        materialCount = 0;
+        addMaterialRow();
+    }
 }
