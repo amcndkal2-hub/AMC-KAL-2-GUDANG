@@ -1485,6 +1485,8 @@ app.post('/api/save-transaction-from-rab', async (c) => {
     const { env } = c
     const data = await c.req.json()
     
+    console.log('📥 Received RAB transaction data:', JSON.stringify(data, null, 2))
+    
     // Validate required fields
     if (!data.materials || data.materials.length === 0) {
       return c.json({ error: 'Materials are required' }, 400)
@@ -1501,25 +1503,40 @@ app.post('/api/save-transaction-from-rab', async (c) => {
         SELECT nomor_rab FROM rab WHERE id = ?
       `).bind(data.rab_id).first()
       nomorRAB = rab?.nomor_rab
+      console.log(`📋 Found RAB: ${nomorRAB}`)
     }
     
-    // Save transaction using existing saveTransaction function
+    // Generate BA number
+    const tanggal = data.tanggal || new Date().toISOString().split('T')[0]
+    const nomorBA = await DB.getNextBANumber(env.DB, tanggal)
+    console.log(`🔢 Generated BA Number: ${nomorBA}`)
+    
+    // Prepare transaction data with correct field names for DB.saveTransaction
     const transactionData = {
-      jenis: 'Masuk (Penerimaan Gudang)',
-      tanggal: data.tanggal || new Date().toISOString().split('T')[0],
-      lokasi_asal: data.lokasi_asal || 'Supplier/Gudang',
-      lokasi_tujuan: data.lokasi_tujuan || 'Gudang',
+      nomorBA: nomorBA,
+      tanggal: tanggal,
+      jenisTransaksi: 'Masuk (Penerimaan Gudang)',
+      lokasiAsal: data.lokasi_asal || 'Supplier/Gudang',
+      lokasiTujuan: data.lokasi_tujuan || 'Gudang',
       pemeriksa: data.pemeriksa,
       penerima: data.penerima,
-      ttd_pemeriksa: data.ttd_pemeriksa,
-      ttd_penerima: data.ttd_penerima,
+      ttdPemeriksa: data.ttd_pemeriksa,
+      ttdPenerima: data.ttd_penerima,
       materials: data.materials.map(m => ({
-        ...m,
-        status: nomorRAB || ''  // Auto-fill status with nomor_rab
+        partNumber: m.part_number,
+        jenisBarang: m.jenis_barang || '-',
+        material: m.material,
+        mesin: m.mesin,
+        status: nomorRAB || '',  // Auto-fill status with nomor_rab
+        jumlah: m.jumlah
       }))
     }
     
+    console.log('💾 Saving transaction with data:', JSON.stringify(transactionData, null, 2))
+    
     const result = await DB.saveTransaction(env.DB, transactionData)
+    
+    console.log('✅ Transaction saved:', result)
     
     // Update material_gangguan status to Tersedia for these materials
     if (data.materials && data.materials.length > 0) {
@@ -1530,12 +1547,12 @@ app.post('/api/save-transaction-from-rab', async (c) => {
             SET status = 'Tersedia', updated_at = datetime('now')
             WHERE id = ?
           `).bind(material.material_gangguan_id).run()
+          console.log(`✅ Updated material_gangguan ${material.material_gangguan_id} to Tersedia`)
         }
       }
     }
     
     // Update RAB status to "Masuk Gudang" and set tanggal_masuk_gudang
-    // Get rab_id from first material (all materials in one transaction have same RAB)
     if (data.rab_id) {
       try {
         await env.DB.prepare(`
@@ -1564,11 +1581,11 @@ app.post('/api/save-transaction-from-rab', async (c) => {
     return c.json({
       success: true,
       message: 'Transaksi berhasil disimpan!',
-      nomor_ba: result.nomor_ba,
+      nomor_ba: nomorBA,
       transaction_id: result.id
     })
   } catch (error) {
-    console.error('Failed to save transaction from RAB:', error)
+    console.error('❌ Failed to save transaction from RAB:', error)
     return c.json({ 
       success: false,
       error: error.message || 'Failed to save transaction' 
