@@ -1518,15 +1518,28 @@ app.post('/api/save-transaction-from-rab', async (c) => {
     // Update RAB status to "Masuk Gudang" and set tanggal_masuk_gudang
     // Get rab_id from first material (all materials in one transaction have same RAB)
     if (data.rab_id) {
-      await env.DB.prepare(`
-        UPDATE rab 
-        SET status = 'Masuk Gudang', 
-            tanggal_masuk_gudang = datetime('now'),
-            updated_at = datetime('now')
-        WHERE id = ?
-      `).bind(data.rab_id).run()
-      
-      console.log(`✅ RAB ${data.rab_id} status updated to "Masuk Gudang"`)
+      try {
+        await env.DB.prepare(`
+          UPDATE rab 
+          SET status = 'Masuk Gudang', 
+              tanggal_masuk_gudang = datetime('now'),
+              updated_at = datetime('now')
+          WHERE id = ?
+        `).bind(data.rab_id).run()
+        
+        console.log(`✅ RAB ${data.rab_id} status updated to "Masuk Gudang"`)
+      } catch (updateError) {
+        // If tanggal_masuk_gudang column doesn't exist, use basic update
+        console.log('⚠️ tanggal_masuk_gudang column not found, using fallback')
+        await env.DB.prepare(`
+          UPDATE rab 
+          SET status = 'Masuk Gudang', 
+              updated_at = datetime('now')
+          WHERE id = ?
+        `).bind(data.rab_id).run()
+        
+        console.log(`✅ RAB ${data.rab_id} status updated to "Masuk Gudang" (fallback)`)
+      }
     }
     
     return c.json({
@@ -1566,21 +1579,30 @@ app.post('/api/rab/:id/update-status', async (c) => {
     }
     
     // Determine which timestamp field to update based on status
-    let timestampField = 'updated_at'
+    let updateQuery = 'UPDATE rab SET status = ?, updated_at = datetime(\'now\') WHERE id = ?'
+    let bindParams = [status, rabId]
+    
+    // Try to update timestamp columns if they exist
     if (status === 'Pengadaan') {
-      timestampField = 'tanggal_pengadaan'
+      updateQuery = 'UPDATE rab SET status = ?, tanggal_pengadaan = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
     } else if (status === 'Tersedia') {
-      timestampField = 'tanggal_tersedia'
+      updateQuery = 'UPDATE rab SET status = ?, tanggal_tersedia = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
     } else if (status === 'Masuk Gudang') {
-      timestampField = 'tanggal_masuk_gudang'
+      updateQuery = 'UPDATE rab SET status = ?, tanggal_masuk_gudang = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
     }
     
-    // Update RAB status with timestamp
-    await env.DB.prepare(`
-      UPDATE rab 
-      SET status = ?, ${timestampField} = datetime('now'), updated_at = datetime('now')
-      WHERE id = ?
-    `).bind(status, rabId).run()
+    // Update RAB status with timestamp (ignore column errors)
+    try {
+      await env.DB.prepare(updateQuery).bind(...bindParams).run()
+    } catch (updateError) {
+      // If timestamp columns don't exist, fallback to basic update
+      console.log('⚠️ Timestamp column update failed, using fallback')
+      await env.DB.prepare(`
+        UPDATE rab 
+        SET status = ?, updated_at = datetime('now')
+        WHERE id = ?
+      `).bind(status, rabId).run()
+    }
     
     // Sync status to material_gangguan if status is Pengadaan or Tersedia
     if (status === 'Pengadaan' || status === 'Tersedia') {
@@ -1616,21 +1638,38 @@ app.get('/api/rab/:id/history', async (c) => {
     const { env } = c
     const rabId = parseInt(c.req.param('id'))
     
-    // Get RAB with all timestamp fields
-    const rab = await env.DB.prepare(`
-      SELECT 
-        id,
-        nomor_rab,
-        status,
-        tanggal_draft,
-        tanggal_pengadaan,
-        tanggal_tersedia,
-        tanggal_masuk_gudang,
-        created_at,
-        updated_at
-      FROM rab
-      WHERE id = ?
-    `).bind(rabId).first()
+    // Try to get RAB with all timestamp fields
+    // If columns don't exist, fallback to basic fields
+    let rab
+    try {
+      rab = await env.DB.prepare(`
+        SELECT 
+          id,
+          nomor_rab,
+          status,
+          tanggal_draft,
+          tanggal_pengadaan,
+          tanggal_tersedia,
+          tanggal_masuk_gudang,
+          created_at,
+          updated_at
+        FROM rab
+        WHERE id = ?
+      `).bind(rabId).first()
+    } catch (columnError) {
+      // Fallback: columns don't exist yet, use basic query
+      console.log('⚠️ Timestamp columns not found, using fallback query')
+      rab = await env.DB.prepare(`
+        SELECT 
+          id,
+          nomor_rab,
+          status,
+          created_at,
+          updated_at
+        FROM rab
+        WHERE id = ?
+      `).bind(rabId).first()
+    }
     
     if (!rab) {
       return c.json({ error: 'RAB not found' }, 404)
@@ -1639,48 +1678,79 @@ app.get('/api/rab/:id/history', async (c) => {
     // Build timeline array
     const timeline = []
     
-    // 1. Draft (created)
-    if (rab.tanggal_draft) {
+    // If new columns exist, use them
+    if (rab.tanggal_draft || rab.tanggal_pengadaan || rab.tanggal_tersedia || rab.tanggal_masuk_gudang) {
+      // 1. Draft (created)
+      if (rab.tanggal_draft) {
+        timeline.push({
+          status: 'Draft',
+          tanggal: rab.tanggal_draft,
+          icon: '📝',
+          color: 'blue',
+          description: 'RAB dibuat dan berstatus Draft'
+        })
+      }
+      
+      // 2. Pengadaan
+      if (rab.tanggal_pengadaan) {
+        timeline.push({
+          status: 'Pengadaan',
+          tanggal: rab.tanggal_pengadaan,
+          icon: '🛒',
+          color: 'yellow',
+          description: 'RAB diproses untuk pengadaan material'
+        })
+      }
+      
+      // 3. Tersedia
+      if (rab.tanggal_tersedia) {
+        timeline.push({
+          status: 'Tersedia',
+          tanggal: rab.tanggal_tersedia,
+          icon: '✅',
+          color: 'green',
+          description: 'Material tersedia dan siap diinput'
+        })
+      }
+      
+      // 4. Masuk Gudang
+      if (rab.tanggal_masuk_gudang) {
+        timeline.push({
+          status: 'Masuk Gudang',
+          tanggal: rab.tanggal_masuk_gudang,
+          icon: '📦',
+          color: 'purple',
+          description: 'Material sudah diinput ke sistem gudang'
+        })
+      }
+    } else {
+      // Fallback: Use created_at as Draft timestamp
       timeline.push({
         status: 'Draft',
-        tanggal: rab.tanggal_draft,
+        tanggal: rab.created_at,
         icon: '📝',
         color: 'blue',
         description: 'RAB dibuat dan berstatus Draft'
       })
-    }
-    
-    // 2. Pengadaan
-    if (rab.tanggal_pengadaan) {
-      timeline.push({
-        status: 'Pengadaan',
-        tanggal: rab.tanggal_pengadaan,
-        icon: '🛒',
-        color: 'yellow',
-        description: 'RAB diproses untuk pengadaan material'
-      })
-    }
-    
-    // 3. Tersedia
-    if (rab.tanggal_tersedia) {
-      timeline.push({
-        status: 'Tersedia',
-        tanggal: rab.tanggal_tersedia,
-        icon: '✅',
-        color: 'green',
-        description: 'Material tersedia dan siap diinput'
-      })
-    }
-    
-    // 4. Masuk Gudang
-    if (rab.tanggal_masuk_gudang) {
-      timeline.push({
-        status: 'Masuk Gudang',
-        tanggal: rab.tanggal_masuk_gudang,
-        icon: '📦',
-        color: 'purple',
-        description: 'Material sudah diinput ke sistem gudang'
-      })
+      
+      // Show current status if not Draft
+      if (rab.status !== 'Draft') {
+        const statusInfo = {
+          'Pengadaan': { icon: '🛒', color: 'yellow', desc: 'RAB diproses untuk pengadaan material' },
+          'Tersedia': { icon: '✅', color: 'green', desc: 'Material tersedia dan siap diinput' },
+          'Masuk Gudang': { icon: '📦', color: 'purple', desc: 'Material sudah diinput ke sistem gudang' }
+        }
+        
+        if (statusInfo[rab.status]) {
+          timeline.push({
+            status: rab.status,
+            tanggal: rab.updated_at,
+            icon: statusInfo[rab.status].icon,
+            color: statusInfo[rab.status].color,
+            description: statusInfo[rab.status].desc
+          })
+        }
+      }
     }
     
     return c.json({
@@ -1690,7 +1760,8 @@ app.get('/api/rab/:id/history', async (c) => {
         nomor_rab: rab.nomor_rab,
         status: rab.status
       },
-      timeline
+      timeline,
+      migration_needed: !rab.tanggal_draft // Flag to indicate migration is needed
     })
   } catch (error: any) {
     console.error('Failed to get RAB history:', error)
