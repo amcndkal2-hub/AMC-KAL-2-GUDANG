@@ -1675,82 +1675,94 @@ app.get('/api/rab/:id/history', async (c) => {
       return c.json({ error: 'RAB not found' }, 404)
     }
     
-    // Build timeline array
+    // Build timeline array - ALWAYS show all 4 steps
     const timeline = []
     
     // If new columns exist, use them
     if (rab.tanggal_draft || rab.tanggal_pengadaan || rab.tanggal_tersedia || rab.tanggal_masuk_gudang) {
-      // 1. Draft (created)
-      if (rab.tanggal_draft) {
-        timeline.push({
-          status: 'Draft',
-          tanggal: rab.tanggal_draft,
-          icon: '📝',
-          color: 'blue',
-          description: 'RAB dibuat dan berstatus Draft'
-        })
-      }
+      // 1. Draft - ALWAYS show
+      timeline.push({
+        status: 'Draft',
+        tanggal: rab.tanggal_draft || rab.created_at,
+        icon: '📝',
+        color: 'blue',
+        description: 'RAB dibuat dan berstatus Draft',
+        completed: !!rab.tanggal_draft || !!rab.created_at
+      })
       
-      // 2. Pengadaan
-      if (rab.tanggal_pengadaan) {
-        timeline.push({
-          status: 'Pengadaan',
-          tanggal: rab.tanggal_pengadaan,
-          icon: '🛒',
-          color: 'yellow',
-          description: 'RAB diproses untuk pengadaan material'
-        })
-      }
+      // 2. Pengadaan - ALWAYS show
+      timeline.push({
+        status: 'Pengadaan',
+        tanggal: rab.tanggal_pengadaan || null,
+        icon: '🛒',
+        color: 'yellow',
+        description: 'RAB diproses untuk pengadaan material',
+        completed: !!rab.tanggal_pengadaan
+      })
       
-      // 3. Tersedia
-      if (rab.tanggal_tersedia) {
-        timeline.push({
-          status: 'Tersedia',
-          tanggal: rab.tanggal_tersedia,
-          icon: '✅',
-          color: 'green',
-          description: 'Material tersedia dan siap diinput'
-        })
-      }
+      // 3. Tersedia - ALWAYS show
+      timeline.push({
+        status: 'Tersedia',
+        tanggal: rab.tanggal_tersedia || null,
+        icon: '✅',
+        color: 'green',
+        description: 'Material tersedia dan siap diinput',
+        completed: !!rab.tanggal_tersedia
+      })
       
-      // 4. Masuk Gudang
-      if (rab.tanggal_masuk_gudang) {
-        timeline.push({
-          status: 'Masuk Gudang',
-          tanggal: rab.tanggal_masuk_gudang,
-          icon: '📦',
-          color: 'purple',
-          description: 'Material sudah diinput ke sistem gudang'
-        })
-      }
+      // 4. Masuk Gudang - ALWAYS show
+      timeline.push({
+        status: 'Masuk Gudang',
+        tanggal: rab.tanggal_masuk_gudang || null,
+        icon: '📦',
+        color: 'purple',
+        description: 'Material sudah diinput ke sistem gudang',
+        completed: !!rab.tanggal_masuk_gudang
+      })
     } else {
-      // Fallback: Use created_at as Draft timestamp
+      // Fallback: Use created_at as Draft timestamp, show all 4 steps
       timeline.push({
         status: 'Draft',
         tanggal: rab.created_at,
         icon: '📝',
         color: 'blue',
-        description: 'RAB dibuat dan berstatus Draft'
+        description: 'RAB dibuat dan berstatus Draft',
+        completed: true
       })
       
-      // Show current status if not Draft
-      if (rab.status !== 'Draft') {
-        const statusInfo = {
-          'Pengadaan': { icon: '🛒', color: 'yellow', desc: 'RAB diproses untuk pengadaan material' },
-          'Tersedia': { icon: '✅', color: 'green', desc: 'Material tersedia dan siap diinput' },
-          'Masuk Gudang': { icon: '📦', color: 'purple', desc: 'Material sudah diinput ke sistem gudang' }
-        }
-        
-        if (statusInfo[rab.status]) {
-          timeline.push({
-            status: rab.status,
-            tanggal: rab.updated_at,
-            icon: statusInfo[rab.status].icon,
-            color: statusInfo[rab.status].color,
-            description: statusInfo[rab.status].desc
-          })
-        }
-      }
+      // Determine which steps are completed based on current status
+      const statusOrder = ['Draft', 'Pengadaan', 'Tersedia', 'Masuk Gudang']
+      const currentIndex = statusOrder.indexOf(rab.status)
+      
+      // Pengadaan
+      timeline.push({
+        status: 'Pengadaan',
+        tanggal: (currentIndex >= 1) ? rab.updated_at : null,
+        icon: '🛒',
+        color: 'yellow',
+        description: 'RAB diproses untuk pengadaan material',
+        completed: currentIndex >= 1
+      })
+      
+      // Tersedia
+      timeline.push({
+        status: 'Tersedia',
+        tanggal: (currentIndex >= 2) ? rab.updated_at : null,
+        icon: '✅',
+        color: 'green',
+        description: 'Material tersedia dan siap diinput',
+        completed: currentIndex >= 2
+      })
+      
+      // Masuk Gudang
+      timeline.push({
+        status: 'Masuk Gudang',
+        tanggal: (currentIndex >= 3) ? rab.updated_at : null,
+        icon: '📦',
+        color: 'purple',
+        description: 'Material sudah diinput ke sistem gudang',
+        completed: currentIndex >= 3
+      })
     }
     
     return c.json({

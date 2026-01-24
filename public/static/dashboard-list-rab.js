@@ -66,7 +66,7 @@ function renderRABList(rabList) {
           <option value="Draft" ${rab.status === 'Draft' ? 'selected' : ''}>Draft</option>
           <option value="Pengadaan" ${rab.status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
           <option value="Tersedia" ${rab.status === 'Tersedia' ? 'selected' : ''}>Tersedia</option>
-          <option value="Masuk Gudang" ${rab.status === 'Masuk Gudang' ? 'selected' : ''}>Masuk Gudang</option>
+          <option value="Masuk Gudang" ${rab.status === 'Masuk Gudang' ? 'selected' : ''} disabled>Masuk Gudang (Auto)</option>
         </select>
       </td>
       <td class="px-4 py-3 border text-center">
@@ -458,25 +458,32 @@ function showRABHistoryModal(data) {
     const isLast = index === timeline.length - 1
     const connectorClass = isLast ? 'hidden' : ''
     
+    // Determine style based on completion status
+    const isCompleted = item.completed !== false && item.tanggal !== null
+    const bgOpacity = isCompleted ? '100' : '50'
+    const textOpacity = isCompleted ? 'text-gray-800' : 'text-gray-400'
+    const borderStyle = isCompleted ? `border-${item.color}-500` : 'border-gray-300'
+    const dateDisplay = item.tanggal ? formatDateTime(item.tanggal) : '<span class="text-gray-400 italic">Belum dilakukan</span>'
+    
     return `
       <div class="flex gap-4 relative">
         <!-- Timeline Icon -->
         <div class="flex flex-col items-center">
-          <div class="w-12 h-12 rounded-full bg-${item.color}-100 flex items-center justify-center text-${item.color}-600 text-2xl z-10">
+          <div class="w-12 h-12 rounded-full bg-${item.color}-${bgOpacity} flex items-center justify-center ${isCompleted ? `text-${item.color}-600` : 'text-gray-400'} text-2xl z-10 ${isCompleted ? '' : 'opacity-50'}">
             ${item.icon}
           </div>
           <!-- Connector Line -->
-          <div class="${connectorClass} w-1 h-full bg-gray-300 absolute top-12"></div>
+          <div class="${connectorClass} w-1 h-full ${isCompleted ? 'bg-gray-300' : 'bg-gray-200'} absolute top-12 ${isCompleted ? '' : 'opacity-30'}"></div>
         </div>
         
         <!-- Timeline Content -->
         <div class="flex-1 pb-8">
-          <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-${item.color}-500">
+          <div class="bg-white rounded-lg shadow-md p-4 border-l-4 ${borderStyle} ${isCompleted ? '' : 'opacity-60'}">
             <div class="flex justify-between items-start mb-2">
-              <h3 class="font-bold text-lg text-gray-800">${item.status}</h3>
-              <span class="text-sm text-gray-500">${formatDateTime(item.tanggal)}</span>
+              <h3 class="font-bold text-lg ${textOpacity}">${item.status}</h3>
+              <span class="text-sm ${isCompleted ? 'text-gray-500' : 'text-gray-400'}">${dateDisplay}</span>
             </div>
-            <p class="text-gray-600 text-sm">${item.description}</p>
+            <p class="${isCompleted ? 'text-gray-600' : 'text-gray-400'} text-sm">${item.description}</p>
           </div>
         </div>
       </div>
