@@ -471,10 +471,51 @@ export async function getNextLH05Number(db: D1Database, tanggal?: string) {
 
 export async function deleteTransaction(db: D1Database, nomorBA: string) {
   try {
-    // Get transaction ID first
+    // Get transaction with materials
     const tx = await getTransactionByBA(db, nomorBA)
     if (!tx) {
       throw new Error('Transaction not found')
+    }
+
+    console.log('🗑️ Deleting transaction:', nomorBA)
+    
+    // Check if any material has RAB number in status field
+    const materials = tx.materials || []
+    const rabNumbers = new Set<string>()
+    
+    for (const mat of materials) {
+      // Status field contains RAB number (e.g., "RAB-2026-0005")
+      const status = mat.status || mat.sn_mesin || mat.snMesin
+      if (status && status.startsWith('RAB-')) {
+        rabNumbers.add(status)
+        console.log('📋 Found RAB reference:', status)
+      }
+    }
+
+    // If transaction was from RAB, revert RAB status to "Tersedia"
+    if (rabNumbers.size > 0) {
+      for (const nomorRAB of rabNumbers) {
+        console.log('🔄 Reverting RAB status to Tersedia:', nomorRAB)
+        
+        // Update RAB status back to "Tersedia"
+        await db.prepare(`
+          UPDATE rab 
+          SET status = 'Tersedia',
+              tanggal_masuk_gudang = NULL
+          WHERE nomor_rab = ?
+        `).bind(nomorRAB).run()
+
+        // Also revert material_gangguan status if exists
+        await db.prepare(`
+          UPDATE material_gangguan
+          SET status = 'Tersedia'
+          WHERE rab_id IN (
+            SELECT id FROM rab WHERE nomor_rab = ?
+          )
+        `).bind(nomorRAB).run()
+        
+        console.log('✅ RAB status reverted:', nomorRAB)
+      }
     }
 
     // Delete materials first (foreign key constraint)
@@ -487,7 +528,13 @@ export async function deleteTransaction(db: D1Database, nomorBA: string) {
       DELETE FROM transactions WHERE nomor_ba = ?
     `).bind(nomorBA).run()
 
-    return { success: true, message: 'Transaction deleted successfully' }
+    console.log('✅ Transaction deleted:', nomorBA)
+
+    return { 
+      success: true, 
+      message: 'Transaction deleted successfully',
+      revertedRAB: Array.from(rabNumbers)
+    }
   } catch (error: any) {
     console.error('Failed to delete transaction:', error)
     throw new Error(`Delete failed: ${error.message}`)
