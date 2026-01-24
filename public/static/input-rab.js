@@ -325,12 +325,15 @@ async function saveRABTransaction() {
         rab_id: selectedMaterials[0].rab_id, // Add rab_id for status update
         materials: selectedMaterials.map(m => ({
             part_number: m.part_number,
+            jenis_barang: m.jenis_barang || '-',  // Add jenis_barang
             material: m.material,
-            mesin: m.mesin,
+            mesin: m.mesin || '-',  // Ensure mesin has value
             jumlah: m.jumlah,
             material_gangguan_id: m.material_gangguan_id
         }))
     };
+    
+    console.log('📤 Sending transaction data:', transactionData);
     
     try {
         const response = await fetch('/api/save-transaction-from-rab', {
