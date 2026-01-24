@@ -498,12 +498,27 @@ export async function deleteTransaction(db: D1Database, nomorBA: string) {
         console.log('🔄 Reverting RAB status to Tersedia:', nomorRAB)
         
         // Update RAB status back to "Tersedia"
-        await db.prepare(`
-          UPDATE rab 
-          SET status = 'Tersedia',
-              tanggal_masuk_gudang = NULL
-          WHERE nomor_rab = ?
-        `).bind(nomorRAB).run()
+        // Try with tanggal_masuk_gudang first, fallback if column doesn't exist
+        try {
+          await db.prepare(`
+            UPDATE rab 
+            SET status = 'Tersedia',
+                tanggal_masuk_gudang = NULL
+            WHERE nomor_rab = ?
+          `).bind(nomorRAB).run()
+        } catch (error: any) {
+          // Fallback if tanggal_masuk_gudang column doesn't exist
+          if (error.message?.includes('tanggal_masuk_gudang') || error.message?.includes('no such column')) {
+            console.log('⚠️ Column tanggal_masuk_gudang not found, updating status only')
+            await db.prepare(`
+              UPDATE rab 
+              SET status = 'Tersedia'
+              WHERE nomor_rab = ?
+            `).bind(nomorRAB).run()
+          } else {
+            throw error
+          }
+        }
 
         // Also revert material_gangguan status if exists
         await db.prepare(`
