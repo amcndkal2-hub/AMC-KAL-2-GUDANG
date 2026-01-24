@@ -265,7 +265,7 @@ function showBAModal(ba) {
                             <th class="border border-gray-300 px-3 py-2">MATERIAL</th>
                             <th class="border border-gray-300 px-3 py-2">MESIN</th>
                             <th class="border border-gray-300 px-3 py-2">JUMLAH</th>
-                            <th class="border border-gray-300 px-3 py-2">S/N MESIN</th>
+                            <th class="border border-gray-300 px-3 py-2">STATUS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -275,7 +275,7 @@ function showBAModal(ba) {
                                 <td class="border border-gray-300 px-3 py-2">${mat.material}</td>
                                 <td class="border border-gray-300 px-3 py-2">${mat.mesin}</td>
                                 <td class="border border-gray-300 px-3 py-2 text-center">${mat.jumlah}</td>
-                                <td class="border border-gray-300 px-3 py-2">${mat.snMesin || mat.sn_mesin || '-'}</td>
+                                <td class="border border-gray-300 px-3 py-2">${mat.status || mat.snMesin || mat.sn_mesin || '-'}</td>
                             </tr>
                         `).join('')}
                     </tbody>

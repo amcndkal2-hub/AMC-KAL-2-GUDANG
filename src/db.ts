@@ -45,7 +45,7 @@ export async function saveTransaction(db: D1Database, data: any) {
       }
       
       await db.prepare(`
-        INSERT INTO materials (transaction_id, part_number, jenis_barang, material, mesin, sn_mesin, jumlah)
+        INSERT INTO materials (transaction_id, part_number, jenis_barang, material, mesin, status, jumlah)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).bind(
         transactionId,
@@ -53,7 +53,7 @@ export async function saveTransaction(db: D1Database, data: any) {
         jenisBarang,  // Use auto-filled value
         material.material,
         material.mesin,
-        material.snMesin,
+        material.status || material.snMesin || '',  // Use status (renamed from snMesin)
         material.jumlah
       ).run()
     }
@@ -76,7 +76,7 @@ export async function getAllTransactions(db: D1Database) {
             'jenisBarang', m.jenis_barang,
             'material', m.material,
             'mesin', m.mesin,
-            'snMesin', m.sn_mesin,
+            'status', m.status,
             'jumlah', m.jumlah
           )
         ) as materials
@@ -107,7 +107,7 @@ export async function getTransactionByBA(db: D1Database, nomorBA: string) {
             'jenisBarang', m.jenis_barang,
             'material', m.material,
             'mesin', m.mesin,
-            'snMesin', m.sn_mesin,
+            'status', m.status,
             'jumlah', m.jumlah
           )
         ) as materials

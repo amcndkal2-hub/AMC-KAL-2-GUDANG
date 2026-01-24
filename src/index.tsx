@@ -362,10 +362,17 @@ app.post('/api/save-transaction', async (c) => {
     // Generate Nomor BA dari D1 Database with year from tanggal
     const nomorBA = await DB.getNextBANumber(env.DB, body.tanggal)
     
+    // Ensure materials have empty status for manual input (not from RAB)
+    const materials = body.materials.map((m: any) => ({
+      ...m,
+      status: m.status || ''  // Keep status from frontend, default to empty string
+    }))
+    
     // Save ke D1 Database (persistent storage)
     const result = await DB.saveTransaction(env.DB, {
       nomorBA,
-      ...body
+      ...body,
+      materials
     })
     
     // Fallback: juga simpan ke in-memory untuk backward compatibility
@@ -1487,6 +1494,15 @@ app.post('/api/save-transaction-from-rab', async (c) => {
       return c.json({ error: 'Pemeriksa and Penerima are required' }, 400)
     }
     
+    // Get nomor_rab for auto-filling status
+    let nomorRAB = null
+    if (data.rab_id) {
+      const rab = await env.DB.prepare(`
+        SELECT nomor_rab FROM rab WHERE id = ?
+      `).bind(data.rab_id).first()
+      nomorRAB = rab?.nomor_rab
+    }
+    
     // Save transaction using existing saveTransaction function
     const transactionData = {
       jenis: 'Masuk (Penerimaan Gudang)',
@@ -1497,7 +1513,10 @@ app.post('/api/save-transaction-from-rab', async (c) => {
       penerima: data.penerima,
       ttd_pemeriksa: data.ttd_pemeriksa,
       ttd_penerima: data.ttd_penerima,
-      materials: data.materials
+      materials: data.materials.map(m => ({
+        ...m,
+        status: nomorRAB || ''  // Auto-fill status with nomor_rab
+      }))
     }
     
     const result = await DB.saveTransaction(env.DB, transactionData)

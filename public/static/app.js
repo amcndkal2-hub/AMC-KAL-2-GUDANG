@@ -219,9 +219,9 @@ function addMaterialRow() {
             </div>
             
             <div class="lg:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">S/N Mesin</label>
-                <input type="text" class="sn-mesin w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                    placeholder="Contoh: SN-EXC-001">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <input type="text" class="status w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                    placeholder="Status material (opsional)">
             </div>
             
             <div class="lg:col-span-2">
@@ -379,7 +379,7 @@ async function handleSubmit(e) {
                 jenisBarang: div.querySelector('.jenis-barang').value,
                 material: div.querySelector('.material').value,
                 mesin: div.querySelector('.mesin').value,
-                snMesin: div.querySelector('.sn-mesin').value,
+                status: div.querySelector('.status').value,
                 jumlah: parseInt(jumlah)
             });
         }
@@ -440,7 +440,7 @@ ${data.materials.map((m, i) => `
   ${i+1}. Part: ${m.partNumber}
      Material: ${m.material}
      Mesin: ${m.mesin}
-     S/N: ${m.snMesin || '-'}
+     Status: ${m.status || '-'}
      Jumlah: ${m.jumlah}
 `).join('\n')}
 
