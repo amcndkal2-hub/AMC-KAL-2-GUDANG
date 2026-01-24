@@ -60,7 +60,8 @@ export async function saveTransaction(db: D1Database, data: any) {
         ).run()
       } catch (insertError: any) {
         // Fallback to sn_mesin if status column doesn't exist
-        if (insertError.message && insertError.message.includes('no such column: status')) {
+        const errorMsg = insertError.message || insertError.toString() || ''
+        if (errorMsg.includes('no column') || errorMsg.includes('no such column') || errorMsg.includes('status')) {
           console.log('⚠️ status column not found, using sn_mesin fallback for insert')
           await db.prepare(`
             INSERT INTO materials (transaction_id, part_number, jenis_barang, material, mesin, sn_mesin, jumlah)

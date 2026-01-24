@@ -342,12 +342,19 @@ async function saveRABTransaction() {
             body: JSON.stringify(transactionData)
         });
         
+        const result = await response.json();
+        
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to save transaction');
+            console.error('❌ Server error:', result);
+            throw new Error(result.error || result.message || 'Failed to save transaction');
         }
         
-        const result = await response.json();
+        if (!result.success) {
+            console.error('❌ Transaction failed:', result);
+            throw new Error(result.error || result.message || 'Failed to save transaction');
+        }
+        
+        console.log('✅ Transaction saved successfully:', result);
         
         alert(`Transaksi berhasil disimpan!\nNomor BA: ${result.nomor_ba}`);
         
@@ -359,6 +366,8 @@ async function saveRABTransaction() {
         
     } catch (error) {
         console.error('❌ Error saving transaction:', error);
+        console.error('Error details:', error.message);
+        console.error('Stack:', error.stack);
         alert('Gagal menyimpan transaksi: ' + error.message);
     }
 }
