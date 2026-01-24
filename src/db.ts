@@ -530,14 +530,20 @@ export async function deleteTransaction(db: D1Database, nomorBA: string) {
           `).bind(nomorRAB).run()
         }
 
-        // Also revert material_gangguan status if exists
-        await db.prepare(`
-          UPDATE material_gangguan
-          SET status = 'Tersedia'
-          WHERE rab_id IN (
-            SELECT id FROM rab WHERE nomor_rab = ?
-          )
-        `).bind(nomorRAB).run()
+        // Also revert material_gangguan status if exists (if table exists)
+        try {
+          await db.prepare(`
+            UPDATE material_gangguan
+            SET status = 'Tersedia'
+            WHERE rab_id IN (
+              SELECT id FROM rab WHERE nomor_rab = ?
+            )
+          `).bind(nomorRAB).run()
+          console.log('✅ Material gangguan status also reverted')
+        } catch (mgError: any) {
+          // material_gangguan table might not exist or have different structure
+          console.log('⚠️ Could not update material_gangguan (table may not exist):', mgError.message)
+        }
         
         console.log('✅ RAB status reverted:', nomorRAB)
       }
