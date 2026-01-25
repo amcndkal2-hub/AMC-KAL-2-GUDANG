@@ -3364,13 +3364,103 @@ function getFormGangguanHTML() {
                             11. Kebutuhan Material
                         </h2>
                         
-                        <div id="materialListGangguan" class="space-y-4"></div>
+                        <!-- Temporary Message -->
+                        <div id="tempMessageGangguan" class="hidden"></div>
                         
-                        <button type="button" id="addMaterialGangguan" 
-                            class="w-full mt-4 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
-                            <i class="fas fa-plus mr-2"></i>
-                            Tambah Material
-                        </button>
+                        <!-- Single Material Input Form -->
+                        <div class="border-2 border-red-500 rounded-lg p-4 bg-red-50 mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                                <i class="fas fa-edit mr-2"></i>Input Material
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div class="lg:col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Part Number (Cari) *</label>
+                                    <div class="relative">
+                                        <input type="text" 
+                                            class="part-number-search-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" 
+                                            placeholder="Ketik atau pilih Part Number"
+                                            data-material-id="1"
+                                            autocomplete="off">
+                                        <div class="search-results-gangguan absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Barang</label>
+                                    <input type="text" class="jenis-barang-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Material</label>
+                                    <input type="text" class="material-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Mesin</label>
+                                    <input type="text" class="mesin-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                
+                                <div class="lg:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">S/N Mesin</label>
+                                    <input type="text" class="sn-mesin-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                                        placeholder="Serial Number Mesin (opsional)">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah *</label>
+                                    <input type="number" class="jumlah-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                                        value="1" min="1" required>
+                                </div>
+                                
+                                <div class="flex items-end">
+                                    <button type="button" id="addMaterialBtnGangguan" 
+                                        class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center">
+                                        <i class="fas fa-plus mr-2"></i>Tambah
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Materials Preview Table -->
+                        <div class="mt-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800">
+                                    <i class="fas fa-list mr-2"></i>
+                                    List Material (<span id="totalMaterialsCountGangguan">0</span> item)
+                                </h3>
+                                <button type="button" onclick="resetMaterialsListGangguan()" 
+                                    class="text-sm text-red-600 hover:text-red-700">
+                                    <i class="fas fa-trash mr-1"></i>Hapus Semua
+                                </button>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">No</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Part Number</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Jenis Barang</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Material</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Mesin</th>
+                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">S/N Mesin</th>
+                                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Jumlah</th>
+                                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="materialPreviewBodyGangguan">
+                                        <tr>
+                                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                                <i class="fas fa-inbox text-4xl mb-2"></i>
+                                                <p>Belum ada material yang ditambahkan.</p>
+                                                <p class="text-sm mt-1">Isi form di atas dan klik "Tambah" untuk menambahkan material.</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 12. TTD Digital -->
@@ -3408,6 +3498,7 @@ function getFormGangguanHTML() {
             </div>
         </div>
 
+        <script src="/static/form-gangguan-material-list.js"></script>
         <script src="/static/form-gangguan.js"></script>
     </body>
     </html>

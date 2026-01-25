@@ -266,30 +266,42 @@ async function handleFormSubmit(e) {
     return
   }
   
-  // Collect materials
-  const materials = []
-  const materialRows = document.querySelectorAll('#materialListGangguan > div')
-  
-  for (const row of materialRows) {
-    const partNumber = row.querySelector('.part-number-search').value
-    const jenisBarang = row.querySelector('.jenis-barang').value
-    const material = row.querySelector('.material').value
-    const mesin = row.querySelector('.mesin').value
-    const jumlah = parseInt(row.querySelector('.jumlah').value)
+  // Use new material list system if available
+  let materials = [];
+  if (typeof getMaterialsDataGangguan === 'function' && typeof materialsDataGangguan !== 'undefined') {
+    materials = getMaterialsDataGangguan();
+    console.log('Using new material list system (Gangguan):', materials);
+  } else {
+    // Fallback to old system
+    const materialRows = document.querySelectorAll('#materialListGangguan > div')
     
-    if (!partNumber || !jumlah) {
-      alert('Semua material harus diisi lengkap!')
-      return
+    for (const row of materialRows) {
+      const partNumber = row.querySelector('.part-number-search').value
+      const jenisBarang = row.querySelector('.jenis-barang').value
+      const material = row.querySelector('.material').value
+      const mesin = row.querySelector('.mesin').value
+      const jumlah = parseInt(row.querySelector('.jumlah').value)
+      
+      if (!partNumber || !jumlah) {
+        alert('Semua material harus diisi lengkap!')
+        return
+      }
+      
+      materials.push({
+        partNumber,
+        jenisBarang,
+        material,
+        mesin,
+        jumlah
+      })
     }
-    
-    materials.push({
-      partNumber,
-      jenisBarang,
-      material,
-      mesin,
-      jumlah
-    })
   }
+  
+  // Validate at least one material (optional for Form Gangguan)
+  // if (materials.length === 0) {
+  //   alert('Minimal harus ada 1 material yang diisi!')
+  //   return
+  // }
   
   // Collect form data
   const formData = {
