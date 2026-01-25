@@ -184,8 +184,8 @@ function updateStatusLabels() {
     
     // Determine label and placeholder based on transaction type
     const isMasuk = jenisTransaksi.includes('Masuk');
-    const label = isMasuk ? 'Status' : 'S/N Mesin';
-    const placeholder = isMasuk ? 'Status material (opsional)' : 'Contoh: SN-EXC-001';
+    const label = isMasuk ? 'Status *' : 'S/N Mesin *';
+    const placeholder = isMasuk ? 'Status material (WAJIB)' : 'Serial Number Mesin (WAJIB)';
     
     // Update all status labels and inputs
     statusLabels.forEach(labelElement => {
@@ -194,6 +194,7 @@ function updateStatusLabels() {
     
     statusInputs.forEach(input => {
         input.placeholder = placeholder;
+        input.setAttribute('required', 'required');
     });
 }
 

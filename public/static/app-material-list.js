@@ -163,19 +163,31 @@ function addMaterialToList() {
     const status = document.querySelector('.status').value.trim();
     const jumlah = document.querySelector('.jumlah').value.trim();
     
-    // Validation
+    // VALIDATION: Part Number (WAJIB)
     if (!partNumber) {
         alert('❌ Part Number wajib diisi!');
+        document.querySelector('.part-number-search').focus();
         return;
     }
     
+    // VALIDATION: Data material lengkap
     if (!jenisBarang || !material || !mesin || jenisBarang === '-' || material === '-' || mesin === '-') {
         alert('❌ Data material tidak lengkap! Pastikan Part Number sudah dipilih dari dropdown.');
+        document.querySelector('.part-number-search').focus();
         return;
     }
     
+    // VALIDATION: Status/S/N Mesin (WAJIB)
+    if (!status || status.trim() === '') {
+        alert('❌ Status/S/N Mesin wajib diisi!');
+        document.querySelector('.status').focus();
+        return;
+    }
+    
+    // VALIDATION: Jumlah (WAJIB, harus > 0)
     if (!jumlah || parseInt(jumlah) <= 0) {
-        alert('❌ Jumlah harus lebih dari 0!');
+        alert('❌ Jumlah wajib diisi dan harus lebih dari 0!');
+        document.querySelector('.jumlah').focus();
         return;
     }
     

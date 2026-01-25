@@ -2310,9 +2310,11 @@ function getInputFormHTML() {
                                 </div>
                                 
                                 <div class="lg:col-span-2">
-                                    <label class="status-label block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                    <label class="status-label block text-sm font-medium text-gray-700 mb-2">
+                                        Status/S/N Mesin *
+                                    </label>
                                     <input type="text" class="status w-full px-4 py-2 border border-gray-300 rounded-lg" 
-                                        placeholder="Status material (opsional)">
+                                        placeholder="Status material atau S/N Mesin (WAJIB)" required>
                                 </div>
                                 
                                 <div>
@@ -3402,9 +3404,9 @@ function getFormGangguanHTML() {
                                 </div>
                                 
                                 <div class="lg:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">S/N Mesin</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">S/N Mesin *</label>
                                     <input type="text" class="sn-mesin-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg" 
-                                        placeholder="Serial Number Mesin (opsional)">
+                                        placeholder="Serial Number Mesin (WAJIB)" required>
                                 </div>
                                 
                                 <div>
