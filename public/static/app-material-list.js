@@ -114,9 +114,38 @@ function displaySearchResultsForMaterialInput(resultsDiv, results) {
 // Fill material data from selected part
 function fillMaterialDataForInput(data) {
     const partNumber = data.PART_NUMBER ? String(data.PART_NUMBER) : '';
-    const jenisBarang = data.JENIS_BARANG || '-';
+    let jenisBarang = data.JENIS_BARANG || '';
     const material = data.MATERIAL || '-';
     const mesin = data.MESIN || '-';
+    
+    // TEMPORARY FIX: Fallback JENIS_BARANG if empty
+    // Because Google Apps Script doesn't read column A correctly
+    if (!jenisBarang || jenisBarang === '' || jenisBarang === '-') {
+        // Default to "MATERIAL HANDAL" for common materials
+        const materialUpper = material.toUpperCase();
+        
+        // Check material keywords to determine JENIS_BARANG
+        if (materialUpper.includes('PUMP') || 
+            materialUpper.includes('OIL') || 
+            materialUpper.includes('WATER') || 
+            materialUpper.includes('FUEL')) {
+            jenisBarang = 'MATERIAL HANDAL';
+        } else if (materialUpper.includes('GASKET') || 
+                   materialUpper.includes('SEAL') || 
+                   materialUpper.includes('BEARING')) {
+            jenisBarang = 'SPAREPART';
+        } else if (materialUpper.includes('FILTER')) {
+            jenisBarang = 'FILTER';
+        } else if (materialUpper.includes('BELT') || 
+                   materialUpper.includes('HOSE')) {
+            jenisBarang = 'CONSUMABLE';
+        } else {
+            // Default fallback
+            jenisBarang = 'MATERIAL HANDAL';
+        }
+        
+        console.log('⚠️ JENIS_BARANG empty, using fallback:', jenisBarang);
+    }
     
     document.querySelector('.part-number-search').value = partNumber;
     document.querySelector('.jenis-barang').value = jenisBarang;
