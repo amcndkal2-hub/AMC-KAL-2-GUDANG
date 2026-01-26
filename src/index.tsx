@@ -2367,13 +2367,13 @@ function getInputFormHTML() {
                                         Status/S/N Mesin *
                                     </label>
                                     <input type="text" class="status w-full px-4 py-2 border border-gray-300 rounded-lg" 
-                                        placeholder="Status material atau S/N Mesin (WAJIB)" required>
+                                        placeholder="Status material atau S/N Mesin (WAJIB)">
                                 </div>
                                 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah *</label>
                                     <input type="number" class="jumlah w-full px-4 py-2 border border-gray-300 rounded-lg" 
-                                        value="1" min="1" required>
+                                        value="1" min="1">
                                 </div>
                                 
                                 <div class="flex items-end">
