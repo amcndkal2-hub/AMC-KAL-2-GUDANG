@@ -157,7 +157,15 @@ function renderMutasiTable(data = transactions) {
     let html = '';
     
     data.forEach(tx => {
-        tx.materials.forEach((mat, idx) => {
+        // CRITICAL FIX: Handle both materials formats (array and potential null/empty)
+        const materials = Array.isArray(tx.materials) ? tx.materials : [];
+        
+        if (materials.length === 0) {
+            console.warn('⚠️ Transaction has no materials:', tx.nomor_ba);
+            return; // Skip this transaction
+        }
+        
+        materials.forEach((mat, idx) => {
             const jenisClass = tx.jenis_transaksi.includes('Masuk') 
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-red-100 text-red-800';
@@ -169,15 +177,15 @@ function renderMutasiTable(data = transactions) {
             html += `
                 <tr class="border-b hover:bg-gray-50">
                     ${idx === 0 ? `
-                        <td class="px-4 py-3 font-bold" rowspan="${tx.materials.length}">
+                        <td class="px-4 py-3 font-bold" rowspan="${materials.length}">
                             <a href="#" onclick="viewBA('${tx.nomor_ba}')" class="text-blue-600 hover:underline">
                                 ${tx.nomor_ba}
                             </a>
                         </td>
-                        <td class="px-4 py-3" rowspan="${tx.materials.length}">
+                        <td class="px-4 py-3" rowspan="${materials.length}">
                             ${formatDate(tx.tanggal)}
                         </td>
-                        <td class="px-4 py-3" rowspan="${tx.materials.length}">
+                        <td class="px-4 py-3" rowspan="${materials.length}">
                             <span class="inline-block ${jenisClass} px-3 py-1 rounded-full text-sm">
                                 <i class="fas fa-${jenisIcon} mr-1"></i>
                                 ${tx.jenis_transaksi}
@@ -185,19 +193,19 @@ function renderMutasiTable(data = transactions) {
                         </td>
                     ` : ''}
                     <td class="px-4 py-3">${mat.partNumber || mat.part_number || '-'}</td>
-                    <td class="px-4 py-3 text-center font-semibold">${mat.jumlah}</td>
+                    <td class="px-4 py-3 text-center font-semibold">${mat.jumlah || 0}</td>
                     ${idx === 0 ? `
-                        <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.lokasi_asal}</td>
-                        <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.lokasi_tujuan}</td>
-                        <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.pemeriksa}</td>
-                        <td class="px-4 py-3" rowspan="${tx.materials.length}">${tx.penerima}</td>
-                        <td class="px-4 py-3 text-center" rowspan="${tx.materials.length}">
+                        <td class="px-4 py-3" rowspan="${materials.length}">${tx.lokasi_asal || '-'}</td>
+                        <td class="px-4 py-3" rowspan="${materials.length}">${tx.lokasi_tujuan || '-'}</td>
+                        <td class="px-4 py-3" rowspan="${materials.length}">${tx.pemeriksa || '-'}</td>
+                        <td class="px-4 py-3" rowspan="${materials.length}">${tx.penerima || '-'}</td>
+                        <td class="px-4 py-3 text-center" rowspan="${materials.length}">
                             <button onclick="exportBA('${tx.nomor_ba}')" 
                                 class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">
                                 <i class="fas fa-download mr-1"></i>Terkirim
                             </button>
                         </td>
-                        <td class="px-4 py-3 text-center" rowspan="${tx.materials.length}">
+                        <td class="px-4 py-3 text-center" rowspan="${materials.length}">
                             ${isAdminUser ? `
                                 <button onclick="deleteTransaction('${tx.nomor_ba}')" 
                                     class="admin-only btn-delete bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">
