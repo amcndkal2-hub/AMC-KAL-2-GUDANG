@@ -157,7 +157,7 @@ function renderTable() {
   if (filteredMaterials.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="9" class="px-4 py-8 text-center text-gray-500">
           ${allMaterials.length === 0 ? 'Belum ada data kebutuhan material' : 'Tidak ada data yang sesuai filter'}
         </td>
       </tr>
@@ -238,6 +238,7 @@ function renderTable() {
         <td class="px-4 py-3 font-semibold">${item.partNumber}</td>
         <td class="px-4 py-3">${item.material}</td>
         <td class="px-4 py-3">${item.mesin}</td>
+        <td class="px-4 py-3">${item.sn_mesin || item.snMesin || '-'}</td>
         <td class="px-4 py-3 text-center font-semibold">${item.jumlah}</td>
         <td class="px-4 py-3">${lokasiTujuan}</td>
         <td class="px-4 py-3 text-center">

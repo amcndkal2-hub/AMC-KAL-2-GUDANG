@@ -4456,6 +4456,7 @@ function getDashboardKebutuhanMaterialHTML() {
                                 <th class="px-4 py-3 text-left">Part Number</th>
                                 <th class="px-4 py-3 text-left">Material</th>
                                 <th class="px-4 py-3 text-left">Mesin</th>
+                                <th class="px-4 py-3 text-left">S/N Mesin</th>
                                 <th class="px-4 py-3 text-center">Jumlah</th>
                                 <th class="px-4 py-3 text-left">Unit/Lokasi Tujuan</th>
                                 <th class="px-4 py-3 text-center">Status</th>

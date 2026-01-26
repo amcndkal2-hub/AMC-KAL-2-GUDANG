@@ -286,8 +286,8 @@ export async function saveGangguan(db: D1Database, data: any) {
     // Insert materials for gangguan
     for (const material of data.materials) {
       await db.prepare(`
-        INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         gangguanId,
         material.partNumber,
@@ -296,7 +296,8 @@ export async function saveGangguan(db: D1Database, data: any) {
         material.jumlah,
         material.status || 'N/A',
         data.unitULD,
-        data.unitULD
+        data.unitULD,
+        material.snMesin || material.sn_mesin || ''
       ).run()
     }
 
@@ -353,7 +354,8 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
             'jumlah', mg.jumlah,
             'status', mg.status,
             'unitULD', mg.unit_uld,
-            'lokasiTujuan', mg.lokasi_tujuan
+            'lokasiTujuan', mg.lokasi_tujuan,
+            'snMesin', mg.sn_mesin
           )
         ) as materials
       FROM gangguan g
@@ -861,7 +863,8 @@ export async function getMaterialPengadaan(db: D1Database) {
         mg.jumlah,
         mg.unit_uld as lokasi_tujuan,
         mg.status,
-        mg.is_rab_created
+        mg.is_rab_created,
+        mg.sn_mesin
       FROM material_gangguan mg
       JOIN gangguan g ON mg.gangguan_id = g.id
       WHERE UPPER(mg.status) = 'PENGADAAN'

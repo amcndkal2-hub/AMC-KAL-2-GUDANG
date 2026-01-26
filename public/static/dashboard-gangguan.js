@@ -414,6 +414,7 @@ function showLH05Modal(gangguan) {
       <td class="px-4 py-2">${mat.partNumber}</td>
       <td class="px-4 py-2">${mat.material}</td>
       <td class="px-4 py-2">${mat.mesin}</td>
+      <td class="px-4 py-2">${mat.snMesin || mat.status || '-'}</td>
       <td class="px-4 py-2 text-center">${mat.jumlah}</td>
     </tr>
   `).join('')
@@ -538,6 +539,7 @@ function showLH05Modal(gangguan) {
                   <th class="px-4 py-2 text-left">Part Number</th>
                   <th class="px-4 py-2 text-left">Material</th>
                   <th class="px-4 py-2 text-left">Mesin</th>
+                  <th class="px-4 py-2 text-left">S/N Mesin</th>
                   <th class="px-4 py-2 text-center">Jumlah</th>
                 </tr>
               </thead>
