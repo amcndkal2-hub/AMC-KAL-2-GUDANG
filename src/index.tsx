@@ -453,15 +453,47 @@ app.post('/api/save-transaction', async (c) => {
 app.get('/api/transactions', async (c) => {
   try {
     const { env } = c
+    
+    // Check if DB binding exists
+    if (!env.DB) {
+      console.warn('⚠️ DB binding not available, returning empty array')
+      return c.json({ 
+        transactions: [], 
+        source: 'none',
+        error: 'Database binding not configured'
+      })
+    }
+    
     // Get from D1 Database (persistent storage)
     const dbTransactions = await DB.getAllTransactions(env.DB)
+    console.log(`✅ Retrieved ${dbTransactions.length} transactions from D1`)
+    
     // Merge dengan in-memory untuk backward compatibility
     const allTransactions = [...dbTransactions, ...transactions]
-    return c.json({ transactions: allTransactions })
+    
+    return c.json({ 
+      transactions: allTransactions,
+      source: 'd1',
+      count: {
+        db: dbTransactions.length,
+        memory: transactions.length,
+        total: allTransactions.length
+      }
+    })
   } catch (error: any) {
-    console.error('Failed to get transactions:', error)
+    console.error('❌ Failed to get transactions from D1:', error)
+    
     // Fallback to in-memory if D1 fails
-    return c.json({ transactions })
+    return c.json({ 
+      transactions,
+      source: 'memory-fallback',
+      error: error.message,
+      count: {
+        db: 0,
+        memory: transactions.length,
+        total: transactions.length
+      }
+    })
   }
 })
 
