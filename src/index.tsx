@@ -497,6 +497,119 @@ app.get('/api/transactions', async (c) => {
   }
 })
 
+// API: Get LH05 list for dropdown (Material Request from Gangguan)
+app.get('/api/lh05-list', async (c) => {
+  try {
+    const { env } = c
+    
+    if (!env.DB) {
+      return c.json({ error: 'Database not available' }, 500)
+    }
+    
+    // Get all gangguan with their material count
+    const { results } = await env.DB.prepare(`
+      SELECT 
+        g.id,
+        g.nomor_lh05,
+        g.tanggal_laporan,
+        g.lokasi_gangguan as unit_uld,
+        g.komponen_rusak,
+        COUNT(mg.id) as material_count
+      FROM gangguan g
+      LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+      GROUP BY g.id
+      HAVING material_count > 0
+      ORDER BY g.created_at DESC
+    `).all()
+    
+    return c.json({ lh05List: results })
+  } catch (error: any) {
+    console.error('Failed to get LH05 list:', error)
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// API: Get materials by LH05 with stock info
+app.get('/api/lh05/:nomorLH05/materials', async (c) => {
+  try {
+    const { env } = c
+    const nomorLH05 = c.req.param('nomorLH05')
+    
+    if (!env.DB) {
+      return c.json({ error: 'Database not available' }, 500)
+    }
+    
+    // Get gangguan details
+    const gangguan = await DB.getGangguanByLH05(env.DB, nomorLH05)
+    
+    if (!gangguan) {
+      return c.json({ error: 'LH05 not found' }, 404)
+    }
+    
+    // Get materials with stock info and jenis_barang from master_material
+    const materialsWithStock = await Promise.all(
+      gangguan.materials.map(async (mat: any) => {
+        // Lookup jenis_barang from master_material table
+        let jenisBarang = 'MATERIAL HANDAL' // Default fallback
+        try {
+          const masterResult = await env.DB.prepare(`
+            SELECT JENIS_BARANG FROM master_material 
+            WHERE PART_NUMBER = ? LIMIT 1
+          `).bind(mat.partNumber).first()
+          
+          if (masterResult && masterResult.JENIS_BARANG) {
+            jenisBarang = masterResult.JENIS_BARANG as string
+          }
+        } catch (lookupError) {
+          console.warn(`⚠️ Failed to lookup jenis_barang for ${mat.partNumber}:`, lookupError)
+        }
+        
+        // Calculate stock for this part number
+        const allTransactions = await DB.getAllTransactions(env.DB)
+        let stokMasuk = 0
+        let stokKeluar = 0
+        
+        allTransactions.forEach((tx: any) => {
+          tx.materials.forEach((txMat: any) => {
+            if (txMat.partNumber === mat.partNumber) {
+              if (tx.jenis_transaksi.includes('Masuk')) {
+                stokMasuk += txMat.jumlah
+              } else {
+                stokKeluar += txMat.jumlah
+              }
+            }
+          })
+        })
+        
+        const stokAkhir = stokMasuk - stokKeluar
+        
+        return {
+          id: mat.id || mat.partNumber, // Use id for identification
+          partNumber: mat.partNumber,
+          jenisBarang: jenisBarang,
+          material: mat.material,
+          mesin: mat.mesin,
+          status: mat.status, // S/N Mesin
+          jumlah: mat.jumlah,
+          stok: stokAkhir,
+          available: stokAkhir >= mat.jumlah
+        }
+      })
+    )
+    
+    return c.json({
+      lh05: nomorLH05,
+      unit_uld: gangguan.lokasi_gangguan,
+      tanggal_laporan: gangguan.tanggal_laporan,
+      komponen_rusak: gangguan.komponen_rusak,
+      materials: materialsWithStock
+    })
+  } catch (error: any) {
+    console.error('Failed to get LH05 materials:', error)
+    return c.json({ error: error.message }, 500)
+  }
+})
+
 // API: Get stock dashboard
 app.get('/api/dashboard/stock', async (c) => {
   try {
@@ -2298,6 +2411,10 @@ function getInputFormHTML() {
                                     class="tab-button px-4 py-2 font-semibold text-blue-600 border-b-2 border-blue-600">
                                 <i class="fas fa-keyboard mr-2"></i>Input Manual
                             </button>
+                            <button onclick="switchTab('lh05')" id="tabLH05" 
+                                    class="tab-button px-4 py-2 font-semibold text-gray-500 hover:text-blue-600">
+                                <i class="fas fa-file-medical mr-2"></i>Dari LH05 (Gangguan)
+                            </button>
                             <button onclick="switchTab('rab')" id="tabRAB" 
                                     class="tab-button px-4 py-2 font-semibold text-gray-500 hover:text-blue-600">
                                 <i class="fas fa-file-invoice mr-2"></i>Input dari RAB Tersedia
@@ -2510,6 +2627,185 @@ function getInputFormHTML() {
                 </div>
                 <!-- End Tab Content: Manual Input -->
 
+                <!-- Tab Content: LH05 Input -->
+                <div id="contentLH05" class="tab-content hidden">
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-file-medical text-blue-600 mr-2"></i>
+                            Material dari Laporan Gangguan (LH05)
+                        </h2>
+                        <p class="text-gray-600 text-sm mb-4">
+                            <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                            Pilih Nomor LH05, lalu centang material yang akan dikeluarkan. Material dengan stok 0 tidak bisa dipilih.
+                        </p>
+
+                        <!-- LH05 Selector -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-list-alt mr-2"></i>Pilih Nomor LH05:
+                            </label>
+                            <select id="lh05Selector" onchange="loadMaterialsFromLH05()" 
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800 font-medium">
+                                <option value="">-- Pilih Nomor LH05 --</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Hanya menampilkan LH05 yang memiliki material
+                            </p>
+                        </div>
+
+                        <!-- LH05 Info (hidden initially) -->
+                        <div id="lh05Info" class="hidden mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div>
+                                    <span class="font-semibold text-gray-700">Unit/ULD:</span>
+                                    <span id="lh05Unit" class="ml-2 text-gray-900"></span>
+                                </div>
+                                <div>
+                                    <span class="font-semibold text-gray-700">Tanggal Laporan:</span>
+                                    <span id="lh05Tanggal" class="ml-2 text-gray-900"></span>
+                                </div>
+                                <div>
+                                    <span class="font-semibold text-gray-700">Komponen Rusak:</span>
+                                    <span id="lh05Komponen" class="ml-2 text-gray-900"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Materials List with Checkboxes -->
+                        <div id="lh05MaterialsContainer" class="hidden">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-boxes text-blue-600 mr-2"></i>
+                                Daftar Material (Pilih yang akan dikeluarkan)
+                            </h3>
+                            
+                            <div id="lh05MaterialsList" class="space-y-3 mb-6">
+                                <!-- Materials will be loaded here dynamically -->
+                            </div>
+
+                            <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                                <div>
+                                    <span class="text-sm text-gray-600">Material dipilih: </span>
+                                    <span id="selectedCount" class="text-lg font-bold text-blue-600">0</span>
+                                </div>
+                                <button type="button" onclick="addSelectedLH05Materials()" 
+                                        class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-all">
+                                    <i class="fas fa-plus-circle mr-2"></i>
+                                    Tambah ke Transaksi
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="lh05EmptyState" class="text-center py-12">
+                            <i class="fas fa-clipboard-list text-gray-300 text-6xl mb-4"></i>
+                            <p class="text-gray-500 text-lg">Pilih Nomor LH05 untuk melihat material</p>
+                        </div>
+                    </div>
+
+                    <!-- Preview Table (sama seperti Manual Input, tapi auto-filled dari LH05) -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-table text-blue-600 mr-2"></i>
+                            Preview Material yang Akan Diinput
+                        </h3>
+                        
+                        <div id="materialPreviewLH05" class="overflow-x-auto">
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border">No</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border">Part Number</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border">Jenis Barang</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border">Material</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border">Mesin</th>
+                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border">S/N Mesin</th>
+                                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border">Jumlah</th>
+                                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="materialPreviewBodyLH05">
+                                    <tr>
+                                        <td colspan="8" class="px-4 py-8 text-center text-gray-500 border">
+                                            <i class="fas fa-inbox text-gray-300 text-3xl mb-2"></i>
+                                            <p>Belum ada material yang ditambahkan</p>
+                                            <p class="text-sm mt-1">Pilih material dari LH05 di atas</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-4 flex items-center justify-between text-sm text-gray-600">
+                            <div>
+                                <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                                Total Material: <span id="totalMaterialsLH05" class="font-semibold">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Penanggung Jawab Section (sama seperti Manual) -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Penanggung Jawab dan Validasi</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pemeriksa *</label>
+                                <select id="pemeriksa LH05" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="">-- Pilih Pemeriksa --</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Penerima *</label>
+                                <select id="penerimaLH05" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="">-- Pilih Penerima --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Tanda Tangan Section -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Pemeriksa *</label>
+                                <div class="border-2 border-gray-300 rounded-lg overflow-hidden">
+                                    <canvas id="signaturePemeriksaLH05" class="w-full h-40 cursor-crosshair bg-white"></canvas>
+                                </div>
+                                <button type="button" onclick="clearSignatureLH05('pemeriksa')" 
+                                        class="mt-2 text-sm text-red-600 hover:text-red-700">
+                                    <i class="fas fa-eraser mr-1"></i>Hapus Tanda Tangan
+                                </button>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Penerima *</label>
+                                <div class="border-2 border-gray-300 rounded-lg overflow-hidden">
+                                    <canvas id="signaturePenerimaLH05" class="w-full h-40 cursor-crosshair bg-white"></canvas>
+                                </div>
+                                <button type="button" onclick="clearSignatureLH05('penerima')" 
+                                        class="mt-2 text-sm text-red-600 hover:text-red-700">
+                                    <i class="fas fa-eraser mr-1"></i>Hapus Tanda Tangan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="flex justify-between items-center mt-6">
+                        <button type="button" onclick="resetFormLH05()" 
+                                class="px-6 py-3 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600">
+                            <i class="fas fa-undo mr-2"></i>Reset Form
+                        </button>
+                        <button type="button" onclick="submitTransactionFromLH05()" 
+                                class="px-8 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 focus:ring-4 focus:ring-green-300">
+                            <i class="fas fa-save mr-2"></i>Simpan Transaksi
+                        </button>
+                    </div>
+                </div>
+                <!-- End Tab Content: LH05 Input -->
+
                 <!-- Tab Content: RAB Input -->
                 <div id="contentRAB" class="tab-content hidden">
                     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -2674,35 +2970,53 @@ function getInputFormHTML() {
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/app-material-list.js"></script>
+        <script src="/static/form-lh05-input.js"></script>
         <script src="/static/app.js"></script>
         <script src="/static/input-rab.js"></script>
         <script>
-          // Simple tab switching without complex logic
+          // Tab switching with support for manual, lh05, and rab
           function switchTab(tab) {
             console.log('🔄 Switching to tab:', tab);
             
-            // Hide all tabs
+            // Get all tab elements
             const contentManual = document.getElementById('contentManual');
+            const contentLH05 = document.getElementById('contentLH05');
             const contentRAB = document.getElementById('contentRAB');
             const tabManual = document.getElementById('tabManual');
+            const tabLH05 = document.getElementById('tabLH05');
             const tabRAB = document.getElementById('tabRAB');
             
-            if (!contentManual || !contentRAB || !tabManual || !tabRAB) {
-              console.error('❌ One or more elements not found:', {
-                contentManual: !!contentManual,
-                contentRAB: !!contentRAB,
-                tabManual: !!tabManual,
-                tabRAB: !!tabRAB
-              });
+            if (!contentManual || !contentLH05 || !contentRAB || !tabManual || !tabLH05 || !tabRAB) {
+              console.error('❌ One or more tab elements not found');
               return;
             }
             
-            if (tab === 'rab') {
-              // Show RAB tab
-              contentManual.classList.add('hidden');
+            // Hide all tab contents
+            contentManual.classList.add('hidden');
+            contentLH05.classList.add('hidden');
+            contentRAB.classList.add('hidden');
+            
+            // Reset all tab buttons
+            [tabManual, tabLH05, tabRAB].forEach(btn => {
+              btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+              btn.classList.add('text-gray-500');
+            });
+            
+            // Show selected tab
+            if (tab === 'lh05') {
+              contentLH05.classList.remove('hidden');
+              tabLH05.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+              tabLH05.classList.remove('text-gray-500');
+              
+              // Load LH05 dropdown if not already loaded
+              console.log('📋 Loading LH05 materials...');
+              setTimeout(() => {
+                if (typeof loadLH05Dropdown === 'function') {
+                  loadLH05Dropdown();
+                }
+              }, 100);
+            } else if (tab === 'rab') {
               contentRAB.classList.remove('hidden');
-              tabManual.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-              tabManual.classList.add('text-gray-500');
               tabRAB.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
               tabRAB.classList.remove('text-gray-500');
               
@@ -2716,11 +3030,8 @@ function getInputFormHTML() {
                 }
               }, 100);
             } else {
-              // Show Manual tab
-              contentRAB.classList.add('hidden');
+              // Default: Manual tab
               contentManual.classList.remove('hidden');
-              tabRAB.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-              tabRAB.classList.add('text-gray-500');
               tabManual.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
               tabManual.classList.remove('text-gray-500');
             }

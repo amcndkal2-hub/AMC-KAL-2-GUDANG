@@ -316,6 +316,7 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
         g.*,
         json_group_array(
           json_object(
+            'id', mg.id,
             'partNumber', mg.part_number,
             'material', mg.material,
             'mesin', mg.mesin,
