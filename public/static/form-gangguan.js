@@ -329,11 +329,11 @@ async function handleFormSubmit(e) {
     }
   }
   
-  // Validate at least one material (optional for Form Gangguan)
-  // if (materials.length === 0) {
-  //   alert('Minimal harus ada 1 material yang diisi!')
-  //   return
-  // }
+  // Validate at least one material
+  if (materials.length === 0) {
+    alert('❌ Minimal harus ada 1 material yang diisi!')
+    return
+  }
   
   // Collect form data
   const formData = {

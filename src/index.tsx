@@ -3459,13 +3459,13 @@ function getFormGangguanHTML() {
                                 <div class="lg:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">S/N Mesin *</label>
                                     <input type="text" class="sn-mesin-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg" 
-                                        placeholder="Serial Number Mesin (WAJIB)" required>
+                                        placeholder="Serial Number Mesin (WAJIB)">
                                 </div>
                                 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah *</label>
                                     <input type="number" class="jumlah-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg" 
-                                        value="1" min="1" required>
+                                        value="1" min="1">
                                 </div>
                                 
                                 <div class="flex items-end">
