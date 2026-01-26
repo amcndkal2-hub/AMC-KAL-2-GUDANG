@@ -11,24 +11,53 @@ export type Bindings = {
 
 export async function saveTransaction(db: D1Database, data: any) {
   try {
-    // Insert transaction with from_lh05 field
-    const txResult = await db.prepare(`
-      INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima, from_lh05)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      data.nomorBA,
-      data.tanggal,
-      data.jenisTransaksi,
-      data.lokasiAsal,
-      data.lokasiTujuan,
-      data.pemeriksa,
-      data.penerima,
-      data.ttdPemeriksa,
-      data.ttdPenerima,
-      data.fromLH05 || null  // Include fromLH05 field if exists
-    ).run()
-
-    const transactionId = txResult.meta.last_row_id
+    let transactionId
+    
+    // Try inserting with from_lh05 column first
+    try {
+      const txResult = await db.prepare(`
+        INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima, from_lh05)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        data.nomorBA,
+        data.tanggal,
+        data.jenisTransaksi,
+        data.lokasiAsal,
+        data.lokasiTujuan,
+        data.pemeriksa,
+        data.penerima,
+        data.ttdPemeriksa,
+        data.ttdPenerima,
+        data.fromLH05 || null
+      ).run()
+      
+      transactionId = txResult.meta.last_row_id
+      console.log('✅ Transaction saved with from_lh05 column')
+    } catch (columnError: any) {
+      // Fallback: Insert without from_lh05 if column doesn't exist
+      if (columnError.message && columnError.message.includes('from_lh05')) {
+        console.log('⚠️ from_lh05 column not found, using fallback insert')
+        const txResult = await db.prepare(`
+          INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          data.nomorBA,
+          data.tanggal,
+          data.jenisTransaksi,
+          data.lokasiAsal,
+          data.lokasiTujuan,
+          data.pemeriksa,
+          data.penerima,
+          data.ttdPemeriksa,
+          data.ttdPenerima
+        ).run()
+        
+        transactionId = txResult.meta.last_row_id
+        console.log('✅ Transaction saved without from_lh05 column (fallback)')
+      } else {
+        throw columnError
+      }
+    }
 
     // Insert materials with auto-fill jenisBarang
     for (const material of data.materials) {

@@ -112,10 +112,13 @@ function renderLH05MaterialsList() {
     
     listContainer.innerHTML = lh05Materials.map((mat, index) => {
         const isAvailable = mat.stok >= mat.jumlah;
-        const isDisabled = mat.stok === 0;
+        const isAlreadySent = mat.alreadySent || false;
+        const isDisabled = mat.stok === 0 || isAlreadySent;
         
         let stockBadge = '';
-        if (mat.stok === 0) {
+        if (isAlreadySent) {
+            stockBadge = '<span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded"><i class="fas fa-check-circle mr-1"></i>SUDAH TERKIRIM</span>';
+        } else if (mat.stok === 0) {
             stockBadge = '<span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded">STOK HABIS</span>';
         } else if (!isAvailable) {
             stockBadge = `<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded">Stok: ${mat.stok} (Kurang)</span>`;
@@ -149,8 +152,9 @@ function renderLH05MaterialsList() {
                             <div><span class="font-medium">Jumlah Diminta:</span> <strong>${mat.jumlah}</strong></div>
                             <div><span class="font-medium">Stok Tersedia:</span> <strong class="${mat.stok === 0 ? 'text-red-600' : mat.stok < mat.jumlah ? 'text-yellow-600' : 'text-green-600'}">${mat.stok}</strong></div>
                         </div>
-                        ${isDisabled ? '<p class="mt-2 text-xs text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>Material ini tidak dapat dipilih karena stok habis</p>' : ''}
-                        ${!isAvailable && mat.stok > 0 ? '<p class="mt-2 text-xs text-yellow-600"><i class="fas fa-exclamation-triangle mr-1"></i>Stok tidak mencukupi permintaan</p>' : ''}
+                        ${isAlreadySent ? '<p class="mt-2 text-xs text-purple-600"><i class="fas fa-check-circle mr-1"></i>Material ini sudah dikirim sebelumnya dan tidak dapat dipilih lagi</p>' : ''}
+                        ${isDisabled && !isAlreadySent ? '<p class="mt-2 text-xs text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>Material ini tidak dapat dipilih karena stok habis</p>' : ''}
+                        ${!isAvailable && mat.stok > 0 && !isAlreadySent ? '<p class="mt-2 text-xs text-yellow-600"><i class="fas fa-exclamation-triangle mr-1"></i>Stok tidak mencukupi permintaan</p>' : ''}
                     </div>
                 </div>
             </div>

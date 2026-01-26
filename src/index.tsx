@@ -569,6 +569,7 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
         const allTransactions = await DB.getAllTransactions(env.DB)
         let stokMasuk = 0
         let stokKeluar = 0
+        let alreadySent = false
         
         allTransactions.forEach((tx: any) => {
           tx.materials.forEach((txMat: any) => {
@@ -577,6 +578,13 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
                 stokMasuk += txMat.jumlah
               } else {
                 stokKeluar += txMat.jumlah
+                
+                // Check if this specific material from this LH05 has been sent
+                // Match by from_lh05 or fromLH05 field
+                const txFromLH05 = tx.from_lh05 || tx.fromLH05
+                if (txFromLH05 === nomorLH05 && txMat.partNumber === mat.partNumber) {
+                  alreadySent = true
+                }
               }
             }
           })
@@ -593,7 +601,8 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
           status: mat.status, // S/N Mesin
           jumlah: mat.jumlah,
           stok: stokAkhir,
-          available: stokAkhir >= mat.jumlah
+          available: stokAkhir >= mat.jumlah && !alreadySent, // Not available if already sent
+          alreadySent: alreadySent // Flag to indicate material was already sent
         }
       })
     )
