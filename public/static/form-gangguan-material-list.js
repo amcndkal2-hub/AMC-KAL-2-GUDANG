@@ -165,13 +165,14 @@ async function checkStockForGangguan(partNumber) {
         if (stockInfoDiv) {
             if (data.stok === 0) {
                 stockInfoDiv.innerHTML = `
-                    <div class="p-3 bg-red-100 border border-red-300 rounded-lg text-red-800">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <strong>STOK HABIS!</strong> Part Number ini tidak memiliki stok.
+                    <div class="p-3 bg-yellow-100 border border-yellow-300 rounded-lg text-yellow-800">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>INFO:</strong> Stok saat ini: <strong>0</strong> (kosong). 
+                        <span class="text-sm">Tetap bisa diminta untuk Form Gangguan.</span>
                     </div>
                 `;
                 stockInfoDiv.classList.remove('hidden');
-                console.warn('⚠️ STOK HABIS untuk Part:', partNumber);
+                console.log('ℹ️ INFO: STOK HABIS untuk Part:', partNumber, '- tetap bisa diminta');
             } else if (data.stok > 0) {
                 stockInfoDiv.innerHTML = `
                     <div class="p-3 bg-green-100 border border-green-300 rounded-lg text-green-800">
@@ -234,20 +235,16 @@ function addMaterialToListGangguan() {
         return;
     }
     
-    // STOCK VALIDATION: Check if stock is sufficient (Form Gangguan = Permintaan = Keluar)
+    // STOCK INFO (INFORMATIONAL ONLY - NOT BLOCKING)
+    // Form Gangguan adalah untuk permintaan material, jadi stok 0 tetap bisa diminta
     const currentStock = window.currentStockGangguan || { stok: 0, available: false };
     const requestedQty = parseInt(jumlah);
     
     if (currentStock.stok === 0) {
-        alert(`❌ STOK HABIS!\n\nPart Number: ${partNumber}\nStok saat ini: 0\n\nTidak bisa melakukan permintaan material.`);
-        document.querySelector('.jumlah-gangguan').focus();
-        return;
-    }
-    
-    if (currentStock.stok < requestedQty) {
-        alert(`❌ STOK TIDAK CUKUP!\n\nPart Number: ${partNumber}\nStok tersedia: ${currentStock.stok}\nJumlah diminta: ${requestedQty}\n\nSilakan kurangi jumlah permintaan.`);
-        document.querySelector('.jumlah-gangguan').focus();
-        return;
+        console.warn('⚠️ INFO: Stok habis untuk Part:', partNumber, '- tetap bisa diminta (Form Gangguan)');
+    } else if (currentStock.stok < requestedQty) {
+        console.warn('⚠️ INFO: Stok tidak cukup untuk Part:', partNumber, 
+            `(tersedia: ${currentStock.stok}, diminta: ${requestedQty}) - tetap bisa diminta (Form Gangguan)`);
     }
     
     // Add to materials array
