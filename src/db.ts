@@ -285,20 +285,39 @@ export async function saveGangguan(db: D1Database, data: any) {
 
     // Insert materials for gangguan
     for (const material of data.materials) {
-      await db.prepare(`
-        INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        gangguanId,
-        material.partNumber,
-        material.material,
-        material.mesin,
-        material.jumlah,
-        material.status || 'N/A',
-        data.unitULD,
-        data.unitULD,
-        material.snMesin || material.sn_mesin || ''
-      ).run()
+      try {
+        // Try INSERT with sn_mesin column
+        await db.prepare(`
+          INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          gangguanId,
+          material.partNumber,
+          material.material,
+          material.mesin,
+          material.jumlah,
+          material.status || 'N/A',
+          data.unitULD,
+          data.unitULD,
+          material.snMesin || material.sn_mesin || ''
+        ).run()
+      } catch (columnError: any) {
+        // Fallback: INSERT without sn_mesin if column doesn't exist
+        console.log('⚠️ sn_mesin column not found in INSERT, using fallback')
+        await db.prepare(`
+          INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          gangguanId,
+          material.partNumber,
+          material.material,
+          material.mesin,
+          material.jumlah,
+          material.status || 'N/A',
+          data.unitULD,
+          data.unitULD
+        ).run()
+      }
     }
 
     return { success: true, id: gangguanId, nomorLH05: data.nomorLH05 }
