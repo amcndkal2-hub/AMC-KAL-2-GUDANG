@@ -588,12 +588,13 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
                   sentQuantity += txMat.jumlah
                 }
                 
-                // Method 2: Check by matching part_number + mesin + lokasi_asal contains LH05 pattern
+                // Method 2: Check by matching part_number + mesin + lokasi_tujuan contains LH05 unit
                 // This is fallback when from_lh05 column doesn't exist
-                if (!txFromLH05 && tx.lokasi_asal && tx.lokasi_asal.includes(gangguan.lokasi_gangguan)) {
+                // Check OUTGOING transactions (Keluar) where lokasi_tujuan matches LH05's unit
+                if (!txFromLH05 && tx.jenis_transaksi.includes('Keluar') && 
+                    tx.lokasi_tujuan && tx.lokasi_tujuan.includes(gangguan.lokasi_gangguan)) {
                   // Match by part number and mesin
-                  if (txMat.partNumber === mat.partNumber && 
-                      (txMat.mesin === mat.mesin || tx.lokasi_asal.includes(mat.mesin))) {
+                  if (txMat.partNumber === mat.partNumber && txMat.mesin === mat.mesin) {
                     alreadySent = true
                     sentQuantity += txMat.jumlah
                   }
