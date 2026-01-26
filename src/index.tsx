@@ -1008,6 +1008,45 @@ async function isAdmin(c: any): Promise<boolean> {
   return false
 }
 
+// Helper function to check if user can delete RAB (admin or Andalcekatan)
+async function canDeleteRAB(c: any): Promise<{allowed: boolean, username: string}> {
+  const authHeader = c.req.header('Authorization')
+  const sessionToken = authHeader?.replace('Bearer ', '')
+  
+  if (!sessionToken) {
+    return {allowed: false, username: ''}
+  }
+  
+  // Check in-memory first
+  if (activeSessions.has(sessionToken)) {
+    const session = activeSessions.get(sessionToken)
+    const isAllowed = session.role === 'admin' || session.username === 'Andalcekatan'
+    return {allowed: isAllowed, username: session.username}
+  }
+  
+  // Check D1 database
+  try {
+    const { env } = c
+    const dbSession: any = await DB.getSession(env.DB, sessionToken)
+    
+    if (dbSession && new Date(dbSession.expires_at) > new Date()) {
+      // Restore session to memory
+      activeSessions.set(sessionToken, {
+        username: dbSession.username,
+        role: dbSession.role,
+        expiresAt: dbSession.expires_at
+      })
+      
+      const isAllowed = dbSession.role === 'admin' || dbSession.username === 'Andalcekatan'
+      return {allowed: isAllowed, username: dbSession.username}
+    }
+  } catch (error) {
+    console.error('Failed to check session from D1:', error)
+  }
+  
+  return {allowed: false, username: ''}
+}
+
 // API: Delete transaction by Nomor BA (ADMIN ONLY)
 app.delete('/api/transaction/:nomorBA', async (c) => {
   try {
@@ -1991,6 +2030,73 @@ app.post('/api/rab/:id/update-status', async (c) => {
   } catch (error: any) {
     console.error('Failed to update RAB status:', error)
     return c.json({ error: 'Failed to update status: ' + error.message }, 500)
+  }
+})
+
+// API: Delete RAB (ADMIN or Andalcekatan only)
+app.delete('/api/rab/:id', async (c) => {
+  try {
+    // Check if user can delete RAB (admin or Andalcekatan)
+    const {allowed, username} = await canDeleteRAB(c)
+    
+    if (!allowed) {
+      console.log('❌ Delete RAB denied: User does not have permission')
+      return c.json({ 
+        success: false, 
+        error: 'Access denied. Only Admin or Andalcekatan can delete RAB.' 
+      }, 403)
+    }
+    
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    
+    console.log(`✅ User ${username} confirmed, deleting RAB ID: ${rabId}`)
+    
+    // Get RAB details first for updating material_gangguan status
+    const rab = await DB.getRABById(env.DB, rabId)
+    if (!rab) {
+      return c.json({ error: 'RAB not found' }, 404)
+    }
+    
+    const nomorRAB = rab.nomor_rab
+    
+    // Reset material_gangguan status back to "Pengadaan" for all items in this RAB
+    // This makes them reappear in Dashboard Kebutuhan Material
+    if (rab.items && rab.items.length > 0) {
+      for (const item of rab.items) {
+        try {
+          await env.DB.prepare(`
+            UPDATE material_gangguan 
+            SET status = 'Pengadaan', updated_at = datetime('now')
+            WHERE part_number = ? 
+            AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
+          `).bind(item.part_number, item.nomor_lh05).run()
+          
+          console.log(`✅ Reset material ${item.part_number} to Pengadaan status`)
+        } catch (updateError) {
+          console.error(`⚠️ Failed to reset material ${item.part_number}:`, updateError)
+        }
+      }
+    }
+    
+    // Delete RAB from database (CASCADE will delete rab_items automatically)
+    await env.DB.prepare(`
+      DELETE FROM rab WHERE id = ?
+    `).bind(rabId).run()
+    
+    console.log(`✅ RAB ${nomorRAB} (ID: ${rabId}) deleted successfully by ${username}`)
+    
+    return c.json({
+      success: true,
+      message: `RAB ${nomorRAB} berhasil dihapus!`,
+      nomor_rab: nomorRAB
+    })
+  } catch (error: any) {
+    console.error('Failed to delete RAB:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to delete RAB' 
+    }, 500)
   }
 })
 

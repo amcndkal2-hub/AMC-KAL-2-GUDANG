@@ -35,6 +35,9 @@ async function loadRABList() {
 // Render RAB list table
 function renderRABList(rabList) {
   const tbody = document.getElementById('rabListTable')
+  const username = localStorage.getItem('username') || ''
+  const userRole = localStorage.getItem('userRole') || ''
+  const canDelete = userRole === 'admin' || username === 'Andalcekatan'
   
   if (rabList.length === 0) {
     tbody.innerHTML = `
@@ -79,6 +82,12 @@ function renderRABList(rabList) {
                   class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs">
             <i class="fas fa-history mr-1"></i>History
           </button>
+          ${canDelete ? `
+            <button onclick="deleteRAB(${rab.id}, '${rab.nomor_rab}')" 
+                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs">
+              <i class="fas fa-trash mr-1"></i>Delete
+            </button>
+          ` : ''}
         </div>
       </td>
     </tr>
@@ -575,6 +584,44 @@ function getStatusColor(status) {
     'Masuk Gudang': 'purple'
   }
   return colors[status] || 'gray'
+}
+
+// Delete RAB (Admin and Andalcekatan only)
+async function deleteRAB(rabId, nomorRAB) {
+  const username = localStorage.getItem('username') || ''
+  const confirmMessage = `⚠️ HAPUS RAB ${nomorRAB}?\n\n` +
+                        `PERHATIAN:\n` +
+                        `- RAB akan dihapus permanen\n` +
+                        `- Material dengan status Pengadaan akan kembali ke Dashboard Kebutuhan\n` +
+                        `- Tindakan ini TIDAK BISA DIBATALKAN!\n\n` +
+                        `Yakin ingin melanjutkan?`
+  
+  if (!confirm(confirmMessage)) {
+    return
+  }
+  
+  try {
+    const sessionToken = localStorage.getItem('sessionToken')
+    const response = await fetch(`/api/rab/${rabId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      }
+    })
+    
+    const result = await response.json()
+    
+    if (result.success) {
+      showSuccess(`✅ RAB ${nomorRAB} berhasil dihapus!\n\nMaterial telah dikembalikan ke Dashboard Kebutuhan dengan status Pengadaan.`)
+      // Reload RAB list
+      loadRABList()
+    } else {
+      showError(`❌ Gagal menghapus RAB: ${result.error}`)
+    }
+  } catch (error) {
+    console.error('Failed to delete RAB:', error)
+    showError('Gagal menghapus RAB')
+  }
 }
 
 // Logout
