@@ -353,6 +353,59 @@ app.get('/api/dropdown-values', async (c) => {
   }
 })
 
+// API: Check stock availability for part number
+app.get('/api/check-stock/:partNumber', async (c) => {
+  const { env } = c
+  const partNumber = c.req.param('partNumber')
+  
+  if (!partNumber) {
+    return c.json({ error: 'Part number is required' }, 400)
+  }
+  
+  try {
+    // Get all transactions for this part number
+    const transactions = await env.DB.prepare(`
+      SELECT 
+        t.jenis_transaksi,
+        m.jumlah
+      FROM materials m
+      JOIN transactions t ON m.transaction_id = t.id
+      WHERE m.part_number = ?
+      ORDER BY t.tanggal ASC
+    `).bind(partNumber).all()
+    
+    // Calculate stock: Masuk (+) minus Keluar (-)
+    let totalStok = 0
+    
+    if (transactions.results) {
+      for (const tx of transactions.results) {
+        const jenis = tx.jenis_transaksi as string
+        const jumlah = tx.jumlah as number
+        
+        if (jenis && jenis.includes('Masuk')) {
+          totalStok += jumlah
+        } else if (jenis && jenis.includes('Keluar')) {
+          totalStok -= jumlah
+        }
+      }
+    }
+    
+    return c.json({
+      partNumber,
+      stok: totalStok,
+      available: totalStok > 0
+    })
+  } catch (error: any) {
+    console.error('Failed to check stock:', error)
+    return c.json({ 
+      error: 'Failed to check stock',
+      partNumber,
+      stok: 0,
+      available: false
+    }, 500)
+  }
+})
+
 // API: Save transaction
 app.post('/api/save-transaction', async (c) => {
   try {

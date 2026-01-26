@@ -112,7 +112,7 @@ function displaySearchResultsForMaterialInput(resultsDiv, results) {
 }
 
 // Fill material data from selected part
-function fillMaterialDataForInput(data) {
+async function fillMaterialDataForInput(data) {
     const partNumber = data.PART_NUMBER ? String(data.PART_NUMBER) : '';
     let jenisBarang = data.JENIS_BARANG || '';
     const material = data.MATERIAL || '-';
@@ -151,10 +151,30 @@ function fillMaterialDataForInput(data) {
     document.querySelector('.jenis-barang').value = jenisBarang;
     document.querySelector('.material').value = material;
     document.querySelector('.mesin').value = mesin;
+    
+    // Check stock for KELUAR transaction
+    const jenisTransaksi = document.getElementById('jenisTransaksi')?.value || '';
+    if (jenisTransaksi.includes('Keluar')) {
+        try {
+            const response = await fetch(`/api/check-stock/${encodeURIComponent(partNumber)}`);
+            const stockData = await response.json();
+            
+            // Show stock info in console
+            if (stockData.stok <= 0) {
+                console.warn(`⚠️ Stok ${partNumber}: ${stockData.stok} (HABIS!)`);
+            } else if (stockData.stok < 5) {
+                console.warn(`⚠️ Stok ${partNumber}: ${stockData.stok} (Menipis)`);
+            } else {
+                console.log(`✅ Stok ${partNumber}: ${stockData.stok}`);
+            }
+        } catch (error) {
+            console.error('Failed to check stock:', error);
+        }
+    }
 }
 
 // Add material to the list
-function addMaterialToList() {
+async function addMaterialToList() {
     // Get form values
     const partNumber = document.querySelector('.part-number-search').value.trim();
     const jenisBarang = document.querySelector('.jenis-barang').value.trim();
@@ -189,6 +209,37 @@ function addMaterialToList() {
         alert('❌ Jumlah wajib diisi dan harus lebih dari 0!');
         document.querySelector('.jumlah').focus();
         return;
+    }
+    
+    // VALIDATION: Check stock for KELUAR transaction
+    const jenisTransaksi = document.getElementById('jenisTransaksi')?.value || '';
+    if (jenisTransaksi.includes('Keluar')) {
+        try {
+            const response = await fetch(`/api/check-stock/${encodeURIComponent(partNumber)}`);
+            const stockData = await response.json();
+            
+            if (!stockData.available || stockData.stok <= 0) {
+                alert(`❌ STOK HABIS!\n\nPart Number: ${partNumber}\nStok Tersedia: ${stockData.stok}\n\nTidak dapat melakukan pengeluaran karena stok tidak tersedia.`);
+                return;
+            }
+            
+            // Check if requested quantity exceeds available stock
+            const requestedQty = parseInt(jumlah);
+            if (requestedQty > stockData.stok) {
+                alert(`❌ STOK TIDAK CUKUP!\n\nPart Number: ${partNumber}\nStok Tersedia: ${stockData.stok}\nJumlah Diminta: ${requestedQty}\n\nStok tidak mencukupi untuk pengeluaran ini.`);
+                document.querySelector('.jumlah').focus();
+                return;
+            }
+            
+            // Show stock info
+            console.log(`✅ Stok tersedia untuk ${partNumber}: ${stockData.stok} unit`);
+        } catch (error) {
+            console.error('Failed to check stock:', error);
+            // Continue anyway if stock check fails (to prevent blocking due to network issues)
+            if (!confirm('⚠️ Gagal memeriksa stok. Lanjutkan tanpa validasi stok?')) {
+                return;
+            }
+        }
     }
     
     // Add to materials array
