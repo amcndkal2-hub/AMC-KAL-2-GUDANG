@@ -397,6 +397,50 @@ function fillMaterialData(materialDiv, data) {
 async function handleSubmit(e) {
     e.preventDefault();
     
+    // Validate required form fields
+    const tanggal = document.getElementById('tanggal').value;
+    const jenisTransaksi = document.getElementById('jenisTransaksi').value;
+    const lokasiAsal = document.getElementById('lokasiAsal').value;
+    const lokasiTujuan = document.getElementById('lokasiTujuan').value;
+    const pemeriksa = document.getElementById('pemeriksa').value;
+    const penerima = document.getElementById('penerima').value;
+    
+    if (!tanggal) {
+        alert('❌ Tanggal harus diisi!');
+        document.getElementById('tanggal').focus();
+        return;
+    }
+    
+    if (!jenisTransaksi) {
+        alert('❌ Jenis Transaksi harus diisi!');
+        document.getElementById('jenisTransaksi').focus();
+        return;
+    }
+    
+    if (!lokasiAsal) {
+        alert('❌ Lokasi Asal harus diisi!');
+        document.getElementById('lokasiAsal').focus();
+        return;
+    }
+    
+    if (!lokasiTujuan) {
+        alert('❌ Lokasi Tujuan harus diisi!');
+        document.getElementById('lokasiTujuan').focus();
+        return;
+    }
+    
+    if (!pemeriksa) {
+        alert('❌ Pemeriksa harus diisi!');
+        document.getElementById('pemeriksa').focus();
+        return;
+    }
+    
+    if (!penerima) {
+        alert('❌ Penerima harus diisi!');
+        document.getElementById('penerima').focus();
+        return;
+    }
+    
     // Validate signatures
     if (signaturePemeriksa.isEmpty()) {
         alert('Tanda tangan pemeriksa harus diisi!');
@@ -410,12 +454,12 @@ async function handleSubmit(e) {
     
     // Collect form data
     const formData = {
-        tanggal: document.getElementById('tanggal').value,
-        jenisTransaksi: document.getElementById('jenisTransaksi').value,
-        lokasiAsal: document.getElementById('lokasiAsal').value,
-        lokasiTujuan: document.getElementById('lokasiTujuan').value,
-        pemeriksa: document.getElementById('pemeriksa').value,
-        penerima: document.getElementById('penerima').value,
+        tanggal: tanggal,
+        jenisTransaksi: jenisTransaksi,
+        lokasiAsal: lokasiAsal,
+        lokasiTujuan: lokasiTujuan,
+        pemeriksa: pemeriksa,
+        penerima: penerima,
         ttdPemeriksa: signaturePemeriksa.toDataURL(),
         ttdPenerima: signaturePenerima.toDataURL(),
         materials: []
