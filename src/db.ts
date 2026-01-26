@@ -342,34 +342,68 @@ export async function getAllGangguan(db: D1Database) {
 
 export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
   try {
-    const { results } = await db.prepare(`
-      SELECT 
-        g.*,
-        json_group_array(
-          json_object(
-            'id', mg.id,
-            'partNumber', mg.part_number,
-            'material', mg.material,
-            'mesin', mg.mesin,
-            'jumlah', mg.jumlah,
-            'status', mg.status,
-            'unitULD', mg.unit_uld,
-            'lokasiTujuan', mg.lokasi_tujuan,
-            'snMesin', mg.sn_mesin
-          )
-        ) as materials
-      FROM gangguan g
-      LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
-      WHERE g.nomor_lh05 = ?
-      GROUP BY g.id
-    `).bind(nomorLH05).all()
+    // Try with sn_mesin column first
+    try {
+      const { results } = await db.prepare(`
+        SELECT 
+          g.*,
+          json_group_array(
+            json_object(
+              'id', mg.id,
+              'partNumber', mg.part_number,
+              'material', mg.material,
+              'mesin', mg.mesin,
+              'jumlah', mg.jumlah,
+              'status', mg.status,
+              'unitULD', mg.unit_uld,
+              'lokasiTujuan', mg.lokasi_tujuan,
+              'snMesin', mg.sn_mesin
+            )
+          ) as materials
+        FROM gangguan g
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+        WHERE g.nomor_lh05 = ?
+        GROUP BY g.id
+      `).bind(nomorLH05).all()
 
-    if (results.length === 0) return null
+      if (results.length === 0) return null
 
-    const g: any = results[0]
-    return {
-      ...g,
-      materials: JSON.parse(g.materials)
+      const g: any = results[0]
+      return {
+        ...g,
+        materials: JSON.parse(g.materials)
+      }
+    } catch (columnError: any) {
+      // Fallback: Query without sn_mesin if column doesn't exist
+      console.log('⚠️ sn_mesin column not found, using fallback query')
+      const { results } = await db.prepare(`
+        SELECT 
+          g.*,
+          json_group_array(
+            json_object(
+              'id', mg.id,
+              'partNumber', mg.part_number,
+              'material', mg.material,
+              'mesin', mg.mesin,
+              'jumlah', mg.jumlah,
+              'status', mg.status,
+              'unitULD', mg.unit_uld,
+              'lokasiTujuan', mg.lokasi_tujuan
+            )
+          ) as materials
+        FROM gangguan g
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+        WHERE g.nomor_lh05 = ?
+        GROUP BY g.id
+      `).bind(nomorLH05).all()
+
+      if (results.length === 0) return null
+
+      const g: any = results[0]
+      return {
+        ...g,
+        materials: JSON.parse(g.materials)
+      }
     }
   } catch (error: any) {
     console.error('Failed to get gangguan by LH05:', error)
@@ -852,27 +886,53 @@ export async function getRABById(db: D1Database, rabId: number) {
 
 export async function getMaterialPengadaan(db: D1Database) {
   try {
-    const result = await db.prepare(`
-      SELECT 
-        mg.id,
-        mg.gangguan_id,
-        g.nomor_lh05,
-        mg.part_number,
-        mg.material,
-        mg.mesin,
-        mg.jumlah,
-        mg.unit_uld as lokasi_tujuan,
-        mg.status,
-        mg.is_rab_created,
-        mg.sn_mesin
-      FROM material_gangguan mg
-      JOIN gangguan g ON mg.gangguan_id = g.id
-      WHERE UPPER(mg.status) = 'PENGADAAN'
-      AND (mg.is_rab_created IS NULL OR mg.is_rab_created = 0)
-      ORDER BY g.created_at DESC
-    `).all()
-    
-    return result.results || []
+    // Try with sn_mesin column first
+    try {
+      const result = await db.prepare(`
+        SELECT 
+          mg.id,
+          mg.gangguan_id,
+          g.nomor_lh05,
+          mg.part_number,
+          mg.material,
+          mg.mesin,
+          mg.jumlah,
+          mg.unit_uld as lokasi_tujuan,
+          mg.status,
+          mg.is_rab_created,
+          mg.sn_mesin
+        FROM material_gangguan mg
+        JOIN gangguan g ON mg.gangguan_id = g.id
+        WHERE UPPER(mg.status) = 'PENGADAAN'
+        AND (mg.is_rab_created IS NULL OR mg.is_rab_created = 0)
+        ORDER BY g.created_at DESC
+      `).all()
+      
+      return result.results || []
+    } catch (columnError) {
+      // Fallback: Query without sn_mesin
+      console.log('⚠️ sn_mesin column not found in getMaterialPengadaan, using fallback')
+      const result = await db.prepare(`
+        SELECT 
+          mg.id,
+          mg.gangguan_id,
+          g.nomor_lh05,
+          mg.part_number,
+          mg.material,
+          mg.mesin,
+          mg.jumlah,
+          mg.unit_uld as lokasi_tujuan,
+          mg.status,
+          mg.is_rab_created
+        FROM material_gangguan mg
+        JOIN gangguan g ON mg.gangguan_id = g.id
+        WHERE UPPER(mg.status) = 'PENGADAAN'
+        AND (mg.is_rab_created IS NULL OR mg.is_rab_created = 0)
+        ORDER BY g.created_at DESC
+      `).all()
+      
+      return result.results || []
+    }
   } catch (error) {
     console.error('Failed to get material pengadaan:', error)
     return []
