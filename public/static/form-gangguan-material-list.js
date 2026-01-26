@@ -112,7 +112,7 @@ function displaySearchResultsForGangguan(resultsDiv, results) {
 }
 
 // Fill material data from selected part (Form Gangguan)
-function fillMaterialDataForGangguan(data) {
+async function fillMaterialDataForGangguan(data) {
     const partNumber = data.PART_NUMBER ? String(data.PART_NUMBER) : '';
     let jenisBarang = data.JENIS_BARANG || '';
     const material = data.MATERIAL || '-';
@@ -147,6 +147,53 @@ function fillMaterialDataForGangguan(data) {
     document.querySelector('.jenis-barang-gangguan').value = jenisBarang;
     document.querySelector('.material-gangguan').value = material;
     document.querySelector('.mesin-gangguan').value = mesin;
+    
+    // CHECK STOCK for Form Gangguan (Permintaan = Keluar)
+    if (partNumber) {
+        await checkStockForGangguan(partNumber);
+    }
+}
+
+// Check stock for Form Gangguan
+async function checkStockForGangguan(partNumber) {
+    try {
+        const response = await fetch(`/api/check-stock/${encodeURIComponent(partNumber)}`);
+        const data = await response.json();
+        
+        // Display stock info
+        const stockInfoDiv = document.getElementById('stockInfoGangguan');
+        if (stockInfoDiv) {
+            if (data.stok === 0) {
+                stockInfoDiv.innerHTML = `
+                    <div class="p-3 bg-red-100 border border-red-300 rounded-lg text-red-800">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>STOK HABIS!</strong> Part Number ini tidak memiliki stok.
+                    </div>
+                `;
+                stockInfoDiv.classList.remove('hidden');
+                console.warn('⚠️ STOK HABIS untuk Part:', partNumber);
+            } else if (data.stok > 0) {
+                stockInfoDiv.innerHTML = `
+                    <div class="p-3 bg-green-100 border border-green-300 rounded-lg text-green-800">
+                        <i class="fas fa-check-circle"></i>
+                        Stok tersedia: <strong>${data.stok}</strong>
+                    </div>
+                `;
+                stockInfoDiv.classList.remove('hidden');
+                console.log('✅ Stok tersedia untuk Part:', partNumber, '=', data.stok);
+            } else {
+                stockInfoDiv.classList.add('hidden');
+            }
+        }
+        
+        // Store stock info for validation
+        window.currentStockGangguan = data;
+        
+    } catch (error) {
+        console.error('❌ Failed to check stock:', error);
+        // Continue anyway (emergency fallback)
+        window.currentStockGangguan = { stok: 999, available: true };
+    }
 }
 
 // Add material to the list (Form Gangguan)
@@ -183,6 +230,22 @@ function addMaterialToListGangguan() {
     // VALIDATION: Jumlah (WAJIB, harus > 0)
     if (!jumlah || parseInt(jumlah) <= 0) {
         alert('❌ Jumlah wajib diisi dan harus lebih dari 0!');
+        document.querySelector('.jumlah-gangguan').focus();
+        return;
+    }
+    
+    // STOCK VALIDATION: Check if stock is sufficient (Form Gangguan = Permintaan = Keluar)
+    const currentStock = window.currentStockGangguan || { stok: 0, available: false };
+    const requestedQty = parseInt(jumlah);
+    
+    if (currentStock.stok === 0) {
+        alert(`❌ STOK HABIS!\n\nPart Number: ${partNumber}\nStok saat ini: 0\n\nTidak bisa melakukan permintaan material.`);
+        document.querySelector('.jumlah-gangguan').focus();
+        return;
+    }
+    
+    if (currentStock.stok < requestedQty) {
+        alert(`❌ STOK TIDAK CUKUP!\n\nPart Number: ${partNumber}\nStok tersedia: ${currentStock.stok}\nJumlah diminta: ${requestedQty}\n\nSilakan kurangi jumlah permintaan.`);
         document.querySelector('.jumlah-gangguan').focus();
         return;
     }

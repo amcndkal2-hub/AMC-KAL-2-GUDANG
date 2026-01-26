@@ -9,37 +9,57 @@ let canvasPelapor, ctxPelapor, isDrawingPelapor = false
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Form Gangguan initialized');
   initializeForm()
   setupSignaturePads()
   loadDropdownUnits()
   
-  // Add first material row
-  addMaterialRow()
+  // NOTE: Material rows now handled by form-gangguan-material-list.js
+  // No longer calling addMaterialRow() here
 })
 
 function initializeForm() {
+  console.log('✅ Initializing form controls');
+  
   // Set default datetime to now
   const now = new Date()
   const localDateTime = now.toISOString().slice(0, 16)
-  document.getElementById('hariTanggal').value = localDateTime
-  
-  // Add material button
-  document.getElementById('addMaterialGangguan').addEventListener('click', addMaterialRow)
+  const hariTanggalInput = document.getElementById('hariTanggal');
+  if (hariTanggalInput) {
+    hariTanggalInput.value = localDateTime
+    console.log('✅ Default datetime set:', localDateTime);
+  }
   
   // Form submit
-  document.getElementById('gangguanForm').addEventListener('submit', handleFormSubmit)
+  const gangguanForm = document.getElementById('gangguanForm');
+  if (gangguanForm) {
+    gangguanForm.addEventListener('submit', handleFormSubmit)
+    console.log('✅ Form submit handler attached');
+  }
   
   // Reset button
-  document.getElementById('resetFormGangguan').addEventListener('click', resetForm)
+  const resetBtn = document.getElementById('resetFormGangguan');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', resetForm)
+    console.log('✅ Reset button handler attached');
+  }
 }
 
 // Load Unit/ULD dropdown from API
 async function loadDropdownUnits() {
+  console.log('📋 Loading Unit/ULD dropdown...');
   try {
     const response = await fetch('/api/dropdown-values')
     const data = await response.json()
     
+    console.log('✅ Dropdown data received:', data);
+    
     const unitSelect = document.getElementById('unitULD')
+    
+    if (!unitSelect) {
+      console.error('❌ unitULD select element not found!');
+      return;
+    }
     
     if (data.units && data.units.length > 0) {
       data.units.forEach(unit => {
@@ -48,16 +68,28 @@ async function loadDropdownUnits() {
         option.textContent = unit
         unitSelect.appendChild(option)
       })
+      console.log(`✅ Added ${data.units.length} units to dropdown`);
+    } else {
+      console.warn('⚠️ No units data received');
     }
   } catch (error) {
-    console.error('Error loading units:', error)
+    console.error('❌ Error loading units:', error)
   }
 }
 
 // ===== Signature Pad =====
 function setupSignaturePads() {
+  console.log('🖊️ Setting up signature pads...');
+  
   // Pelapor
   canvasPelapor = document.getElementById('signaturePelapor')
+  
+  if (!canvasPelapor) {
+    console.error('❌ signaturePelapor canvas not found!');
+    return;
+  }
+  
+  console.log('✅ signaturePelapor canvas found');
   ctxPelapor = canvasPelapor.getContext('2d')
   setupCanvas(canvasPelapor, ctxPelapor)
   

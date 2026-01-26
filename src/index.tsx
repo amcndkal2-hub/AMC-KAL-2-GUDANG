@@ -3475,6 +3475,9 @@ function getFormGangguanHTML() {
                                     </button>
                                 </div>
                             </div>
+                            
+                            <!-- Stock Info Display -->
+                            <div id="stockInfoGangguan" class="mt-4 hidden"></div>
                         </div>
                         
                         <!-- Materials Preview Table -->
