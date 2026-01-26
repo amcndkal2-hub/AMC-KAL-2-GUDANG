@@ -327,10 +327,11 @@ app.get('/api/search-part', async (c) => {
   try {
     const data = await fetchGoogleSheetsData()
     
-    // Search by MATERIAL instead of PART_NUMBER
+    // Search by BOTH MATERIAL and PART_NUMBER
     const results = data.filter((item: any) => {
       const material = String(item.MATERIAL || '').toLowerCase()
-      return material.includes(query)
+      const partNumber = String(item.PART_NUMBER || '').toLowerCase()
+      return material.includes(query) || partNumber.includes(query)
     })
     
     return c.json({ results: results.slice(0, 10) })
