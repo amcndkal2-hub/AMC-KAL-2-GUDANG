@@ -334,7 +334,30 @@ app.get('/api/search-part', async (c) => {
       return material.includes(query) || partNumber.includes(query)
     })
     
-    return c.json({ results: results.slice(0, 10) })
+    // Sort results by relevance:
+    // 1. Exact matches first (material or part number)
+    // 2. Then starts-with matches
+    // 3. Then contains matches
+    const sortedResults = results.sort((a: any, b: any) => {
+      const aMaterial = String(a.MATERIAL || '').toLowerCase()
+      const aPartNumber = String(a.PART_NUMBER || '').toLowerCase()
+      const bMaterial = String(b.MATERIAL || '').toLowerCase()
+      const bPartNumber = String(b.PART_NUMBER || '').toLowerCase()
+      
+      // Exact match priority
+      const aExact = (aMaterial === query || aPartNumber === query) ? 1 : 0
+      const bExact = (bMaterial === query || bPartNumber === query) ? 1 : 0
+      if (aExact !== bExact) return bExact - aExact
+      
+      // Starts-with priority
+      const aStarts = (aMaterial.startsWith(query) || aPartNumber.startsWith(query)) ? 1 : 0
+      const bStarts = (bMaterial.startsWith(query) || bPartNumber.startsWith(query)) ? 1 : 0
+      if (aStarts !== bStarts) return bStarts - aStarts
+      
+      return 0
+    })
+    
+    return c.json({ results: sortedResults.slice(0, 20) })
   } catch (error) {
     return c.json({ error: 'Search failed' }, 500)
   }
