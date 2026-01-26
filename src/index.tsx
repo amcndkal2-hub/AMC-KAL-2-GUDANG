@@ -327,9 +327,10 @@ app.get('/api/search-part', async (c) => {
   try {
     const data = await fetchGoogleSheetsData()
     
+    // Search by MATERIAL instead of PART_NUMBER
     const results = data.filter((item: any) => {
-      const partNumber = String(item.PART_NUMBER || '').toLowerCase()
-      return partNumber.includes(query)
+      const material = String(item.MATERIAL || '').toLowerCase()
+      return material.includes(query)
     })
     
     return c.json({ results: results.slice(0, 10) })
@@ -2537,11 +2538,11 @@ function getInputFormHTML() {
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div class="lg:col-span-1">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Part Number (Cari) *</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Material (Cari) *</label>
                                     <div class="relative">
                                         <input type="text" 
-                                            class="part-number-search w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                                            placeholder="Ketik atau pilih Part Number"
+                                            class="material-search w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                            placeholder="Ketik untuk cari Material"
                                             data-material-id="1"
                                             autocomplete="off">
                                         <div class="search-results absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
@@ -2549,13 +2550,13 @@ function getInputFormHTML() {
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Barang</label>
-                                    <input type="text" class="jenis-barang w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Part Number</label>
+                                    <input type="text" class="part-number w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Material</label>
-                                    <input type="text" class="material w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Barang</label>
+                                    <input type="text" class="jenis-barang w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
                                 </div>
                                 
                                 <div>
@@ -3825,11 +3826,11 @@ function getFormGangguanHTML() {
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div class="lg:col-span-1">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Part Number (Cari) *</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Material (Cari) *</label>
                                     <div class="relative">
                                         <input type="text" 
-                                            class="part-number-search-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" 
-                                            placeholder="Ketik atau pilih Part Number"
+                                            class="material-search-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" 
+                                            placeholder="Ketik untuk cari Material"
                                             data-material-id="1"
                                             autocomplete="off">
                                         <div class="search-results-gangguan absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
@@ -3837,13 +3838,13 @@ function getFormGangguanHTML() {
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Barang</label>
-                                    <input type="text" class="jenis-barang-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Part Number</label>
+                                    <input type="text" class="part-number-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Material</label>
-                                    <input type="text" class="material-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Barang</label>
+                                    <input type="text" class="jenis-barang-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
                                 </div>
                                 
                                 <div>

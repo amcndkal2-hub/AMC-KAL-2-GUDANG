@@ -21,10 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Bind Enter key on Part Number input
-    const partNumberInput = document.querySelector('.part-number-search-gangguan');
-    if (partNumberInput) {
-        partNumberInput.addEventListener('keypress', (e) => {
+    // Bind Enter key on Material input
+    const materialInput = document.querySelector('.material-search-gangguan');
+    if (materialInput) {
+        materialInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 addMaterialToListGangguan();
@@ -32,13 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Setup part number search
-    setupPartNumberSearchForGangguan();
+    // Setup material search
+    setupMaterialSearchForGangguan();
 });
 
-// Setup part number search for Form Gangguan
-function setupPartNumberSearchForGangguan() {
-    const searchInput = document.querySelector('.part-number-search-gangguan');
+// Setup material search for Form Gangguan
+function setupMaterialSearchForGangguan() {
+    const searchInput = document.querySelector('.material-search-gangguan');
     const resultsDiv = document.querySelector('.search-results-gangguan');
     
     if (!searchInput || !resultsDiv) return;
@@ -91,9 +91,9 @@ function displaySearchResultsForGangguan(resultsDiv, results) {
         return `
         <div class="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 search-result-item" 
             data-part='${JSON.stringify(item)}'>
-            <div class="font-semibold text-sm">${item.PART_NUMBER}</div>
+            <div class="font-semibold text-sm">${material}</div>
             <div class="text-xs text-gray-600">
-                ${jenisBarang} • ${material} • ${mesin}
+                Part: ${item.PART_NUMBER} • ${jenisBarang} • ${mesin}
             </div>
         </div>
         `;
@@ -143,9 +143,9 @@ async function fillMaterialDataForGangguan(data) {
         console.log('⚠️ JENIS_BARANG empty (Gangguan), using fallback:', jenisBarang);
     }
     
-    document.querySelector('.part-number-search-gangguan').value = partNumber;
+    document.querySelector('.material-search-gangguan').value = material;
+    document.querySelector('.part-number-gangguan').value = partNumber;
     document.querySelector('.jenis-barang-gangguan').value = jenisBarang;
-    document.querySelector('.material-gangguan').value = material;
     document.querySelector('.mesin-gangguan').value = mesin;
     
     // CHECK STOCK for Form Gangguan (Permintaan = Keluar)
@@ -200,24 +200,24 @@ async function checkStockForGangguan(partNumber) {
 // Add material to the list (Form Gangguan)
 function addMaterialToListGangguan() {
     // Get form values
-    const partNumber = document.querySelector('.part-number-search-gangguan').value.trim();
+    const material = document.querySelector('.material-search-gangguan').value.trim();
+    const partNumber = document.querySelector('.part-number-gangguan').value.trim();
     const jenisBarang = document.querySelector('.jenis-barang-gangguan').value.trim();
-    const material = document.querySelector('.material-gangguan').value.trim();
     const mesin = document.querySelector('.mesin-gangguan').value.trim();
     const snMesin = document.querySelector('.sn-mesin-gangguan').value.trim();
     const jumlah = document.querySelector('.jumlah-gangguan').value.trim();
     
-    // VALIDATION: Part Number (WAJIB)
-    if (!partNumber) {
-        alert('❌ Part Number wajib diisi!');
-        document.querySelector('.part-number-search-gangguan').focus();
+    // VALIDATION: Material (WAJIB)
+    if (!material) {
+        alert('❌ Material wajib diisi!');
+        document.querySelector('.material-search-gangguan').focus();
         return;
     }
     
-    // VALIDATION: Data material lengkap
-    if (!jenisBarang || !material || !mesin || jenisBarang === '-' || material === '-' || mesin === '-') {
-        alert('❌ Data material tidak lengkap! Pastikan Part Number sudah dipilih dari dropdown.');
-        document.querySelector('.part-number-search-gangguan').focus();
+    // VALIDATION: Data material lengkap (Part Number harus terisi dari auto-fill)
+    if (!partNumber || !jenisBarang || !mesin || jenisBarang === '-' || mesin === '-') {
+        alert('❌ Data material tidak lengkap! Pastikan Material sudah dipilih dari dropdown.');
+        document.querySelector('.material-search-gangguan').focus();
         return;
     }
     
@@ -268,20 +268,20 @@ function addMaterialToListGangguan() {
     updateMaterialPreviewTableGangguan();
     
     // Show success message
-    showTemporaryMessageGangguan(`✅ Material "${partNumber}" berhasil ditambahkan!`, 'success');
+    showTemporaryMessageGangguan(`✅ Material "${material}" berhasil ditambahkan!`, 'success');
 }
 
 // Clear material form (Form Gangguan)
 function clearMaterialFormGangguan() {
-    document.querySelector('.part-number-search-gangguan').value = '';
+    document.querySelector('.material-search-gangguan').value = '';
+    document.querySelector('.part-number-gangguan').value = '';
     document.querySelector('.jenis-barang-gangguan').value = '';
-    document.querySelector('.material-gangguan').value = '';
     document.querySelector('.mesin-gangguan').value = '';
     document.querySelector('.sn-mesin-gangguan').value = '';
     document.querySelector('.jumlah-gangguan').value = '1';
     
-    // Focus back to part number
-    document.querySelector('.part-number-search-gangguan').focus();
+    // Focus back to material search
+    document.querySelector('.material-search-gangguan').focus();
 }
 
 // Update preview table (Form Gangguan)
