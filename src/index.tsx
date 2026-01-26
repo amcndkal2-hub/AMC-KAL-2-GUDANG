@@ -570,20 +570,33 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
         let stokMasuk = 0
         let stokKeluar = 0
         let alreadySent = false
+        let sentQuantity = 0
         
         allTransactions.forEach((tx: any) => {
           tx.materials.forEach((txMat: any) => {
             if (txMat.partNumber === mat.partNumber) {
               if (tx.jenis_transaksi.includes('Masuk')) {
                 stokMasuk += txMat.jumlah
-              } else {
+              } else if (tx.jenis_transaksi.includes('Keluar')) {
                 stokKeluar += txMat.jumlah
                 
-                // Check if this specific material from this LH05 has been sent
-                // Match by from_lh05 or fromLH05 field
+                // Check if this material was sent from this LH05
+                // Method 1: Check from_lh05 field (if column exists)
                 const txFromLH05 = tx.from_lh05 || tx.fromLH05
                 if (txFromLH05 === nomorLH05 && txMat.partNumber === mat.partNumber) {
                   alreadySent = true
+                  sentQuantity += txMat.jumlah
+                }
+                
+                // Method 2: Check by matching part_number + mesin + lokasi_asal contains LH05 pattern
+                // This is fallback when from_lh05 column doesn't exist
+                if (!txFromLH05 && tx.lokasi_asal && tx.lokasi_asal.includes(gangguan.lokasi_gangguan)) {
+                  // Match by part number and mesin
+                  if (txMat.partNumber === mat.partNumber && 
+                      (txMat.mesin === mat.mesin || tx.lokasi_asal.includes(mat.mesin))) {
+                    alreadySent = true
+                    sentQuantity += txMat.jumlah
+                  }
                 }
               }
             }
@@ -592,17 +605,23 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
         
         const stokAkhir = stokMasuk - stokKeluar
         
+        // Material is not available if:
+        // 1. Already sent (sentQuantity >= requested quantity)
+        // 2. Stock is insufficient
+        const isFullySent = sentQuantity >= mat.jumlah
+        
         return {
-          id: mat.id || mat.partNumber, // Use id for identification
+          id: mat.id || mat.partNumber,
           partNumber: mat.partNumber,
           jenisBarang: jenisBarang,
           material: mat.material,
           mesin: mat.mesin,
-          status: mat.status, // S/N Mesin
+          status: mat.status,
           jumlah: mat.jumlah,
           stok: stokAkhir,
-          available: stokAkhir >= mat.jumlah && !alreadySent, // Not available if already sent
-          alreadySent: alreadySent // Flag to indicate material was already sent
+          available: stokAkhir >= mat.jumlah && !isFullySent,
+          alreadySent: isFullySent,
+          sentQuantity: sentQuantity
         }
       })
     )
