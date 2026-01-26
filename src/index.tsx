@@ -1454,20 +1454,28 @@ app.get('/api/kebutuhan-material', async (c) => {
       
       // Auto-update status based on stock and shipment
       let finalStatus = mat.status
+      let snMesin = mat.sn_mesin || null
+      
+      // Parse S/N Mesin from status field if in format "SN:serial_number"
+      if (!snMesin && mat.status && mat.status.startsWith('SN:')) {
+        snMesin = mat.status.substring(3) // Extract S/N after "SN:"
+        finalStatus = 'N/A' // Reset status to default when S/N is found
+      }
       
       if (isTerkirim) {
         // Priority 1: If already sent (Terkirim), keep it
         finalStatus = 'Terkirim'
-      } else if (stok > 0 && (mat.status === 'N/A' || !mat.status)) {
+      } else if (stok > 0 && (finalStatus === 'N/A' || !finalStatus)) {
         // Priority 2: If stock available and status is N/A, change to Tersedia
         finalStatus = 'Tersedia'
-      } else if (stok === 0 && mat.status === 'Tersedia') {
+      } else if (stok === 0 && finalStatus === 'Tersedia') {
         // Priority 3: If stock became 0 but status was Tersedia, revert to N/A
         finalStatus = 'N/A'
       }
       
       return {
         ...mat,
+        sn_mesin: snMesin,
         stok: stok,
         status: finalStatus,
         isTerkirim: isTerkirim

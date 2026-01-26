@@ -303,7 +303,11 @@ export async function saveGangguan(db: D1Database, data: any) {
         ).run()
       } catch (columnError: any) {
         // Fallback: INSERT without sn_mesin if column doesn't exist
-        console.log('⚠️ sn_mesin column not found in INSERT, using fallback')
+        // Store S/N Mesin in status field with prefix "SN:" if provided
+        console.log('⚠️ sn_mesin column not found in INSERT, using fallback with status field')
+        const snMesin = material.snMesin || material.sn_mesin || ''
+        const statusValue = snMesin ? `SN:${snMesin}` : (material.status || 'N/A')
+        
         await db.prepare(`
           INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -313,7 +317,7 @@ export async function saveGangguan(db: D1Database, data: any) {
           material.material,
           material.mesin,
           material.jumlah,
-          material.status || 'N/A',
+          statusValue,
           data.unitULD,
           data.unitULD
         ).run()
@@ -419,9 +423,23 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
       if (results.length === 0) return null
 
       const g: any = results[0]
+      const materials = JSON.parse(g.materials)
+      
+      // Parse S/N Mesin from status field (format: "SN:serial_number")
+      const parsedMaterials = materials.map((mat: any) => {
+        if (mat.status && mat.status.startsWith('SN:')) {
+          return {
+            ...mat,
+            snMesin: mat.status.substring(3), // Extract S/N after "SN:"
+            status: 'N/A' // Reset status to default
+          }
+        }
+        return { ...mat, snMesin: null }
+      })
+      
       return {
         ...g,
-        materials: JSON.parse(g.materials)
+        materials: parsedMaterials
       }
     }
   } catch (error: any) {
