@@ -1330,6 +1330,57 @@ app.get('/api/kebutuhan-material', async (c) => {
     // Get from D1 Database
     let materials = await DB.getAllMaterialKebutuhan(env.DB)
     
+    // Get all transactions for stock calculation and Terkirim status
+    const allTransactions = await DB.getAllTransactions(env.DB)
+    
+    // Enhance materials with stock info and auto-update status
+    materials = await Promise.all(materials.map(async (mat: any) => {
+      // Calculate stock for this part number
+      let stokMasuk = 0
+      let stokKeluar = 0
+      let isTerkirim = false
+      
+      allTransactions.forEach((tx: any) => {
+        tx.materials.forEach((txMat: any) => {
+          if (txMat.partNumber === mat.part_number) {
+            if (tx.jenis_transaksi.includes('Masuk')) {
+              stokMasuk += txMat.jumlah
+            } else {
+              stokKeluar += txMat.jumlah
+              // Check if this material was sent from this specific LH05
+              // Compare fromLH05 from transaction with nomor_lh05 from material
+              if (tx.from_lh05 === mat.nomor_lh05 && mat.part_number === txMat.partNumber) {
+                isTerkirim = true
+              }
+            }
+          }
+        })
+      })
+      
+      const stok = stokMasuk - stokKeluar
+      
+      // Auto-update status based on stock and shipment
+      let finalStatus = mat.status
+      
+      if (isTerkirim) {
+        // Priority 1: If already sent (Terkirim), keep it
+        finalStatus = 'Terkirim'
+      } else if (stok > 0 && (mat.status === 'N/A' || !mat.status)) {
+        // Priority 2: If stock available and status is N/A, change to Tersedia
+        finalStatus = 'Tersedia'
+      } else if (stok === 0 && mat.status === 'Tersedia') {
+        // Priority 3: If stock became 0 but status was Tersedia, revert to N/A
+        finalStatus = 'N/A'
+      }
+      
+      return {
+        ...mat,
+        stok: stok,
+        status: finalStatus,
+        isTerkirim: isTerkirim
+      }
+    }))
+    
     // Apply filters
     if (status) {
       materials = materials.filter((m: any) => m.status === status)
@@ -1354,7 +1405,8 @@ app.get('/api/kebutuhan-material', async (c) => {
             lokasiTujuan: gangguan.unitULD,
             tanggalGangguan: gangguan.hariTanggal,
             kelompokSPD: gangguan.kelompokSPD,
-            status: mat.status || 'Pengadaan'
+            status: mat.status || 'N/A',
+            stok: 0
           })
         })
       }

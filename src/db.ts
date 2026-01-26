@@ -11,10 +11,10 @@ export type Bindings = {
 
 export async function saveTransaction(db: D1Database, data: any) {
   try {
-    // Insert transaction
+    // Insert transaction with from_lh05 field
     const txResult = await db.prepare(`
-      INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima, from_lh05)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       data.nomorBA,
       data.tanggal,
@@ -24,7 +24,8 @@ export async function saveTransaction(db: D1Database, data: any) {
       data.pemeriksa,
       data.penerima,
       data.ttdPemeriksa,
-      data.ttdPenerima
+      data.ttdPenerima,
+      data.fromLH05 || null  // Include fromLH05 field if exists
     ).run()
 
     const transactionId = txResult.meta.last_row_id

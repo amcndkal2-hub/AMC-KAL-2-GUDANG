@@ -67,7 +67,9 @@ async function loadKebutuhanMaterial() {
       nomorLH05: item.nomor_lh05,
       partNumber: item.part_number,
       lokasiTujuan: item.lokasi_tujuan || item.unit_uld,
-      unitULD: item.unit_uld
+      unitULD: item.unit_uld,
+      stok: item.stok || 0, // Include stock info
+      isTerkirim: item.isTerkirim || false // Include shipment status
     }))
     filteredMaterials = [...allMaterials]
     
@@ -164,8 +166,66 @@ function renderTable() {
   }
   
   tbody.innerHTML = filteredMaterials.map((item, index) => {
-    const statusColor = getStatusColor(item.status)
     const lokasiTujuan = item.lokasiTujuan || item.unitULD || '-'
+    const stok = item.stok || 0
+    const status = item.status || 'N/A'
+    const isTerkirim = item.isTerkirim || status === 'Terkirim'
+    
+    // Determine status display and dropdown behavior
+    let statusDisplay = ''
+    let statusColor = ''
+    let isDisabled = false
+    
+    // Case 3: Sudah terkirim (read-only, blue)
+    if (isTerkirim) {
+      statusDisplay = `
+        <span class="inline-block px-3 py-2 rounded bg-blue-100 text-blue-800 font-semibold text-sm w-full">
+          🚚 Terkirim
+        </span>
+      `
+      isDisabled = true
+    } 
+    // Case 1: Stok > 0 → Status "Tersedia" (green, disabled, show stock)
+    else if (stok > 0) {
+      statusDisplay = `
+        <span class="inline-block px-3 py-2 rounded bg-green-100 text-green-800 font-semibold text-sm w-full">
+          ✅ Tersedia
+          <span class="text-xs block mt-1">Stok: ${stok}</span>
+        </span>
+      `
+      isDisabled = true
+    } 
+    // Case 2: Stok = 0 → Status "N/A" or "Pengadaan" (gray/yellow, editable, show stock 0)
+    else if (stok === 0) {
+      if (status === 'Pengadaan') {
+        statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-300'
+        statusDisplay = `
+          <select 
+            onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
+            class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
+            <option value="N/A" ${status === 'N/A' ? 'selected' : ''}>N/A</option>
+            <option value="Pengadaan" ${status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
+            <option value="Tunda" ${status === 'Tunda' ? 'selected' : ''}>Tunda</option>
+            <option value="Reject" ${status === 'Reject' ? 'selected' : ''}>Reject</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-1">📦 Stok: 0</p>
+        `
+      } else {
+        statusColor = 'bg-gray-100 text-gray-800 border-gray-300'
+        statusDisplay = `
+          <select 
+            onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
+            class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
+            <option value="N/A" ${status === 'N/A' ? 'selected' : ''}>N/A</option>
+            <option value="Pengadaan" ${status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
+            <option value="Tunda" ${status === 'Tunda' ? 'selected' : ''}>Tunda</option>
+            <option value="Reject" ${status === 'Reject' ? 'selected' : ''}>Reject</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-1">📦 Stok: 0</p>
+        `
+      }
+      isDisabled = false
+    }
     
     return `
       <tr class="border-b hover:bg-gray-50">
@@ -181,18 +241,7 @@ function renderTable() {
         <td class="px-4 py-3 text-center font-semibold">${item.jumlah}</td>
         <td class="px-4 py-3">${lokasiTujuan}</td>
         <td class="px-4 py-3 text-center">
-          <select 
-            onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
-            ${(item.status === 'Pengadaan' || item.status === 'Tersedia') ? 'disabled' : ''}
-            class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm ${(item.status === 'Pengadaan' || item.status === 'Tersedia') ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}">
-            <option value="N/A" ${item.status === 'N/A' ? 'selected' : ''}>N/A</option>
-            <option value="Pengadaan" ${item.status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
-            <option value="Tunda" ${item.status === 'Tunda' ? 'selected' : ''}>Tunda</option>
-            <option value="Reject" ${item.status === 'Reject' ? 'selected' : ''}>Reject</option>
-            <option value="Terkirim" ${item.status === 'Terkirim' ? 'selected' : ''}>Terkirim</option>
-            <option value="Tersedia" ${item.status === 'Tersedia' ? 'selected' : ''}>Tersedia</option>
-          </select>
-          ${(item.status === 'Pengadaan' || item.status === 'Tersedia') ? '<p class="text-xs text-gray-500 mt-1">🔒 Status dari RAB</p>' : ''}
+          ${statusDisplay}
         </td>
       </tr>
     `
