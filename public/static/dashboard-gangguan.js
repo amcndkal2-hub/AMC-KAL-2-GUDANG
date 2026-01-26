@@ -411,11 +411,11 @@ function showLH05Modal(gangguan) {
   const materialsHtml = gangguan.materials.map((mat, index) => `
     <tr class="border-b">
       <td class="px-4 py-2 text-center">${index + 1}</td>
-      <td class="px-4 py-2">${mat.partNumber}</td>
-      <td class="px-4 py-2">${mat.material}</td>
-      <td class="px-4 py-2">${mat.mesin}</td>
-      <td class="px-4 py-2">${mat.snMesin || mat.status || '-'}</td>
-      <td class="px-4 py-2 text-center">${mat.jumlah}</td>
+      <td class="px-4 py-2">${mat.partNumber ?? '-'}</td>
+      <td class="px-4 py-2">${mat.material ?? '-'}</td>
+      <td class="px-4 py-2">${mat.mesin ?? '-'}</td>
+      <td class="px-4 py-2">${mat.snMesin ?? mat.status ?? '-'}</td>
+      <td class="px-4 py-2 text-center">${mat.jumlah ?? 0}</td>
     </tr>
   `).join('')
   
