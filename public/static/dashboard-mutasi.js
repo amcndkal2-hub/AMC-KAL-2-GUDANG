@@ -261,7 +261,7 @@ function showBAModal(ba) {
                     </div>
                     <div>
                         <p><strong>Tanggal Keluar:</strong> ${formatDate(ba.tanggal)}</p>
-                        <p><strong>Dasar Pengeluaran:</strong> LH 02</p>
+                        <p><strong>Dasar Pengeluaran:</strong> ${ba.from_lh05 || ba.fromLH05 || (ba.jenis_transaksi.includes('Keluar') ? 'Pengeluaran Gudang' : '-')}</p>
                         <p><strong>Unit/ULD Tujuan:</strong> ${ba.lokasi_tujuan}</p>
                     </div>
                 </div>
