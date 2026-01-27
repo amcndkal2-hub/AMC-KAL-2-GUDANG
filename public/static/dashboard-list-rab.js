@@ -62,7 +62,7 @@ function renderRABList(rabList) {
           ${rab.item_count || 0} items
         </span>
       </td>
-      <td class="px-4 py-3 border text-right font-semibold">${formatRupiah(rab.total_harga)}</td>
+      <td class="px-4 py-3 border text-right font-semibold">${formatRupiah((rab.total_harga || 0) * 1.11)}</td>
       <td class="px-4 py-3 border text-center">
         <select onchange="updateRABStatus(${rab.id}, this.value)" 
                 class="px-3 py-1 rounded text-xs font-semibold border-0 cursor-pointer ${getStatusColorSelect(rab.status)}">
@@ -227,6 +227,8 @@ function renderRABDetail(rab) {
   
   const items = rab.items || []
   const totalHarga = items.reduce((sum, item) => sum + (item.subtotal || 0), 0)
+  const ppn = totalHarga * 0.11
+  const grandTotal = totalHarga + ppn
   
   content.innerHTML = `
     <!-- RAB Header -->
@@ -244,8 +246,8 @@ function renderRABDetail(rab) {
         <p class="text-lg"><span class="px-3 py-1 rounded-full ${getStatusColor(rab.status)}">${rab.status}</span></p>
       </div>
       <div>
-        <label class="text-sm font-semibold text-gray-600">Total Harga:</label>
-        <p class="text-xl font-bold text-green-600">${formatRupiah(totalHarga)}</p>
+        <label class="text-sm font-semibold text-gray-600">Total Harga (inc. PPN 11%):</label>
+        <p class="text-xl font-bold text-green-600">${formatRupiah(grandTotal)}</p>
       </div>
     </div>
     
@@ -286,8 +288,16 @@ function renderRABDetail(rab) {
         </tbody>
         <tfoot class="bg-gray-100 font-bold">
           <tr>
-            <td colspan="8" class="px-4 py-3 border text-right text-lg">TOTAL HARGA:</td>
-            <td class="px-4 py-3 border text-right text-xl text-green-600">${formatRupiah(totalHarga)}</td>
+            <td colspan="8" class="px-4 py-3 border text-right text-lg">Subtotal:</td>
+            <td class="px-4 py-3 border text-right text-lg">${formatRupiah(totalHarga)}</td>
+          </tr>
+          <tr>
+            <td colspan="8" class="px-4 py-3 border text-right text-lg">PPN 11%:</td>
+            <td class="px-4 py-3 border text-right text-lg">${formatRupiah(totalHarga * 0.11)}</td>
+          </tr>
+          <tr class="bg-green-50">
+            <td colspan="8" class="px-4 py-3 border text-right text-xl">TOTAL HARGA:</td>
+            <td class="px-4 py-3 border text-right text-xl text-green-600 font-bold">${formatRupiah(totalHarga * 1.11)}</td>
           </tr>
         </tfoot>
       </table>
@@ -337,8 +347,13 @@ function exportRABToExcel() {
   })
   
   const totalHarga = items.reduce((sum, item) => sum + item.subtotal, 0)
+  const ppn = totalHarga * 0.11
+  const grandTotal = totalHarga + ppn
+  
   data.push([])
-  data.push(['', '', '', '', '', '', '', 'TOTAL HARGA:', totalHarga])
+  data.push(['', '', '', '', '', '', '', 'Subtotal:', totalHarga])
+  data.push(['', '', '', '', '', '', '', 'PPN 11%:', ppn])
+  data.push(['', '', '', '', '', '', '', 'TOTAL HARGA:', grandTotal])
   
   // Create workbook
   const wb = XLSX.utils.book_new()
@@ -409,14 +424,30 @@ function exportRABToPDF() {
     }
   })
   
-  // Total
-  const finalY = doc.lastAutoTable.finalY + 10
+  // Total with PPN
+  let finalY = doc.lastAutoTable.finalY + 10
   const totalHarga = items.reduce((sum, item) => sum + item.subtotal, 0)
+  const ppn = totalHarga * 0.11
+  const grandTotal = totalHarga + ppn
   
+  doc.setFont(undefined, 'normal')
+  doc.setFontSize(11)
+  
+  // Subtotal
+  doc.text('Subtotal:', 120, finalY)
+  doc.text(formatRupiah(totalHarga), 170, finalY, { align: 'right' })
+  
+  // PPN 11%
+  finalY += 7
+  doc.text('PPN 11%:', 120, finalY)
+  doc.text(formatRupiah(ppn), 170, finalY, { align: 'right' })
+  
+  // Total Harga (bold)
+  finalY += 10
   doc.setFont(undefined, 'bold')
   doc.setFontSize(12)
   doc.text('TOTAL HARGA:', 120, finalY)
-  doc.text(formatRupiah(totalHarga), 170, finalY)
+  doc.text(formatRupiah(grandTotal), 170, finalY, { align: 'right' })
   
   // Download
   doc.save(`RAB_${rab.nomor_rab}.pdf`)
