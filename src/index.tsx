@@ -2173,6 +2173,102 @@ app.delete('/api/rab/:id', async (c) => {
   }
 })
 
+// API: Fix orphaned materials (reset is_rab_created for materials not in any active RAB)
+app.post('/api/fix-orphaned-materials', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔧 Starting orphaned materials fix...')
+    
+    // Get all materials with is_rab_created = 1
+    let flaggedMaterials: any[] = []
+    try {
+      const result = await env.DB.prepare(`
+        SELECT 
+          mg.id,
+          mg.part_number,
+          mg.material,
+          mg.status,
+          mg.is_rab_created,
+          g.nomor_lh05
+        FROM material_gangguan mg
+        JOIN gangguan g ON mg.gangguan_id = g.id
+        WHERE mg.is_rab_created = 1
+      `).all()
+      flaggedMaterials = result.results || []
+    } catch (columnError) {
+      console.log('⚠️ is_rab_created column not found, no orphaned materials to fix')
+      return c.json({ 
+        success: true, 
+        message: 'No is_rab_created column - nothing to fix',
+        fixed: 0 
+      })
+    }
+    
+    if (flaggedMaterials.length === 0) {
+      return c.json({ 
+        success: true, 
+        message: 'No orphaned materials found',
+        fixed: 0 
+      })
+    }
+    
+    console.log(`Found ${flaggedMaterials.length} materials with is_rab_created = 1`)
+    
+    // Get all active RAB items
+    const rabItems = await env.DB.prepare(`
+      SELECT DISTINCT ri.part_number, ri.nomor_lh05
+      FROM rab_items ri
+      JOIN rab r ON ri.rab_id = r.id
+    `).all()
+    
+    const activeRABSet = new Set(
+      (rabItems.results || []).map((item: any) => `${item.part_number}-${item.nomor_lh05}`)
+    )
+    
+    console.log(`Found ${activeRABSet.size} unique materials in active RABs`)
+    
+    // Find orphaned materials (flagged but not in any active RAB)
+    let fixedCount = 0
+    for (const mat of flaggedMaterials) {
+      const key = `${mat.part_number}-${mat.nomor_lh05}`
+      
+      if (!activeRABSet.has(key)) {
+        // This material is orphaned - reset its flag
+        try {
+          await env.DB.prepare(`
+            UPDATE material_gangguan 
+            SET is_rab_created = 0, updated_at = datetime('now')
+            WHERE id = ?
+          `).bind(mat.id).run()
+          
+          console.log(`✅ Reset is_rab_created for Part ${mat.part_number} (${mat.material})`)
+          fixedCount++
+        } catch (updateError) {
+          console.error(`⚠️ Failed to reset Part ${mat.part_number}:`, updateError)
+        }
+      } else {
+        console.log(`⏭️ Part ${mat.part_number} is in active RAB - skipping`)
+      }
+    }
+    
+    console.log(`✅ Fixed ${fixedCount} orphaned materials`)
+    
+    return c.json({
+      success: true,
+      message: `Berhasil memperbaiki ${fixedCount} material yang orphaned`,
+      fixed: fixedCount,
+      total_checked: flaggedMaterials.length
+    })
+  } catch (error: any) {
+    console.error('Failed to fix orphaned materials:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to fix orphaned materials' 
+    }, 500)
+  }
+})
+
 // API: Get RAB history (timeline)
 app.get('/api/rab/:id/history', async (c) => {
   try {
