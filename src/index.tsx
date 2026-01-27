@@ -2121,19 +2121,31 @@ app.delete('/api/rab/:id', async (c) => {
     
     const nomorRAB = rab.nomor_rab
     
-    // Reset material_gangguan status back to "Pengadaan" for all items in this RAB
-    // This makes them reappear in Dashboard Kebutuhan Material
+    // Reset material_gangguan status back to "N/A" and clear is_rab_created flag
+    // This makes them reappear in Dashboard Kebutuhan Material and can be selected again for RAB
     if (rab.items && rab.items.length > 0) {
       for (const item of rab.items) {
         try {
-          await env.DB.prepare(`
-            UPDATE material_gangguan 
-            SET status = 'Pengadaan', updated_at = datetime('now')
-            WHERE part_number = ? 
-            AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
-          `).bind(item.part_number, item.nomor_lh05).run()
+          // Try UPDATE with is_rab_created column
+          try {
+            await env.DB.prepare(`
+              UPDATE material_gangguan 
+              SET status = 'N/A', is_rab_created = 0, updated_at = datetime('now')
+              WHERE part_number = ? 
+              AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
+            `).bind(item.part_number, item.nomor_lh05).run()
+          } catch (columnError) {
+            // Fallback: UPDATE without is_rab_created if column doesn't exist
+            console.log('⚠️ is_rab_created column not found, using fallback')
+            await env.DB.prepare(`
+              UPDATE material_gangguan 
+              SET status = 'N/A', updated_at = datetime('now')
+              WHERE part_number = ? 
+              AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
+            `).bind(item.part_number, item.nomor_lh05).run()
+          }
           
-          console.log(`✅ Reset material ${item.part_number} to Pengadaan status`)
+          console.log(`✅ Reset material ${item.part_number} to N/A status (is_rab_created = 0)`)
         } catch (updateError) {
           console.error(`⚠️ Failed to reset material ${item.part_number}:`, updateError)
         }
