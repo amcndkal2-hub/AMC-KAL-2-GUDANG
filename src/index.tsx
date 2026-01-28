@@ -5250,7 +5250,7 @@ function getDashboardCreateRABHTML() {
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             required>
                         <option value="">-- Pilih Jenis RAB --</option>
-                        <option value="KHS">KHS (Kajian Harga Setempat)</option>
+                        <option value="KHS">KHS (Kontrak Harga Satuan)</option>
                         <option value="SPK">SPK (Surat Perintah Kerja)</option>
                         <option value="Pembelian Langsung">Pembelian Langsung</option>
                     </select>
