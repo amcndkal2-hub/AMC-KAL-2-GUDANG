@@ -804,22 +804,55 @@ export async function saveRAB(db: D1Database, data: any) {
     const totalHarga = data.items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
     
     // Insert RAB header
-    const rabResult = await db.prepare(`
-      INSERT INTO rab (nomor_rab, tanggal_rab, total_harga, status, created_by)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(
-      nomorRAB,
-      data.tanggal_rab,
-      totalHarga,
-      data.status || 'Draft',
-      data.created_by || 'System'
-    ).run()
-    
-    const rabId = rabResult.meta.last_row_id
-    console.log('✅ RAB header saved with ID:', rabId, 'Nomor:', nomorRAB)
+    // Try with jenis_rab column first
+    try {
+      const rabResult = await db.prepare(`
+        INSERT INTO rab (nomor_rab, tanggal_rab, jenis_rab, total_harga, status, created_by)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).bind(
+        nomorRAB,
+        data.tanggal_rab,
+        data.jenis_rab || null,
+        totalHarga,
+        data.status || 'Draft',
+        data.created_by || 'System'
+      ).run()
+      
+      const rabId = rabResult.meta.last_row_id
+      console.log('✅ RAB header saved with ID:', rabId, 'Nomor:', nomorRAB, 'Jenis:', data.jenis_rab)
+      
+      return await insertRABItems(db, rabId, nomorRAB, totalHarga, data.items)
+    } catch (columnError: any) {
+      // Fallback: INSERT without jenis_rab if column doesn't exist
+      console.log('⚠️ jenis_rab column not found, using fallback INSERT')
+      const rabResult = await db.prepare(`
+        INSERT INTO rab (nomor_rab, tanggal_rab, total_harga, status, created_by)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(
+        nomorRAB,
+        data.tanggal_rab,
+        totalHarga,
+        data.status || 'Draft',
+        data.created_by || 'System'
+      ).run()
+      
+      const rabId = rabResult.meta.last_row_id
+      console.log('✅ RAB header saved with ID:', rabId, 'Nomor:', nomorRAB)
+      
+      return await insertRABItems(db, rabId, nomorRAB, totalHarga, data.items)
+    }
+  } catch (error: any) {
+    console.error('Failed to save RAB:', error)
+    throw new Error(`Database error: ${error.message}`)
+  }
+}
+
+// Helper function to insert RAB items
+async function insertRABItems(db: D1Database, rabId: number, nomorRAB: string, totalHarga: number, items: any[]) {
+  try {
     
     // Insert RAB items and mark material as RAB created
-    for (const item of data.items) {
+    for (const item of items) {
       // Insert RAB item
       await db.prepare(`
         INSERT INTO rab_items (
@@ -856,7 +889,7 @@ export async function saveRAB(db: D1Database, data: any) {
       }
     }
     
-    console.log(`✅ ${data.items.length} RAB items saved and materials marked as RAB created`)
+    console.log(`✅ ${items.length} RAB items saved and materials marked as RAB created`)
     
     return {
       success: true,
@@ -865,30 +898,54 @@ export async function saveRAB(db: D1Database, data: any) {
       total_harga: totalHarga
     }
   } catch (error: any) {
-    console.error('Failed to save RAB:', error)
+    console.error('Failed to insert RAB items:', error)
     throw new Error(`Database error: ${error.message}`)
   }
 }
 
 export async function getAllRAB(db: D1Database) {
   try {
-    const result = await db.prepare(`
-      SELECT 
-        r.id,
-        r.nomor_rab,
-        r.tanggal_rab,
-        r.total_harga,
-        r.status,
-        r.created_by,
-        r.created_at,
-        COUNT(ri.id) as item_count
-      FROM rab r
-      LEFT JOIN rab_items ri ON r.id = ri.rab_id
-      GROUP BY r.id
-      ORDER BY r.created_at DESC
-    `).all()
-    
-    return result.results || []
+    // Try with jenis_rab column first
+    try {
+      const result = await db.prepare(`
+        SELECT 
+          r.id,
+          r.nomor_rab,
+          r.tanggal_rab,
+          r.jenis_rab,
+          r.total_harga,
+          r.status,
+          r.created_by,
+          r.created_at,
+          COUNT(ri.id) as item_count
+        FROM rab r
+        LEFT JOIN rab_items ri ON r.id = ri.rab_id
+        GROUP BY r.id
+        ORDER BY r.created_at DESC
+      `).all()
+      
+      return result.results || []
+    } catch (columnError) {
+      // Fallback: Query without jenis_rab
+      console.log('⚠️ jenis_rab column not found, using fallback query')
+      const result = await db.prepare(`
+        SELECT 
+          r.id,
+          r.nomor_rab,
+          r.tanggal_rab,
+          r.total_harga,
+          r.status,
+          r.created_by,
+          r.created_at,
+          COUNT(ri.id) as item_count
+        FROM rab r
+        LEFT JOIN rab_items ri ON r.id = ri.rab_id
+        GROUP BY r.id
+        ORDER BY r.created_at DESC
+      `).all()
+      
+      return result.results || []
+    }
   } catch (error) {
     console.error('Failed to get RAB list:', error)
     return []

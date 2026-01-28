@@ -225,9 +225,15 @@ async function createRAB() {
   try {
     // Validation
     const tanggalRAB = document.getElementById('tanggalRAB').value
+    const jenisRAB = document.getElementById('jenisRAB').value
     
     if (!tanggalRAB) {
       alert('Mohon pilih tanggal RAB!')
+      return
+    }
+    
+    if (!jenisRAB) {
+      alert('Mohon pilih jenis RAB!')
       return
     }
     
@@ -243,6 +249,7 @@ async function createRAB() {
     const totalHarga = subtotal + ppn
     
     let confirmMessage = `Create RAB dengan:\n\n` +
+      `• Jenis RAB: ${jenisRAB}\n` +
       `• Tanggal: ${tanggalRAB}\n` +
       `• Total Material: ${selectedMaterials.length} items\n` +
       `• Subtotal: ${formatRupiah(subtotal)}\n`
@@ -263,6 +270,7 @@ async function createRAB() {
     // Prepare data
     const rabData = {
       tanggal_rab: tanggalRAB,
+      jenis_rab: jenisRAB,
       items: selectedMaterials.map(item => ({
         nomor_lh05: item.nomor_lh05,
         part_number: item.part_number,

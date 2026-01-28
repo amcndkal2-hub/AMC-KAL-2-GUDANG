@@ -5241,6 +5241,21 @@ function getDashboardCreateRABHTML() {
                     </div>
                 </div>
                 
+                <!-- Jenis RAB Dropdown -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-file-invoice mr-2"></i>Jenis RAB
+                    </label>
+                    <select id="jenisRAB" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            required>
+                        <option value="">-- Pilih Jenis RAB --</option>
+                        <option value="KHS">KHS (Kajian Harga Setempat)</option>
+                        <option value="SPK">SPK (Surat Perintah Kerja)</option>
+                        <option value="Pembelian Langsung">Pembelian Langsung</option>
+                    </select>
+                </div>
+                
                 <!-- PPN Toggle -->
                 <div class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
                     <label class="flex items-center cursor-pointer">

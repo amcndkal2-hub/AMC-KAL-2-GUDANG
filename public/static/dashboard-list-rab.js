@@ -242,10 +242,14 @@ function renderRABDetail(rab) {
         <p class="text-lg font-bold">${formatDate(rab.tanggal_rab)}</p>
       </div>
       <div>
+        <label class="text-sm font-semibold text-gray-600">Jenis RAB:</label>
+        <p class="text-lg font-bold">${rab.jenis_rab || '-'}</p>
+      </div>
+      <div>
         <label class="text-sm font-semibold text-gray-600">Status:</label>
         <p class="text-lg"><span class="px-3 py-1 rounded-full ${getStatusColor(rab.status)}">${rab.status}</span></p>
       </div>
-      <div>
+      <div class="col-span-2">
         <label class="text-sm font-semibold text-gray-600">Total Harga (inc. PPN 11%):</label>
         <p class="text-xl font-bold text-green-600">${formatRupiah(grandTotal)}</p>
       </div>
@@ -327,6 +331,7 @@ function exportRABToExcel() {
     [],
     ['Nomor RAB:', rab.nomor_rab],
     ['Tanggal:', formatDate(rab.tanggal_rab)],
+    ['Jenis RAB:', rab.jenis_rab || '-'],
     ['Status:', rab.status],
     [],
     ['No', 'Nomor LH05', 'Part Number', 'Material', 'Mesin', 'Jumlah', 'Unit/ULD', 'Harga Satuan', 'Subtotal']
@@ -395,7 +400,8 @@ function exportRABToPDF() {
   doc.setFont(undefined, 'normal')
   doc.text(`Nomor RAB: ${rab.nomor_rab}`, 14, 35)
   doc.text(`Tanggal: ${formatDate(rab.tanggal_rab)}`, 14, 42)
-  doc.text(`Status: ${rab.status}`, 14, 49)
+  doc.text(`Jenis RAB: ${rab.jenis_rab || '-'}`, 14, 49)
+  doc.text(`Status: ${rab.status}`, 14, 56)
   
   // Table
   const tableData = items.map((item, index) => [
@@ -413,7 +419,7 @@ function exportRABToPDF() {
   doc.autoTable({
     head: [['No', 'Nomor LH05', 'Part Number', 'Material', 'Mesin', 'Jml', 'Unit/ULD', 'Harga Satuan', 'Subtotal']],
     body: tableData,
-    startY: 58,
+    startY: 65,
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [59, 130, 246], fontStyle: 'bold' },
     columnStyles: {
