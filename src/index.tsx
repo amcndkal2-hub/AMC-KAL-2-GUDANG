@@ -5240,6 +5240,20 @@ function getDashboardCreateRABHTML() {
                                readonly>
                     </div>
                 </div>
+                
+                <!-- PPN Toggle -->
+                <div class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="usePPN" class="w-5 h-5 text-blue-600 rounded mr-3" checked onchange="updateTotalHarga()">
+                        <span class="text-base font-semibold text-gray-800">
+                            <i class="fas fa-percent mr-2 text-blue-600"></i>
+                            Gunakan PPN 11%
+                        </span>
+                    </label>
+                    <p class="text-sm text-gray-600 mt-2 ml-8">
+                        Centang untuk menambahkan PPN 11% ke total harga RAB
+                    </p>
+                </div>
 
                 <!-- Material Pengadaan List -->
                 <div class="mb-6">
@@ -5298,9 +5312,19 @@ function getDashboardCreateRABHTML() {
                             <tbody id="selectedMaterialsTable">
                             </tbody>
                             <tfoot class="bg-gray-100 font-bold">
-                                <tr>
-                                    <td colspan="8" class="px-4 py-3 border text-right">TOTAL HARGA:</td>
-                                    <td class="px-4 py-3 border text-right text-lg text-blue-600" id="totalHarga">Rp 0</td>
+                                <tr id="subtotalRow">
+                                    <td colspan="8" class="px-4 py-3 border text-right">Subtotal:</td>
+                                    <td class="px-4 py-3 border text-right text-lg" id="subtotalHarga">Rp 0</td>
+                                    <td class="px-4 py-3 border"></td>
+                                </tr>
+                                <tr id="ppnRow" style="display:none;">
+                                    <td colspan="8" class="px-4 py-3 border text-right">PPN 11%:</td>
+                                    <td class="px-4 py-3 border text-right text-lg" id="ppnHarga">Rp 0</td>
+                                    <td class="px-4 py-3 border"></td>
+                                </tr>
+                                <tr class="bg-green-50">
+                                    <td colspan="8" class="px-4 py-3 border text-right text-xl">TOTAL HARGA:</td>
+                                    <td class="px-4 py-3 border text-right text-xl text-blue-600" id="totalHarga">Rp 0</td>
                                     <td class="px-4 py-3 border"></td>
                                 </tr>
                             </tfoot>

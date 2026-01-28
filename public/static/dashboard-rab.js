@@ -171,7 +171,22 @@ function removeMaterial(materialId) {
 
 // Update total harga
 function updateTotalHarga() {
-  const total = selectedMaterials.reduce((sum, item) => sum + item.subtotal, 0)
+  const subtotal = selectedMaterials.reduce((sum, item) => sum + item.subtotal, 0)
+  const usePPN = document.getElementById('usePPN')?.checked || false
+  const ppn = usePPN ? subtotal * 0.11 : 0
+  const total = subtotal + ppn
+  
+  // Update subtotal
+  document.getElementById('subtotalHarga').textContent = formatRupiah(subtotal)
+  
+  // Show/hide PPN row
+  const ppnRow = document.getElementById('ppnRow')
+  if (ppnRow) {
+    ppnRow.style.display = usePPN ? 'table-row' : 'none'
+    document.getElementById('ppnHarga').textContent = formatRupiah(ppn)
+  }
+  
+  // Update total
   document.getElementById('totalHarga').textContent = formatRupiah(total)
 }
 
@@ -222,14 +237,24 @@ async function createRAB() {
     }
     
     // Confirm
-    const totalHarga = selectedMaterials.reduce((sum, item) => sum + item.subtotal, 0)
-    const confirmation = confirm(
-      `Create RAB dengan:\n\n` +
+    const subtotal = selectedMaterials.reduce((sum, item) => sum + item.subtotal, 0)
+    const usePPN = document.getElementById('usePPN')?.checked || false
+    const ppn = usePPN ? subtotal * 0.11 : 0
+    const totalHarga = subtotal + ppn
+    
+    let confirmMessage = `Create RAB dengan:\n\n` +
       `• Tanggal: ${tanggalRAB}\n` +
       `• Total Material: ${selectedMaterials.length} items\n` +
-      `• Total Harga: ${formatRupiah(totalHarga)}\n\n` +
+      `• Subtotal: ${formatRupiah(subtotal)}\n`
+    
+    if (usePPN) {
+      confirmMessage += `• PPN 11%: ${formatRupiah(ppn)}\n`
+    }
+    
+    confirmMessage += `• Total Harga: ${formatRupiah(totalHarga)}\n\n` +
       `Lanjutkan?`
-    )
+    
+    const confirmation = confirm(confirmMessage)
     
     if (!confirmation) return
     
