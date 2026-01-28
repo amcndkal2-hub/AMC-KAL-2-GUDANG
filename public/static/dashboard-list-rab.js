@@ -476,7 +476,9 @@ function showError(message) {
 
 // Format Jenis RAB with full label
 function formatJenisRAB(jenis) {
-  if (!jenis) return '-'
+  if (!jenis || jenis === null || jenis === '') {
+    return '<span class="text-gray-400">-</span> <span class="text-xs text-gray-400">(Dibuat sebelum fitur Jenis RAB)</span>'
+  }
   
   const jenisLabels = {
     'KHS': 'KHS (Kontrak Harga Satuan)',
