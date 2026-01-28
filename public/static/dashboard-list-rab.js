@@ -243,7 +243,7 @@ function renderRABDetail(rab) {
       </div>
       <div>
         <label class="text-sm font-semibold text-gray-600">Jenis RAB:</label>
-        <p class="text-lg font-bold">${rab.jenis_rab || '-'}</p>
+        <p class="text-lg font-bold">${formatJenisRAB(rab.jenis_rab)}</p>
       </div>
       <div>
         <label class="text-sm font-semibold text-gray-600">Status:</label>
@@ -331,7 +331,7 @@ function exportRABToExcel() {
     [],
     ['Nomor RAB:', rab.nomor_rab],
     ['Tanggal:', formatDate(rab.tanggal_rab)],
-    ['Jenis RAB:', rab.jenis_rab || '-'],
+    ['Jenis RAB:', formatJenisRAB(rab.jenis_rab)],
     ['Status:', rab.status],
     [],
     ['No', 'Nomor LH05', 'Part Number', 'Material', 'Mesin', 'Jumlah', 'Unit/ULD', 'Harga Satuan', 'Subtotal']
@@ -400,7 +400,7 @@ function exportRABToPDF() {
   doc.setFont(undefined, 'normal')
   doc.text(`Nomor RAB: ${rab.nomor_rab}`, 14, 35)
   doc.text(`Tanggal: ${formatDate(rab.tanggal_rab)}`, 14, 42)
-  doc.text(`Jenis RAB: ${rab.jenis_rab || '-'}`, 14, 49)
+  doc.text(`Jenis RAB: ${formatJenisRAB(rab.jenis_rab)}`, 14, 49)
   doc.text(`Status: ${rab.status}`, 14, 56)
   
   // Table
@@ -472,6 +472,19 @@ function showError(message) {
       </td>
     </tr>
   `
+}
+
+// Format Jenis RAB with full label
+function formatJenisRAB(jenis) {
+  if (!jenis) return '-'
+  
+  const jenisLabels = {
+    'KHS': 'KHS (Kontrak Harga Satuan)',
+    'SPK': 'SPK (Surat Perintah Kerja)',
+    'Pembelian Langsung': 'Pembelian Langsung'
+  }
+  
+  return jenisLabels[jenis] || jenis
 }
 
 // View RAB History (Timeline)
