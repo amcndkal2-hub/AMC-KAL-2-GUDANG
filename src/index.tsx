@@ -2534,10 +2534,7 @@ function getDashboardMainHTML() {
                     <span class="text-xl font-bold">Dashboard Utama</span>
                 </div>
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/main" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
-                        <i class="fas fa-home mr-1"></i>Dashboard
-                    </a>
-                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
                     <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
@@ -2713,6 +2710,7 @@ function getInputFormHTML() {
           }
         </style>
     <script src="/static/url-redirect.js"></script>
+    <script src="/static/auth-check.js"></script>
     </head>
     <body class="bg-gray-50">
         <!-- Navigation -->
@@ -2723,10 +2721,7 @@ function getInputFormHTML() {
                     <span class="text-xl font-bold">Sistem Manajemen Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded">
-                        <i class="fas fa-home mr-1"></i>Dashboard
-                    </a>
-                    <a href="/" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                    <a href="/dashboard/main" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
                     <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
@@ -3928,7 +3923,7 @@ function getFormGangguanHTML() {
                     <span class="text-xl font-bold">Form Gangguan dan Permintaan Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
                     <a href="/form-gangguan" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
