@@ -317,6 +317,31 @@ app.get('/api/data', async (c) => {
   }
 })
 
+// API: Clear cache - Force refresh data from Google Sheets
+app.post('/api/clear-cache', async (c) => {
+  try {
+    // Reset cache
+    cachedData = []
+    lastFetchTime = 0
+    
+    // Fetch fresh data
+    const data = await fetchGoogleSheetsData()
+    
+    return c.json({ 
+      success: true, 
+      message: 'Cache cleared successfully',
+      itemsLoaded: data.length,
+      timestamp: new Date().toISOString()
+    })
+  } catch (error) {
+    return c.json({ 
+      success: false, 
+      error: 'Failed to clear cache',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500)
+  }
+})
+
 // API: Search part number
 app.get('/api/search-part', async (c) => {
   const query = c.req.query('q')?.toLowerCase() || ''
