@@ -2451,7 +2451,8 @@ app.get('/api/rab/:id/history', async (c) => {
 
 // Main page - Input Form
 app.get('/', (c) => {
-  return c.html(getInputFormHTML())
+  // Auto-redirect to Form Gangguan
+  return c.redirect('/form-gangguan', 302)
 })
 
 // Dashboard Utama (PROTECTED - auth required)
