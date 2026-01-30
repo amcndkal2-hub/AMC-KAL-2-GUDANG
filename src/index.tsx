@@ -145,7 +145,12 @@ async function fetchGoogleSheetsData() {
   }
   
   try {
-    const response = await fetch(GOOGLE_SHEETS_URL, {
+    // Add cache buster parameter to force fresh data
+    const cacheBuster = `v=${Date.now()}`
+    const separator = GOOGLE_SHEETS_URL.includes('?') ? '&' : '?'
+    const urlWithCacheBuster = `${GOOGLE_SHEETS_URL}${separator}${cacheBuster}`
+    
+    const response = await fetch(urlWithCacheBuster, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       redirect: 'follow'
     })
