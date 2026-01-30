@@ -14,6 +14,12 @@
   // Format: https://[RANDOM-ID].amc-kal-2-gudang.pages.dev
   const isDeploymentPreview = currentHostname.match(/^[a-f0-9]{8}\.amc-kal-2-gudang\.pages\.dev$/i);
   
+  console.log('🔍 URL Redirect Check:', {
+    currentHostname,
+    isDeploymentPreview: !!isDeploymentPreview,
+    dismissed: sessionStorage.getItem('url-redirect-dismissed')
+  });
+  
   if (isDeploymentPreview) {
     // Extract current path
     const currentPath = window.location.pathname + window.location.search + window.location.hash;
@@ -36,6 +42,8 @@
   }
   
   function showRedirectBanner(newUrl) {
+    console.log('✅ Showing redirect banner:', newUrl);
+    
     // Create banner HTML
     const banner = document.createElement('div');
     banner.id = 'url-redirect-banner';
@@ -46,15 +54,16 @@
       right: 0;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      padding: 16px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      z-index: 9999;
+      padding: 20px 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 999999;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 16px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       animation: slideDown 0.3s ease-out;
+      flex-wrap: wrap;
     `;
     
     banner.innerHTML = `
@@ -70,10 +79,10 @@
           transform: scale(1.05);
         }
       </style>
-      <i class="fas fa-info-circle" style="font-size: 24px;"></i>
+      <div style="font-size: 32px; line-height: 1;">⚠️</div>
       <div style="flex: 1; max-width: 600px;">
-        <strong style="display: block; margin-bottom: 4px;">⚠️ URL Lama Terdeteksi</strong>
-        <span style="font-size: 14px; opacity: 0.95;">
+        <strong style="display: block; margin-bottom: 4px; font-size: 16px;">URL Lama Terdeteksi</strong>
+        <span style="font-size: 13px; opacity: 0.95; line-height: 1.4;">
           Anda menggunakan URL deployment lama. Klik <strong>Update Sekarang</strong> untuk menggunakan URL stabil yang tidak berubah.
         </span>
       </div>
@@ -83,7 +92,7 @@
           background: white;
           color: #667eea;
           border: none;
-          padding: 10px 20px;
+          padding: 12px 24px;
           border-radius: 6px;
           font-weight: bold;
           cursor: pointer;
@@ -99,7 +108,7 @@
           background: transparent;
           color: white;
           border: 1px solid rgba(255,255,255,0.5);
-          padding: 10px 16px;
+          padding: 12px 20px;
           border-radius: 6px;
           cursor: pointer;
           font-size: 14px;
@@ -110,10 +119,12 @@
     `;
     
     // Add to body
-    document.body.appendChild(banner);
+    document.body.insertBefore(banner, document.body.firstChild);
     
     // Add body padding to prevent content overlap
-    document.body.style.paddingTop = '80px';
+    document.body.style.paddingTop = '100px';
+    
+    console.log('✅ Banner added to DOM with padding-top: 100px');
     
     // Auto redirect after 10 seconds (optional)
     setTimeout(() => {
@@ -137,9 +148,9 @@
       }
       
       banner.innerHTML = `
-        <i class="fas fa-sync fa-spin" style="font-size: 24px;"></i>
+        <div style="font-size: 32px; line-height: 1;">🔄</div>
         <div style="flex: 1; text-align: center;">
-          <strong style="display: block; font-size: 18px;">Auto-redirect dalam ${countdown} detik...</strong>
+          <strong style="display: block; font-size: 18px; margin-bottom: 4px;">Auto-redirect dalam ${countdown} detik...</strong>
           <span style="font-size: 14px; opacity: 0.9;">Mengalihkan ke URL stabil</span>
         </div>
         <button 
@@ -148,7 +159,7 @@
             background: white;
             color: #667eea;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
