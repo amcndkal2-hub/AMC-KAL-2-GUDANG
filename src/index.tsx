@@ -137,38 +137,6 @@ let lastFetchTime = 0
 const CACHE_DURATION = 5 * 60 * 1000 // 5 menit
 
 // Fungsi fetch data dari Google Sheets
-// Helper: Fix JENIS_BARANG for specific part numbers (Google Sheets data correction)
-function fixJenisBarang(item: any) {
-  const partNumber = String(item.PART_NUMBER || '').trim().toUpperCase()
-  const material = String(item.MATERIAL || '').toUpperCase()
-  
-  // Manual mapping for parts with missing or wrong JENIS_BARANG in Google Sheets
-  const jenisBarangMap: Record<string, string> = {
-    // ACCU series - All are MATERIAL BEKAS
-    'N120': 'MATERIAL BEKAS',
-    'N150': 'MATERIAL BEKAS',
-    'N200': 'MATERIAL BEKAS',
-  }
-  
-  // If JENIS_BARANG is empty/null, try to fill it from mapping
-  if (!item.JENIS_BARANG || item.JENIS_BARANG.trim() === '') {
-    // Check part number mapping first
-    if (jenisBarangMap[partNumber]) {
-      return jenisBarangMap[partNumber]
-    }
-    
-    // If material contains ACCU, it's MATERIAL BEKAS
-    if (material.includes('ACCU')) {
-      return 'MATERIAL BEKAS'
-    }
-    
-    // Default fallback
-    return 'MATERIAL HANDAL'
-  }
-  
-  return item.JENIS_BARANG
-}
-
 async function fetchGoogleSheetsData() {
   const now = Date.now()
   
@@ -186,13 +154,7 @@ async function fetchGoogleSheetsData() {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     
-    const rawData = await response.json()
-    
-    // Apply JENIS_BARANG fix to all items
-    const data = rawData.map((item: any) => ({
-      ...item,
-      JENIS_BARANG: fixJenisBarang(item)
-    }))
+    const data = await response.json()
     
     cachedData = data
     lastFetchTime = now
