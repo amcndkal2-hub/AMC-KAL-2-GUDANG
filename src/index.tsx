@@ -39,7 +39,7 @@ app.use('/api/*', async (c, next) => {
 app.use('/static/*', serveStatic({ root: './public' }))
 
 // Google Sheets URL
-const GOOGLE_SHEETS_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLhqzAeIhnzMWpFMPxA0eobNgYiqWWAHJK9oe1vuEbjsn36CFbWVtphEo1mlXxNLustDtY7qFhtsLt5A4CkBdALr77NTIeqdfhhkTlNYV3MeuBvCFvgN5RcL0SiiKdTRUcwzSff0ucVAH0MjaNKaBMpbc5NlreajQZsNjKrSNx98G231VUU34897IzefWyj3LYu3evscwl5MAFIfPEoRUyfSNrjJOc1kKh0IUo3UyQEMa-VjE6JOBCLJKFWxns4p4McbvUKDGkPmQVYFyxWSlq7uh_Poh5jenfUzife4&lib=MRb65GHGTxo8fAtO2JZr8dy1qv6vbq6ko'
+const GOOGLE_SHEETS_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLhBy3qfnECdHiBWDk7YEcZWY39Mz3t6Z0wVKcEXl6hrhAuxUf0Z7xLYScp4E-nWoxLoQjoVeyQbLK-M6msTCuakmgqvO32g9OhDiaIVGsXDp_f9L1sVyFSCBohRyxXelIreJR9WZxYv_975H6EDnj_0Er0yTXZflMoeAaif2izWSMhHWo5w0biwzGty-0EtHtXgeRHuxpgHeDcS-gRnFs2F8i1IZ_BmYY3P_Sq24lzS0kkKVK-mwdz9QmVZdIyvBwWqjwt6HKMrQ0jnz3EjFBmNsbSAv5oHlZ1pEB0m&lib=MRb65GHGTxo8fAtO2JZr8dy1qv6vbq6ko'
 
 // In-memory storage untuk demo (ganti dengan Firestore di production)
 let transactions: any[] = []
