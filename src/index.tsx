@@ -2456,7 +2456,13 @@ app.get('/', (c) => {
 })
 
 // Dashboard Utama (PROTECTED - auth required)
+// Input Material Form (PROTECTED - auth required)
 app.get('/dashboard/main', (c) => {
+  return c.html(getInputFormHTML())
+})
+
+// Dashboard Analytics (PROTECTED - auth required)
+app.get('/dashboard/analytics', (c) => {
   return c.html(getDashboardMainHTML())
 })
 
@@ -2539,6 +2545,9 @@ function getDashboardMainHTML() {
                     </a>
                     <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/analytics" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
@@ -2726,6 +2735,9 @@ function getInputFormHTML() {
                     </a>
                     <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/analytics" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
@@ -3928,6 +3940,9 @@ function getFormGangguanHTML() {
                     </a>
                     <a href="/form-gangguan" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/analytics" class="px-3 py-2 hover:bg-blue-700 rounded">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
