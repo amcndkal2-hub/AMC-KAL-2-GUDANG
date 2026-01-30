@@ -23,8 +23,15 @@
     const dismissed = sessionStorage.getItem('url-redirect-dismissed');
     
     if (!dismissed) {
-      // Show notification banner
-      showRedirectBanner(newUrl);
+      // Wait for DOM to be ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          showRedirectBanner(newUrl);
+        });
+      } else {
+        // DOM already loaded
+        showRedirectBanner(newUrl);
+      }
     }
   }
   
