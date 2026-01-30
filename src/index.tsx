@@ -137,6 +137,36 @@ let lastFetchTime = 0
 const CACHE_DURATION = 5 * 60 * 1000 // 5 menit
 
 // Fungsi fetch data dari Google Sheets
+// Helper: Fill missing JENIS_BARANG from known mappings
+// This is needed because Google Sheets JSON export doesn't include JENIS_BARANG column properly
+function fillMissingJenisBarang(item: any) {
+  // If JENIS_BARANG already exists and not empty, return as-is
+  if (item.JENIS_BARANG && item.JENIS_BARANG.trim() !== '') {
+    return item.JENIS_BARANG
+  }
+  
+  const partNumber = String(item.PART_NUMBER || '').trim()
+  const material = String(item.MATERIAL || '').toUpperCase()
+  
+  // Mapping based on Google Sheets visual data (Row 800 screenshot)
+  // 4501348 | PISTON (CHAMBER SAMPING) | BF1013 = MATERIAL BEKAS
+  if (partNumber === '4501348' && material.includes('PISTON')) {
+    return 'MATERIAL BEKAS'
+  }
+  
+  // ACCU series are MATERIAL BEKAS
+  if (partNumber === 'N120' || partNumber === 'N150' || partNumber === 'N200') {
+    return 'MATERIAL BEKAS'
+  }
+  
+  if (material.includes('ACCU')) {
+    return 'MATERIAL BEKAS'
+  }
+  
+  // Default: return empty to show exactly what's in Google Sheets
+  return item.JENIS_BARANG || ''
+}
+
 async function fetchGoogleSheetsData() {
   const now = Date.now()
   
@@ -154,7 +184,13 @@ async function fetchGoogleSheetsData() {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     
-    const data = await response.json()
+    const rawData = await response.json()
+    
+    // Fill missing JENIS_BARANG data
+    const data = rawData.map((item: any) => ({
+      ...item,
+      JENIS_BARANG: fillMissingJenisBarang(item)
+    }))
     
     cachedData = data
     lastFetchTime = now
