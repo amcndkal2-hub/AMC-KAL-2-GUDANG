@@ -2534,11 +2534,7 @@ function getDashboardMainHTML() {
     <body class="bg-gray-50">
         <!-- Navigation -->
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-tachometer-alt text-2xl"></i>
-                    <span class="text-xl font-bold">Dashboard Utama</span>
-                </div>
+            <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
@@ -2724,11 +2720,7 @@ function getInputFormHTML() {
     <body class="bg-gray-50">
         <!-- Navigation -->
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-warehouse text-2xl"></i>
-                    <span class="text-xl font-bold">Sistem Manajemen Material</span>
-                </div>
+            <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800 text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
@@ -3428,11 +3420,7 @@ function getDashboardStokHTML() {
     </head>
     <body class="bg-gray-50">
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-chart-bar text-2xl"></i>
-                    <span class="text-xl font-bold">Dashboard Stok Material</span>
-                </div>
+            <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
@@ -3598,11 +3586,7 @@ function getDashboardUmurHTML() {
     <body class="bg-gray-50">
         <!-- Navigation -->
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-calendar-alt text-2xl"></i>
-                    <span class="text-xl font-bold">Dashboard Umur Material</span>
-                </div>
+            <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
@@ -3753,11 +3737,7 @@ function getDashboardMutasiHTML() {
     <body class="bg-gray-50">
         <!-- Navigation -->
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-exchange-alt text-2xl"></i>
-                    <span class="text-xl font-bold">Dashboard Mutasi Material</span>
-                </div>
+            <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
@@ -3929,11 +3909,7 @@ function getFormGangguanHTML() {
     <body class="bg-gray-50">
         <!-- Navigation -->
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-exclamation-triangle text-2xl"></i>
-                    <span class="text-xl font-bold">Form Gangguan dan Permintaan Material</span>
-                </div>
+            <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
@@ -4463,11 +4439,7 @@ function getDashboardKebutuhanMaterialHTML() {
     </head>
     <body class="bg-gray-50">
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-clipboard-list text-2xl"></i>
-                    <span class="text-xl font-bold">Dashboard Kebutuhan Material</span>
-                </div>
+            <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
@@ -4679,11 +4651,7 @@ function getDashboardGangguanHTML() {
     </head>
     <body class="bg-gray-50">
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-tools text-2xl"></i>
-                    <span class="text-xl font-bold">Dashboard Gangguan dan Permintaan Material</span>
-                </div>
+            <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
@@ -5244,10 +5212,6 @@ function getDashboardCreateRABHTML() {
         <nav class="bg-blue-600 text-white shadow-lg">
             <div class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <i class="fas fa-calculator text-2xl"></i>
-                    <span class="text-xl font-bold">Create RAB</span>
-                </div>
-                <div class="flex items-center space-x-4">
                     <a href="/form-gangguan" class="hover:text-blue-200"><i class="fas fa-wrench mr-2"></i>Form Gangguan</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
                     <a href="/dashboard/stok" class="hover:text-blue-200"><i class="fas fa-boxes mr-2"></i>Stok
@@ -5444,10 +5408,6 @@ function getDashboardListRABHTML() {
         <nav class="bg-blue-600 text-white shadow-lg">
             <div class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <i class="fas fa-list-alt text-2xl"></i>
-                    <span class="text-xl font-bold">Daftar RAB</span>
-                </div>
-                <div class="flex items-center space-x-4">
                     <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
@@ -5555,7 +5515,7 @@ function getInputFormV2HTML() {
     <body class="bg-gray-100">
         <!-- Navigation -->
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="max-w-7xl mx-auto">
                 <div class="flex items-center space-x-4">
                     <i class="fas fa-clipboard-list text-2xl"></i>
                     <span class="text-xl font-bold">Input Material V2 (Beta)</span>
