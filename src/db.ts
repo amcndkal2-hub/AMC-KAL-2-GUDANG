@@ -293,8 +293,50 @@ export async function getAllTransactions(db: D1Database) {
               return { ...tx, materials }
             })
           } catch (level3Error: any) {
-            console.error('❌ ALL LEVELS FAILED! Level 3 error:', level3Error)
-            throw level3Error
+            const level3ErrorMsg = level3Error.message || level3Error.toString() || ''
+            console.log('❌ Level 3 FAILED:', level3ErrorMsg)
+            
+            // Level 4: ORIGINAL SCHEMA (no from_lh05, no jenis_pengeluaran, use sn_mesin)
+            try {
+              console.log('🔍 Trying Level 4: ORIGINAL SCHEMA (no extra columns)')
+              const { results } = await db.prepare(`
+                SELECT 
+                  t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi,
+                  t.lokasi_asal, t.lokasi_tujuan, t.pemeriksa, t.penerima,
+                  t.ttd_pemeriksa, t.ttd_penerima, t.created_at, t.updated_at,
+                  json_group_array(
+                    json_object(
+                      'partNumber', m.part_number,
+                      'jenisBarang', m.jenis_barang,
+                      'material', m.material,
+                      'mesin', m.mesin,
+                      'status', m.sn_mesin,
+                      'jumlah', m.jumlah
+                    )
+                  ) as materials
+                FROM transactions t
+                LEFT JOIN materials m ON t.id = m.transaction_id
+                GROUP BY t.id
+                ORDER BY t.created_at DESC
+              `).all()
+
+              console.log(`✅ Level 4 SUCCESS: Retrieved ${results.length} transactions`)             
+              return results.map((tx: any) => {
+                let materials = []
+                try {
+                  materials = JSON.parse(tx.materials || '[]')
+                  materials = materials.filter((m: any) => m.partNumber !== null)
+                } catch (parseError) {
+                  console.error('Failed to parse materials for transaction:', tx.nomor_ba, parseError)
+                  materials = []
+                }
+                
+                return { ...tx, materials }
+              })
+            } catch (level4Error: any) {
+              console.error('❌ ALL LEVELS FAILED! Level 4 error:', level4Error)
+              throw level4Error
+            }
           }
         }
       } else {
@@ -335,9 +377,51 @@ export async function getAllTransactions(db: D1Database) {
             
             return { ...tx, materials }
           })
-        } catch (directLevel3Error) {
-          console.error('❌ Direct Level 3 also failed:', directLevel3Error)
-          throw level1Error
+        } catch (directLevel3Error: any) {
+          const directLevel3ErrorMsg = directLevel3Error.message || directLevel3Error.toString() || ''
+          console.log('❌ Direct Level 3 FAILED:', directLevel3ErrorMsg)
+          
+          // Try Level 4: ORIGINAL SCHEMA (no from_lh05, no jenis_pengeluaran)
+          try {
+            console.log('🔍 Trying Level 4: ORIGINAL SCHEMA (final fallback)')
+            const { results } = await db.prepare(`
+              SELECT 
+                t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi,
+                t.lokasi_asal, t.lokasi_tujuan, t.pemeriksa, t.penerima,
+                t.ttd_pemeriksa, t.ttd_penerima, t.created_at, t.updated_at,
+                json_group_array(
+                  json_object(
+                    'partNumber', m.part_number,
+                    'jenisBarang', m.jenis_barang,
+                    'material', m.material,
+                    'mesin', m.mesin,
+                    'status', m.sn_mesin,
+                    'jumlah', m.jumlah
+                  )
+                ) as materials
+              FROM transactions t
+              LEFT JOIN materials m ON t.id = m.transaction_id
+              GROUP BY t.id
+              ORDER BY t.created_at DESC
+            `).all()
+
+            console.log(`✅ Level 4 (final) SUCCESS: Retrieved ${results.length} transactions`)
+            return results.map((tx: any) => {
+              let materials = []
+              try {
+                materials = JSON.parse(tx.materials || '[]')
+                materials = materials.filter((m: any) => m.partNumber !== null)
+              } catch (parseError) {
+                console.error('Failed to parse materials for transaction:', tx.nomor_ba, parseError)
+                materials = []
+              }
+              
+              return { ...tx, materials }
+            })
+          } catch (finalError) {
+            console.error('❌ Final fallback (Level 4) also failed:', finalError)
+            throw level1Error
+          }
         }
       }
     }

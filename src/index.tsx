@@ -542,6 +542,42 @@ app.post('/api/save-transaction', async (c) => {
   }
 })
 
+// API: Test database connection
+app.get('/api/test-db', async (c) => {
+  try {
+    const { env } = c
+    
+    if (!env.DB) {
+      return c.json({ 
+        success: false, 
+        error: 'DB binding not available',
+        binding: 'missing'
+      })
+    }
+    
+    // Test simple query
+    const testResult = await env.DB.prepare('SELECT COUNT(*) as count FROM transactions').first()
+    
+    // Test columns
+    const columnsResult = await env.DB.prepare('PRAGMA table_info(transactions)').all()
+    
+    return c.json({
+      success: true,
+      binding: 'available',
+      transactionCount: testResult?.count || 0,
+      columns: columnsResult.results.map((col: any) => col.name),
+      hasJenisPengeluaran: columnsResult.results.some((col: any) => col.name === 'jenis_pengeluaran'),
+      hasFromLH05: columnsResult.results.some((col: any) => col.name === 'from_lh05')
+    })
+  } catch (error: any) {
+    return c.json({
+      success: false,
+      error: error.message,
+      stack: error.stack
+    })
+  }
+})
+
 // API: Get transactions
 app.get('/api/transactions', async (c) => {
   try {
