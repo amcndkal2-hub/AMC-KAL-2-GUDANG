@@ -174,6 +174,7 @@ export async function getAllTransactions(db: D1Database) {
   try {
     // Level 1: Try with jenis_pengeluaran + status columns (latest schema)
     try {
+      console.log('🔍 Trying Level 1: WITH jenis_pengeluaran + status')
       const { results } = await db.prepare(`
         SELECT 
           t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi, t.jenis_pengeluaran,
@@ -195,6 +196,7 @@ export async function getAllTransactions(db: D1Database) {
         ORDER BY t.created_at DESC
       `).all()
 
+      console.log(`✅ Level 1 SUCCESS: Retrieved ${results.length} transactions`)
       return results.map((tx: any) => {
         let materials = []
         try {
@@ -209,11 +211,12 @@ export async function getAllTransactions(db: D1Database) {
       })
     } catch (level1Error: any) {
       const errorMsg = level1Error.message || level1Error.toString() || ''
+      console.log('❌ Level 1 FAILED:', errorMsg)
       
       // Level 2: Try without jenis_pengeluaran (if column missing)
       if (errorMsg.includes('jenis_pengeluaran') || errorMsg.includes('no such column')) {
-        console.log('⚠️ jenis_pengeluaran column not found, trying without it')
         try {
+          console.log('🔍 Trying Level 2: WITHOUT jenis_pengeluaran')
           const { results } = await db.prepare(`
             SELECT 
               t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi,
@@ -235,6 +238,7 @@ export async function getAllTransactions(db: D1Database) {
             ORDER BY t.created_at DESC
           `).all()
 
+          console.log(`✅ Level 2 SUCCESS: Retrieved ${results.length} transactions`)
           return results.map((tx: any) => {
             let materials = []
             try {
@@ -248,8 +252,55 @@ export async function getAllTransactions(db: D1Database) {
             return { ...tx, materials }
           })
         } catch (level2Error: any) {
+          const level2ErrorMsg = level2Error.message || level2Error.toString() || ''
+          console.log('❌ Level 2 FAILED:', level2ErrorMsg)
+          
           // Level 3: Fallback to sn_mesin if status column also doesn't exist
-          console.log('⚠️ status column not found, using sn_mesin fallback')
+          try {
+            console.log('🔍 Trying Level 3: WITH sn_mesin instead of status')
+            const { results } = await db.prepare(`
+              SELECT 
+                t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi,
+                t.lokasi_asal, t.lokasi_tujuan, t.pemeriksa, t.penerima,
+                t.ttd_pemeriksa, t.ttd_penerima, t.from_lh05, t.created_at, t.updated_at,
+                json_group_array(
+                  json_object(
+                    'partNumber', m.part_number,
+                    'jenisBarang', m.jenis_barang,
+                    'material', m.material,
+                    'mesin', m.mesin,
+                    'status', m.sn_mesin,
+                    'jumlah', m.jumlah
+                  )
+                ) as materials
+              FROM transactions t
+              LEFT JOIN materials m ON t.id = m.transaction_id
+              GROUP BY t.id
+              ORDER BY t.created_at DESC
+            `).all()
+
+            console.log(`✅ Level 3 SUCCESS: Retrieved ${results.length} transactions`)
+            return results.map((tx: any) => {
+              let materials = []
+              try {
+                materials = JSON.parse(tx.materials || '[]')
+                materials = materials.filter((m: any) => m.partNumber !== null)
+              } catch (parseError) {
+                console.error('Failed to parse materials for transaction:', tx.nomor_ba, parseError)
+                materials = []
+              }
+              
+              return { ...tx, materials }
+            })
+          } catch (level3Error: any) {
+            console.error('❌ ALL LEVELS FAILED! Level 3 error:', level3Error)
+            throw level3Error
+          }
+        }
+      } else {
+        // If error is not about jenis_pengeluaran, try Level 3 directly
+        console.log('🔍 Error not about jenis_pengeluaran, trying Level 3 directly')
+        try {
           const { results } = await db.prepare(`
             SELECT 
               t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi,
@@ -271,6 +322,7 @@ export async function getAllTransactions(db: D1Database) {
             ORDER BY t.created_at DESC
           `).all()
 
+          console.log(`✅ Level 3 (direct) SUCCESS: Retrieved ${results.length} transactions`)
           return results.map((tx: any) => {
             let materials = []
             try {
@@ -283,13 +335,14 @@ export async function getAllTransactions(db: D1Database) {
             
             return { ...tx, materials }
           })
+        } catch (directLevel3Error) {
+          console.error('❌ Direct Level 3 also failed:', directLevel3Error)
+          throw level1Error
         }
-      } else {
-        throw level1Error
       }
     }
   } catch (error: any) {
-    console.error('Failed to get transactions:', error)
+    console.error('❌ getAllTransactions COMPLETE FAILURE:', error)
     return []
   }
 }
