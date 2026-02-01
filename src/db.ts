@@ -141,10 +141,22 @@ export async function getAllTransactions(db: D1Database) {
         ORDER BY t.created_at DESC
       `).all()
 
-      return results.map((tx: any) => ({
-        ...tx,
-        materials: JSON.parse(tx.materials)
-      }))
+      return results.map((tx: any) => {
+        let materials = []
+        try {
+          materials = JSON.parse(tx.materials || '[]')
+          // Filter out null entries from LEFT JOIN
+          materials = materials.filter((m: any) => m.partNumber !== null)
+        } catch (parseError) {
+          console.error('Failed to parse materials for transaction:', tx.nomor_ba, parseError)
+          materials = []
+        }
+        
+        return {
+          ...tx,
+          materials
+        }
+      })
     } catch (statusError) {
       // Fallback to sn_mesin if status column doesn't exist
       console.log('⚠️ status column not found, using sn_mesin fallback')
@@ -167,10 +179,22 @@ export async function getAllTransactions(db: D1Database) {
         ORDER BY t.created_at DESC
       `).all()
 
-      return results.map((tx: any) => ({
-        ...tx,
-        materials: JSON.parse(tx.materials)
-      }))
+      return results.map((tx: any) => {
+        let materials = []
+        try {
+          materials = JSON.parse(tx.materials || '[]')
+          // Filter out null entries from LEFT JOIN
+          materials = materials.filter((m: any) => m.partNumber !== null)
+        } catch (parseError) {
+          console.error('Failed to parse materials for transaction:', tx.nomor_ba, parseError)
+          materials = []
+        }
+        
+        return {
+          ...tx,
+          materials
+        }
+      })
     }
   } catch (error: any) {
     console.error('Failed to get transactions:', error)
