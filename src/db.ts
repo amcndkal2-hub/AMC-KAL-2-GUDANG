@@ -172,11 +172,13 @@ export async function saveTransaction(db: D1Database, data: any) {
 
 export async function getAllTransactions(db: D1Database) {
   try {
-    // Try with status column first (after migration)
+    // Level 1: Try with jenis_pengeluaran + status columns (latest schema)
     try {
       const { results } = await db.prepare(`
         SELECT 
-          t.*,
+          t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi, t.jenis_pengeluaran,
+          t.lokasi_asal, t.lokasi_tujuan, t.pemeriksa, t.penerima,
+          t.ttd_pemeriksa, t.ttd_penerima, t.from_lh05, t.created_at, t.updated_at,
           json_group_array(
             json_object(
               'partNumber', m.part_number,
@@ -197,56 +199,94 @@ export async function getAllTransactions(db: D1Database) {
         let materials = []
         try {
           materials = JSON.parse(tx.materials || '[]')
-          // Filter out null entries from LEFT JOIN
           materials = materials.filter((m: any) => m.partNumber !== null)
         } catch (parseError) {
           console.error('Failed to parse materials for transaction:', tx.nomor_ba, parseError)
           materials = []
         }
         
-        return {
-          ...tx,
-          materials
-        }
+        return { ...tx, materials }
       })
-    } catch (statusError) {
-      // Fallback to sn_mesin if status column doesn't exist
-      console.log('⚠️ status column not found, using sn_mesin fallback')
-      const { results } = await db.prepare(`
-        SELECT 
-          t.*,
-          json_group_array(
-            json_object(
-              'partNumber', m.part_number,
-              'jenisBarang', m.jenis_barang,
-              'material', m.material,
-              'mesin', m.mesin,
-              'status', m.sn_mesin,
-              'jumlah', m.jumlah
-            )
-          ) as materials
-        FROM transactions t
-        LEFT JOIN materials m ON t.id = m.transaction_id
-        GROUP BY t.id
-        ORDER BY t.created_at DESC
-      `).all()
-
-      return results.map((tx: any) => {
-        let materials = []
+    } catch (level1Error: any) {
+      const errorMsg = level1Error.message || level1Error.toString() || ''
+      
+      // Level 2: Try without jenis_pengeluaran (if column missing)
+      if (errorMsg.includes('jenis_pengeluaran') || errorMsg.includes('no such column')) {
+        console.log('⚠️ jenis_pengeluaran column not found, trying without it')
         try {
-          materials = JSON.parse(tx.materials || '[]')
-          // Filter out null entries from LEFT JOIN
-          materials = materials.filter((m: any) => m.partNumber !== null)
-        } catch (parseError) {
-          console.error('Failed to parse materials for transaction:', tx.nomor_ba, parseError)
-          materials = []
+          const { results } = await db.prepare(`
+            SELECT 
+              t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi,
+              t.lokasi_asal, t.lokasi_tujuan, t.pemeriksa, t.penerima,
+              t.ttd_pemeriksa, t.ttd_penerima, t.from_lh05, t.created_at, t.updated_at,
+              json_group_array(
+                json_object(
+                  'partNumber', m.part_number,
+                  'jenisBarang', m.jenis_barang,
+                  'material', m.material,
+                  'mesin', m.mesin,
+                  'status', m.status,
+                  'jumlah', m.jumlah
+                )
+              ) as materials
+            FROM transactions t
+            LEFT JOIN materials m ON t.id = m.transaction_id
+            GROUP BY t.id
+            ORDER BY t.created_at DESC
+          `).all()
+
+          return results.map((tx: any) => {
+            let materials = []
+            try {
+              materials = JSON.parse(tx.materials || '[]')
+              materials = materials.filter((m: any) => m.partNumber !== null)
+            } catch (parseError) {
+              console.error('Failed to parse materials for transaction:', tx.nomor_ba, parseError)
+              materials = []
+            }
+            
+            return { ...tx, materials }
+          })
+        } catch (level2Error: any) {
+          // Level 3: Fallback to sn_mesin if status column also doesn't exist
+          console.log('⚠️ status column not found, using sn_mesin fallback')
+          const { results } = await db.prepare(`
+            SELECT 
+              t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi,
+              t.lokasi_asal, t.lokasi_tujuan, t.pemeriksa, t.penerima,
+              t.ttd_pemeriksa, t.ttd_penerima, t.from_lh05, t.created_at, t.updated_at,
+              json_group_array(
+                json_object(
+                  'partNumber', m.part_number,
+                  'jenisBarang', m.jenis_barang,
+                  'material', m.material,
+                  'mesin', m.mesin,
+                  'status', m.sn_mesin,
+                  'jumlah', m.jumlah
+                )
+              ) as materials
+            FROM transactions t
+            LEFT JOIN materials m ON t.id = m.transaction_id
+            GROUP BY t.id
+            ORDER BY t.created_at DESC
+          `).all()
+
+          return results.map((tx: any) => {
+            let materials = []
+            try {
+              materials = JSON.parse(tx.materials || '[]')
+              materials = materials.filter((m: any) => m.partNumber !== null)
+            } catch (parseError) {
+              console.error('Failed to parse materials for transaction:', tx.nomor_ba, parseError)
+              materials = []
+            }
+            
+            return { ...tx, materials }
+          })
         }
-        
-        return {
-          ...tx,
-          materials
-        }
-      })
+      } else {
+        throw level1Error
+      }
     }
   } catch (error: any) {
     console.error('Failed to get transactions:', error)
