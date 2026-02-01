@@ -404,6 +404,7 @@ async function submitTransactionFromLH05() {
         const formData = {
             tanggal: today,
             jenisTransaksi: 'Pengeluaran / Keluar', // Always Keluar for LH05
+            jenisPengeluaran: `LH05 - ${selectedLH05.lh05}`, // ✅ Dasar Pengeluaran = Nomor LH05
             lokasiAsal: 'GUDANG KAL 2',
             lokasiTujuan: selectedLH05.unit_uld, // From LH05
             pemeriksa: pemeriksa,

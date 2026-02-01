@@ -343,7 +343,7 @@ function downloadBA(nomorBA) {
 }
 
 async function deleteTransaction(nomorBA) {
-    if (!confirm(`⚠️ PERINGATAN!\n\nAnda akan menghapus transaksi:\n${nomorBA}\n\nData yang terhapus TIDAK BISA dikembalikan!\n\nLanjutkan hapus?`)) {
+    if (!confirm(`⚠️ PERINGATAN!\n\nAnda akan menghapus transaksi:\n${nomorBA}\n\n📦 Jika transaksi ini dari LH05, material akan dikembalikan dan stok akan di-rollback.\n\n🔄 Material yang sudah dikeluarkan akan bisa dipilih kembali dari LH05.\n\nData transaksi yang terhapus TIDAK BISA dikembalikan!\n\nLanjutkan hapus?`)) {
         return;
     }
     
@@ -360,7 +360,7 @@ async function deleteTransaction(nomorBA) {
         const result = await response.json();
         
         if (result.success) {
-            alert(`✅ Transaksi ${nomorBA} berhasil dihapus!`);
+            alert(`✅ Transaksi ${nomorBA} berhasil dihapus!\n\n${result.rollback ? '🔄 Material LH05 telah di-rollback dan bisa dipilih kembali.' : ''}`);
             // Reload data
             await loadTransactions();
         } else {

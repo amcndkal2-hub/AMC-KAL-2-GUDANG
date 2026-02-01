@@ -1209,10 +1209,58 @@ app.delete('/api/transaction/:nomorBA', async (c) => {
     
     console.log(`✅ Admin confirmed, deleting transaction: ${nomorBA}`)
     
+    // ========================================
+    // ROLLBACK LOGIC: If transaction from LH05
+    // ========================================
+    let rollbackPerformed = false
+    
+    try {
+      // Get transaction details before deleting
+      const transaction = await DB.getTransactionByBA(env.DB, nomorBA)
+      
+      if (transaction && transaction.from_lh05) {
+        console.log(`🔄 Rollback: Transaction is from LH05 ${transaction.from_lh05}`)
+        
+        // Get gangguan by LH05 number
+        const gangguan = await DB.getGangguanByLH05(env.DB, transaction.from_lh05)
+        
+        if (gangguan) {
+          console.log(`🔄 Found gangguan ID: ${gangguan.id}`)
+          
+          // Rollback is_issued for each material
+          for (const mat of transaction.materials) {
+            try {
+              const updateResult = await env.DB.prepare(`
+                UPDATE material_gangguan 
+                SET is_issued = 0, updated_at = CURRENT_TIMESTAMP
+                WHERE gangguan_id = ? AND part_number = ?
+              `).bind(gangguan.id, mat.partNumber).run()
+              
+              console.log(`✅ Rolled back is_issued for ${mat.partNumber}:`, updateResult.meta)
+              rollbackPerformed = true
+            } catch (updateError) {
+              // Fallback: Column might not exist yet
+              console.warn(`⚠️ Failed to rollback is_issued for ${mat.partNumber}:`, updateError)
+            }
+          }
+          
+          console.log(`✅ Rollback complete for LH05 ${transaction.from_lh05}`)
+        } else {
+          console.warn(`⚠️ Gangguan not found for LH05 ${transaction.from_lh05}`)
+        }
+      }
+    } catch (rollbackError) {
+      console.error('⚠️ Rollback error (continuing with delete):', rollbackError)
+      // Continue with delete even if rollback fails
+    }
+    
     // Delete from D1 Database
     const result = await DB.deleteTransaction(env.DB, nomorBA)
     
-    return c.json(result)
+    return c.json({
+      ...result,
+      rollback: rollbackPerformed
+    })
   } catch (error: any) {
     console.error('Failed to delete transaction:', error)
     return c.json({ 
