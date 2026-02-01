@@ -16,12 +16,13 @@ export async function saveTransaction(db: D1Database, data: any) {
     // Try inserting with from_lh05 column first
     try {
       const txResult = await db.prepare(`
-        INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima, from_lh05)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, jenis_pengeluaran, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima, from_lh05)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         data.nomorBA,
         data.tanggal,
         data.jenisTransaksi,
+        data.jenisPengeluaran || null,  // ✅ ADD jenisPengeluaran
         data.lokasiAsal,
         data.lokasiTujuan,
         data.pemeriksa,
@@ -38,12 +39,13 @@ export async function saveTransaction(db: D1Database, data: any) {
       if (columnError.message && columnError.message.includes('from_lh05')) {
         console.log('⚠️ from_lh05 column not found, using fallback insert')
         const txResult = await db.prepare(`
-          INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, jenis_pengeluaran, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           data.nomorBA,
           data.tanggal,
           data.jenisTransaksi,
+          data.jenisPengeluaran || null,  // ✅ ADD jenisPengeluaran
           data.lokasiAsal,
           data.lokasiTujuan,
           data.pemeriksa,
