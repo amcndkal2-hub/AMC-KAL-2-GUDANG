@@ -484,9 +484,9 @@ app.post('/api/save-transaction', async (c) => {
       materials
     })
     
-    // IF this transaction is from LH05, mark materials as issued
-    if (body.nomorLH05) {
-      console.log(`🔒 Marking materials from LH05 ${body.nomorLH05} as issued`)
+    // IF this transaction is from LH05, mark SELECTED materials as issued
+    if (body.nomorLH05 && body.materials && body.materials.length > 0) {
+      console.log(`🔒 Marking selected materials from LH05 ${body.nomorLH05} as issued`)
       
       // Get gangguan_id from nomor LH05
       const gangguan = await env.DB.prepare(`
@@ -494,14 +494,20 @@ app.post('/api/save-transaction', async (c) => {
       `).bind(body.nomorLH05).first()
       
       if (gangguan) {
-        // Mark all materials from this gangguan as issued
-        const updateResult = await env.DB.prepare(`
-          UPDATE material_gangguan 
-          SET is_issued = 1, updated_at = CURRENT_TIMESTAMP
-          WHERE gangguan_id = ?
-        `).bind(gangguan.id).run()
+        // Mark ONLY the materials that were selected in this transaction
+        let totalMarked = 0
         
-        console.log(`✅ Marked ${updateResult.meta.changes} materials as issued`)
+        for (const material of body.materials) {
+          const updateResult = await env.DB.prepare(`
+            UPDATE material_gangguan 
+            SET is_issued = 1, updated_at = CURRENT_TIMESTAMP
+            WHERE gangguan_id = ? AND part_number = ?
+          `).bind(gangguan.id, material.partNumber).run()
+          
+          totalMarked += updateResult.meta.changes || 0
+        }
+        
+        console.log(`✅ Marked ${totalMarked} selected materials as issued from LH05 ${body.nomorLH05}`)
       }
     }
     
