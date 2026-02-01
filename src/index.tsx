@@ -3969,6 +3969,22 @@ function getDashboardMutasiHTML() {
                             <p>• Status Terkirim untuk export BA</p>
                             <p>• Filter: Tanggal, BA, Part Number, Unit</p>
                         </div>
+                        
+                        <!-- Admin Tools -->
+                        <div class="admin-only mt-6 pt-4 border-t border-gray-200">
+                            <h4 class="font-semibold text-red-600 mb-3">
+                                <i class="fas fa-tools mr-2"></i>
+                                Admin Tools
+                            </h4>
+                            <button onclick="fixLH05JenisPengeluaran()" 
+                                    class="w-full px-4 py-2 bg-yellow-500 text-white font-semibold rounded hover:bg-yellow-600 transition-all">
+                                <i class="fas fa-wrench mr-2"></i>
+                                Perbaiki Data LH05 Lama
+                            </button>
+                            <p class="text-xs text-gray-600 mt-2">
+                                Update Dasar Pengeluaran untuk transaksi LH05 yang lama
+                            </p>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -5875,6 +5891,96 @@ function getDashboardPengadaanHTML() {
     </html>
   `;
 }
+
+// ========================================
+// API: Fix historical LH05 jenis_pengeluaran
+// ========================================
+app.post('/api/fix-lh05-jenis-pengeluaran', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔧 Starting LH05 jenis_pengeluaran fix...')
+    
+    // Get all transactions with from_lh05 field
+    let transactionsWithLH05: any[] = []
+    
+    try {
+      const result = await env.DB.prepare(`
+        SELECT 
+          t.id,
+          t.nomor_ba,
+          t.from_lh05,
+          t.jenis_pengeluaran
+        FROM transactions t
+        WHERE t.from_lh05 IS NOT NULL AND t.from_lh05 != ''
+      `).all()
+      
+      transactionsWithLH05 = result.results || []
+    } catch (queryError) {
+      console.log('⚠️ from_lh05 column not found, no LH05 transactions to fix')
+      return c.json({ 
+        success: true, 
+        message: 'No from_lh05 column - nothing to fix',
+        fixed: 0 
+      })
+    }
+    
+    if (transactionsWithLH05.length === 0) {
+      return c.json({ 
+        success: true, 
+        message: 'No LH05 transactions found',
+        fixed: 0 
+      })
+    }
+    
+    console.log(`📦 Found ${transactionsWithLH05.length} transactions from LH05`)
+    
+    let fixedCount = 0
+    let skippedCount = 0
+    
+    // Update each transaction
+    for (const tx of transactionsWithLH05) {
+      const expectedJenisPengeluaran = `LH05 - ${tx.from_lh05}`
+      
+      // Skip if already correct
+      if (tx.jenis_pengeluaran === expectedJenisPengeluaran) {
+        console.log(`✅ ${tx.nomor_ba} already correct, skipping`)
+        skippedCount++
+        continue
+      }
+      
+      try {
+        await env.DB.prepare(`
+          UPDATE transactions 
+          SET jenis_pengeluaran = ?
+          WHERE id = ?
+        `).bind(expectedJenisPengeluaran, tx.id).run()
+        
+        console.log(`✅ Fixed ${tx.nomor_ba}: "${tx.jenis_pengeluaran}" → "${expectedJenisPengeluaran}"`)
+        fixedCount++
+      } catch (updateError) {
+        console.error(`❌ Failed to update ${tx.nomor_ba}:`, updateError)
+      }
+    }
+    
+    console.log(`🎉 Fix complete! Fixed: ${fixedCount}, Skipped: ${skippedCount}`)
+    
+    return c.json({ 
+      success: true, 
+      message: `Fixed ${fixedCount} transactions, skipped ${skippedCount} (already correct)`,
+      fixed: fixedCount,
+      skipped: skippedCount,
+      total: transactionsWithLH05.length
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Fix error:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to fix jenis_pengeluaran' 
+    }, 500)
+  }
+})
 
 export default app
 

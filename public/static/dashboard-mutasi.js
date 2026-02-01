@@ -377,3 +377,35 @@ function formatDate(dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('id-ID');
 }
+
+// Fix historical LH05 jenis_pengeluaran data
+async function fixLH05JenisPengeluaran() {
+    if (!confirm('🔧 PERBAIKAN DATA LAMA\n\nTool ini akan memperbaiki field "Dasar Pengeluaran" untuk semua transaksi LH05 yang lama.\n\nContoh:\n"Pengeluaran Gudang" → "LH05 - 0022/ND KAL 2/LH05/2026"\n\nProses ini aman dan tidak akan menghapus data.\n\nLanjutkan?')) {
+        return;
+    }
+    
+    try {
+        console.log('🔧 Starting LH05 fix...');
+        
+        const response = await fetch('/api/fix-lh05-jenis-pengeluaran', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`✅ Perbaikan selesai!\n\n📊 Hasil:\n- Total transaksi LH05: ${result.total}\n- Diperbaiki: ${result.fixed}\n- Sudah benar (dilewati): ${result.skipped}\n\n${result.message}`);
+            
+            // Reload transactions to show updated data
+            await loadTransactions();
+        } else {
+            alert(`❌ Gagal memperbaiki data:\n${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Fix error:', error);
+        alert('❌ Terjadi kesalahan saat memperbaiki data');
+    }
+}
