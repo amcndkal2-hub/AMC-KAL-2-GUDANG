@@ -488,26 +488,36 @@ app.post('/api/save-transaction', async (c) => {
     if (body.nomorLH05 && body.materials && body.materials.length > 0) {
       console.log(`🔒 Marking selected materials from LH05 ${body.nomorLH05} as issued`)
       
-      // Get gangguan_id from nomor LH05
-      const gangguan = await env.DB.prepare(`
-        SELECT id FROM gangguan WHERE nomor_lh05 = ?
-      `).bind(body.nomorLH05).first()
-      
-      if (gangguan) {
-        // Mark ONLY the materials that were selected in this transaction
-        let totalMarked = 0
+      try {
+        // Get gangguan_id from nomor LH05
+        const gangguan = await env.DB.prepare(`
+          SELECT id FROM gangguan WHERE nomor_lh05 = ?
+        `).bind(body.nomorLH05).first()
         
-        for (const material of body.materials) {
-          const updateResult = await env.DB.prepare(`
-            UPDATE material_gangguan 
-            SET is_issued = 1, updated_at = CURRENT_TIMESTAMP
-            WHERE gangguan_id = ? AND part_number = ?
-          `).bind(gangguan.id, material.partNumber).run()
+        if (gangguan) {
+          // Mark ONLY the materials that were selected in this transaction
+          let totalMarked = 0
           
-          totalMarked += updateResult.meta.changes || 0
+          for (const material of body.materials) {
+            try {
+              const updateResult = await env.DB.prepare(`
+                UPDATE material_gangguan 
+                SET is_issued = 1, updated_at = CURRENT_TIMESTAMP
+                WHERE gangguan_id = ? AND part_number = ?
+              `).bind(gangguan.id, material.partNumber).run()
+              
+              totalMarked += updateResult.meta.changes || 0
+            } catch (updateError: any) {
+              console.warn(`⚠️ Could not mark material ${material.partNumber} as issued:`, updateError.message)
+              // Continue with other materials even if one fails
+            }
+          }
+          
+          console.log(`✅ Marked ${totalMarked} selected materials as issued from LH05 ${body.nomorLH05}`)
         }
-        
-        console.log(`✅ Marked ${totalMarked} selected materials as issued from LH05 ${body.nomorLH05}`)
+      } catch (gangguanError: any) {
+        console.warn('⚠️ Could not mark materials as issued (is_issued column may not exist yet):', gangguanError.message)
+        // Continue with transaction save even if marking fails
       }
     }
     
@@ -589,24 +599,45 @@ app.get('/api/lh05-list', async (c) => {
       return c.json({ error: 'Database not available' }, 500)
     }
     
-    // Get all gangguan with their AVAILABLE (not issued) material count
-    const { results } = await env.DB.prepare(`
-      SELECT 
-        g.id,
-        g.nomor_lh05,
-        g.tanggal_laporan,
-        g.lokasi_gangguan as unit_uld,
-        g.komponen_rusak,
-        COUNT(mg.id) as material_count
-      FROM gangguan g
-      LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id 
-        AND (mg.is_issued IS NULL OR mg.is_issued = 0)
-      GROUP BY g.id
-      HAVING material_count > 0
-      ORDER BY g.created_at DESC
-    `).all()
-    
-    return c.json({ lh05List: results })
+    // Try with is_issued column first (if migration applied)
+    try {
+      const { results } = await env.DB.prepare(`
+        SELECT 
+          g.id,
+          g.nomor_lh05,
+          g.tanggal_laporan,
+          g.lokasi_gangguan as unit_uld,
+          g.komponen_rusak,
+          COUNT(mg.id) as material_count
+        FROM gangguan g
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id 
+          AND (mg.is_issued IS NULL OR mg.is_issued = 0)
+        GROUP BY g.id
+        HAVING material_count > 0
+        ORDER BY g.created_at DESC
+      `).all()
+      
+      return c.json({ lh05List: results })
+    } catch (columnError: any) {
+      // Fallback: Query without is_issued if column doesn't exist yet
+      console.log('⚠️ is_issued column not found, using fallback query')
+      const { results } = await env.DB.prepare(`
+        SELECT 
+          g.id,
+          g.nomor_lh05,
+          g.tanggal_laporan,
+          g.lokasi_gangguan as unit_uld,
+          g.komponen_rusak,
+          COUNT(mg.id) as material_count
+        FROM gangguan g
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+        GROUP BY g.id
+        HAVING material_count > 0
+        ORDER BY g.created_at DESC
+      `).all()
+      
+      return c.json({ lh05List: results })
+    }
   } catch (error: any) {
     console.error('Failed to get LH05 list:', error)
     return c.json({ error: error.message }, 500)
