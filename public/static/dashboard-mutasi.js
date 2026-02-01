@@ -397,7 +397,7 @@ async function fixLH05JenisPengeluaran() {
         const result = await response.json();
         
         if (result.success) {
-            alert(`✅ Perbaikan selesai!\n\n📊 Hasil:\n- Total transaksi LH05: ${result.total}\n- Diperbaiki: ${result.fixed}\n- Sudah benar (dilewati): ${result.skipped}\n\n${result.message}`);
+            alert(`✅ Perbaikan selesai!\n\n📊 Hasil:\n- Total transaksi LH05: ${result.total}\n- Fixed (explicit): ${result.fixed}\n- Detected & Fixed: ${result.detected}\n- Sudah benar (dilewati): ${result.skipped}\n\n${result.message}`);
             
             // Reload transactions to show updated data
             await loadTransactions();
@@ -406,6 +406,50 @@ async function fixLH05JenisPengeluaran() {
         }
     } catch (error) {
         console.error('Fix error:', error);
+        alert('❌ Terjadi kesalahan saat memperbaiki data');
+    }
+}
+
+// Manual fix for single BA (emergency)
+async function fixSingleBA() {
+    const nomorBA = prompt('🔧 PERBAIKAN MANUAL\n\nMasukkan Nomor BA yang ingin diperbaiki:\n(contoh: BA-2026-0022)');
+    
+    if (!nomorBA) return;
+    
+    const nomorLH05 = prompt(`Masukkan Nomor LH05 untuk ${nomorBA}:\n(contoh: 0022/ND KAL 2/LH05/2026)`);
+    
+    if (!nomorLH05) return;
+    
+    if (!confirm(`Apakah Anda yakin?\n\nBA: ${nomorBA}\nLH05: ${nomorLH05}\n\nDasar Pengeluaran akan diupdate menjadi:\n"LH05 - ${nomorLH05}"`)) {
+        return;
+    }
+    
+    try {
+        console.log(`🔧 Manual fix: ${nomorBA} → ${nomorLH05}`);
+        
+        const response = await fetch('/api/fix-single-ba', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                nomorBA: nomorBA,
+                nomorLH05: nomorLH05
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`✅ Berhasil!\n\n${result.nomor_ba} telah diperbaiki.\n\nDasar Pengeluaran: ${result.jenis_pengeluaran}`);
+            
+            // Reload transactions
+            await loadTransactions();
+        } else {
+            alert(`❌ Gagal:\n${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Manual fix error:', error);
         alert('❌ Terjadi kesalahan saat memperbaiki data');
     }
 }

@@ -3977,12 +3977,18 @@ function getDashboardMutasiHTML() {
                                 Admin Tools
                             </h4>
                             <button onclick="fixLH05JenisPengeluaran()" 
-                                    class="w-full px-4 py-2 bg-yellow-500 text-white font-semibold rounded hover:bg-yellow-600 transition-all">
+                                    class="w-full px-4 py-2 bg-yellow-500 text-white font-semibold rounded hover:bg-yellow-600 transition-all mb-3">
                                 <i class="fas fa-wrench mr-2"></i>
                                 Perbaiki Data LH05 Lama
                             </button>
+                            <button onclick="fixSingleBA()" 
+                                    class="w-full px-4 py-2 bg-orange-500 text-white font-semibold rounded hover:bg-orange-600 transition-all">
+                                <i class="fas fa-edit mr-2"></i>
+                                Perbaiki 1 BA Manual
+                            </button>
                             <p class="text-xs text-gray-600 mt-2">
-                                Update Dasar Pengeluaran untuk transaksi LH05 yang lama
+                                Bulk fix: Otomatis detect semua LH05<br/>
+                                Manual: Input BA & LH05 spesifik
                             </p>
                         </div>
                     </div>
@@ -5990,16 +5996,15 @@ app.post('/api/fix-lh05-jenis-pengeluaran', async (c) => {
           continue
         }
         
-        // Try to match materials with material_gangguan
+        // Try to match materials with material_gangguan (by part_number only)
         for (const mat of txMaterials.results) {
           const matchedGangguan = await env.DB.prepare(`
             SELECT DISTINCT g.nomor_lh05
             FROM material_gangguan mg
             JOIN gangguan g ON mg.gangguan_id = g.id
             WHERE mg.part_number = ?
-              AND (mg.mesin = ? OR ? IS NULL)
             LIMIT 1
-          `).bind(mat.part_number, mat.mesin, mat.mesin).first()
+          `).bind(mat.part_number).first()
           
           if (matchedGangguan && matchedGangguan.nomor_lh05) {
             const nomorLH05 = matchedGangguan.nomor_lh05
@@ -6045,6 +6050,62 @@ app.post('/api/fix-lh05-jenis-pengeluaran', async (c) => {
     return c.json({ 
       success: false, 
       error: error.message || 'Failed to fix jenis_pengeluaran' 
+    }, 500)
+  }
+})
+
+// ========================================
+// API: Manual fix for specific BA (emergency)
+// ========================================
+app.post('/api/fix-single-ba', async (c) => {
+  try {
+    const { env } = c
+    const { nomorBA, nomorLH05 } = await c.req.json()
+    
+    if (!nomorBA || !nomorLH05) {
+      return c.json({ 
+        success: false, 
+        error: 'nomorBA and nomorLH05 are required' 
+      }, 400)
+    }
+    
+    console.log(`🔧 Manual fix for ${nomorBA} → LH05: ${nomorLH05}`)
+    
+    // Get transaction
+    const tx = await DB.getTransactionByBA(env.DB, nomorBA)
+    
+    if (!tx) {
+      return c.json({ 
+        success: false, 
+        error: `Transaction ${nomorBA} not found` 
+      }, 404)
+    }
+    
+    const expectedJenisPengeluaran = `LH05 - ${nomorLH05}`
+    
+    // Update both fields
+    await env.DB.prepare(`
+      UPDATE transactions 
+      SET from_lh05 = ?,
+          jenis_pengeluaran = ?
+      WHERE nomor_ba = ?
+    `).bind(nomorLH05, expectedJenisPengeluaran, nomorBA).run()
+    
+    console.log(`✅ Manually fixed ${nomorBA}: → "${expectedJenisPengeluaran}"`)
+    
+    return c.json({ 
+      success: true, 
+      message: `Successfully updated ${nomorBA}`,
+      nomor_ba: nomorBA,
+      nomor_lh05: nomorLH05,
+      jenis_pengeluaran: expectedJenisPengeluaran
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Manual fix error:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to fix transaction' 
     }, 500)
   }
 })
