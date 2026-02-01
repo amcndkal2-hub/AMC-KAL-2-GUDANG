@@ -2516,6 +2516,11 @@ app.get('/dashboard/resume', (c) => {
   return c.html(getDashboardResumeHTML())
 })
 
+// Dashboard Pengadaan (PROTECTED - auth required)
+app.get('/dashboard/pengadaan', (c) => {
+  return c.html(getDashboardPengadaanHTML())
+})
+
 // HTML Templates
 function getDashboardMainHTML() {
   return `
@@ -2559,6 +2564,9 @@ function getDashboardMainHTML() {
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
@@ -2745,6 +2753,9 @@ function getInputFormHTML() {
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
@@ -3443,6 +3454,9 @@ function getDashboardStokHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
+                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
+                    </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
@@ -3609,6 +3623,9 @@ function getDashboardUmurHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
+                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
+                    </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
@@ -3759,6 +3776,9 @@ function getDashboardMutasiHTML() {
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
@@ -4477,6 +4497,9 @@ function getDashboardKebutuhanMaterialHTML() {
                             </a>
                         </div>
                     </div>
+                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
+                    </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
@@ -4673,6 +4696,9 @@ function getDashboardGangguanHTML() {
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
@@ -5384,6 +5410,365 @@ function getDashboardCreateRABHTML() {
     </body>
     </html>
   `
+}
+
+function getDashboardPengadaanHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard Pengadaan</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="/static/url-redirect.js"></script>
+    </head>
+    <body class="bg-gray-50">
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-plus mr-1"></i>Input Material
+                    </a>
+                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/analytics" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Analytics
+                    </a>
+                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/pengadaan" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
+                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
+                    </a>
+                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
+                    </a>
+                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    </a>
+                    <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto p-6">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                    <i class="fas fa-shopping-cart text-blue-600 mr-3"></i>
+                    Dashboard Pengadaan
+                </h1>
+                <p class="text-gray-600">Monitoring dan Tracking Pengadaan Material</p>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-filter text-blue-600 mr-2"></i>
+                    Filter Data
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Mitra/Vendor</label>
+                        <select id="filterMitra" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Mitra</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Bidang</label>
+                        <select id="filterBidang" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Bidang</option>
+                            <option value="1. Distribusi">1. Distribusi</option>
+                            <option value="2. Pelayanan Pelanggan">2. Pelayanan Pelanggan</option>
+                            <option value="3. Transmisi">3. Transmisi</option>
+                            <option value="4. Beyond kWh">4. Beyond kWh</option>
+                            <option value="5. Pembangkit">5. Pembangkit</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="applyFilter()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold">
+                            <i class="fas fa-search mr-2"></i>Terapkan Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Total Pengadaan</p>
+                            <h3 id="totalPengadaan" class="text-3xl font-bold text-blue-600">-</h3>
+                        </div>
+                        <div class="bg-blue-100 p-4 rounded-full">
+                            <i class="fas fa-shopping-cart text-3xl text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Total Nilai</p>
+                            <h3 id="totalNilai" class="text-2xl font-bold text-green-600">-</h3>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded-full">
+                            <i class="fas fa-money-bill-wave text-3xl text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Total Mitra</p>
+                            <h3 id="totalMitra" class="text-3xl font-bold text-purple-600">-</h3>
+                        </div>
+                        <div class="bg-purple-100 p-4 rounded-full">
+                            <i class="fas fa-handshake text-3xl text-purple-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-blue-600 text-white">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold">No. Kontrak</th>
+                                <th class="px-6 py-4 text-right text-sm font-semibold">Total (Rp)</th>
+                                <th class="px-6 py-4 text-center text-sm font-semibold">Berkas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pengadaanTable">
+                            <tr>
+                                <td colspan="3" class="px-6 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                                    <p>Memuat data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="mt-6 flex justify-center"></div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script>
+            const PENGADAAN_URL = 'https://script.google.com/macros/s/AKfycbxDcBjksuaGABwPxQ3kQTyVrGskxH_wvqsMlga42ycgThYvqrUr2WoOa8ZxK9Qx58BMBg/exec';
+            let allData = [];
+            let filteredData = [];
+            let currentPage = 1;
+            const itemsPerPage = 20;
+
+            // Load data on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                loadPengadaanData();
+            });
+
+            async function loadPengadaanData() {
+                try {
+                    const response = await fetch(PENGADAAN_URL);
+                    allData = await response.json();
+                    filteredData = allData;
+                    
+                    // Populate mitra dropdown
+                    populateMitraDropdown();
+                    
+                    // Update summary
+                    updateSummary();
+                    
+                    // Display table
+                    displayTable();
+                    
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    document.getElementById('pengadaanTable').innerHTML = \`
+                        <tr>
+                            <td colspan="3" class="px-6 py-8 text-center text-red-500">
+                                <i class="fas fa-exclamation-triangle text-3xl mb-3"></i>
+                                <p>Gagal memuat data pengadaan</p>
+                            </td>
+                        </tr>
+                    \`;
+                }
+            }
+
+            function populateMitraDropdown() {
+                const mitraSet = new Set();
+                allData.forEach(item => {
+                    if (item.mitra) mitraSet.add(item.mitra);
+                });
+                
+                const mitraSelect = document.getElementById('filterMitra');
+                const sortedMitra = Array.from(mitraSet).sort();
+                
+                sortedMitra.forEach(mitra => {
+                    const option = document.createElement('option');
+                    option.value = mitra;
+                    option.textContent = mitra;
+                    mitraSelect.appendChild(option);
+                });
+            }
+
+            function applyFilter() {
+                const mitraFilter = document.getElementById('filterMitra').value;
+                const bidangFilter = document.getElementById('filterBidang').value;
+                
+                filteredData = allData.filter(item => {
+                    const matchMitra = !mitraFilter || item.mitra === mitraFilter;
+                    const matchBidang = !bidangFilter || item.bidang === bidangFilter;
+                    return matchMitra && matchBidang;
+                });
+                
+                currentPage = 1;
+                updateSummary();
+                displayTable();
+            }
+
+            function updateSummary() {
+                // Total pengadaan
+                document.getElementById('totalPengadaan').textContent = filteredData.length;
+                
+                // Total nilai
+                const totalNilai = filteredData.reduce((sum, item) => {
+                    const nilai = parseFloat(item['rp._total_+_ppn']) || 0;
+                    return sum + nilai;
+                }, 0);
+                document.getElementById('totalNilai').textContent = formatRupiah(totalNilai);
+                
+                // Total mitra
+                const uniqueMitra = new Set(filteredData.map(item => item.mitra));
+                document.getElementById('totalMitra').textContent = uniqueMitra.size;
+            }
+
+            function displayTable() {
+                const start = (currentPage - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                const pageData = filteredData.slice(start, end);
+                
+                const tbody = document.getElementById('pengadaanTable');
+                
+                if (pageData.length === 0) {
+                    tbody.innerHTML = \`
+                        <tr>
+                            <td colspan="3" class="px-6 py-8 text-center text-gray-500">
+                                <i class="fas fa-inbox text-3xl mb-3"></i>
+                                <p>Tidak ada data pengadaan</p>
+                            </td>
+                        </tr>
+                    \`;
+                    return;
+                }
+                
+                tbody.innerHTML = pageData.map(item => \`
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm text-gray-800">
+                            \${item.no_kontrak_pekerjaan || '-'}
+                        </td>
+                        <td class="px-6 py-4 text-right text-sm font-semibold text-gray-800">
+                            \${formatRupiah(item['rp._total_+_ppn'] || 0)}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            \${item.link_berkas_tagihan ? 
+                                \`<a href="\${item.link_berkas_tagihan}" target="_blank" 
+                                   class="inline-block bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition">
+                                    <i class="fas fa-file-pdf text-lg"></i>
+                                </a>\` 
+                                : '<span class="text-gray-400">-</span>'}
+                        </td>
+                    </tr>
+                \`).join('');
+                
+                // Update pagination
+                displayPagination();
+            }
+
+            function displayPagination() {
+                const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+                const paginationDiv = document.getElementById('pagination');
+                
+                if (totalPages <= 1) {
+                    paginationDiv.innerHTML = '';
+                    return;
+                }
+                
+                let html = '<div class="flex space-x-2">';
+                
+                // Previous button
+                html += \`
+                    <button onclick="changePage(\${currentPage - 1})" 
+                            \${currentPage === 1 ? 'disabled' : ''}
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                \`;
+                
+                // Page numbers
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                        html += \`
+                            <button onclick="changePage(\${i})" 
+                                    class="px-4 py-2 \${i === currentPage ? 'bg-blue-800' : 'bg-blue-600'} text-white rounded-lg hover:bg-blue-700 font-semibold">
+                                \${i}
+                            </button>
+                        \`;
+                    } else if (i === currentPage - 3 || i === currentPage + 3) {
+                        html += '<span class="px-2 py-2 text-gray-600">...</span>';
+                    }
+                }
+                
+                // Next button
+                html += \`
+                    <button onclick="changePage(\${currentPage + 1})" 
+                            \${currentPage === totalPages ? 'disabled' : ''}
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                \`;
+                
+                html += '</div>';
+                paginationDiv.innerHTML = html;
+            }
+
+            function changePage(page) {
+                const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+                if (page < 1 || page > totalPages) return;
+                currentPage = page;
+                displayTable();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            function formatRupiah(number) {
+                const num = parseFloat(number) || 0;
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(num);
+            }
+        </script>
+    </body>
+    </html>
+  `;
 }
 
 export default app
