@@ -5901,7 +5901,13 @@ app.post('/api/fix-lh05-jenis-pengeluaran', async (c) => {
     
     console.log('🔧 Starting LH05 jenis_pengeluaran fix...')
     
-    // Get all transactions with from_lh05 field
+    let fixedCount = 0
+    let skippedCount = 0
+    let detectedCount = 0
+    
+    // ========================================
+    // STEP 1: Fix transactions with from_lh05 already set
+    // ========================================
     let transactionsWithLH05: any[] = []
     
     try {
@@ -5917,60 +5923,121 @@ app.post('/api/fix-lh05-jenis-pengeluaran', async (c) => {
       
       transactionsWithLH05 = result.results || []
     } catch (queryError) {
-      console.log('⚠️ from_lh05 column not found, no LH05 transactions to fix')
-      return c.json({ 
-        success: true, 
-        message: 'No from_lh05 column - nothing to fix',
-        fixed: 0 
-      })
+      console.log('⚠️ from_lh05 column not found, skipping explicit from_lh05 fix')
     }
     
-    if (transactionsWithLH05.length === 0) {
-      return c.json({ 
-        success: true, 
-        message: 'No LH05 transactions found',
-        fixed: 0 
-      })
-    }
-    
-    console.log(`📦 Found ${transactionsWithLH05.length} transactions from LH05`)
-    
-    let fixedCount = 0
-    let skippedCount = 0
-    
-    // Update each transaction
-    for (const tx of transactionsWithLH05) {
-      const expectedJenisPengeluaran = `LH05 - ${tx.from_lh05}`
+    if (transactionsWithLH05.length > 0) {
+      console.log(`📦 Found ${transactionsWithLH05.length} transactions with from_lh05 field`)
       
-      // Skip if already correct
-      if (tx.jenis_pengeluaran === expectedJenisPengeluaran) {
-        console.log(`✅ ${tx.nomor_ba} already correct, skipping`)
-        skippedCount++
-        continue
-      }
-      
-      try {
-        await env.DB.prepare(`
-          UPDATE transactions 
-          SET jenis_pengeluaran = ?
-          WHERE id = ?
-        `).bind(expectedJenisPengeluaran, tx.id).run()
+      // Update each transaction
+      for (const tx of transactionsWithLH05) {
+        const expectedJenisPengeluaran = `LH05 - ${tx.from_lh05}`
         
-        console.log(`✅ Fixed ${tx.nomor_ba}: "${tx.jenis_pengeluaran}" → "${expectedJenisPengeluaran}"`)
-        fixedCount++
-      } catch (updateError) {
-        console.error(`❌ Failed to update ${tx.nomor_ba}:`, updateError)
+        // Skip if already correct
+        if (tx.jenis_pengeluaran === expectedJenisPengeluaran) {
+          console.log(`✅ ${tx.nomor_ba} already correct, skipping`)
+          skippedCount++
+          continue
+        }
+        
+        try {
+          await env.DB.prepare(`
+            UPDATE transactions 
+            SET jenis_pengeluaran = ?
+            WHERE id = ?
+          `).bind(expectedJenisPengeluaran, tx.id).run()
+          
+          console.log(`✅ Fixed ${tx.nomor_ba}: "${tx.jenis_pengeluaran}" → "${expectedJenisPengeluaran}"`)
+          fixedCount++
+        } catch (updateError) {
+          console.error(`❌ Failed to update ${tx.nomor_ba}:`, updateError)
+        }
       }
     }
     
-    console.log(`🎉 Fix complete! Fixed: ${fixedCount}, Skipped: ${skippedCount}`)
+    // ========================================
+    // STEP 2: Detect and fix transactions WITHOUT from_lh05 
+    // (by matching materials with material_gangguan)
+    // ========================================
+    console.log('🔍 Detecting LH05 transactions by materials...')
+    
+    try {
+      // Get all transactions without from_lh05 or with generic jenis_pengeluaran
+      const candidateTransactions = await env.DB.prepare(`
+        SELECT DISTINCT
+          t.id,
+          t.nomor_ba,
+          t.from_lh05,
+          t.jenis_pengeluaran,
+          t.jenis_transaksi
+        FROM transactions t
+        WHERE (t.from_lh05 IS NULL OR t.from_lh05 = '')
+          AND t.jenis_transaksi LIKE '%Keluar%'
+      `).all()
+      
+      const candidates = candidateTransactions.results || []
+      console.log(`🔎 Found ${candidates.length} candidate transactions to check`)
+      
+      for (const tx of candidates) {
+        // Get materials for this transaction
+        const txMaterials = await env.DB.prepare(`
+          SELECT part_number, mesin
+          FROM materials
+          WHERE transaction_id = ?
+        `).bind(tx.id).all()
+        
+        if (!txMaterials.results || txMaterials.results.length === 0) {
+          continue
+        }
+        
+        // Try to match materials with material_gangguan
+        for (const mat of txMaterials.results) {
+          const matchedGangguan = await env.DB.prepare(`
+            SELECT DISTINCT g.nomor_lh05
+            FROM material_gangguan mg
+            JOIN gangguan g ON mg.gangguan_id = g.id
+            WHERE mg.part_number = ?
+              AND (mg.mesin = ? OR ? IS NULL)
+            LIMIT 1
+          `).bind(mat.part_number, mat.mesin, mat.mesin).first()
+          
+          if (matchedGangguan && matchedGangguan.nomor_lh05) {
+            const nomorLH05 = matchedGangguan.nomor_lh05
+            const expectedJenisPengeluaran = `LH05 - ${nomorLH05}`
+            
+            console.log(`🎯 Detected ${tx.nomor_ba} from LH05: ${nomorLH05}`)
+            
+            // Update both from_lh05 and jenis_pengeluaran
+            try {
+              await env.DB.prepare(`
+                UPDATE transactions 
+                SET from_lh05 = ?,
+                    jenis_pengeluaran = ?
+                WHERE id = ?
+              `).bind(nomorLH05, expectedJenisPengeluaran, tx.id).run()
+              
+              console.log(`✅ Fixed (detected) ${tx.nomor_ba}: → "${expectedJenisPengeluaran}"`)
+              detectedCount++
+              break // Found LH05, move to next transaction
+            } catch (updateError) {
+              console.error(`❌ Failed to update detected ${tx.nomor_ba}:`, updateError)
+            }
+          }
+        }
+      }
+    } catch (detectionError) {
+      console.error('⚠️ Detection error:', detectionError)
+    }
+    
+    console.log(`🎉 Fix complete! Fixed (explicit): ${fixedCount}, Detected & Fixed: ${detectedCount}, Skipped: ${skippedCount}`)
     
     return c.json({ 
       success: true, 
-      message: `Fixed ${fixedCount} transactions, skipped ${skippedCount} (already correct)`,
+      message: `Fixed ${fixedCount + detectedCount} transactions total (${fixedCount} with from_lh05, ${detectedCount} detected by materials). Skipped ${skippedCount} (already correct)`,
       fixed: fixedCount,
+      detected: detectedCount,
       skipped: skippedCount,
-      total: transactionsWithLH05.length
+      total: transactionsWithLH05.length + detectedCount
     })
     
   } catch (error: any) {
