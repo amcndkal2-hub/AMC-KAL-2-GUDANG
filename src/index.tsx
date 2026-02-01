@@ -2768,7 +2768,7 @@ function getInputFormHTML() {
         </nav>
 
         <div class="min-h-screen py-8 px-4">
-            <div class="max-w-5xl mx-auto">
+            <div class="max-w-5xl mx-auto" id="inputFormContent">
                 <!-- Header -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h1 class="text-3xl font-bold text-gray-800 mb-2">
@@ -3342,6 +3342,7 @@ function getInputFormHTML() {
         </div>
 
         <script src="/static/auth-check.js"></script>
+        <script src="/static/check-input-permission.js"></script>
         <script src="/static/app-material-list.js"></script>
         <script src="/static/form-lh05-input.js"></script>
         <script src="/static/app.js"></script>
