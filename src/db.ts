@@ -365,7 +365,7 @@ export async function getAllGangguan(db: D1Database) {
 
 export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
   try {
-    // Try with sn_mesin column first
+    // Try with BOTH sn_mesin AND is_issued columns (if migration applied)
     try {
       const { results } = await db.prepare(`
         SELECT 
@@ -398,10 +398,43 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
         materials: JSON.parse(g.materials).filter((m: any) => m.id !== null)
       }
     } catch (columnError: any) {
-      // Fallback: Query without sn_mesin if column doesn't exist
-      console.log('⚠️ sn_mesin column not found, using fallback query')
-      const { results } = await db.prepare(`
-        SELECT 
+      // Fallback 1: Try without is_issued but with sn_mesin
+      console.log('⚠️ is_issued column not found, trying without it')
+      try {
+        const { results } = await db.prepare(`
+          SELECT 
+            g.*,
+            json_group_array(
+              json_object(
+                'id', mg.id,
+                'partNumber', mg.part_number,
+                'material', mg.material,
+                'mesin', mg.mesin,
+                'jumlah', mg.jumlah,
+                'status', mg.status,
+                'unitULD', mg.unit_uld,
+                'lokasiTujuan', mg.lokasi_tujuan,
+                'snMesin', mg.sn_mesin
+              )
+            ) as materials
+          FROM gangguan g
+          LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+          WHERE g.nomor_lh05 = ?
+          GROUP BY g.id
+        `).bind(nomorLH05).all()
+
+        if (results.length === 0) return null
+
+        const g: any = results[0]
+        return {
+          ...g,
+          materials: JSON.parse(g.materials).filter((m: any) => m.id !== null)
+        }
+      } catch (snMesinError: any) {
+        // Fallback 2: Query without BOTH sn_mesin AND is_issued
+        console.log('⚠️ sn_mesin column also not found, using basic query')
+        const { results } = await db.prepare(`
+          SELECT 
           g.*,
           json_group_array(
             json_object(
@@ -416,8 +449,7 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
             )
           ) as materials
         FROM gangguan g
-        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id 
-          AND (mg.is_issued IS NULL OR mg.is_issued = 0)
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
         WHERE g.nomor_lh05 = ?
         GROUP BY g.id
       `).bind(nomorLH05).all()
@@ -442,6 +474,7 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
       return {
         ...g,
         materials: parsedMaterials
+      }
       }
     }
   } catch (error: any) {
