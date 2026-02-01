@@ -7,6 +7,7 @@ let selectedLH05 = null;
 let lh05Materials = [];
 let materialsDataLH05 = [];
 let materialIdCounterLH05 = 0;
+let addedMaterialIds = new Set(); // Track material_gangguan.id yang sudah di-add
 
 // Signature pads for LH05 tab
 let signaturePadPemeriksaLH05 = null;
@@ -113,10 +114,13 @@ function renderLH05MaterialsList() {
     listContainer.innerHTML = lh05Materials.map((mat, index) => {
         const isAvailable = mat.stok >= mat.jumlah;
         const isAlreadySent = mat.alreadySent || false;
-        const isDisabled = mat.stok === 0 || isAlreadySent;
+        const isAlreadyAdded = addedMaterialIds.has(mat.id); // Check if already added to preview
+        const isDisabled = mat.stok === 0 || isAlreadySent || isAlreadyAdded;
         
         let stockBadge = '';
-        if (isAlreadySent) {
+        if (isAlreadyAdded) {
+            stockBadge = '<span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded"><i class="fas fa-check-circle mr-1"></i>SUDAH DITAMBAHKAN</span>';
+        } else if (isAlreadySent) {
             stockBadge = '<span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded"><i class="fas fa-check-circle mr-1"></i>SUDAH TERKIRIM</span>';
         } else if (mat.stok === 0) {
             stockBadge = '<span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded">STOK HABIS</span>';
@@ -152,9 +156,10 @@ function renderLH05MaterialsList() {
                             <div><span class="font-medium">Jumlah Diminta:</span> <strong>${mat.jumlah}</strong></div>
                             <div><span class="font-medium">Stok Tersedia:</span> <strong class="${mat.stok === 0 ? 'text-red-600' : mat.stok < mat.jumlah ? 'text-yellow-600' : 'text-green-600'}">${mat.stok}</strong></div>
                         </div>
+                        ${isAlreadyAdded ? '<p class="mt-2 text-xs text-blue-600"><i class="fas fa-check-circle mr-1"></i>Material ini sudah ditambahkan ke preview table</p>' : ''}
                         ${isAlreadySent ? '<p class="mt-2 text-xs text-purple-600"><i class="fas fa-check-circle mr-1"></i>Material ini sudah dikirim sebelumnya dan tidak dapat dipilih lagi</p>' : ''}
-                        ${isDisabled && !isAlreadySent ? '<p class="mt-2 text-xs text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>Material ini tidak dapat dipilih karena stok habis</p>' : ''}
-                        ${!isAvailable && mat.stok > 0 && !isAlreadySent ? '<p class="mt-2 text-xs text-yellow-600"><i class="fas fa-exclamation-triangle mr-1"></i>Stok tidak mencukupi permintaan</p>' : ''}
+                        ${isDisabled && !isAlreadySent && !isAlreadyAdded ? '<p class="mt-2 text-xs text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>Material ini tidak dapat dipilih karena stok habis</p>' : ''}
+                        ${!isAvailable && mat.stok > 0 && !isAlreadySent && !isAlreadyAdded ? '<p class="mt-2 text-xs text-yellow-600"><i class="fas fa-exclamation-triangle mr-1"></i>Stok tidak mencukupi permintaan</p>' : ''}
                     </div>
                 </div>
             </div>
@@ -181,10 +186,20 @@ function addSelectedLH05Materials() {
     }
     
     let addedCount = 0;
+    let skippedCount = 0;
     
     checkboxes.forEach(checkbox => {
         const index = parseInt(checkbox.dataset.index);
         const mat = lh05Materials[index];
+        
+        // Check if material already added (prevent duplicate)
+        if (addedMaterialIds.has(mat.id)) {
+            console.warn(`⚠️ Material ${mat.partNumber} sudah ditambahkan sebelumnya, skip!`);
+            checkbox.checked = false; // Uncheck
+            checkbox.disabled = true; // Disable untuk prevent re-add
+            skippedCount++;
+            return;
+        }
         
         // Add to materials data
         materialIdCounterLH05++;
@@ -201,18 +216,27 @@ function addSelectedLH05Materials() {
         };
         
         materialsDataLH05.push(materialData);
+        addedMaterialIds.add(mat.id); // Track as added
+        
+        // Disable checkbox after adding
+        checkbox.checked = false;
+        checkbox.disabled = true;
+        
         addedCount++;
     });
     
     // Update preview table
     updateMaterialPreviewTableLH05();
-    
-    // Clear checkboxes
-    checkboxes.forEach(cb => cb.checked = false);
     updateSelectedCount();
     
     // Show success message
-    showTemporaryMessageLH05(`✅ ${addedCount} material berhasil ditambahkan ke transaksi!`, 'success');
+    if (addedCount > 0) {
+        showTemporaryMessageLH05(`✅ ${addedCount} material berhasil ditambahkan ke transaksi!`, 'success');
+    }
+    
+    if (skippedCount > 0) {
+        showTemporaryMessageLH05(`⚠️ ${skippedCount} material dilewati (sudah ditambahkan sebelumnya)`, 'info');
+    }
 }
 
 // Update preview table for LH05 materials
@@ -256,9 +280,28 @@ function updateMaterialPreviewTableLH05() {
 
 // Remove material from preview
 function removeMaterialLH05(materialId) {
+    // Find material data before removing
+    const materialToRemove = materialsDataLH05.find(m => m.id === materialId);
+    
+    if (materialToRemove) {
+        // Remove from added tracking
+        addedMaterialIds.delete(materialToRemove.materialGangguanId);
+        
+        // Re-enable checkbox in materials list
+        const materialIndex = lh05Materials.findIndex(mat => mat.id === materialToRemove.materialGangguanId);
+        if (materialIndex !== -1) {
+            const checkbox = document.querySelector(`input[data-index="${materialIndex}"]`);
+            if (checkbox) {
+                checkbox.disabled = false; // Re-enable untuk bisa dipilih lagi
+                console.log(`✅ Re-enabled checkbox for ${materialToRemove.partNumber}`);
+            }
+        }
+    }
+    
+    // Remove from data array
     materialsDataLH05 = materialsDataLH05.filter(m => m.id !== materialId);
     updateMaterialPreviewTableLH05();
-    showTemporaryMessageLH05('Material berhasil dihapus', 'info');
+    showTemporaryMessageLH05('Material berhasil dihapus dari transaksi', 'info');
 }
 
 // Setup signature pads for LH05 tab
@@ -415,6 +458,7 @@ function resetFormLH05() {
     materialIdCounterLH05 = 0;
     selectedLH05 = null;
     lh05Materials = [];
+    addedMaterialIds.clear(); // Clear tracking set
     
     // Hide containers
     document.getElementById('lh05Info').classList.add('hidden');
