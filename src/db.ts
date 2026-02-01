@@ -384,7 +384,8 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
             )
           ) as materials
         FROM gangguan g
-        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id 
+          AND (mg.is_issued IS NULL OR mg.is_issued = 0)
         WHERE g.nomor_lh05 = ?
         GROUP BY g.id
       `).bind(nomorLH05).all()
@@ -394,7 +395,7 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
       const g: any = results[0]
       return {
         ...g,
-        materials: JSON.parse(g.materials)
+        materials: JSON.parse(g.materials).filter((m: any) => m.id !== null)
       }
     } catch (columnError: any) {
       // Fallback: Query without sn_mesin if column doesn't exist
@@ -415,7 +416,8 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
             )
           ) as materials
         FROM gangguan g
-        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id 
+          AND (mg.is_issued IS NULL OR mg.is_issued = 0)
         WHERE g.nomor_lh05 = ?
         GROUP BY g.id
       `).bind(nomorLH05).all()
@@ -423,7 +425,7 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
       if (results.length === 0) return null
 
       const g: any = results[0]
-      const materials = JSON.parse(g.materials)
+      const materials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
       
       // Parse S/N Mesin from status field (format: "SN:serial_number")
       const parsedMaterials = materials.map((mat: any) => {
