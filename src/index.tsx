@@ -2540,34 +2540,34 @@ function getDashboardMainHTML() {
                     <span class="text-xl font-bold">Dashboard Utama</span>
                 </div>
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/analytics" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                    <a href="/dashboard/analytics" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800 text-sm">
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-sm">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
                 </div>
@@ -2730,31 +2730,31 @@ function getInputFormHTML() {
                     <span class="text-xl font-bold">Sistem Manajemen Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/main" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                    <a href="/dashboard/main" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800 text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/analytics" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/analytics" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
@@ -3434,28 +3434,28 @@ function getDashboardStokHTML() {
                     <span class="text-xl font-bold">Dashboard Stok Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                    <a href="/dashboard/stok" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800 text-sm">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
@@ -3604,28 +3604,28 @@ function getDashboardUmurHTML() {
                     <span class="text-xl font-bold">Dashboard Umur Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                    <a href="/dashboard/umur" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800 text-sm">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
@@ -3759,28 +3759,28 @@ function getDashboardMutasiHTML() {
                     <span class="text-xl font-bold">Dashboard Mutasi Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800 text-sm">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
@@ -3935,25 +3935,25 @@ function getFormGangguanHTML() {
                     <span class="text-xl font-bold">Form Gangguan dan Permintaan Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                    <a href="/form-gangguan" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800 text-sm">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/analytics" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/analytics" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
                 </div>
@@ -4469,22 +4469,22 @@ function getDashboardKebutuhanMaterialHTML() {
                     <span class="text-xl font-bold">Dashboard Kebutuhan Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
                     <!-- Dropdown Kebutuhan -->
@@ -4505,7 +4505,7 @@ function getDashboardKebutuhanMaterialHTML() {
                             </a>
                         </div>
                     </div>
-                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
@@ -4685,28 +4685,28 @@ function getDashboardGangguanHTML() {
                     <span class="text-xl font-bold">Dashboard Gangguan dan Permintaan Material</span>
                 </div>
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/umur" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/mutasi" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exchange-alt mr-1"></i>Mutasi
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800">
+                    <a href="/dashboard/gangguan" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800 text-sm">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/resume" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
@@ -4876,28 +4876,30 @@ function getDashboardResumeHTML() {
     </head>
     <body class="bg-gray-50">
         <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <i class="fas fa-chart-line text-2xl"></i>
-                    <span class="text-xl font-bold">Dashboard Resume Material</span>
-                </div>
+            <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/form-gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/analytics" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Analytics
+                    </a>
+                    <a href="/dashboard/stok" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/kebutuhan-material" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/resume" class="px-3 py-2 bg-blue-800 rounded">
+                    <a href="/dashboard/resume" class="px-3 py-2 bg-blue-800 rounded text-sm">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4">
+                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-sm">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
                 </div>
@@ -5560,10 +5562,10 @@ function getInputFormV2HTML() {
                     <span class="bg-yellow-500 text-xs px-2 py-1 rounded">NEW</span>
                 </div>
                 <div class="flex space-x-2">
-                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-arrow-left mr-1"></i>Kembali ke V1
                     </a>
-                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded">
+                    <a href="/dashboard/main" class="px-3 py-2 hover:bg-blue-700 rounded text-sm">
                         <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded">
