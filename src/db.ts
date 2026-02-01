@@ -13,7 +13,7 @@ export async function saveTransaction(db: D1Database, data: any) {
   try {
     let transactionId
     
-    // Try inserting with from_lh05 column first
+    // Try inserting with BOTH jenis_pengeluaran AND from_lh05 columns
     try {
       const txResult = await db.prepare(`
         INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, jenis_pengeluaran, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima, from_lh05)
@@ -22,7 +22,7 @@ export async function saveTransaction(db: D1Database, data: any) {
         data.nomorBA,
         data.tanggal,
         data.jenisTransaksi,
-        data.jenisPengeluaran || null,  // ✅ ADD jenisPengeluaran
+        data.jenisPengeluaran || null,
         data.lokasiAsal,
         data.lokasiTujuan,
         data.pemeriksa,
@@ -33,11 +33,61 @@ export async function saveTransaction(db: D1Database, data: any) {
       ).run()
       
       transactionId = txResult.meta.last_row_id
-      console.log('✅ Transaction saved with from_lh05 column')
+      console.log('✅ Transaction saved with jenis_pengeluaran + from_lh05 columns')
     } catch (columnError: any) {
-      // Fallback: Insert without from_lh05 if column doesn't exist
-      if (columnError.message && columnError.message.includes('from_lh05')) {
-        console.log('⚠️ from_lh05 column not found, using fallback insert')
+      console.log('⚠️ Column error, trying fallbacks...', columnError.message)
+      
+      // Fallback Level 1: Try with from_lh05 only (no jenis_pengeluaran)
+      if (columnError.message && columnError.message.includes('jenis_pengeluaran')) {
+        console.log('⚠️ jenis_pengeluaran column not found, trying with from_lh05 only')
+        try {
+          const txResult = await db.prepare(`
+            INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima, from_lh05)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            data.nomorBA,
+            data.tanggal,
+            data.jenisTransaksi,
+            data.lokasiAsal,
+            data.lokasiTujuan,
+            data.pemeriksa,
+            data.penerima,
+            data.ttdPemeriksa,
+            data.ttdPenerima,
+            data.fromLH05 || null
+          ).run()
+          
+          transactionId = txResult.meta.last_row_id
+          console.log('✅ Transaction saved with from_lh05 only (no jenis_pengeluaran)')
+        } catch (secondError: any) {
+          // Fallback Level 2: No jenis_pengeluaran, no from_lh05 (original schema)
+          if (secondError.message && secondError.message.includes('from_lh05')) {
+            console.log('⚠️ from_lh05 also not found, using original schema')
+            const txResult = await db.prepare(`
+              INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(
+              data.nomorBA,
+              data.tanggal,
+              data.jenisTransaksi,
+              data.lokasiAsal,
+              data.lokasiTujuan,
+              data.pemeriksa,
+              data.penerima,
+              data.ttdPemeriksa,
+              data.ttdPenerima
+            ).run()
+            
+            transactionId = txResult.meta.last_row_id
+            console.log('✅ Transaction saved with original schema (no extra columns)')
+          } else {
+            throw secondError
+          }
+        }
+      } 
+      // Fallback for from_lh05 missing but jenis_pengeluaran exists
+      else if (columnError.message && columnError.message.includes('from_lh05')) {
+        console.log('⚠️ from_lh05 column not found, using jenis_pengeluaran only')
         const txResult = await db.prepare(`
           INSERT INTO transactions (nomor_ba, tanggal, jenis_transaksi, jenis_pengeluaran, lokasi_asal, lokasi_tujuan, pemeriksa, penerima, ttd_pemeriksa, ttd_penerima)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -45,7 +95,7 @@ export async function saveTransaction(db: D1Database, data: any) {
           data.nomorBA,
           data.tanggal,
           data.jenisTransaksi,
-          data.jenisPengeluaran || null,  // ✅ ADD jenisPengeluaran
+          data.jenisPengeluaran || null,
           data.lokasiAsal,
           data.lokasiTujuan,
           data.pemeriksa,
@@ -55,7 +105,7 @@ export async function saveTransaction(db: D1Database, data: any) {
         ).run()
         
         transactionId = txResult.meta.last_row_id
-        console.log('✅ Transaction saved without from_lh05 column (fallback)')
+        console.log('✅ Transaction saved with jenis_pengeluaran only (no from_lh05)')
       } else {
         throw columnError
       }
