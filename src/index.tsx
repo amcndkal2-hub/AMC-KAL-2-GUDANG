@@ -5449,9 +5449,6 @@ function getDashboardPengadaanHTML() {
                     <a href="/dashboard/pengadaan" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
-                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
-                    </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
