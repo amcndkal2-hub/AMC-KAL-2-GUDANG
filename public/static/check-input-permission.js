@@ -1,6 +1,7 @@
 // =============================================
-// Check Input Manual Permission
-// Only user "Andalcekatan" can access Input Manual
+// Check Input Manual Tab Permission
+// Only user "Andalcekatan" can access "Input Manual" tab
+// All users can access "Dari LH05" and "Input dari RAB" tabs
 // =============================================
 
 async function checkInputPermission() {
@@ -10,7 +11,7 @@ async function checkInputPermission() {
   const sessionToken = localStorage.getItem('sessionToken')
   const username = localStorage.getItem('username')
   
-  console.log('🔐 Checking Input Manual permission for:', username)
+  console.log('🔐 Checking Input Manual tab permission for:', username)
   
   if (!sessionToken || !username) {
     console.log('⏳ Waiting for auth-check.js to complete...')
@@ -19,77 +20,69 @@ async function checkInputPermission() {
     return false
   }
   
-  // Only "Andalcekatan" can access Input Manual
+  // Only "Andalcekatan" can access Input Manual tab
   const ALLOWED_USERS = ['Andalcekatan']
   
   if (!ALLOWED_USERS.includes(username)) {
-    console.log('❌ User not allowed to access Input Manual:', username)
-    showAccessDenied(username)
+    console.log('❌ User not allowed to access Input Manual tab:', username)
+    restrictManualTab(username)
     return false
   }
   
-  console.log('✅ User allowed to access Input Manual:', username)
+  console.log('✅ User allowed to access Input Manual tab:', username)
   return true
 }
 
-function showAccessDenied(currentUser) {
-  // Hide the form content
-  const formContent = document.getElementById('inputFormContent')
-  if (formContent) {
-    formContent.style.display = 'none'
+function restrictManualTab(currentUser) {
+  // Hide Input Manual tab button
+  const manualTabButton = document.getElementById('tabManual')
+  if (manualTabButton) {
+    manualTabButton.style.display = 'none'
+    console.log('🚫 Input Manual tab hidden for:', currentUser)
   }
   
-  // Show access denied message
-  const container = document.querySelector('.min-h-screen.py-8')
-  if (container) {
-    const deniedHTML = `
-      <div class="max-w-2xl mx-auto mt-20">
-        <div class="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-lg p-8">
-          <div class="flex items-center mb-4">
-            <i class="fas fa-exclamation-triangle text-red-500 text-4xl mr-4"></i>
-            <div>
-              <h2 class="text-2xl font-bold text-red-800">Akses Ditolak</h2>
-              <p class="text-red-600 mt-1">Access Denied</p>
-            </div>
-          </div>
-          
-          <div class="mt-6 p-4 bg-white rounded border border-red-200">
-            <p class="text-gray-700 mb-4">
-              <i class="fas fa-info-circle text-blue-500 mr-2"></i>
-              Halaman <strong>Input Manual</strong> hanya dapat diakses oleh:
+  // Hide Input Manual tab content
+  const manualTabContent = document.getElementById('tabContentManual')
+  if (manualTabContent) {
+    manualTabContent.style.display = 'none'
+  }
+  
+  // Switch to LH05 tab by default
+  const lh05TabButton = document.getElementById('tabLH05')
+  const lh05TabContent = document.getElementById('tabContentLH05')
+  
+  if (lh05TabButton && lh05TabContent) {
+    // Activate LH05 tab
+    lh05TabButton.classList.add('text-blue-600', 'border-blue-600')
+    lh05TabButton.classList.remove('text-gray-600', 'border-transparent')
+    lh05TabContent.classList.remove('hidden')
+    
+    console.log('✅ Switched to LH05 tab for:', currentUser)
+  }
+  
+  // Show info banner about restricted access
+  showInfoBanner(currentUser)
+}
+
+function showInfoBanner(currentUser) {
+  const headerSection = document.querySelector('.bg-white.rounded-lg.shadow-md.p-6.mb-6')
+  if (headerSection) {
+    const bannerHTML = `
+      <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 rounded p-4">
+        <div class="flex items-start">
+          <i class="fas fa-info-circle text-blue-500 text-xl mr-3 mt-1"></i>
+          <div class="flex-1">
+            <p class="text-sm text-gray-700">
+              <strong>Info:</strong> Tab <strong>"Input Manual"</strong> hanya tersedia untuk user <strong class="text-green-600">Andalcekatan</strong>.
             </p>
-            <ul class="list-disc list-inside ml-4 mb-4 text-gray-700">
-              <li class="mb-2">Username: <strong class="text-green-600">Andalcekatan</strong></li>
-            </ul>
-            <hr class="my-4 border-gray-200">
-            <p class="text-gray-600 text-sm">
-              <i class="fas fa-user text-gray-400 mr-2"></i>
-              User Anda saat ini: <strong class="text-blue-600">${currentUser || 'Unknown'}</strong>
+            <p class="text-xs text-gray-600 mt-1">
+              User Anda (<strong class="text-blue-600">${currentUser}</strong>) dapat menggunakan tab <strong>"Dari LH05"</strong> dan <strong>"Input dari RAB"</strong>.
             </p>
-            <p class="text-gray-500 text-xs mt-2">
-              Jika Anda memerlukan akses, silakan hubungi administrator sistem.
-            </p>
-          </div>
-          
-          <div class="mt-6 flex space-x-4">
-            <a href="/dashboard/analytics" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-center font-semibold">
-              <i class="fas fa-tachometer-alt mr-2"></i>Dashboard Analytics
-            </a>
-            <a href="/dashboard/stok" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg text-center font-semibold">
-              <i class="fas fa-chart-bar mr-2"></i>Dashboard Stok
-            </a>
-          </div>
-          
-          <div class="mt-4">
-            <button onclick="logout()" class="w-full bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold">
-              <i class="fas fa-sign-out-alt mr-2"></i>Logout
-            </button>
           </div>
         </div>
       </div>
     `
-    
-    container.innerHTML = deniedHTML
+    headerSection.insertAdjacentHTML('beforeend', bannerHTML)
   }
 }
 
