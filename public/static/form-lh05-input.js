@@ -469,3 +469,15 @@ function formatDate(dateString) {
 function getMaterialsDataLH05() {
     return materialsDataLH05;
 }
+
+// =====================================================
+// EXPOSE FUNCTIONS TO GLOBAL WINDOW SCOPE
+// (Required for inline onclick/onchange handlers)
+// =====================================================
+window.loadMaterialsFromLH05 = loadMaterialsFromLH05;
+window.addSelectedLH05Materials = addSelectedLH05Materials;
+window.updateSelectedCount = updateSelectedCount;
+window.removeMaterialLH05 = removeMaterialLH05;
+window.getMaterialsDataLH05 = getMaterialsDataLH05;
+window.clearSignatureLH05 = clearSignatureLH05;
+window.submitLH05Transaction = submitLH05Transaction;
