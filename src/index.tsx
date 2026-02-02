@@ -3933,13 +3933,14 @@ function getDashboardUmurHTML() {
                                 <th class="px-4 py-3 text-center">Target (Hari)</th>
                                 <th class="px-4 py-3 text-center">Sisa (Hari)</th>
                                 <th class="px-4 py-3 text-left">Lokasi</th>
+                                <th class="px-4 py-3 text-center">Total Penggantian</th>
                                 <th class="px-4 py-3 text-center">Status</th>
                                 <th class="px-4 py-3 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="ageTable">
                             <tr>
-                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="11" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
                                     <p>Memuat data...</p>
                                 </td>

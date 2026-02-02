@@ -73,7 +73,7 @@ function renderAgeTable() {
     if (ageData.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                <td colspan="11" class="px-4 py-8 text-center text-gray-500">
                     Tidak ada data material terpasang
                 </td>
             </tr>
@@ -125,6 +125,11 @@ function renderAgeTable() {
                     ${sisaHari >= 0 ? `${sisaHari} hari` : `Lewat ${Math.abs(sisaHari)} hari`}
                 </td>
                 <td class="px-4 py-3">${item.lokasi}</td>
+                <td class="px-4 py-3 text-center">
+                    <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">
+                        ${item.totalPenggantian || 0} kali
+                    </span>
+                </td>
                 <td class="px-4 py-3 text-center">
                     <span class="inline-block ${statusClass} px-3 py-1 rounded-full text-sm">
                         <i class="fas fa-${statusIcon} mr-1"></i>
