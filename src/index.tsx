@@ -1101,30 +1101,66 @@ app.get('/api/material-history/:snMesin/:partNumber', async (c) => {
     }
     
     // Query database for transaction history
-    const { results } = await env.DB.prepare(`
-      SELECT 
-        t.nomor_ba,
-        t.tanggal,
-        t.jenis_transaksi,
-        t.jenis_pengeluaran,
-        t.lokasi_asal,
-        t.lokasi_tujuan,
-        t.pemeriksa,
-        t.penerima,
-        t.from_lh05,
-        m.part_number,
-        m.jenis_barang,
-        m.material,
-        m.mesin,
-        m.jumlah,
-        m.status
-      FROM materials m
-      JOIN transactions t ON m.transaction_id = t.id
-      WHERE m.part_number = ?
-        AND (m.status = ? OR m.sn_mesin = ?)
-        AND t.jenis_transaksi LIKE '%Keluar%'
-      ORDER BY t.tanggal DESC, t.created_at DESC
-    `).bind(partNumber, snMesin, snMesin).all()
+    let results: any = []
+    
+    try {
+      // Try with status column first
+      const query = await env.DB.prepare(`
+        SELECT 
+          t.nomor_ba,
+          t.tanggal,
+          t.jenis_transaksi,
+          t.jenis_pengeluaran,
+          t.lokasi_asal,
+          t.lokasi_tujuan,
+          t.pemeriksa,
+          t.penerima,
+          t.from_lh05,
+          m.part_number,
+          m.jenis_barang,
+          m.material,
+          m.mesin,
+          m.jumlah,
+          m.status
+        FROM materials m
+        JOIN transactions t ON m.transaction_id = t.id
+        WHERE m.part_number = ?
+          AND m.status = ?
+          AND t.jenis_transaksi LIKE '%Keluar%'
+        ORDER BY t.tanggal DESC, t.created_at DESC
+      `).bind(partNumber, snMesin).all()
+      
+      results = query.results
+      console.log(`✅ Material history query with status: found ${results.length} records`)
+    } catch (err: any) {
+      // Fallback to sn_mesin column if status doesn't exist
+      console.log('⚠️ Falling back to sn_mesin column for history query')
+      const query = await env.DB.prepare(`
+        SELECT 
+          t.nomor_ba,
+          t.tanggal,
+          t.jenis_transaksi,
+          t.lokasi_asal,
+          t.lokasi_tujuan,
+          t.pemeriksa,
+          t.penerima,
+          m.part_number,
+          m.jenis_barang,
+          m.material,
+          m.mesin,
+          m.jumlah,
+          m.sn_mesin AS status
+        FROM materials m
+        JOIN transactions t ON m.transaction_id = t.id
+        WHERE m.part_number = ?
+          AND m.sn_mesin = ?
+          AND t.jenis_transaksi LIKE '%Keluar%'
+        ORDER BY t.tanggal DESC, t.created_at DESC
+      `).bind(partNumber, snMesin).all()
+      
+      results = query.results
+      console.log(`✅ Material history query with sn_mesin: found ${results.length} records`)
+    }
     
     const history = results.map((row: any) => ({
       nomorBA: row.nomor_ba,
