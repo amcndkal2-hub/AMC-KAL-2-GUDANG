@@ -1,0 +1,13 @@
+# Force no-cache for all JS files
+/*.js
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+
+# Force no-cache for all CSS files  
+/*.css
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+
+# Allow caching for static assets
+/static/*
+  Cache-Control: public, max-age=3600
