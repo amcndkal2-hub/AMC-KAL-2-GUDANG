@@ -1,37 +1,31 @@
 let ageData = [];
 
-// Wait for auth check before loading data
-document.addEventListener('DOMContentLoaded', async () => {
-    // Wait a bit for auth-check.js to complete
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Check if still on page (not redirected to login)
-    if (window.location.pathname.includes('/dashboard/umur')) {
-        await loadAgeData();
-        setupFilters();
-        populateLokasiFilter();
-    }
-});
-
 async function loadAgeData() {
+    const tbody = document.getElementById('ageTable');
+    
     try {
+        console.log('🔄 Loading age data...');
         const response = await fetch('/api/dashboard/umur-material');
+        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+        
         const data = await response.json();
         console.log('✅ Loaded age data:', data.ageData?.length || 0, 'items');
+        
         ageData = data.ageData || [];
         renderAgeTable();
     } catch (error) {
         console.error('❌ Failed to load age data:', error);
-        const tbody = document.getElementById('ageTable');
+        
         if (tbody) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="11" class="px-4 py-8 text-center text-red-500">
                         <i class="fas fa-exclamation-triangle text-3xl mb-3"></i>
-                        <p>Gagal memuat data: ${error.message}</p>
+                        <p class="font-semibold">Gagal memuat data</p>
+                        <p class="text-sm mt-2">${error.message}</p>
                         <button onclick="loadAgeData()" class="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                             <i class="fas fa-sync-alt mr-2"></i>Coba Lagi
                         </button>
@@ -40,6 +34,24 @@ async function loadAgeData() {
             `;
         }
     }
+}
+
+// Simple initialization - just wait for DOM then load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            loadAgeData();
+            setupFilters();
+            populateLokasiFilter();
+        }, 200);
+    });
+} else {
+    // DOM already loaded
+    setTimeout(() => {
+        loadAgeData();
+        setupFilters();
+        populateLokasiFilter();
+    }, 200);
 }
 
 async function populateLokasiFilter() {
