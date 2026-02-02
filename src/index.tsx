@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { serveStatic } from 'hono/cloudflare-workers'
 import * as DB from './db'
 
 // Type untuk Cloudflare bindings
@@ -34,9 +33,6 @@ app.use('/api/*', async (c, next) => {
   }
   await next()
 })
-
-// Serve static files
-app.use('/static/*', serveStatic({ root: './public' }))
 
 // Google Sheets URL
 const GOOGLE_SHEETS_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLgIOFG1fLbjU_hBye86rPyTSJVSulXqCHlMw0sZwtZF8_nolEs11-zQhoZRe5c6w7wtbJw6mpdvKj2eCYaTGjHNrSyikvMKzjxLpYViD0RUnHENi_x2IfD9_yOUwQI_BrBfJRKnu-N48Fr5AP7fQJYf22-v2zMV_SERF4SBUcciAcJVuPB7QaWtd5G2vOFMjmYTexNBC1z7YlnllCRSkoGbO3Axnat70P3mcKT4KpDjhBaH3_mDQgzn7BZKaANTLEx-QD-yGp0zbkMBoUMLsBIZqcFbfHe1vfe-bn68&lib=MRb65GHGTxo8fAtO2JZr8dy1qv6vbq6ko'
