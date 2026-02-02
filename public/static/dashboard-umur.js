@@ -9,11 +9,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadAgeData() {
     try {
         const response = await fetch('/api/dashboard/umur-material');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
-        ageData = data.ageData;
+        console.log('✅ Loaded age data:', data.ageData?.length || 0, 'items');
+        ageData = data.ageData || [];
         renderAgeTable();
     } catch (error) {
-        console.error('Failed to load age data:', error);
+        console.error('❌ Failed to load age data:', error);
+        const tbody = document.getElementById('ageTable');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="11" class="px-4 py-8 text-center text-red-500">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-3"></i>
+                        <p>Gagal memuat data: ${error.message}</p>
+                        <button onclick="loadAgeData()" class="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            <i class="fas fa-sync-alt mr-2"></i>Coba Lagi
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
     }
 }
 

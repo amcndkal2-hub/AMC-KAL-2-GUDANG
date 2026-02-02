@@ -110,7 +110,7 @@ function filterData() {
     
     if (nomorBA) {
         filtered = filtered.filter(tx => 
-            tx.nomor_ba.toLowerCase().includes(nomorBA)
+            (tx.nomor_ba || '').toLowerCase().includes(nomorBA)
         );
     }
     
@@ -124,7 +124,7 @@ function filterData() {
     
     if (unitTujuan) {
         filtered = filtered.filter(tx => 
-            tx.lokasi_tujuan.toLowerCase().includes(unitTujuan)
+            (tx.lokasi_tujuan || '').toLowerCase().includes(unitTujuan)
         );
     }
     
@@ -166,11 +166,11 @@ function renderMutasiTable(data = transactions) {
         }
         
         materials.forEach((mat, idx) => {
-            const jenisClass = tx.jenis_transaksi.includes('Masuk') 
+            const jenisClass = (tx.jenis_transaksi || '').includes('Masuk') 
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-red-100 text-red-800';
             
-            const jenisIcon = tx.jenis_transaksi.includes('Masuk') 
+            const jenisIcon = (tx.jenis_transaksi || '').includes('Masuk') 
                 ? 'arrow-down' 
                 : 'arrow-up';
             
