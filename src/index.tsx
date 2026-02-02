@@ -6253,6 +6253,161 @@ app.post('/api/fix-single-ba', async (c) => {
   }
 })
 
+// API: Fix S/N Mesin untuk BA lama yang berasal dari LH05
+app.post('/api/fix-sn-mesin/:nomorBA', async (c) => {
+  try {
+    const { env } = c
+    const nomorBA = c.req.param('nomorBA')
+    
+    if (!env.DB) {
+      return c.json({ error: 'Database not available' }, 500)
+    }
+    
+    console.log(`🔧 Fixing S/N Mesin for BA: ${nomorBA}`)
+    
+    // Get BA details with from_lh05
+    const ba = await env.DB.prepare(`
+      SELECT id, nomor_ba, from_lh05 
+      FROM transactions 
+      WHERE nomor_ba = ?
+    `).bind(nomorBA).first()
+    
+    if (!ba) {
+      return c.json({ error: 'BA not found' }, 404)
+    }
+    
+    if (!ba.from_lh05) {
+      return c.json({ 
+        error: 'BA ini bukan dari LH05',
+        message: 'Hanya BA yang berasal dari LH05 yang bisa di-fix' 
+      }, 400)
+    }
+    
+    console.log(`📋 BA ${nomorBA} berasal dari LH05: ${ba.from_lh05}`)
+    
+    // Get gangguan details with materials
+    const gangguan = await DB.getGangguanByLH05(env.DB, ba.from_lh05)
+    
+    if (!gangguan || !gangguan.materials || gangguan.materials.length === 0) {
+      return c.json({ 
+        error: 'LH05 tidak ditemukan atau tidak ada material',
+        lh05: ba.from_lh05 
+      }, 404)
+    }
+    
+    console.log(`📦 Found ${gangguan.materials.length} materials in LH05`)
+    
+    // Get BA materials yang perlu di-fix (with fallback for column names)
+    let baMaterials: any
+    try {
+      // Try with 'status' column first
+      baMaterials = await env.DB.prepare(`
+        SELECT id, part_number, material, mesin, status
+        FROM materials
+        WHERE transaction_id = ?
+      `).bind(ba.id).all()
+    } catch (statusError: any) {
+      // Fallback to 'sn_mesin' column if 'status' doesn't exist
+      console.log('⚠️ status column not found, using sn_mesin')
+      baMaterials = await env.DB.prepare(`
+        SELECT id, part_number, material, mesin, sn_mesin as status
+        FROM materials
+        WHERE transaction_id = ?
+      `).bind(ba.id).all()
+    }
+    
+    if (!baMaterials.results || baMaterials.results.length === 0) {
+      return c.json({ 
+        success: true,
+        message: 'Tidak ada material dalam BA ini',
+        fixed: 0
+      })
+    }
+    
+    console.log(`🔍 Found ${baMaterials.results.length} materials in BA`)
+    
+    // Filter materials yang perlu di-fix (S/N Mesin is N/A or empty)
+    const materialsToFix = baMaterials.results.filter((mat: any) => 
+      !mat.status || mat.status === 'N/A' || mat.status === '' || mat.status === '-'
+    )
+    
+    if (materialsToFix.length === 0) {
+      return c.json({ 
+        success: true,
+        message: 'Semua material sudah memiliki S/N Mesin yang valid',
+        fixed: 0,
+        total: baMaterials.results.length
+      })
+    }
+    
+    console.log(`🔧 Need to fix ${materialsToFix.length} materials`)
+    
+    // Update each material dengan S/N Mesin dari LH05
+    let fixedCount = 0
+    const fixedDetails: any[] = []
+    
+    for (const baMat of materialsToFix) {
+      // Find matching material in LH05
+      const lh05Mat = gangguan.materials.find((m: any) => m.partNumber === baMat.part_number)
+      
+      if (lh05Mat) {
+        const snMesin = lh05Mat.snMesin || lh05Mat.sn_mesin || 'N/A'
+        
+        if (snMesin && snMesin !== 'N/A' && snMesin !== '' && snMesin !== '-') {
+          // Update S/N Mesin (with fallback for column name)
+          try {
+            await env.DB.prepare(`
+              UPDATE materials 
+              SET status = ?
+              WHERE id = ?
+            `).bind(snMesin, baMat.id).run()
+          } catch (updateError: any) {
+            // Fallback to sn_mesin column
+            console.log('⚠️ status column not found for update, using sn_mesin')
+            await env.DB.prepare(`
+              UPDATE materials 
+              SET sn_mesin = ?
+              WHERE id = ?
+            `).bind(snMesin, baMat.id).run()
+          }
+          
+          fixedCount++
+          fixedDetails.push({
+            partNumber: baMat.part_number,
+            material: baMat.material,
+            mesin: baMat.mesin,
+            oldSnMesin: baMat.status || 'N/A',
+            newSnMesin: snMesin
+          })
+          
+          console.log(`✅ Fixed ${baMat.part_number}: ${baMat.status || 'N/A'} → ${snMesin}`)
+        } else {
+          console.log(`⚠️ Skip ${baMat.part_number}: S/N Mesin tidak valid (${snMesin})`)
+        }
+      } else {
+        console.log(`⚠️ Skip ${baMat.part_number}: tidak ditemukan di LH05`)
+      }
+    }
+    
+    console.log(`✅ Fixed ${fixedCount} materials for BA ${nomorBA}`)
+    
+    return c.json({
+      success: true,
+      message: `Berhasil memperbaiki ${fixedCount} material`,
+      nomorBA,
+      fromLH05: ba.from_lh05,
+      fixed: fixedCount,
+      details: fixedDetails
+    })
+  } catch (error: any) {
+    console.error('Failed to fix S/N Mesin:', error)
+    return c.json({ 
+      error: error.message || 'Failed to fix S/N Mesin',
+      stack: error.stack
+    }, 500)
+  }
+})
+
 export default app
 
 function getDashboardListRABHTML() {
