@@ -763,7 +763,7 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
           jenisBarang: jenisBarang,
           material: mat.material,
           mesin: mat.mesin,
-          status: mat.status,
+          status: mat.snMesin || mat.sn_mesin || mat.status || 'N/A',  // PRIORITIZE sn_mesin for S/N Mesin
           jumlah: mat.jumlah,
           stok: stokAkhir,
           available: stokAkhir >= mat.jumlah && !isFullySent,

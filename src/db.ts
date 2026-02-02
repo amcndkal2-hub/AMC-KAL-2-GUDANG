@@ -137,7 +137,7 @@ export async function saveTransaction(db: D1Database, data: any) {
           jenisBarang,  // Use auto-filled value
           material.material,
           material.mesin,
-          material.status || material.snMesin || '',  // Use status (renamed from snMesin)
+          material.status || material.snMesin || material.sn_mesin || 'N/A',  // Prioritize status field (renamed from snMesin)
           material.jumlah
         ).run()
       } catch (insertError: any) {
@@ -154,7 +154,7 @@ export async function saveTransaction(db: D1Database, data: any) {
             jenisBarang,
             material.material,
             material.mesin,
-            material.status || material.snMesin || '',
+            material.status || material.snMesin || material.sn_mesin || 'N/A',
             material.jumlah
           ).run()
         } else {
@@ -187,6 +187,8 @@ export async function getAllTransactions(db: D1Database) {
               'material', m.material,
               'mesin', m.mesin,
               'status', m.status,
+              'snMesin', m.status,
+              'sn_mesin', m.status,
               'jumlah', m.jumlah
             )
           ) as materials
@@ -270,6 +272,8 @@ export async function getAllTransactions(db: D1Database) {
                     'material', m.material,
                     'mesin', m.mesin,
                     'status', m.sn_mesin,
+                    'snMesin', m.sn_mesin,
+                    'sn_mesin', m.sn_mesin,
                     'jumlah', m.jumlah
                   )
                 ) as materials
@@ -396,6 +400,8 @@ export async function getAllTransactions(db: D1Database) {
                     'material', m.material,
                     'mesin', m.mesin,
                     'status', m.sn_mesin,
+                    'snMesin', m.sn_mesin,
+                    'sn_mesin', m.sn_mesin,
                     'jumlah', m.jumlah
                   )
                 ) as materials
@@ -445,6 +451,8 @@ export async function getTransactionByBA(db: D1Database, nomorBA: string) {
               'material', m.material,
               'mesin', m.mesin,
               'status', m.status,
+              'snMesin', m.status,
+              'sn_mesin', m.status,
               'jumlah', m.jumlah
             )
           ) as materials
