@@ -1081,19 +1081,93 @@ app.get('/api/ba/:nomor', async (c) => {
 })
 
 // API: Get material history by S/N and Part Number
-app.get('/api/material-history/:snMesin/:partNumber', (c) => {
-  const snMesin = c.req.param('snMesin')
-  const partNumber = c.req.param('partNumber')
-  const key = `${snMesin}_${partNumber}`
-  
-  const history = materialHistory.get(key) || []
-  
-  return c.json({ 
-    snMesin,
-    partNumber,
-    totalPenggantian: history.length,
-    history: history 
-  })
+app.get('/api/material-history/:snMesin/:partNumber', async (c) => {
+  try {
+    const { env } = c
+    const snMesin = c.req.param('snMesin')
+    const partNumber = c.req.param('partNumber')
+    
+    if (!env.DB) {
+      // Fallback to in-memory if DB not available
+      const key = `${snMesin}_${partNumber}`
+      const history = materialHistory.get(key) || []
+      return c.json({ 
+        snMesin,
+        partNumber,
+        totalPenggantian: history.length,
+        history: history,
+        source: 'memory'
+      })
+    }
+    
+    // Query database for transaction history
+    const { results } = await env.DB.prepare(`
+      SELECT 
+        t.nomor_ba,
+        t.tanggal,
+        t.jenis_transaksi,
+        t.jenis_pengeluaran,
+        t.lokasi_asal,
+        t.lokasi_tujuan,
+        t.pemeriksa,
+        t.penerima,
+        t.from_lh05,
+        m.part_number,
+        m.jenis_barang,
+        m.material,
+        m.mesin,
+        m.jumlah,
+        m.status
+      FROM materials m
+      JOIN transactions t ON m.transaction_id = t.id
+      WHERE m.part_number = ?
+        AND (m.status = ? OR m.sn_mesin = ?)
+        AND t.jenis_transaksi LIKE '%Keluar%'
+      ORDER BY t.tanggal DESC, t.created_at DESC
+    `).bind(partNumber, snMesin, snMesin).all()
+    
+    const history = results.map((row: any) => ({
+      nomorBA: row.nomor_ba,
+      tanggal: row.tanggal,
+      jenisTransaksi: row.jenis_transaksi,
+      dasarPengeluaran: row.jenis_pengeluaran || row.from_lh05 || 'Pengeluaran Gudang',
+      lokasiAsal: row.lokasi_asal,
+      lokasiTujuan: row.lokasi_tujuan,
+      pemeriksa: row.pemeriksa,
+      penerima: row.penerima,
+      partNumber: row.part_number,
+      jenisBarang: row.jenis_barang,
+      material: row.material,
+      mesin: row.mesin,
+      jumlah: row.jumlah,
+      snMesin: row.status
+    }))
+    
+    return c.json({ 
+      snMesin,
+      partNumber,
+      totalPenggantian: history.length,
+      history: history,
+      source: 'd1'
+    })
+  } catch (error: any) {
+    console.error('Failed to get material history:', error)
+    
+    // Fallback to in-memory on error
+    const snMesin = c.req.param('snMesin')
+    const partNumber = c.req.param('partNumber')
+    const key = `${snMesin}_${partNumber}`
+    const history = materialHistory.get(key) || []
+    
+    return c.json({ 
+      snMesin,
+      partNumber,
+      totalPenggantian: history.length,
+      history: history,
+      source: 'memory-fallback',
+      error: error.message
+    })
+  }
 })
 
 // API: Get all target umur material

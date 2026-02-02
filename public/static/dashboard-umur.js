@@ -261,7 +261,7 @@ function showHistoryModal(data) {
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto';
     modal.innerHTML = `
-        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full m-4 p-6">
+        <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full m-4 p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">History Penggantian Material</h2>
                 <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
@@ -293,30 +293,53 @@ function showHistoryModal(data) {
                                 <th class="px-4 py-3 text-left">Penggantian Ke</th>
                                 <th class="px-4 py-3 text-left">Tanggal</th>
                                 <th class="px-4 py-3 text-left">Nomor BA</th>
-                                <th class="px-4 py-3 text-left">Lokasi</th>
+                                <th class="px-4 py-3 text-left">Dasar Pengeluaran</th>
+                                <th class="px-4 py-3 text-left">Unit Tujuan</th>
                                 <th class="px-4 py-3 text-center">Jumlah</th>
                                 <th class="px-4 py-3 text-left">Pemeriksa</th>
                                 <th class="px-4 py-3 text-left">Penerima</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${data.history.map(h => `
+                            ${data.history.map((h, index) => `
                                 <tr class="border-b hover:bg-gray-50">
                                     <td class="px-4 py-3">
                                         <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
-                                            #${h.penggantianKe}
+                                            #${data.totalPenggantian - index}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3">${formatDate(h.tanggal)}</td>
                                     <td class="px-4 py-3">
-                                        <a href="#" onclick="viewBA('${h.nomorBA}')" class="text-blue-600 hover:underline font-semibold">
+                                        <span class="text-blue-600 font-semibold">
                                             ${h.nomorBA}
-                                        </a>
+                                        </span>
                                     </td>
-                                    <td class="px-4 py-3">${h.lokasi}</td>
-                                    <td class="px-4 py-3 text-center">${h.jumlah}</td>
-                                    <td class="px-4 py-3">${h.pemeriksa}</td>
-                                    <td class="px-4 py-3">${h.penerima}</td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm ${h.dasarPengeluaran && h.dasarPengeluaran.includes('LH05') ? 'bg-green-100 text-green-800 px-2 py-1 rounded' : ''}">
+                                            ${h.dasarPengeluaran || 'Pengeluaran Gudang'}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">${h.lokasiTujuan || '-'}</td>
+                                    <td class="px-4 py-3 text-center font-semibold">${h.jumlah}</td>
+                                    <td class="px-4 py-3">${h.pemeriksa || '-'}</td>
+                                    <td class="px-4 py-3">${h.penerima || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `}
+            
+            <div class="mt-6 flex justify-end">
+                <button onclick="this.closest('.fixed').remove()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
                                 </tr>
                             `).join('')}
                         </tbody>
