@@ -2782,8 +2782,8 @@ function getDashboardMainHTML() {
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="/static/url-redirect.js"></script>
-    <script src="/static/url-redirect.js"></script>
+        <script src="/static/url-redirect.js?v=2"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-50">
         <!-- Navigation -->
@@ -2971,7 +2971,7 @@ function getInputFormHTML() {
             border-color: #3b82f6;
           }
         </style>
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     <script src="/static/auth-check.js"></script>
     </head>
     <body class="bg-gray-50">
@@ -3677,7 +3677,7 @@ function getDashboardStokHTML() {
         <title>Dashboard Stok Material</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-50">
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
@@ -3845,7 +3845,7 @@ function getDashboardUmurHTML() {
         <title>Dashboard Umur Material</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-50">
         <!-- Navigation -->
@@ -3983,8 +3983,8 @@ function getDashboardUmurHTML() {
             </main>
         </div>
 
-        <script src="/static/auth-check.js"></script>
-        <script src="/static/dashboard-umur.js"></script>
+        <script src="/static/auth-check.js?v=2"></script>
+        <script src="/static/dashboard-umur.js?v=2"></script>
     </body>
     </html>
   `
@@ -4000,7 +4000,7 @@ function getDashboardMutasiHTML() {
         <title>Dashboard Mutasi Material</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-50">
         <!-- Navigation -->
@@ -4170,8 +4170,8 @@ function getDashboardMutasiHTML() {
             </main>
         </div>
 
-        <script src="/static/auth-check.js"></script>
-        <script src="/static/dashboard-mutasi.js"></script>
+        <script src="/static/auth-check.js?v=2"></script>
+        <script src="/static/dashboard-mutasi.js?v=2"></script>
     </body>
     </html>
   `
@@ -4197,7 +4197,7 @@ function getFormGangguanHTML() {
             border-color: #3b82f6;
           }
         </style>
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-50">
         <!-- Navigation -->
@@ -4562,7 +4562,7 @@ function getLoginHTML() {
         <title>Login - Sistem Manajemen Material</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gradient-to-br from-blue-500 to-blue-700 min-h-screen flex items-center justify-center">
         <div class="max-w-md w-full mx-4">
@@ -4728,7 +4728,7 @@ function getDashboardKebutuhanMaterialHTML() {
         <title>Dashboard Kebutuhan Material</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-50">
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
@@ -4943,7 +4943,7 @@ function getDashboardGangguanHTML() {
         <title>Dashboard Gangguan dan Permintaan Material</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-50">
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
@@ -5139,7 +5139,7 @@ function getDashboardResumeHTML() {
         <title>Dashboard Resume - Sistem Material</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-50">
         <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
@@ -5504,7 +5504,7 @@ function getDashboardCreateRABHTML() {
         <title>Create RAB - Rencana Anggaran Biaya</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-100">
         <!-- Navbar -->
@@ -5695,7 +5695,7 @@ function getDashboardPengadaanHTML() {
         <title>Dashboard Pengadaan</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-        <script src="/static/url-redirect.js"></script>
+        <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-50">
         <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
@@ -6268,7 +6268,7 @@ function getDashboardListRABHTML() {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-100">
         <!-- Navbar -->
@@ -6377,7 +6377,7 @@ function getInputFormV2HTML() {
         <style>
             .signature-pad { border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: crosshair; }
         </style>
-    <script src="/static/url-redirect.js"></script>
+    <script src="/static/url-redirect.js?v=2"></script>
     </head>
     <body class="bg-gray-100">
         <!-- Navigation -->
