@@ -261,7 +261,7 @@ function showBAModal(ba) {
                     </div>
                     <div>
                         <p><strong>Tanggal Keluar:</strong> ${formatDate(ba.tanggal)}</p>
-                        <p><strong>Dasar Pengeluaran:</strong> ${ba.jenis_pengeluaran || ba.from_lh05 || ba.fromLH05 || (ba.jenis_transaksi.includes('Keluar') ? 'Pengeluaran Gudang' : '-')}</p>
+                        <p><strong>Dasar Pengeluaran:</strong> ${ba.jenis_pengeluaran || ba.from_lh05 || ba.fromLH05 || ((ba.jenis_transaksi || '').includes('Keluar') ? 'Pengeluaran Gudang' : '-')}</p>
                         <p><strong>Unit/ULD Tujuan:</strong> ${ba.lokasi_tujuan}</p>
                     </div>
                 </div>
@@ -273,7 +273,7 @@ function showBAModal(ba) {
                             <th class="border border-gray-300 px-3 py-2">MATERIAL</th>
                             <th class="border border-gray-300 px-3 py-2">MESIN</th>
                             <th class="border border-gray-300 px-3 py-2">JUMLAH</th>
-                            <th class="border border-gray-300 px-3 py-2">${ba.jenis_transaksi.includes('Masuk') ? 'STATUS' : 'S/N MESIN'}</th>
+                            <th class="border border-gray-300 px-3 py-2">${(ba.jenis_transaksi || '').includes('Masuk') ? 'STATUS' : 'S/N MESIN'}</th>
                         </tr>
                     </thead>
                     <tbody>
