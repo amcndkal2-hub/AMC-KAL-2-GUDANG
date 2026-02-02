@@ -2,17 +2,22 @@ let transactions = [];
 
 // Wait for auth check before loading data
 async function initDashboard() {
-    // Check if user is authenticated
+    // Wait a bit for auth-check.js to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Check if user is authenticated (should be handled by auth-check.js)
     const sessionToken = localStorage.getItem('sessionToken');
     if (!sessionToken) {
-        console.log('No session token, redirecting to login');
-        window.location.href = '/login';
+        console.log('No session token, auth-check.js will redirect');
         return;
     }
     
-    // Load transactions after auth check
-    await loadTransactions();
-    setupFilters();
+    // Check if still on page (not redirected to login)
+    if (window.location.pathname.includes('/dashboard/mutasi')) {
+        // Load transactions after auth check
+        await loadTransactions();
+        setupFilters();
+    }
 }
 
 // Initialize on DOM ready

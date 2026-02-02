@@ -1,9 +1,16 @@
 let ageData = [];
 
+// Wait for auth check before loading data
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadAgeData();
-    setupFilters();
-    populateLokasiFilter();
+    // Wait a bit for auth-check.js to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Check if still on page (not redirected to login)
+    if (window.location.pathname.includes('/dashboard/umur')) {
+        await loadAgeData();
+        setupFilters();
+        populateLokasiFilter();
+    }
 });
 
 async function loadAgeData() {
