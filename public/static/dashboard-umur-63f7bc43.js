@@ -428,24 +428,6 @@ function showHistoryModal(data) {
     
     document.body.appendChild(modal);
 }
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `}
-            
-            <div class="flex justify-end mt-6">
-                <button onclick="this.closest('.fixed').remove()" 
-                    class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300">
-                    Tutup
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-}
 
 // View BA (redirect to mutasi dashboard)
 async function viewBA(nomorBA) {
