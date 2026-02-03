@@ -3983,7 +3983,7 @@ function getDashboardUmurHTML() {
         </div>
 
         <!-- <script src="/auth-check.js?v=1770101032"></script> -->
-        <script src="/dashboard-umur-63f7bc43.js?v=1770101032"></script>
+        <script src="/static/dashboard-umur-63f7bc43.js?v=1770101032"></script>
     </body>
     </html>
   `
