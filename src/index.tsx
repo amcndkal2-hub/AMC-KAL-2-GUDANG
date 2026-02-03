@@ -951,6 +951,26 @@ app.get('/api/dashboard/umur-material', async (c) => {
     // Load target umur from database
     let targetUmurMap: Map<string, number> = new Map()
     try {
+      // Auto-create table if not exists (fallback mechanism)
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS target_umur_material (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          part_number TEXT NOT NULL UNIQUE,
+          jenis_barang TEXT NOT NULL,
+          material TEXT NOT NULL,
+          mesin TEXT NOT NULL,
+          target_umur_hari INTEGER NOT NULL DEFAULT 365,
+          updated_by TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run()
+      
+      await env.DB.prepare(`
+        CREATE INDEX IF NOT EXISTS idx_target_umur_part_number 
+        ON target_umur_material(part_number)
+      `).run()
+      
       const targetResult = await env.DB.prepare(`
         SELECT part_number, target_umur_hari 
         FROM target_umur_material
@@ -3999,7 +4019,7 @@ function getDashboardUmurHTML() {
         </div>
 
         <!-- <script src="/auth-check.js?v=1770101032"></script> -->
-        <script src="/static/dashboard-umur-8ad6d7a4.js?v=1770101032"></script>
+        <script src="/static/dashboard-umur-145d6c5d.js?v=1770101032"></script>
     </body>
     </html>
   `
@@ -6432,6 +6452,32 @@ app.post('/api/set-target-umur', async (c) => {
     
     console.log('💾 Saving target umur:', { partNumber, targetUmurHari })
     
+    // Auto-create table if not exists (fallback mechanism)
+    try {
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS target_umur_material (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          part_number TEXT NOT NULL UNIQUE,
+          jenis_barang TEXT NOT NULL,
+          material TEXT NOT NULL,
+          mesin TEXT NOT NULL,
+          target_umur_hari INTEGER NOT NULL DEFAULT 365,
+          updated_by TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run()
+      
+      await env.DB.prepare(`
+        CREATE INDEX IF NOT EXISTS idx_target_umur_part_number 
+        ON target_umur_material(part_number)
+      `).run()
+      
+      console.log('✅ Table target_umur_material ready')
+    } catch (createError: any) {
+      console.log('⚠️ Table creation skipped (already exists):', createError.message)
+    }
+    
     // Insert or replace target umur in D1 database
     const result = await env.DB.prepare(`
       INSERT OR REPLACE INTO target_umur_material 
@@ -6467,6 +6513,30 @@ app.post('/api/set-target-umur', async (c) => {
 app.get('/api/get-target-umur', async (c) => {
   try {
     const { env } = c
+    
+    // Auto-create table if not exists (fallback mechanism)
+    try {
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS target_umur_material (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          part_number TEXT NOT NULL UNIQUE,
+          jenis_barang TEXT NOT NULL,
+          material TEXT NOT NULL,
+          mesin TEXT NOT NULL,
+          target_umur_hari INTEGER NOT NULL DEFAULT 365,
+          updated_by TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run()
+      
+      await env.DB.prepare(`
+        CREATE INDEX IF NOT EXISTS idx_target_umur_part_number 
+        ON target_umur_material(part_number)
+      `).run()
+    } catch (createError: any) {
+      // Table already exists, ignore
+    }
     
     const result = await env.DB.prepare(`
       SELECT part_number, jenis_barang, material, mesin, target_umur_hari, 
