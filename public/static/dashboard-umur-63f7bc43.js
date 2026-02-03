@@ -301,7 +301,7 @@ async function saveTargetUmur(partNumber, jenisBarang, material, mesin) {
     }
     
     try {
-        const response = await fetch('/api/target-umur', {
+        const response = await fetch('/api/set-target-umur', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -309,7 +309,8 @@ async function saveTargetUmur(partNumber, jenisBarang, material, mesin) {
                 targetUmurHari: parseInt(targetUmur),
                 jenisBarang,
                 material,
-                mesin
+                mesin,
+                updatedBy: localStorage.getItem('username') || 'System'
             })
         });
         

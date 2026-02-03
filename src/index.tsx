@@ -948,6 +948,23 @@ app.get('/api/dashboard/umur-material', async (c) => {
     // Get transactions from D1 Database first
     const dbTransactions = await DB.getAllTransactions(env.DB)
     
+    // Load target umur from database
+    let targetUmurMap: Map<string, number> = new Map()
+    try {
+      const targetResult = await env.DB.prepare(`
+        SELECT part_number, target_umur_hari 
+        FROM target_umur_material
+      `).all()
+      
+      targetResult.results.forEach((row: any) => {
+        targetUmurMap.set(row.part_number, row.target_umur_hari)
+      })
+      
+      console.log('✅ Loaded', targetUmurMap.size, 'target umur from database')
+    } catch (error) {
+      console.warn('⚠️ Failed to load target umur from DB, using defaults:', error)
+    }
+    
     // Calculate material age from D1 data with full enrichment
     const ageMap: any = {}
     const today = new Date()
@@ -996,8 +1013,7 @@ app.get('/api/dashboard/umur-material', async (c) => {
           
           // Get target umur for this part number
           const partNum = mat.partNumber || mat.part_number
-          const targetUmur = targetUmurMaterial.get(partNum)
-          const targetUmurHari = targetUmur?.targetUmurHari || 365 // Default 365 hari
+          const targetUmurHari = targetUmurMap.get(partNum) || 365 // Default 365 hari
           
           // Determine status based on target
           let statusUmur = 'Terpasang'
@@ -6404,6 +6420,91 @@ app.post('/api/fix-sn-mesin/:nomorBA', async (c) => {
       error: error.message || 'Failed to fix S/N Mesin',
       stack: error.stack
     }, 500)
+  }
+})
+
+// API: Save Target Umur Material (persistent to D1)
+app.post('/api/set-target-umur', async (c) => {
+  try {
+    const { env } = c
+    const body = await c.req.json()
+    const { partNumber, jenisBarang, material, mesin, targetUmurHari, updatedBy } = body
+    
+    console.log('💾 Saving target umur:', { partNumber, targetUmurHari })
+    
+    // Insert or replace target umur in D1 database
+    const result = await env.DB.prepare(`
+      INSERT OR REPLACE INTO target_umur_material 
+      (part_number, jenis_barang, material, mesin, target_umur_hari, updated_by, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `).bind(
+      partNumber,
+      jenisBarang,
+      material,
+      mesin,
+      targetUmurHari,
+      updatedBy || 'System'
+    ).run()
+    
+    console.log('✅ Target umur saved:', result.meta)
+    
+    return c.json({ 
+      success: true, 
+      message: 'Target umur berhasil disimpan',
+      partNumber,
+      targetUmurHari
+    })
+  } catch (error: any) {
+    console.error('Failed to save target umur:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message 
+    }, 500)
+  }
+})
+
+// API: Get all Target Umur Material from D1
+app.get('/api/get-target-umur', async (c) => {
+  try {
+    const { env } = c
+    
+    const result = await env.DB.prepare(`
+      SELECT part_number, jenis_barang, material, mesin, target_umur_hari, 
+             updated_by, updated_at
+      FROM target_umur_material
+      ORDER BY updated_at DESC
+    `).all()
+    
+    // Convert to Map format for frontend
+    const targetMap: any = {}
+    result.results.forEach((row: any) => {
+      targetMap[row.part_number] = {
+        partNumber: row.part_number,
+        jenisBarang: row.jenis_barang,
+        material: row.material,
+        mesin: row.mesin,
+        targetUmurHari: row.target_umur_hari,
+        updatedBy: row.updated_by,
+        updatedAt: row.updated_at
+      }
+    })
+    
+    console.log('✅ Loaded target umur:', Object.keys(targetMap).length, 'items')
+    
+    return c.json({ 
+      success: true,
+      targets: targetMap,
+      count: result.results.length
+    })
+  } catch (error: any) {
+    console.error('Failed to get target umur:', error)
+    // Return empty on error (default to 365)
+    return c.json({ 
+      success: false,
+      targets: {},
+      count: 0,
+      error: error.message
+    })
   }
 })
 
