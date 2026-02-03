@@ -3845,7 +3845,6 @@ function getDashboardUmurHTML() {
         <title>Dashboard Umur Material</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="/url-redirect.js?v=1770101032"></script>
     </head>
     <body class="bg-gray-50">
         <!-- Navigation -->
