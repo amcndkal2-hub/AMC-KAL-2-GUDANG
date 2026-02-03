@@ -1,22 +1,37 @@
 let ageData = [];
 
+// Debug flag
+const DEBUG = true;
+function debug(...args) {
+    if (DEBUG) console.log('[UMUR DEBUG]', ...args);
+}
+
+debug('📍 Script loaded! readyState:', document.readyState);
+
 async function loadAgeData() {
     const tbody = document.getElementById('ageTable');
+    debug('📍 loadAgeData called, tbody:', tbody);
     
     try {
+        debug('🔄 Loading age data...');
         console.log('🔄 Loading age data...');
         const response = await fetch('/api/dashboard/umur-material');
+        
+        debug('📡 Response received:', response.status, response.ok);
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
+        debug('📦 Data parsed:', data.ageData?.length || 0, 'items');
         console.log('✅ Loaded age data:', data.ageData?.length || 0, 'items');
         
         ageData = data.ageData || [];
+        debug('💾 ageData stored, calling renderAgeTable...');
         renderAgeTable();
     } catch (error) {
+        debug('❌ Error in loadAgeData:', error);
         console.error('❌ Failed to load age data:', error);
         
         if (tbody) {
@@ -38,16 +53,21 @@ async function loadAgeData() {
 
 // Simple initialization - just wait for DOM then load
 if (document.readyState === 'loading') {
+    debug('📍 readyState is loading, waiting for DOMContentLoaded...');
     document.addEventListener('DOMContentLoaded', function() {
+        debug('📍 DOMContentLoaded fired!');
         setTimeout(() => {
+            debug('📍 Timeout complete, calling loadAgeData...');
             loadAgeData();
             setupFilters();
             populateLokasiFilter();
         }, 200);
     });
 } else {
+    debug('📍 DOM already loaded, calling functions after timeout...');
     // DOM already loaded
     setTimeout(() => {
+        debug('📍 Timeout complete, calling loadAgeData...');
         loadAgeData();
         setupFilters();
         populateLokasiFilter();
@@ -106,8 +126,10 @@ async function filterData() {
 
 function renderAgeTable() {
     const tbody = document.getElementById('ageTable');
+    debug('📍 renderAgeTable called, tbody:', tbody, 'ageData.length:', ageData.length);
     
     if (ageData.length === 0) {
+        debug('⚠️ No data to render');
         tbody.innerHTML = `
             <tr>
                 <td colspan="11" class="px-4 py-8 text-center text-gray-500">
@@ -118,6 +140,7 @@ function renderAgeTable() {
         return;
     }
     
+    debug('✅ Rendering', ageData.length, 'rows');
     tbody.innerHTML = ageData.map(item => {
         // Determine status badge color
         let statusClass = 'bg-green-100 text-green-800';
