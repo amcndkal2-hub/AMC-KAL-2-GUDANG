@@ -9,7 +9,7 @@ function debug(...args) {
 debug('📍 Script loaded! readyState:', document.readyState);
 
 // BYPASS AUTH CHECK - Mark this page as NOT requiring auth
-window.noAuthRequired = false; // Auth is required
+window.noAuthRequired = true; // No auth required for public access
 
 async function loadAgeData() {
     const tbody = document.getElementById('ageTable');
