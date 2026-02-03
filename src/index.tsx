@@ -1172,10 +1172,12 @@ app.get('/api/material-history/:snMesin/:partNumber', async (c) => {
           t.nomor_ba,
           t.tanggal,
           t.jenis_transaksi,
+          t.jenis_pengeluaran,
           t.lokasi_asal,
           t.lokasi_tujuan,
           t.pemeriksa,
           t.penerima,
+          t.from_lh05,
           m.part_number,
           m.jenis_barang,
           m.material,
@@ -1198,7 +1200,7 @@ app.get('/api/material-history/:snMesin/:partNumber', async (c) => {
       nomorBA: row.nomor_ba,
       tanggal: row.tanggal,
       jenisTransaksi: row.jenis_transaksi,
-      dasarPengeluaran: row.jenis_pengeluaran || row.from_lh05 || 'Pengeluaran Gudang',
+      dasarPengeluaran: row.from_lh05 || row.jenis_pengeluaran || 'Pengeluaran Gudang',
       lokasiAsal: row.lokasi_asal,
       lokasiTujuan: row.lokasi_tujuan,
       pemeriksa: row.pemeriksa,
@@ -4019,7 +4021,7 @@ function getDashboardUmurHTML() {
         </div>
 
         <!-- <script src="/auth-check.js?v=1770101032"></script> -->
-        <script src="/static/dashboard-umur-145d6c5d.js?v=1770101032"></script>
+        <script src="/static/dashboard-umur-37c7d49d.js?v=1770101032"></script>
     </body>
     </html>
   `
