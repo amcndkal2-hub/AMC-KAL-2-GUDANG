@@ -8,6 +8,9 @@ function debug(...args) {
 
 debug('📍 Script loaded! readyState:', document.readyState);
 
+// BYPASS AUTH CHECK - Mark this page as NOT requiring auth
+window.noAuthRequired = false; // Auth is required
+
 async function loadAgeData() {
     const tbody = document.getElementById('ageTable');
     debug('📍 loadAgeData called, tbody:', tbody);
@@ -15,11 +18,31 @@ async function loadAgeData() {
     try {
         debug('🔄 Loading age data...');
         console.log('🔄 Loading age data...');
-        const response = await fetch('/api/dashboard/umur-material');
+        
+        // Get session token for auth
+        const sessionToken = localStorage.getItem('sessionToken');
+        debug('🔑 Token exists:', !!sessionToken);
+        
+        const headers = sessionToken ? {
+            'Authorization': `Bearer ${sessionToken}`
+        } : {};
+        
+        const response = await fetch('/api/dashboard/umur-material', { headers });
         
         debug('📡 Response received:', response.status, response.ok);
         
         if (!response.ok) {
+            debug('❌ Response not OK:', response.status, response.statusText);
+            const contentType = response.headers.get('content-type');
+            debug('📄 Content-Type:', contentType);
+            
+            // Check if redirected to login page (HTML response)
+            if (response.status === 401 || response.redirected || contentType?.includes('text/html')) {
+                debug('🔒 Auth required - redirecting to login');
+                window.location.href = '/login';
+                return;
+            }
+            
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
