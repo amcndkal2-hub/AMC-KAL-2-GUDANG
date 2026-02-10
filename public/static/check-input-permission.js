@@ -20,8 +20,8 @@ async function checkInputPermission() {
     return false
   }
   
-  // Only "Andalcekatan" and "AMC@12345" can access Input Manual tab
-  const ALLOWED_USERS = ['Andalcekatan', 'AMC@12345']
+  // Only "Andalcekatan" can access Input Manual tab
+  const ALLOWED_USERS = ['Andalcekatan']
   
   if (!ALLOWED_USERS.includes(username)) {
     console.log('❌ User not allowed to access Input Manual tab:', username)
@@ -73,7 +73,7 @@ function showInfoBanner(currentUser) {
           <i class="fas fa-info-circle text-blue-500 text-xl mr-3 mt-1"></i>
           <div class="flex-1">
             <p class="text-sm text-gray-700">
-              <strong>Info:</strong> Tab <strong>"Input Manual"</strong> hanya tersedia untuk user <strong class="text-green-600">Andalcekatan</strong> dan <strong class="text-green-600">AMC@12345</strong>.
+              <strong>Info:</strong> Tab <strong>"Input Manual"</strong> hanya tersedia untuk user <strong class="text-green-600">Andalcekatan</strong>.
             </p>
             <p class="text-xs text-gray-600 mt-1">
               User Anda (<strong class="text-blue-600">${currentUser}</strong>) dapat menggunakan tab <strong>"Dari LH05"</strong> dan <strong>"Input dari RAB"</strong>.
