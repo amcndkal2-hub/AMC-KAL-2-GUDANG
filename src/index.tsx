@@ -5805,32 +5805,25 @@ function getDashboardPengadaanHTML() {
             </div>
         </nav>
 
-        <div class="max-w-7xl mx-auto p-6">
-            <!-- Header -->
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                    <i class="fas fa-shopping-cart text-blue-600 mr-3"></i>
-                    Dashboard Pengadaan
-                </h1>
-                <p class="text-gray-600">Monitoring dan Tracking Pengadaan Material</p>
-            </div>
-
-            <!-- Filter Section -->
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">
+        <div class="flex">
+            <!-- Sidebar Filter (Kiri) -->
+            <div class="w-80 bg-white shadow-lg min-h-screen p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">
                     <i class="fas fa-filter text-blue-600 mr-2"></i>
                     Filter Data
                 </h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Mitra/Vendor</label>
-                        <select id="filterMitra" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <select id="filterMitra" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="">Semua Mitra</option>
                         </select>
                     </div>
+                    
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Bidang</label>
-                        <select id="filterBidang" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <select id="filterBidang" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="">Semua Bidang</option>
                             <option value="1. Distribusi">1. Distribusi</option>
                             <option value="2. Pelayanan Pelanggan">2. Pelayanan Pelanggan</option>
@@ -5839,70 +5832,86 @@ function getDashboardPengadaanHTML() {
                             <option value="5. Pembangkit">5. Pembangkit</option>
                         </select>
                     </div>
-                    <div class="flex items-end">
-                        <button onclick="applyFilter()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold">
+                    
+                    <div class="pt-4">
+                        <button onclick="applyFilter()" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-semibold transition">
                             <i class="fas fa-search mr-2"></i>Terapkan Filter
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-600 text-sm">Total Pengadaan</p>
-                            <h3 id="totalPengadaan" class="text-3xl font-bold text-blue-600">-</h3>
+            <!-- Main Content (Kanan) -->
+            <div class="flex-1 p-6">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Total Pengadaan</p>
+                                <h3 id="totalPengadaan" class="text-3xl font-bold text-blue-600">-</h3>
+                            </div>
+                            <div class="bg-blue-100 p-4 rounded-full">
+                                <i class="fas fa-shopping-cart text-3xl text-blue-600"></i>
+                            </div>
                         </div>
-                        <div class="bg-blue-100 p-4 rounded-full">
-                            <i class="fas fa-shopping-cart text-3xl text-blue-600"></i>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Total Nilai</p>
+                                <h3 id="totalNilai" class="text-2xl font-bold text-green-600">-</h3>
+                            </div>
+                            <div class="bg-green-100 p-4 rounded-full">
+                                <i class="fas fa-money-bill-wave text-3xl text-green-600"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Total Mitra</p>
+                                <h3 id="totalMitra" class="text-3xl font-bold text-purple-600">-</h3>
+                            </div>
+                            <div class="bg-purple-100 p-4 rounded-full">
+                                <i class="fas fa-handshake text-3xl text-purple-600"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-600 text-sm">Total Nilai</p>
-                            <h3 id="totalNilai" class="text-2xl font-bold text-green-600">-</h3>
-                        </div>
-                        <div class="bg-green-100 p-4 rounded-full">
-                            <i class="fas fa-money-bill-wave text-3xl text-green-600"></i>
-                        </div>
+                <!-- Table -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-blue-600 text-white">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">No. Kontrak</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">Mitra</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold">No. PO</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold">No. GRPO</th>
+                                    <th class="px-4 py-3 text-right text-sm font-semibold">Total (Rp)</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold">Berkas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pengadaanTable">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                                        <p>Memuat data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-600 text-sm">Total Mitra</p>
-                            <h3 id="totalMitra" class="text-3xl font-bold text-purple-600">-</h3>
-                        </div>
-                        <div class="bg-purple-100 p-4 rounded-full">
-                            <i class="fas fa-handshake text-3xl text-purple-600"></i>
-                        </div>
-                    </div>
-                </div>
+                <!-- Pagination -->
+                <div id="pagination" class="mt-6 flex justify-center"></div>
             </div>
-
-            <!-- Table -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-blue-600 text-white">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">No. Kontrak</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Mitra</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold">No. PO</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold">No. GRPO</th>
-                                <th class="px-4 py-3 text-right text-sm font-semibold">Total (Rp)</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold">Berkas</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pengadaanTable">
-                            <tr>
-                                <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+        </div>
                                     <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
                                     <p>Memuat data...</p>
                                 </td>
