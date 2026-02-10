@@ -5909,8 +5909,7 @@ function getDashboardPengadaanHTML() {
                     </div>
                 </div>
 
-                <!-- Pagination -->
-                <div id="pagination" class="mt-6 flex justify-center"></div>
+                <!-- Pagination removed - showing all data with scroll -->
             </div>
         </div>
 
@@ -5919,8 +5918,6 @@ function getDashboardPengadaanHTML() {
             const PENGADAAN_URL = 'https://script.google.com/macros/s/AKfycbxDcBjksuaGABwPxQ3kQTyVrGskxH_wvqsMlga42ycgThYvqrUr2WoOa8ZxK9Qx58BMBg/exec';
             let allData = [];
             let filteredData = [];
-            let currentPage = 1;
-            const itemsPerPage = 20;
 
             // Load data on page load
             document.addEventListener('DOMContentLoaded', function() {
@@ -5982,7 +5979,6 @@ function getDashboardPengadaanHTML() {
                     return matchMitra && matchBidang;
                 });
                 
-                currentPage = 1;
                 updateSummary();
                 displayTable();
             }
@@ -6004,13 +6000,9 @@ function getDashboardPengadaanHTML() {
             }
 
             function displayTable() {
-                const start = (currentPage - 1) * itemsPerPage;
-                const end = start + itemsPerPage;
-                const pageData = filteredData.slice(start, end);
-                
                 const tbody = document.getElementById('pengadaanTable');
                 
-                if (pageData.length === 0) {
+                if (filteredData.length === 0) {
                     tbody.innerHTML = \`
                         <tr>
                             <td colspan="7" class="px-6 py-8 text-center text-gray-500">
@@ -6022,7 +6014,7 @@ function getDashboardPengadaanHTML() {
                     return;
                 }
                 
-                tbody.innerHTML = pageData.map(item => \`
+                tbody.innerHTML = filteredData.map(item => \`
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-3 text-sm text-gray-800">
                             \${item.no_kontrak_pekerjaan || '-'}
@@ -6057,64 +6049,6 @@ function getDashboardPengadaanHTML() {
                         </td>
                     </tr>
                 \`).join('');
-                
-                // Update pagination
-                displayPagination();
-            }
-
-            function displayPagination() {
-                const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-                const paginationDiv = document.getElementById('pagination');
-                
-                if (totalPages <= 1) {
-                    paginationDiv.innerHTML = '';
-                    return;
-                }
-                
-                let html = '<div class="flex space-x-2">';
-                
-                // Previous button
-                html += \`
-                    <button onclick="changePage(\${currentPage - 1})" 
-                            \${currentPage === 1 ? 'disabled' : ''}
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                \`;
-                
-                // Page numbers
-                for (let i = 1; i <= totalPages; i++) {
-                    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
-                        html += \`
-                            <button onclick="changePage(\${i})" 
-                                    class="px-4 py-2 \${i === currentPage ? 'bg-blue-800' : 'bg-blue-600'} text-white rounded-lg hover:bg-blue-700 font-semibold">
-                                \${i}
-                            </button>
-                        \`;
-                    } else if (i === currentPage - 3 || i === currentPage + 3) {
-                        html += '<span class="px-2 py-2 text-gray-600">...</span>';
-                    }
-                }
-                
-                // Next button
-                html += \`
-                    <button onclick="changePage(\${currentPage + 1})" 
-                            \${currentPage === totalPages ? 'disabled' : ''}
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                \`;
-                
-                html += '</div>';
-                paginationDiv.innerHTML = html;
-            }
-
-            function changePage(page) {
-                const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-                if (page < 1 || page > totalPages) return;
-                currentPage = page;
-                displayTable();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
             function formatRupiah(number) {
