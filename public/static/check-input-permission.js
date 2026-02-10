@@ -38,23 +38,30 @@ function restrictManualTab(currentUser) {
   const manualTabButton = document.getElementById('tabManual')
   if (manualTabButton) {
     manualTabButton.style.display = 'none'
-    console.log('🚫 Input Manual tab hidden for:', currentUser)
+    console.log('🚫 Input Manual tab button hidden for:', currentUser)
   }
   
-  // Hide Input Manual tab content
-  const manualTabContent = document.getElementById('tabContentManual')
+  // Hide Input Manual tab content (FIXED: correct ID)
+  const manualTabContent = document.getElementById('contentManual')
   if (manualTabContent) {
     manualTabContent.style.display = 'none'
+    console.log('🚫 Input Manual tab content hidden for:', currentUser)
   }
   
   // Switch to LH05 tab by default
   const lh05TabButton = document.getElementById('tabLH05')
-  const lh05TabContent = document.getElementById('tabContentLH05')
+  const lh05TabContent = document.getElementById('contentLH05')
   
   if (lh05TabButton && lh05TabContent) {
+    // Hide manual tab first
+    const manualTab = document.getElementById('contentManual')
+    if (manualTab) {
+      manualTab.classList.add('hidden')
+    }
+    
     // Activate LH05 tab
-    lh05TabButton.classList.add('text-blue-600', 'border-blue-600')
-    lh05TabButton.classList.remove('text-gray-600', 'border-transparent')
+    lh05TabButton.classList.add('text-blue-600', 'border-b-2', 'border-blue-600')
+    lh05TabButton.classList.remove('text-gray-500')
     lh05TabContent.classList.remove('hidden')
     
     console.log('✅ Switched to LH05 tab for:', currentUser)
