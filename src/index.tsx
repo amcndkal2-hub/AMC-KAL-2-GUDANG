@@ -5884,21 +5884,22 @@ function getDashboardPengadaanHTML() {
 
                 <!-- Table -->
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto" style="max-height: calc(100vh - 400px); overflow-y: auto;">
                         <table class="w-full">
-                            <thead class="bg-blue-600 text-white">
+                            <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">No. Kontrak</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold">Mitra</th>
                                     <th class="px-4 py-3 text-center text-sm font-semibold">No. PO</th>
                                     <th class="px-4 py-3 text-center text-sm font-semibold">No. GRPO</th>
                                     <th class="px-4 py-3 text-right text-sm font-semibold">Total (Rp)</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold">SPM Proses UP</th>
                                     <th class="px-4 py-3 text-center text-sm font-semibold">Berkas</th>
                                 </tr>
                             </thead>
                             <tbody id="pengadaanTable">
                                 <tr>
-                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                                         <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
                                         <p>Memuat data...</p>
                                     </td>
@@ -5911,18 +5912,6 @@ function getDashboardPengadaanHTML() {
                 <!-- Pagination -->
                 <div id="pagination" class="mt-6 flex justify-center"></div>
             </div>
-        </div>
-                                    <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
-                                    <p>Memuat data...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Pagination -->
-            <div id="pagination" class="mt-6 flex justify-center"></div>
         </div>
 
         <script src="/static/auth-check.js"></script>
@@ -5957,7 +5946,7 @@ function getDashboardPengadaanHTML() {
                     console.error('Error loading data:', error);
                     document.getElementById('pengadaanTable').innerHTML = \`
                         <tr>
-                            <td colspan="3" class="px-6 py-8 text-center text-red-500">
+                            <td colspan="7" class="px-6 py-8 text-center text-red-500">
                                 <i class="fas fa-exclamation-triangle text-3xl mb-3"></i>
                                 <p>Gagal memuat data pengadaan</p>
                             </td>
@@ -6024,7 +6013,7 @@ function getDashboardPengadaanHTML() {
                 if (pageData.length === 0) {
                     tbody.innerHTML = \`
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                                 <i class="fas fa-inbox text-3xl mb-3"></i>
                                 <p>Tidak ada data pengadaan</p>
                             </td>
@@ -6049,6 +6038,14 @@ function getDashboardPengadaanHTML() {
                         </td>
                         <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800">
                             \${formatRupiah(item['rp._total_+_ppn'] || 0)}
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm text-purple-600">
+                            \${item['spm_proses_up_(no._surat_ams)'] ? 
+                                \`<a href="\${item['link_spm_up_(link_surat_ams)']}" target="_blank" 
+                                   class="hover:underline font-semibold">
+                                    \${item['spm_proses_up_(no._surat_ams)']}
+                                </a>\` 
+                                : '<span class="text-gray-400">-</span>'}
                         </td>
                         <td class="px-4 py-3 text-center">
                             \${item.link_berkas_tagihan ? 
