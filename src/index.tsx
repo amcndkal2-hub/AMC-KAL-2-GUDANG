@@ -5892,14 +5892,17 @@ function getDashboardPengadaanHTML() {
                     <table class="w-full">
                         <thead class="bg-blue-600 text-white">
                             <tr>
-                                <th class="px-6 py-4 text-left text-sm font-semibold">No. Kontrak</th>
-                                <th class="px-6 py-4 text-right text-sm font-semibold">Total (Rp)</th>
-                                <th class="px-6 py-4 text-center text-sm font-semibold">Berkas</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">No. Kontrak</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Mitra</th>
+                                <th class="px-4 py-3 text-center text-sm font-semibold">No. PO</th>
+                                <th class="px-4 py-3 text-center text-sm font-semibold">No. GRPO</th>
+                                <th class="px-4 py-3 text-right text-sm font-semibold">Total (Rp)</th>
+                                <th class="px-4 py-3 text-center text-sm font-semibold">Berkas</th>
                             </tr>
                         </thead>
                         <tbody id="pengadaanTable">
                             <tr>
-                                <td colspan="3" class="px-6 py-8 text-center text-gray-500">
+                                <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
                                     <p>Memuat data...</p>
                                 </td>
@@ -6012,7 +6015,7 @@ function getDashboardPengadaanHTML() {
                 if (pageData.length === 0) {
                     tbody.innerHTML = \`
                         <tr>
-                            <td colspan="3" class="px-6 py-8 text-center text-gray-500">
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                                 <i class="fas fa-inbox text-3xl mb-3"></i>
                                 <p>Tidak ada data pengadaan</p>
                             </td>
@@ -6023,13 +6026,22 @@ function getDashboardPengadaanHTML() {
                 
                 tbody.innerHTML = pageData.map(item => \`
                     <tr class="border-b hover:bg-gray-50">
-                        <td class="px-6 py-4 text-sm text-gray-800">
+                        <td class="px-4 py-3 text-sm text-gray-800">
                             \${item.no_kontrak_pekerjaan || '-'}
                         </td>
-                        <td class="px-6 py-4 text-right text-sm font-semibold text-gray-800">
+                        <td class="px-4 py-3 text-sm text-gray-800">
+                            \${item.mitra || '-'}
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm font-semibold text-blue-600">
+                            \${item['no._po'] ? item['no._po'] : '<span class="text-gray-400">-</span>'}
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm font-mono text-green-600">
+                            \${item['no._gr_po_barang'] ? item['no._gr_po_barang'] : '<span class="text-gray-400">-</span>'}
+                        </td>
+                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800">
                             \${formatRupiah(item['rp._total_+_ppn'] || 0)}
                         </td>
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-4 py-3 text-center">
                             \${item.link_berkas_tagihan ? 
                                 \`<a href="\${item.link_berkas_tagihan}" target="_blank" 
                                    class="inline-block bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition">
