@@ -2082,6 +2082,37 @@ app.get('/api/material-pengadaan', async (c) => {
   }
 })
 
+// API: Update No PO and GRPO for material pengadaan
+app.post('/api/update-po-grpo', async (c) => {
+  try {
+    const { env } = c
+    const { id, no_po, no_grpo } = await c.req.json()
+    
+    if (!id) {
+      return c.json({ success: false, error: 'Material ID is required' }, 400)
+    }
+    
+    console.log(`📦 Updating PO/GRPO for material ID ${id}:`, { no_po, no_grpo })
+    
+    // Update material_gangguan
+    const updateQuery = `
+      UPDATE material_gangguan 
+      SET no_po = ?, no_grpo = ?
+      WHERE id = ?
+    `
+    
+    await env.DB.prepare(updateQuery).bind(no_po || null, no_grpo || null, id).run()
+    
+    return c.json({ 
+      success: true, 
+      message: 'No PO dan GRPO berhasil disimpan'
+    })
+  } catch (error: any) {
+    console.error('Failed to update PO/GRPO:', error)
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
 // API: Create RAB
 app.post('/api/create-rab', async (c) => {
   try {
@@ -2806,6 +2837,11 @@ app.get('/dashboard/resume', (c) => {
 // Dashboard Pengadaan (PROTECTED - auth required)
 app.get('/dashboard/pengadaan', (c) => {
   return c.html(getDashboardPengadaanHTML())
+})
+
+// Dashboard Pengadaan Material - Material with status Pengadaan (PROTECTED - auth required)
+app.get('/dashboard/pengadaan-material', (c) => {
+  return c.html(getDashboardPengadaanMaterialHTML())
 })
 
 // HTML Templates
@@ -6073,6 +6109,142 @@ function getDashboardPengadaanHTML() {
                 }).format(num);
             }
         </script>
+    </body>
+    </html>
+  `;
+}
+
+// HTML Template for Dashboard Pengadaan Material
+function getDashboardPengadaanMaterialHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard Pengadaan Material</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="/url-redirect.js?v=1770101032"></script>
+    </head>
+    <body class="bg-gray-50">
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-plus mr-1"></i>Input Material
+                    </a>
+                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/analytics" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tachometer-alt mr-1"></i>Analytics
+                    </a>
+                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/pengadaan-material" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
+                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
+                    </a>
+                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    </a>
+                    <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto p-6">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                    <i class="fas fa-shopping-cart text-blue-600 mr-3"></i>
+                    Dashboard Pengadaan Material
+                </h1>
+                <p class="text-gray-600">Material dengan status Pengadaan - Tracking No PO & GRPO</p>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Total Pengadaan</p>
+                            <h3 id="totalPengadaan" class="text-3xl font-bold text-blue-600">-</h3>
+                        </div>
+                        <div class="bg-blue-100 p-4 rounded-full">
+                            <i class="fas fa-shopping-cart text-3xl text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Sudah Ada No PO</p>
+                            <h3 id="totalWithPO" class="text-3xl font-bold text-green-600">-</h3>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded-full">
+                            <i class="fas fa-file-invoice text-3xl text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Sudah Ada No GRPO</p>
+                            <h3 id="totalWithGRPO" class="text-3xl font-bold text-purple-600">-</h3>
+                        </div>
+                        <div class="bg-purple-100 p-4 rounded-full">
+                            <i class="fas fa-box text-3xl text-purple-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-blue-600 text-white">
+                            <tr>
+                                <th class="px-4 py-3 text-center text-sm font-semibold">No</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Nomor LH05</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Part Number</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Material</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Mesin</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">S/N Mesin</th>
+                                <th class="px-4 py-3 text-center text-sm font-semibold">Jumlah</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Lokasi Tujuan</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">No PO</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">No GRPO</th>
+                                <th class="px-4 py-3 text-center text-sm font-semibold">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pengadaanTable">
+                            <tr>
+                                <td colspan="11" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                                    <p>Memuat data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/dashboard-pengadaan-material.js"></script>
     </body>
     </html>
   `;

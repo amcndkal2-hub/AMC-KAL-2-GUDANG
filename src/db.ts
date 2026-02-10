@@ -1276,7 +1276,7 @@ export async function getRABById(db: D1Database, rabId: number) {
 
 export async function getMaterialPengadaan(db: D1Database) {
   try {
-    // Try with sn_mesin column first
+    // Try with all new columns (sn_mesin, no_po, no_grpo)
     try {
       const result = await db.prepare(`
         SELECT 
@@ -1290,7 +1290,9 @@ export async function getMaterialPengadaan(db: D1Database) {
           mg.unit_uld as lokasi_tujuan,
           mg.status,
           mg.is_rab_created,
-          mg.sn_mesin
+          mg.sn_mesin,
+          mg.no_po,
+          mg.no_grpo
         FROM material_gangguan mg
         JOIN gangguan g ON mg.gangguan_id = g.id
         WHERE UPPER(mg.status) = 'PENGADAAN'
@@ -1300,8 +1302,8 @@ export async function getMaterialPengadaan(db: D1Database) {
       
       return result.results || []
     } catch (columnError) {
-      // Fallback: Query without sn_mesin
-      console.log('⚠️ sn_mesin column not found in getMaterialPengadaan, using fallback')
+      // Fallback: Query without new columns
+      console.log('⚠️ New columns not found in getMaterialPengadaan, using fallback')
       const result = await db.prepare(`
         SELECT 
           mg.id,
