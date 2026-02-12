@@ -5999,6 +5999,20 @@ function getDashboardPengadaanHTML() {
                 document.getElementById('totalMitra').textContent = uniqueMitra.size;
             }
 
+            // Helper function to fix GRPO data
+            // For "RIGHT OF WAY" contracts, GRPO should be "Jasa", not contract number
+            function fixGRPO(item) {
+                const grpo = item['no._gr_po_barang'];
+                const kontrak = item.no_kontrak_pekerjaan || '';
+                
+                // If GRPO equals contract number (wrong data), return "Jasa"
+                if (grpo && grpo === kontrak) {
+                    return 'Jasa';
+                }
+                
+                return grpo;
+            }
+
             function displayTable() {
                 const tbody = document.getElementById('pengadaanTable');
                 
@@ -6014,7 +6028,10 @@ function getDashboardPengadaanHTML() {
                     return;
                 }
                 
-                tbody.innerHTML = filteredData.map(item => \`
+                tbody.innerHTML = filteredData.map(item => {
+                    const correctedGRPO = fixGRPO(item);
+                    
+                    return \`
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-3 text-sm text-gray-800">
                             \${item.no_kontrak_pekerjaan || '-'}
@@ -6026,7 +6043,7 @@ function getDashboardPengadaanHTML() {
                             \${item['no._po'] ? item['no._po'] : '<span class="text-gray-400">-</span>'}
                         </td>
                         <td class="px-4 py-3 text-center text-sm font-mono text-green-600">
-                            \${item['no._gr_po_barang'] ? item['no._gr_po_barang'] : '<span class="text-gray-400">-</span>'}
+                            \${correctedGRPO ? correctedGRPO : '<span class="text-gray-400">-</span>'}
                         </td>
                         <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800">
                             \${formatRupiah(item['rp._total_+_ppn'] || 0)}
@@ -6048,7 +6065,8 @@ function getDashboardPengadaanHTML() {
                                 : '<span class="text-gray-400">-</span>'}
                         </td>
                     </tr>
-                \`).join('');
+                    \`;
+                }).join('');
             }
 
             function formatRupiah(number) {
