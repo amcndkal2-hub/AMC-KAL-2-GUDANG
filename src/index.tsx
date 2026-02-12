@@ -6050,10 +6050,16 @@ function getDashboardPengadaanHTML() {
                         </td>
                         <td class="px-4 py-3 text-center text-sm text-purple-600">
                             \${item['spm_proses_up_(no._surat_ams)'] ? 
-                                \`<a href="\${item['link_spm_up_(link_surat_ams)']}" target="_blank" 
-                                   class="hover:underline font-semibold">
-                                    \${item['spm_proses_up_(no._surat_ams)']}
-                                </a>\` 
+                                \`<div class="flex items-center justify-center space-x-2">
+                                    <span class="font-semibold">\${item['spm_proses_up_(no._surat_ams)']}</span>
+                                    \${item['link_spm_up_(link_surat_ams)'] ? 
+                                        \`<a href="\${item['link_spm_up_(link_surat_ams)']}" target="_blank" 
+                                           class="inline-block bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700 transition"
+                                           title="Lihat Dokumen SPM">
+                                            <i class="fas fa-external-link-alt text-sm"></i>
+                                        </a>\`
+                                        : ''}
+                                </div>\` 
                                 : '<span class="text-gray-400">-</span>'}
                         </td>
                         <td class="px-4 py-3 text-center">
