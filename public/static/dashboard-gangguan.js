@@ -190,6 +190,7 @@ function applyFilters() {
   const kelompok = document.getElementById('filterKelompok').value
   const tanggal = document.getElementById('filterTanggal').value
   const pemadaman = document.getElementById('filterPemadaman').value
+  const unitFilter = document.getElementById('filterUnit').value
   const searchNomor = document.getElementById('searchNomor').value.toLowerCase()
   
   filteredData = allGangguanData.filter(item => {
@@ -204,6 +205,11 @@ function applyFilters() {
     }
     
     if (pemadaman && item.pemadaman !== pemadaman) {
+      match = false
+    }
+    
+    // Filter by Unit/Lokasi
+    if (unitFilter && item.lokasiGangguan !== unitFilter) {
       match = false
     }
     
