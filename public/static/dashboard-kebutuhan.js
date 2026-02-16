@@ -75,6 +75,26 @@ async function loadKebutuhanMaterial() {
     }))
     filteredMaterials = [...allMaterials]
     
+    // Sort by status priority: N/A, Pengadaan, Tersedia, Terkirim, Tunda, Reject
+    const statusOrder = {
+      'N/A': 1,
+      'Pengadaan': 2,
+      'Tersedia': 3,
+      'Terkirim': 4,
+      'Tunda': 5,
+      'Reject': 6
+    }
+    
+    allMaterials.sort((a, b) => {
+      const statusA = a.status || 'N/A'
+      const statusB = b.status || 'N/A'
+      const orderA = statusOrder[statusA] || 999
+      const orderB = statusOrder[statusB] || 999
+      return orderA - orderB
+    })
+    
+    filteredMaterials = [...allMaterials]
+    
     // Populate mesin filter after data is loaded
     populateMesinFilter()
     
@@ -148,6 +168,24 @@ function applyFilters() {
     }
     
     return match
+  })
+  
+  // Sort by status priority: N/A, Pengadaan, Tersedia, Terkirim, Tunda, Reject
+  const statusOrder = {
+    'N/A': 1,
+    'Pengadaan': 2,
+    'Tersedia': 3,
+    'Terkirim': 4,
+    'Tunda': 5,
+    'Reject': 6
+  }
+  
+  filteredMaterials.sort((a, b) => {
+    const statusA = a.status || 'N/A'
+    const statusB = b.status || 'N/A'
+    const orderA = statusOrder[statusA] || 999
+    const orderB = statusOrder[statusB] || 999
+    return orderA - orderB
   })
   
   renderTable()
