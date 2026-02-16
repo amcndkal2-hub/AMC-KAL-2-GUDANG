@@ -166,7 +166,7 @@ function renderTable() {
   if (filteredMaterials.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="10" class="px-4 py-8 text-center text-gray-500">
           ${allMaterials.length === 0 ? 'Belum ada data kebutuhan material' : 'Tidak ada data yang sesuai filter'}
         </td>
       </tr>
@@ -179,6 +179,19 @@ function renderTable() {
     const stok = item.stok || 0
     const status = item.status || 'N/A'
     const isTerkirim = item.isTerkirim || status === 'Terkirim'
+    
+    // Jenis Barang badge with color
+    const jenisBarang = item.jenisBarang || 'Material Handal'
+    let jenisBadge = ''
+    if (jenisBarang === 'Material Handal' || jenisBarang === 'MATERIAL HANDAL') {
+      jenisBadge = `<span class="inline-block px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">Material Handal</span>`
+    } else if (jenisBarang === 'Filter' || jenisBarang === 'FILTER') {
+      jenisBadge = `<span class="inline-block px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800">Filter</span>`
+    } else if (jenisBarang === 'Material Bekas' || jenisBarang === 'MATERIAL BEKAS') {
+      jenisBadge = `<span class="inline-block px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">Material Bekas</span>`
+    } else {
+      jenisBadge = `<span class="inline-block px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">${jenisBarang}</span>`
+    }
     
     // Determine status display and dropdown behavior
     let statusDisplay = ''
@@ -246,6 +259,7 @@ function renderTable() {
         </td>
         <td class="px-4 py-3 font-semibold">${item.partNumber}</td>
         <td class="px-4 py-3">${item.material}</td>
+        <td class="px-4 py-3">${jenisBadge}</td>
         <td class="px-4 py-3">${item.mesin}</td>
         <td class="px-4 py-3">${item.sn_mesin || item.snMesin || '-'}</td>
         <td class="px-4 py-3 text-center font-semibold">${item.jumlah}</td>
@@ -328,11 +342,12 @@ function showNotification(message, type) {
 
 function exportExcel() {
   // Prepare CSV data
-  let csv = 'No,Nomor LH05,Part Number,Material,Mesin,Jumlah,Unit/Lokasi Tujuan,Status\n'
+  let csv = 'No,Nomor LH05,Part Number,Material,Jenis Barang,Mesin,Jumlah,Unit/Lokasi Tujuan,Status\n'
   
   filteredMaterials.forEach((item, index) => {
     const lokasiTujuan = item.lokasiTujuan || item.unitULD || '-'
-    csv += `${index + 1},"${item.nomorLH05}","${item.partNumber}","${item.material}","${item.mesin}",${item.jumlah},"${lokasiTujuan}","${item.status}"\n`
+    const jenisBarang = item.jenisBarang || 'Material Handal'
+    csv += `${index + 1},"${item.nomorLH05}","${item.partNumber}","${item.material}","${jenisBarang}","${item.mesin}",${item.jumlah},"${lokasiTujuan}","${item.status}"\n`
   })
   
   // Download

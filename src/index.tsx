@@ -4973,6 +4973,7 @@ function getDashboardKebutuhanMaterialHTML() {
                                 <th class="px-4 py-3 text-left">Nomor LH05</th>
                                 <th class="px-4 py-3 text-left">Part Number</th>
                                 <th class="px-4 py-3 text-left">Material</th>
+                                <th class="px-4 py-3 text-left">Jenis Barang</th>
                                 <th class="px-4 py-3 text-left">Mesin</th>
                                 <th class="px-4 py-3 text-left">S/N Mesin</th>
                                 <th class="px-4 py-3 text-center">Jumlah</th>
@@ -4982,7 +4983,7 @@ function getDashboardKebutuhanMaterialHTML() {
                         </thead>
                         <tbody id="kebutuhanTable">
                             <tr>
-                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
                                     Belum ada data kebutuhan material
                                 </td>
                             </tr>
