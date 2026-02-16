@@ -771,9 +771,11 @@ export async function getAllMaterialKebutuhan(db: D1Database) {
         g.nomor_lh05,
         g.tanggal_laporan,
         g.lokasi_gangguan,
-        g.status as gangguan_status
+        g.status as gangguan_status,
+        COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
       FROM material_gangguan mg
       JOIN gangguan g ON mg.gangguan_id = g.id
+      LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
       ORDER BY mg.created_at DESC
     `).all()
 

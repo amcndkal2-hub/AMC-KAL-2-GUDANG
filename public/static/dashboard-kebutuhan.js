@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('filterStatus').addEventListener('change', applyFilters)
   document.getElementById('filterMesin').addEventListener('change', applyFilters)
   document.getElementById('filterUnit').addEventListener('change', applyFilters)
+  document.getElementById('filterJenisBarang').addEventListener('change', applyFilters)
   document.getElementById('searchNomor').addEventListener('input', applyFilters)
 })
 
@@ -69,7 +70,8 @@ async function loadKebutuhanMaterial() {
       lokasiTujuan: item.lokasi_tujuan || item.unit_uld,
       unitULD: item.unit_uld,
       stok: item.stok || 0, // Include stock info
-      isTerkirim: item.isTerkirim || false // Include shipment status
+      isTerkirim: item.isTerkirim || false, // Include shipment status
+      jenisBarang: item.jenis_barang || 'Material Handal' // Include jenis barang
     }))
     filteredMaterials = [...allMaterials]
     
@@ -107,6 +109,7 @@ function applyFilters() {
   const statusFilter = document.getElementById('filterStatus').value
   const mesinFilter = document.getElementById('filterMesin').value
   const unitFilter = document.getElementById('filterUnit').value
+  const jenisBarangFilter = document.getElementById('filterJenisBarang').value
   const searchNomor = document.getElementById('searchNomor').value.toLowerCase()
   
   filteredMaterials = allMaterials.filter(item => {
@@ -130,6 +133,11 @@ function applyFilters() {
       }
     }
     
+    // Filter by Jenis Barang
+    if (jenisBarangFilter && item.jenisBarang !== jenisBarangFilter) {
+      match = false
+    }
+    
     // Filter by Nomor LH05
     if (searchNomor && !item.nomorLH05.toLowerCase().includes(searchNomor)) {
       match = false
@@ -145,6 +153,7 @@ function resetFilters() {
   document.getElementById('filterStatus').value = ''
   document.getElementById('filterMesin').value = ''
   document.getElementById('filterUnit').value = ''
+  document.getElementById('filterJenisBarang').value = ''
   document.getElementById('searchNomor').value = ''
   
   filteredMaterials = [...allMaterials]
