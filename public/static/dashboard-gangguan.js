@@ -253,7 +253,7 @@ function renderTable() {
     
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="9" class="px-4 py-8 text-center text-gray-500">
           <div class="mb-4">
             <i class="fas fa-inbox text-6xl text-gray-300 mb-3"></i>
             <p class="text-lg font-semibold">${message}</p>
@@ -311,6 +311,9 @@ function renderTable() {
         <td class="px-4 py-3">${tanggal}</td>
         <td class="px-4 py-3">
           ${kelompokBadge}
+        </td>
+        <td class="px-4 py-3">
+          <span class="font-semibold text-gray-700">${item.lokasiGangguan || '-'}</span>
         </td>
         <td class="px-4 py-3">${item.komponenRusak}</td>
         <td class="px-4 py-3 text-center">${item.bebanPuncak}</td>

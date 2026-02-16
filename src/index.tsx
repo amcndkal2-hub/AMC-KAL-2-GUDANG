@@ -5171,6 +5171,7 @@ function getDashboardGangguanHTML() {
                                 <th class="px-4 py-3 text-left">Nomor LH05</th>
                                 <th class="px-4 py-3 text-left">Tanggal Kejadian</th>
                                 <th class="px-4 py-3 text-left">Kelompok SPD</th>
+                                <th class="px-4 py-3 text-left">Unit/Lokasi</th>
                                 <th class="px-4 py-3 text-left">Komponen Rusak</th>
                                 <th class="px-4 py-3 text-center">Beban (MW)</th>
                                 <th class="px-4 py-3 text-center">Status</th>
@@ -5180,7 +5181,7 @@ function getDashboardGangguanHTML() {
                         </thead>
                         <tbody id="gangguanTable">
                             <tr>
-                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
                                     <div class="mb-4">
                                         <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-3"></i>
                                         <p class="text-lg font-semibold">Memuat data gangguan...</p>
