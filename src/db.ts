@@ -605,11 +605,13 @@ export async function getAllGangguan(db: D1Database) {
             'jumlah', mg.jumlah,
             'status', mg.status,
             'unitULD', mg.unit_uld,
-            'lokasiTujuan', mg.lokasi_tujuan
+            'lokasiTujuan', mg.lokasi_tujuan,
+            'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
           )
         ) as materials
       FROM gangguan g
       LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+      LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
       GROUP BY g.id
       ORDER BY g.created_at DESC
     `).all()
@@ -641,12 +643,14 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
               'status', mg.status,
               'unitULD', mg.unit_uld,
               'lokasiTujuan', mg.lokasi_tujuan,
-              'snMesin', mg.sn_mesin
+              'snMesin', mg.sn_mesin,
+              'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
             )
           ) as materials
         FROM gangguan g
         LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id 
           AND (mg.is_issued IS NULL OR mg.is_issued = 0)
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
         WHERE g.nomor_lh05 = ?
         GROUP BY g.id
       `).bind(nomorLH05).all()
@@ -675,11 +679,13 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
                 'status', mg.status,
                 'unitULD', mg.unit_uld,
                 'lokasiTujuan', mg.lokasi_tujuan,
-                'snMesin', mg.sn_mesin
+                'snMesin', mg.sn_mesin,
+                'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
               )
             ) as materials
           FROM gangguan g
           LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+          LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
           WHERE g.nomor_lh05 = ?
           GROUP BY g.id
         `).bind(nomorLH05).all()
@@ -706,11 +712,13 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
               'jumlah', mg.jumlah,
               'status', mg.status,
               'unitULD', mg.unit_uld,
-              'lokasiTujuan', mg.lokasi_tujuan
+              'lokasiTujuan', mg.lokasi_tujuan,
+              'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
             )
           ) as materials
         FROM gangguan g
         LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
         WHERE g.nomor_lh05 = ?
         GROUP BY g.id
       `).bind(nomorLH05).all()

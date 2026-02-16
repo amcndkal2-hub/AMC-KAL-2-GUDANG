@@ -416,6 +416,7 @@ function showLH05Modal(gangguan) {
       <td class="px-4 py-2">${mat.mesin ?? '-'}</td>
       <td class="px-4 py-2">${mat.snMesin ?? mat.status ?? '-'}</td>
       <td class="px-4 py-2 text-center">${mat.jumlah ?? 0}</td>
+      <td class="px-4 py-2"><span class="inline-block px-2 py-1 text-xs font-semibold rounded ${mat.jenisBarang === 'FILTER' ? 'bg-yellow-100 text-yellow-800' : mat.jenisBarang === 'MATERIAL BEKAS' ? 'bg-gray-100 text-gray-800' : 'bg-blue-100 text-blue-800'}">${mat.jenisBarang ?? 'Material Handal'}</span></td>
     </tr>
   `).join('')
   
@@ -541,6 +542,7 @@ function showLH05Modal(gangguan) {
                   <th class="px-4 py-2 text-left">Mesin</th>
                   <th class="px-4 py-2 text-left">S/N Mesin</th>
                   <th class="px-4 py-2 text-center">Jumlah</th>
+                  <th class="px-4 py-2 text-left">Jenis Barang</th>
                 </tr>
               </thead>
               <tbody class="bg-white">
