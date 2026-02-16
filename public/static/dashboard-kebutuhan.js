@@ -133,9 +133,13 @@ function applyFilters() {
       }
     }
     
-    // Filter by Jenis Barang
-    if (jenisBarangFilter && item.jenisBarang !== jenisBarangFilter) {
-      match = false
+    // Filter by Jenis Barang (case-insensitive)
+    if (jenisBarangFilter) {
+      const itemJenis = (item.jenisBarang || '').toUpperCase()
+      const filterJenis = jenisBarangFilter.toUpperCase()
+      if (itemJenis !== filterJenis) {
+        match = false
+      }
     }
     
     // Filter by Nomor LH05
