@@ -4908,6 +4908,12 @@ function getDashboardKebutuhanMaterialHTML() {
                             class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
                     </div>
                     
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Cari Material</label>
+                        <input type="text" id="searchMaterial" placeholder="Cari nama material..." 
+                            class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
+                    </div>
+                    
                     <button onclick="applyFilters()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
                         <i class="fas fa-search mr-2"></i>Terapkan Filter
                     </button>

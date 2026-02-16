@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('filterUnit').addEventListener('change', applyFilters)
   document.getElementById('filterJenisBarang').addEventListener('change', applyFilters)
   document.getElementById('searchNomor').addEventListener('input', applyFilters)
+  document.getElementById('searchMaterial').addEventListener('input', applyFilters)
 })
 
 async function populateFilters() {
@@ -131,6 +132,7 @@ function applyFilters() {
   const unitFilter = document.getElementById('filterUnit').value
   const jenisBarangFilter = document.getElementById('filterJenisBarang').value
   const searchNomor = document.getElementById('searchNomor').value.toLowerCase()
+  const searchMaterial = document.getElementById('searchMaterial').value.toLowerCase()
   
   filteredMaterials = allMaterials.filter(item => {
     let match = true
@@ -167,6 +169,11 @@ function applyFilters() {
       match = false
     }
     
+    // Filter by Material (searchable)
+    if (searchMaterial && !item.material.toLowerCase().includes(searchMaterial)) {
+      match = false
+    }
+    
     return match
   })
   
@@ -197,6 +204,7 @@ function resetFilters() {
   document.getElementById('filterUnit').value = ''
   document.getElementById('filterJenisBarang').value = ''
   document.getElementById('searchNomor').value = ''
+  document.getElementById('searchMaterial').value = ''
   
   filteredMaterials = [...allMaterials]
   renderTable()
