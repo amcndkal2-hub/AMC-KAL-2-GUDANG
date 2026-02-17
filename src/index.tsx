@@ -1741,6 +1741,19 @@ app.get('/api/kebutuhan-material', async (c) => {
     // Get from D1 Database
     let materials = await DB.getAllMaterialKebutuhan(env.DB)
     
+    // DEDUPLICATE: Remove duplicate entries based on nomor_lh05 + part_number combination
+    // Keep the latest entry (highest id) for each unique combination
+    const uniqueMaterialsMap = new Map()
+    materials.forEach((mat: any) => {
+      const key = `${mat.nomor_lh05}-${mat.part_number}`
+      const existing = uniqueMaterialsMap.get(key)
+      // Keep the one with higher id (latest insert)
+      if (!existing || mat.id > existing.id) {
+        uniqueMaterialsMap.set(key, mat)
+      }
+    })
+    materials = Array.from(uniqueMaterialsMap.values())
+    
     // Get all transactions for stock calculation and Terkirim status
     const allTransactions = await DB.getAllTransactions(env.DB)
     
