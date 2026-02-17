@@ -339,55 +339,55 @@ function renderSelectedMaterials() {
     
     items.forEach((item, index) => {
       rowNumber++
-      html += `<tr class="hover:bg-gray-50">`
+      html += `<tr class="hover:bg-gray-50 bg-white">`
       
       // No - merged (only first row)
       if (index === 0) {
-        html += `<td class="px-4 py-3 border text-center bg-blue-50 font-semibold" rowspan="${itemCount}">${rowNumber}</td>`
+        html += `<td class="px-4 py-3 border border-gray-300 text-center font-semibold" rowspan="${itemCount}">${rowNumber}</td>`
       }
       
       // Nomor LH05 - always show
-      html += `<td class="px-4 py-3 border font-mono text-sm">${item.nomor_lh05}</td>`
+      html += `<td class="px-4 py-3 border border-gray-300 font-mono text-sm">${item.nomor_lh05}</td>`
       
       // Part Number - merged (only first row)
       if (index === 0) {
-        html += `<td class="px-4 py-3 border font-mono text-sm bg-blue-50" rowspan="${itemCount}">${item.part_number}</td>`
+        html += `<td class="px-4 py-3 border border-gray-300 font-mono text-sm" rowspan="${itemCount}">${item.part_number}</td>`
       }
       
       // Material - merged (only first row)
       if (index === 0) {
-        html += `<td class="px-4 py-3 border bg-blue-50" rowspan="${itemCount}">${item.material}</td>`
+        html += `<td class="px-4 py-3 border border-gray-300" rowspan="${itemCount}">${item.material}</td>`
       }
       
       // Mesin - merged (only first row)
       if (index === 0) {
-        html += `<td class="px-4 py-3 border text-sm bg-blue-50" rowspan="${itemCount}">${item.mesin || '-'}</td>`
+        html += `<td class="px-4 py-3 border border-gray-300 text-sm" rowspan="${itemCount}">${item.mesin || '-'}</td>`
       }
       
       // Jumlah (individual) - always show
-      html += `<td class="px-4 py-3 border text-center">${item.jumlah}</td>`
+      html += `<td class="px-4 py-3 border border-gray-300 text-center">${item.jumlah}</td>`
       
       // Unit/ULD - always show
-      html += `<td class="px-4 py-3 border">${item.unit_uld || '-'}</td>`
+      html += `<td class="px-4 py-3 border border-gray-300">${item.unit_uld || '-'}</td>`
       
       // Jumlah Total - merged (only first row)
       if (index === 0) {
-        html += `<td class="px-4 py-3 border text-center font-bold bg-yellow-50" rowspan="${itemCount}">${totalJumlah}</td>`
+        html += `<td class="px-4 py-3 border border-gray-300 text-center font-bold" rowspan="${itemCount}">${totalJumlah}</td>`
       }
       
       // Harga Satuan - merged (only first row)
       if (index === 0) {
-        html += `<td class="px-4 py-3 border text-right bg-blue-50" rowspan="${itemCount}">${formatRupiah(item.harga_satuan)}</td>`
+        html += `<td class="px-4 py-3 border border-gray-300 text-right" rowspan="${itemCount}">${formatRupiah(item.harga_satuan)}</td>`
       }
       
       // Subtotal - merged (only first row, show total for all items with same part)
       if (index === 0) {
-        html += `<td class="px-4 py-3 border text-right font-semibold bg-blue-50" rowspan="${itemCount}">${formatRupiah(totalSubtotal)}</td>`
+        html += `<td class="px-4 py-3 border border-gray-300 text-right font-semibold" rowspan="${itemCount}">${formatRupiah(totalSubtotal)}</td>`
       }
       
       // Aksi - always show
       html += `
-        <td class="px-4 py-3 border text-center">
+        <td class="px-4 py-3 border border-gray-300 text-center">
           <button onclick="removeMaterial(${item.id})" 
                   class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">
             <i class="fas fa-times"></i>

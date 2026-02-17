@@ -5810,39 +5810,39 @@ function getDashboardCreateRABHTML() {
                     </h3>
                     
                     <div class="overflow-x-auto mb-4">
-                        <table class="min-w-full border">
-                            <thead class="bg-blue-50">
+                        <table class="min-w-full border-collapse border border-gray-300">
+                            <thead class="bg-green-400">
                                 <tr>
-                                    <th class="px-4 py-2 border text-center">No</th>
-                                    <th class="px-4 py-2 border text-left">Nomor LH05</th>
-                                    <th class="px-4 py-2 border text-left">Part Number</th>
-                                    <th class="px-4 py-2 border text-left">Material</th>
-                                    <th class="px-4 py-2 border text-left">Mesin</th>
-                                    <th class="px-4 py-2 border text-center">Jumlah</th>
-                                    <th class="px-4 py-2 border text-left">Unit/ULD</th>
-                                    <th class="px-4 py-2 border text-center">Jumlah Total</th>
-                                    <th class="px-4 py-2 border text-right">Harga Satuan</th>
-                                    <th class="px-4 py-2 border text-right">Subtotal</th>
-                                    <th class="px-4 py-2 border text-center">Aksi</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-center font-semibold text-white">No</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-left font-semibold text-white">Nomor LH05</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-left font-semibold text-white">Part Number</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-left font-semibold text-white">Material</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-left font-semibold text-white">Mesin</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-center font-semibold text-white">Jumlah</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-left font-semibold text-white">Unit/ULD</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-center font-semibold text-white">Jumlah Total</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-right font-semibold text-white">Harga Satuan</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-right font-semibold text-white">Subtotal</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-center font-semibold text-white">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="selectedMaterialsTable">
+                            <tbody id="selectedMaterialsTable" class="bg-white">
                             </tbody>
                             <tfoot class="bg-gray-100 font-bold">
                                 <tr id="subtotalRow">
-                                    <td colspan="9" class="px-4 py-3 border text-right">Subtotal (termasuk ROK):</td>
-                                    <td class="px-4 py-3 border text-right text-lg" id="subtotalHarga">Rp 0</td>
-                                    <td class="px-4 py-3 border"></td>
+                                    <td colspan="9" class="px-4 py-3 border border-gray-300 text-right">Subtotal (termasuk ROK):</td>
+                                    <td class="px-4 py-3 border border-gray-300 text-right text-lg" id="subtotalHarga">Rp 0</td>
+                                    <td class="px-4 py-3 border border-gray-300"></td>
                                 </tr>
                                 <tr id="ppnRow" style="display:none;">
-                                    <td colspan="9" class="px-4 py-3 border text-right">PPN 11%:</td>
-                                    <td class="px-4 py-3 border text-right text-lg" id="ppnHarga">Rp 0</td>
-                                    <td class="px-4 py-3 border"></td>
+                                    <td colspan="9" class="px-4 py-3 border border-gray-300 text-right">PPN 11%:</td>
+                                    <td class="px-4 py-3 border border-gray-300 text-right text-lg" id="ppnHarga">Rp 0</td>
+                                    <td class="px-4 py-3 border border-gray-300"></td>
                                 </tr>
                                 <tr class="bg-green-50">
-                                    <td colspan="9" class="px-4 py-3 border text-right text-xl">TOTAL HARGA:</td>
-                                    <td class="px-4 py-3 border text-right text-xl text-blue-600" id="totalHarga">Rp 0</td>
-                                    <td class="px-4 py-3 border"></td>
+                                    <td colspan="9" class="px-4 py-3 border border-gray-300 text-right text-xl">TOTAL HARGA:</td>
+                                    <td class="px-4 py-3 border border-gray-300 text-right text-xl text-blue-600" id="totalHarga">Rp 0</td>
+                                    <td class="px-4 py-3 border border-gray-300"></td>
                                 </tr>
                             </tfoot>
                         </table>
