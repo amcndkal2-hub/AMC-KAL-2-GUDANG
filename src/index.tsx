@@ -5701,7 +5701,7 @@ function getDashboardCreateRABHTML() {
 
             <!-- Form RAB -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <!-- Tanggal RAB -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -5722,35 +5722,34 @@ function getDashboardCreateRABHTML() {
                                placeholder="Auto-generated"
                                readonly>
                     </div>
-                </div>
-                
-                <!-- Jenis RAB Dropdown -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-file-invoice mr-2"></i>Jenis RAB
-                    </label>
-                    <select id="jenisRAB" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            required>
-                        <option value="">-- Pilih Jenis RAB --</option>
-                        <option value="KHS">KHS (Kontrak Harga Satuan)</option>
-                        <option value="SPK">SPK (Surat Perintah Kerja)</option>
-                        <option value="Pembelian Langsung">Pembelian Langsung</option>
-                    </select>
-                </div>
-                
-                <!-- PPN Toggle -->
-                <div class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                    <label class="flex items-center cursor-pointer">
-                        <input type="checkbox" id="usePPN" class="w-5 h-5 text-blue-600 rounded mr-3" checked onchange="updateTotalHarga()">
-                        <span class="text-base font-semibold text-gray-800">
-                            <i class="fas fa-percent mr-2 text-blue-600"></i>
-                            Gunakan PPN 11%
-                        </span>
-                    </label>
-                    <p class="text-sm text-gray-600 mt-2 ml-8">
-                        Centang untuk menambahkan PPN 11% ke total harga RAB
-                    </p>
+                    
+                    <!-- Jenis RAB -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-file-invoice mr-2"></i>Jenis RAB
+                        </label>
+                        <select id="jenisRAB" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                required>
+                            <option value="">-- Pilih Jenis RAB --</option>
+                            <option value="KHS">KHS (Kontrak Harga Satuan)</option>
+                            <option value="SPK">SPK (Surat Perintah Kerja)</option>
+                            <option value="Pembelian Langsung">Pembelian Langsung</option>
+                        </select>
+                    </div>
+                    
+                    <!-- PPN Toggle -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-percent mr-2"></i>PPN 11%
+                        </label>
+                        <label class="flex items-center cursor-pointer bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 h-[42px]">
+                            <input type="checkbox" id="usePPN" class="w-5 h-5 text-blue-600 rounded mr-3" checked onchange="updateTotalHarga()">
+                            <span class="text-sm font-semibold text-gray-800">
+                                Gunakan PPN 11%
+                            </span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Material Pengadaan List -->
@@ -5759,19 +5758,19 @@ function getDashboardCreateRABHTML() {
                         <i class="fas fa-list mr-2"></i>Pilih Material dari Kebutuhan (Status: Pengadaan)
                     </h3>
                     
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full border">
-                            <thead class="bg-gray-50">
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border rounded-lg">
+                        <table class="min-w-full border-collapse">
+                            <thead class="bg-gray-50 sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th class="px-4 py-2 border text-left">Pilih</th>
-                                    <th class="px-4 py-2 border text-left">Nomor LH05</th>
-                                    <th class="px-4 py-2 border text-left">Part Number</th>
-                                    <th class="px-4 py-2 border text-left">Material</th>
-                                    <th class="px-4 py-2 border text-left">Jenis Barang</th>
-                                    <th class="px-4 py-2 border text-left">Mesin</th>
-                                    <th class="px-4 py-2 border text-center">Jumlah</th>
-                                    <th class="px-4 py-2 border text-left">Unit/ULD</th>
-                                    <th class="px-4 py-2 border text-right">Harga Satuan (Rp)</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Pilih</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Nomor LH05</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Part Number</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Material</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Jenis Barang</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Mesin</th>
+                                    <th class="px-4 py-3 border text-center font-semibold text-gray-700">Jumlah</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Unit/ULD</th>
+                                    <th class="px-4 py-3 border text-right font-semibold text-gray-700">Harga Satuan (Rp)</th>
                                 </tr>
                             </thead>
                             <tbody id="materialPengadaanTable">
