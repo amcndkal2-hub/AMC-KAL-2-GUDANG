@@ -33,6 +33,15 @@ async function loadMaterialPengadaan() {
     const data = await response.json()
     console.log('Material pengadaan loaded:', data)
     
+    // Sort by part_number untuk grouping material yang sama berdekatan
+    data.sort((a, b) => {
+      const partA = (a.part_number || '').toUpperCase()
+      const partB = (b.part_number || '').toUpperCase()
+      if (partA < partB) return -1
+      if (partA > partB) return 1
+      return 0
+    })
+    
     allMaterialPengadaan = data
     filteredMaterialPengadaan = [...data]
     renderMaterialPengadaan(filteredMaterialPengadaan)
@@ -147,6 +156,15 @@ function applyFilters() {
     return match
   })
   
+  // Sort by part_number untuk grouping
+  filteredMaterialPengadaan.sort((a, b) => {
+    const partA = (a.part_number || '').toUpperCase()
+    const partB = (b.part_number || '').toUpperCase()
+    if (partA < partB) return -1
+    if (partA > partB) return 1
+    return 0
+  })
+  
   renderMaterialPengadaan(filteredMaterialPengadaan)
 }
 
@@ -190,12 +208,20 @@ function renderMaterialPengadaan(materials) {
       jenisBadge = `<span class="inline-block px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">${jenisBarang}</span>`
     }
     
+    // Check if this material is already selected
+    const isSelected = selectedMaterials.some(m => m.id === item.id)
+    const disabledAttr = isSelected ? 'disabled' : ''
+    const disabledClass = isSelected ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+    const rowClass = isSelected ? 'bg-green-50' : 'hover:bg-gray-50'
+    
     return `
-    <tr class="hover:bg-gray-50">
+    <tr class="${rowClass}">
       <td class="px-4 py-3 border text-center">
         <input type="checkbox" 
                id="check_${item.id}" 
-               class="w-5 h-5 cursor-pointer"
+               class="w-5 h-5 ${disabledClass}"
+               ${disabledAttr}
+               ${isSelected ? 'checked' : ''}
                onchange="toggleMaterial(${item.id})">
       </td>
       <td class="px-4 py-3 border font-mono text-sm">${item.nomor_lh05 || '-'}</td>
@@ -208,10 +234,11 @@ function renderMaterialPengadaan(materials) {
       <td class="px-4 py-3 border">
         <input type="number" 
                id="harga_${item.id}" 
-               class="w-full px-2 py-1 border rounded text-right"
+               class="w-full px-2 py-1 border rounded text-right ${isSelected ? 'bg-gray-100' : ''}"
                placeholder="0"
                min="0"
-               step="1000">
+               step="1000"
+               ${disabledAttr}>
       </td>
     </tr>
   `
@@ -258,6 +285,9 @@ function toggleMaterial(materialId) {
     console.log('Material removed:', materialId)
   }
   
+  // Re-render tabel pengadaan untuk update disabled state
+  renderMaterialPengadaan(filteredMaterialPengadaan)
+  
   renderSelectedMaterials()
   updateTotalHarga()
 }
@@ -301,6 +331,9 @@ function removeMaterial(materialId) {
   if (checkbox) checkbox.checked = false
   
   selectedMaterials = selectedMaterials.filter(m => m.id !== materialId)
+  
+  // Re-render tabel pengadaan untuk update disabled state
+  renderMaterialPengadaan(filteredMaterialPengadaan)
   
   renderSelectedMaterials()
   updateTotalHarga()
