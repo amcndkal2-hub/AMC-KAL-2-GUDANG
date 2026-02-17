@@ -771,14 +771,17 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
       const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
       
       // Parse S/N Mesin from status field (format: "SN:serial_number")
+      // Only for backward compatibility with old data
       const parsedMaterials = rawMaterials.map((mat: any) => {
+        // If status starts with "SN:", extract serial number and reset status to N/A
         if (mat.status && mat.status.startsWith('SN:')) {
           return {
             ...mat,
             snMesin: mat.status.substring(3), // Extract S/N after "SN:"
-            status: 'N/A' // Reset status to default
+            status: 'N/A' // Reset status to default for old SN format
           }
         }
+        // Keep valid status values unchanged (Pengadaan, Tersedia, Terkirim, Tunda, Reject, N/A)
         return { ...mat, snMesin: null }
       })
       
