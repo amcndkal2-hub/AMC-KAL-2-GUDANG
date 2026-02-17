@@ -599,6 +599,7 @@ export async function getAllGangguan(db: D1Database) {
         g.*,
         json_group_array(
           json_object(
+            'id', mg.id,
             'partNumber', mg.part_number,
             'material', mg.material,
             'mesin', mg.mesin,
@@ -616,10 +617,25 @@ export async function getAllGangguan(db: D1Database) {
       ORDER BY g.created_at DESC
     `).all()
 
-    return results.map((g: any) => ({
-      ...g,
-      materials: JSON.parse(g.materials)
-    }))
+    return results.map((g: any) => {
+      const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
+      
+      // DEDUPLICATE: Remove duplicate materials based on part_number
+      // Keep the one with highest id (latest insert)
+      const uniqueMaterialsMap = new Map()
+      rawMaterials.forEach((mat: any) => {
+        const existing = uniqueMaterialsMap.get(mat.partNumber)
+        if (!existing || mat.id > existing.id) {
+          uniqueMaterialsMap.set(mat.partNumber, mat)
+        }
+      })
+      const materials = Array.from(uniqueMaterialsMap.values())
+      
+      return {
+        ...g,
+        materials: materials
+      }
+    })
   } catch (error: any) {
     console.error('Failed to get gangguan:', error)
     return []
@@ -658,9 +674,22 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
       if (results.length === 0) return null
 
       const g: any = results[0]
+      const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
+      
+      // DEDUPLICATE: Remove duplicate materials based on part_number
+      // Keep the one with highest id (latest insert)
+      const uniqueMaterialsMap = new Map()
+      rawMaterials.forEach((mat: any) => {
+        const existing = uniqueMaterialsMap.get(mat.partNumber)
+        if (!existing || mat.id > existing.id) {
+          uniqueMaterialsMap.set(mat.partNumber, mat)
+        }
+      })
+      const materials = Array.from(uniqueMaterialsMap.values())
+      
       return {
         ...g,
-        materials: JSON.parse(g.materials).filter((m: any) => m.id !== null)
+        materials: materials
       }
     } catch (columnError: any) {
       // Fallback 1: Try without is_issued but with sn_mesin
@@ -693,9 +722,22 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
         if (results.length === 0) return null
 
         const g: any = results[0]
+        const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
+        
+        // DEDUPLICATE: Remove duplicate materials based on part_number
+        // Keep the one with highest id (latest insert)
+        const uniqueMaterialsMap = new Map()
+        rawMaterials.forEach((mat: any) => {
+          const existing = uniqueMaterialsMap.get(mat.partNumber)
+          if (!existing || mat.id > existing.id) {
+            uniqueMaterialsMap.set(mat.partNumber, mat)
+          }
+        })
+        const materials = Array.from(uniqueMaterialsMap.values())
+        
         return {
           ...g,
-          materials: JSON.parse(g.materials).filter((m: any) => m.id !== null)
+          materials: materials
         }
       } catch (snMesinError: any) {
         // Fallback 2: Query without BOTH sn_mesin AND is_issued
@@ -726,10 +768,10 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
       if (results.length === 0) return null
 
       const g: any = results[0]
-      const materials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
+      const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
       
       // Parse S/N Mesin from status field (format: "SN:serial_number")
-      const parsedMaterials = materials.map((mat: any) => {
+      const parsedMaterials = rawMaterials.map((mat: any) => {
         if (mat.status && mat.status.startsWith('SN:')) {
           return {
             ...mat,
@@ -740,9 +782,20 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
         return { ...mat, snMesin: null }
       })
       
+      // DEDUPLICATE: Remove duplicate materials based on part_number
+      // Keep the one with highest id (latest insert)
+      const uniqueMaterialsMap = new Map()
+      parsedMaterials.forEach((mat: any) => {
+        const existing = uniqueMaterialsMap.get(mat.partNumber)
+        if (!existing || mat.id > existing.id) {
+          uniqueMaterialsMap.set(mat.partNumber, mat)
+        }
+      })
+      const materials = Array.from(uniqueMaterialsMap.values())
+      
       return {
         ...g,
-        materials: parsedMaterials
+        materials: materials
       }
       }
     }
