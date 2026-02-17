@@ -5629,6 +5629,52 @@ function getDashboardCreateRABHTML() {
             </div>
         </nav>
 
+        <div class="flex">
+            <!-- Sidebar Filter (Kiri) -->
+            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen">
+                <h2 class="text-xl font-bold mb-6 text-white">
+                    <i class="fas fa-filter mr-2 text-blue-400"></i>
+                    Filter Data
+                </h2>
+                
+                <div class="space-y-6">
+                    <!-- Filter Jenis Barang -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Jenis Barang</label>
+                        <select id="filterJenisBarang" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
+                            <option value="">Semua Jenis</option>
+                            <option value="Material Handal">Material Handal</option>
+                            <option value="Filter">Filter</option>
+                            <option value="Material Bekas">Material Bekas</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filter Unit (Multiple Checkbox) -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Filter Unit</label>
+                        <div id="filterUnitCheckboxes" class="space-y-2 max-h-96 overflow-y-auto bg-gray-800 p-3 rounded-lg border border-gray-700">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="checkAllUnits" class="w-4 h-4 text-blue-600 rounded mr-2">
+                                <label for="checkAllUnits" class="text-sm text-gray-300 font-semibold">Pilih Semua</label>
+                            </div>
+                            <hr class="border-gray-700 my-2">
+                            <!-- Unit checkboxes will be populated by JavaScript -->
+                            <p class="text-xs text-gray-500">Loading units...</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="applyFilters()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-search mr-2"></i>Terapkan Filter
+                    </button>
+                    
+                    <button onclick="resetFilters()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                        <i class="fas fa-undo mr-2"></i>Reset Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content (Kanan) -->
+            <div class="flex-1">
         <div class="container mx-auto px-4 py-6">
             <!-- Header -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -5707,6 +5753,7 @@ function getDashboardCreateRABHTML() {
                                     <th class="px-4 py-2 border text-left">Nomor LH05</th>
                                     <th class="px-4 py-2 border text-left">Part Number</th>
                                     <th class="px-4 py-2 border text-left">Material</th>
+                                    <th class="px-4 py-2 border text-left">Jenis Barang</th>
                                     <th class="px-4 py-2 border text-left">Mesin</th>
                                     <th class="px-4 py-2 border text-center">Jumlah</th>
                                     <th class="px-4 py-2 border text-left">Unit/ULD</th>
@@ -5715,7 +5762,7 @@ function getDashboardCreateRABHTML() {
                             </thead>
                             <tbody id="materialPengadaanTable">
                                 <tr>
-                                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                    <td colspan="9" class="px-4 py-8 text-center text-gray-500">
                                         <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                         <p>Memuat data material...</p>
                                     </td>
@@ -5780,6 +5827,7 @@ function getDashboardCreateRABHTML() {
                     </div>
                 </div>
             </div>
+        </div>
         </div>
 
         <script src="/static/auth-check.js"></script>

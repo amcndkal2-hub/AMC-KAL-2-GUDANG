@@ -2,6 +2,7 @@
 console.log('Dashboard Create RAB loaded')
 
 let allMaterialPengadaan = []
+let filteredMaterialPengadaan = []
 let selectedMaterials = []
 
 // Initialize on page load
@@ -14,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Load material pengadaan
   loadMaterialPengadaan()
+  
+  // Populate unit checkboxes
+  populateUnitFilter()
 })
 
 // Load material with status Pengadaan
@@ -30,12 +34,107 @@ async function loadMaterialPengadaan() {
     console.log('Material pengadaan loaded:', data)
     
     allMaterialPengadaan = data
-    renderMaterialPengadaan(data)
+    filteredMaterialPengadaan = [...data]
+    renderMaterialPengadaan(filteredMaterialPengadaan)
     
   } catch (error) {
     console.error('Failed to load material pengadaan:', error)
     showError('Gagal memuat data material pengadaan')
   }
+}
+
+// Populate unit filter checkboxes
+async function populateUnitFilter() {
+  try {
+    const response = await fetch('/api/dropdown-values')
+    const data = await response.json()
+    
+    const container = document.getElementById('filterUnitCheckboxes')
+    const checkAllDiv = container.querySelector('.flex.items-center').parentElement
+    
+    // Clear existing except "Pilih Semua"
+    container.innerHTML = ''
+    container.appendChild(checkAllDiv)
+    
+    // Add unit checkboxes
+    data.units.forEach(unit => {
+      const div = document.createElement('div')
+      div.className = 'flex items-center'
+      div.innerHTML = `
+        <input type="checkbox" id="unit_${unit}" value="${unit}" 
+               class="unit-checkbox w-4 h-4 text-blue-600 rounded mr-2"
+               onchange="handleUnitChange()">
+        <label for="unit_${unit}" class="text-sm text-gray-300">${unit}</label>
+      `
+      container.appendChild(div)
+    })
+    
+    // Check all by default
+    document.getElementById('checkAllUnits').checked = true
+    document.querySelectorAll('.unit-checkbox').forEach(cb => cb.checked = true)
+    
+    // Add event listener for "Check All"
+    document.getElementById('checkAllUnits').addEventListener('change', function() {
+      document.querySelectorAll('.unit-checkbox').forEach(cb => {
+        cb.checked = this.checked
+      })
+    })
+    
+  } catch (error) {
+    console.error('Failed to load units:', error)
+  }
+}
+
+// Handle unit checkbox change
+function handleUnitChange() {
+  const allCheckboxes = document.querySelectorAll('.unit-checkbox')
+  const checkedCount = document.querySelectorAll('.unit-checkbox:checked').length
+  const checkAll = document.getElementById('checkAllUnits')
+  
+  // Update "Pilih Semua" state
+  checkAll.checked = checkedCount === allCheckboxes.length
+}
+
+// Apply filters
+function applyFilters() {
+  const jenisBarangFilter = document.getElementById('filterJenisBarang').value
+  const selectedUnits = Array.from(document.querySelectorAll('.unit-checkbox:checked'))
+    .map(cb => cb.value)
+  
+  filteredMaterialPengadaan = allMaterialPengadaan.filter(item => {
+    let match = true
+    
+    // Filter by Jenis Barang
+    if (jenisBarangFilter) {
+      const itemJenis = (item.jenis_barang || 'Material Handal').toUpperCase()
+      const filterJenis = jenisBarangFilter.toUpperCase()
+      if (itemJenis !== filterJenis) {
+        match = false
+      }
+    }
+    
+    // Filter by Unit (if any units selected)
+    if (selectedUnits.length > 0) {
+      const itemUnit = item.lokasi_tujuan || item.unit_uld || ''
+      if (!selectedUnits.includes(itemUnit)) {
+        match = false
+      }
+    }
+    
+    return match
+  })
+  
+  renderMaterialPengadaan(filteredMaterialPengadaan)
+}
+
+// Reset filters
+function resetFilters() {
+  document.getElementById('filterJenisBarang').value = ''
+  document.getElementById('checkAllUnits').checked = true
+  document.querySelectorAll('.unit-checkbox').forEach(cb => cb.checked = true)
+  
+  filteredMaterialPengadaan = [...allMaterialPengadaan]
+  renderMaterialPengadaan(filteredMaterialPengadaan)
 }
 
 // Render material pengadaan table
@@ -45,7 +144,7 @@ function renderMaterialPengadaan(materials) {
   if (materials.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="9" class="px-4 py-8 text-center text-gray-500">
           <i class="fas fa-inbox text-4xl mb-2"></i>
           <p>Tidak ada material dengan status Pengadaan</p>
           <p class="text-sm mt-2">Material akan muncul setelah input gangguan dengan status Pengadaan</p>
@@ -55,7 +154,20 @@ function renderMaterialPengadaan(materials) {
     return
   }
   
-  tbody.innerHTML = materials.map((item, index) => `
+  tbody.innerHTML = materials.map((item, index) => {
+    const jenisBarang = item.jenis_barang || 'Material Handal'
+    let jenisBadge = ''
+    if (jenisBarang === 'Material Handal' || jenisBarang === 'MATERIAL HANDAL') {
+      jenisBadge = `<span class="inline-block px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">Material Handal</span>`
+    } else if (jenisBarang === 'Filter' || jenisBarang === 'FILTER') {
+      jenisBadge = `<span class="inline-block px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800">Filter</span>`
+    } else if (jenisBarang === 'Material Bekas' || jenisBarang === 'MATERIAL BEKAS') {
+      jenisBadge = `<span class="inline-block px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">Material Bekas</span>`
+    } else {
+      jenisBadge = `<span class="inline-block px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">${jenisBarang}</span>`
+    }
+    
+    return `
     <tr class="hover:bg-gray-50">
       <td class="px-4 py-3 border text-center">
         <input type="checkbox" 
@@ -66,6 +178,7 @@ function renderMaterialPengadaan(materials) {
       <td class="px-4 py-3 border font-mono text-sm">${item.nomor_lh05 || '-'}</td>
       <td class="px-4 py-3 border font-mono text-sm">${item.part_number || '-'}</td>
       <td class="px-4 py-3 border">${item.material || '-'}</td>
+      <td class="px-4 py-3 border">${jenisBadge}</td>
       <td class="px-4 py-3 border text-sm">${item.mesin || '-'}</td>
       <td class="px-4 py-3 border text-center">${item.jumlah || 0}</td>
       <td class="px-4 py-3 border">${item.lokasi_tujuan || '-'}</td>
@@ -78,7 +191,8 @@ function renderMaterialPengadaan(materials) {
                step="1000">
       </td>
     </tr>
-  `).join('')
+  `
+  }).join('')
 }
 
 // Toggle material selection
