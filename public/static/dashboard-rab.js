@@ -46,28 +46,45 @@ async function loadMaterialPengadaan() {
 // Populate unit filter checkboxes
 async function populateUnitFilter() {
   try {
+    console.log('🔄 Loading unit filters...')
     const response = await fetch('/api/dropdown-values')
     const data = await response.json()
+    console.log('📦 Units data:', data)
     
     const container = document.getElementById('filterUnitCheckboxes')
-    const checkAllDiv = container.querySelector('.flex.items-center').parentElement
+    if (!container) {
+      console.error('❌ Container filterUnitCheckboxes not found!')
+      return
+    }
     
-    // Clear existing except "Pilih Semua"
-    container.innerHTML = ''
-    container.appendChild(checkAllDiv)
+    // Save "Pilih Semua" section HTML
+    const checkAllHTML = `
+      <div class="flex items-center">
+        <input type="checkbox" id="checkAllUnits" class="w-4 h-4 text-blue-600 rounded mr-2">
+        <label for="checkAllUnits" class="text-sm text-gray-300 font-semibold">Pilih Semua</label>
+      </div>
+      <hr class="border-gray-700 my-2">
+    `
     
-    // Add unit checkboxes
-    data.units.forEach(unit => {
-      const div = document.createElement('div')
-      div.className = 'flex items-center'
-      div.innerHTML = `
-        <input type="checkbox" id="unit_${unit}" value="${unit}" 
-               class="unit-checkbox w-4 h-4 text-blue-600 rounded mr-2"
-               onchange="handleUnitChange()">
-        <label for="unit_${unit}" class="text-sm text-gray-300">${unit}</label>
-      `
-      container.appendChild(div)
-    })
+    // Build unit checkboxes HTML
+    let unitsHTML = ''
+    if (data.units && data.units.length > 0) {
+      data.units.forEach(unit => {
+        unitsHTML += `
+          <div class="flex items-center mb-2">
+            <input type="checkbox" id="unit_${unit.replace(/\s+/g, '_')}" value="${unit}" 
+                   class="unit-checkbox w-4 h-4 text-blue-600 rounded mr-2"
+                   onchange="handleUnitChange()">
+            <label for="unit_${unit.replace(/\s+/g, '_')}" class="text-sm text-gray-300">${unit}</label>
+          </div>
+        `
+      })
+    } else {
+      unitsHTML = '<p class="text-xs text-gray-500">No units available</p>'
+    }
+    
+    // Set container HTML
+    container.innerHTML = checkAllHTML + unitsHTML
     
     // Check all by default
     document.getElementById('checkAllUnits').checked = true
@@ -80,8 +97,14 @@ async function populateUnitFilter() {
       })
     })
     
+    console.log('✅ Unit filters loaded:', data.units.length, 'units')
+    
   } catch (error) {
-    console.error('Failed to load units:', error)
+    console.error('❌ Failed to load units:', error)
+    const container = document.getElementById('filterUnitCheckboxes')
+    if (container) {
+      container.innerHTML = '<p class="text-xs text-red-500">Failed to load units</p>'
+    }
   }
 }
 
