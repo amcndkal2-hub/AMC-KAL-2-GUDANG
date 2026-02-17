@@ -1342,7 +1342,7 @@ export async function getRABById(db: D1Database, rabId: number) {
 
 export async function getMaterialPengadaan(db: D1Database) {
   try {
-    // Try with all new columns (sn_mesin, no_po, no_grpo)
+    // Try with all new columns (sn_mesin, no_po, no_grpo) and jenis_barang
     try {
       const result = await db.prepare(`
         SELECT 
@@ -1358,14 +1358,17 @@ export async function getMaterialPengadaan(db: D1Database) {
           mg.is_rab_created,
           mg.sn_mesin,
           mg.no_po,
-          mg.no_grpo
+          mg.no_grpo,
+          COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
         FROM material_gangguan mg
         JOIN gangguan g ON mg.gangguan_id = g.id
-        WHERE UPPER(mg.status) = 'PENGADAAN'
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+        WHERE UPPER(TRIM(mg.status)) = 'PENGADAAN'
         AND (mg.is_rab_created IS NULL OR mg.is_rab_created = 0)
         ORDER BY g.created_at DESC
       `).all()
       
+      console.log('📦 getMaterialPengadaan: Found', result.results?.length || 0, 'materials')
       return result.results || []
     } catch (columnError) {
       // Fallback: Query without new columns
@@ -1381,14 +1384,17 @@ export async function getMaterialPengadaan(db: D1Database) {
           mg.jumlah,
           mg.unit_uld as lokasi_tujuan,
           mg.status,
-          mg.is_rab_created
+          mg.is_rab_created,
+          COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
         FROM material_gangguan mg
         JOIN gangguan g ON mg.gangguan_id = g.id
-        WHERE UPPER(mg.status) = 'PENGADAAN'
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+        WHERE UPPER(TRIM(mg.status)) = 'PENGADAAN'
         AND (mg.is_rab_created IS NULL OR mg.is_rab_created = 0)
         ORDER BY g.created_at DESC
       `).all()
       
+      console.log('📦 getMaterialPengadaan (fallback): Found', result.results?.length || 0, 'materials')
       return result.results || []
     }
   } catch (error) {

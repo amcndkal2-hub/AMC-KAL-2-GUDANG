@@ -2087,7 +2087,21 @@ app.post('/api/update-material-status', async (c) => {
 app.get('/api/material-pengadaan', async (c) => {
   try {
     const { env } = c
-    const materials = await DB.getMaterialPengadaan(env.DB)
+    let materials = await DB.getMaterialPengadaan(env.DB)
+    
+    // DEDUPLICATE: Remove duplicate materials based on nomor_lh05 + part_number
+    // Keep the one with highest id (latest insert)
+    const uniqueMaterialsMap = new Map()
+    materials.forEach((mat: any) => {
+      const key = `${mat.nomor_lh05}-${mat.part_number}`
+      const existing = uniqueMaterialsMap.get(key)
+      if (!existing || mat.id > existing.id) {
+        uniqueMaterialsMap.set(key, mat)
+      }
+    })
+    materials = Array.from(uniqueMaterialsMap.values())
+    
+    console.log('✅ material-pengadaan API: Returning', materials.length, 'unique materials')
     return c.json(materials)
   } catch (error) {
     console.error('Failed to get material pengadaan:', error)
