@@ -5701,7 +5701,7 @@ function getDashboardCreateRABHTML() {
 
             <!-- Form RAB -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
                     <!-- Tanggal RAB -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -5736,6 +5736,21 @@ function getDashboardCreateRABHTML() {
                             <option value="SPK">SPK (Surat Perintah Kerja)</option>
                             <option value="Pembelian Langsung">Pembelian Langsung</option>
                         </select>
+                    </div>
+                    
+                    <!-- ROK (Risiko dan Overhead Kontraktor) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-hard-hat mr-2"></i>ROK (%)
+                        </label>
+                        <input type="number" id="rokPercentage" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="0"
+                               min="0"
+                               max="100"
+                               step="0.1"
+                               value="0"
+                               onchange="updateTotalHarga()">
                     </div>
                     
                     <!-- PPN Toggle -->
@@ -5813,6 +5828,13 @@ function getDashboardCreateRABHTML() {
                                 <tr id="subtotalRow">
                                     <td colspan="8" class="px-4 py-3 border text-right">Subtotal:</td>
                                     <td class="px-4 py-3 border text-right text-lg" id="subtotalHarga">Rp 0</td>
+                                    <td class="px-4 py-3 border"></td>
+                                </tr>
+                                <tr id="rokRow" style="display:none;">
+                                    <td colspan="8" class="px-4 py-3 border text-right">
+                                        ROK (<span id="rokPercentDisplay">0</span>%):
+                                    </td>
+                                    <td class="px-4 py-3 border text-right text-lg" id="rokHarga">Rp 0</td>
                                     <td class="px-4 py-3 border"></td>
                                 </tr>
                                 <tr id="ppnRow" style="display:none;">

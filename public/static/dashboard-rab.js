@@ -309,14 +309,31 @@ function removeMaterial(materialId) {
 // Update total harga
 function updateTotalHarga() {
   const subtotal = selectedMaterials.reduce((sum, item) => sum + item.subtotal, 0)
+  
+  // ROK (Risiko dan Overhead Kontraktor)
+  const rokPercentage = parseFloat(document.getElementById('rokPercentage')?.value) || 0
+  const rok = rokPercentage > 0 ? (subtotal * rokPercentage / 100) : 0
+  
+  // PPN
   const usePPN = document.getElementById('usePPN')?.checked || false
-  const ppn = usePPN ? subtotal * 0.11 : 0
-  const total = subtotal + ppn
+  const subtotalAfterROK = subtotal + rok
+  const ppn = usePPN ? subtotalAfterROK * 0.11 : 0
+  
+  // Total
+  const total = subtotalAfterROK + ppn
   
   // Update subtotal
   document.getElementById('subtotalHarga').textContent = formatRupiah(subtotal)
   
-  // Show/hide PPN row
+  // Show/hide and update ROK row
+  const rokRow = document.getElementById('rokRow')
+  if (rokRow) {
+    rokRow.style.display = rokPercentage > 0 ? 'table-row' : 'none'
+    document.getElementById('rokHarga').textContent = formatRupiah(rok)
+    document.getElementById('rokPercentDisplay').textContent = rokPercentage.toFixed(1)
+  }
+  
+  // Show/hide and update PPN row
   const ppnRow = document.getElementById('ppnRow')
   if (ppnRow) {
     ppnRow.style.display = usePPN ? 'table-row' : 'none'
@@ -381,15 +398,22 @@ async function createRAB() {
     
     // Confirm
     const subtotal = selectedMaterials.reduce((sum, item) => sum + item.subtotal, 0)
+    const rokPercentage = parseFloat(document.getElementById('rokPercentage')?.value) || 0
+    const rok = rokPercentage > 0 ? (subtotal * rokPercentage / 100) : 0
     const usePPN = document.getElementById('usePPN')?.checked || false
-    const ppn = usePPN ? subtotal * 0.11 : 0
-    const totalHarga = subtotal + ppn
+    const subtotalAfterROK = subtotal + rok
+    const ppn = usePPN ? subtotalAfterROK * 0.11 : 0
+    const totalHarga = subtotalAfterROK + ppn
     
     let confirmMessage = `Create RAB dengan:\n\n` +
       `• Jenis RAB: ${jenisRAB}\n` +
       `• Tanggal: ${tanggalRAB}\n` +
       `• Total Material: ${selectedMaterials.length} items\n` +
       `• Subtotal: ${formatRupiah(subtotal)}\n`
+    
+    if (rokPercentage > 0) {
+      confirmMessage += `• ROK ${rokPercentage}%: ${formatRupiah(rok)}\n`
+    }
     
     if (usePPN) {
       confirmMessage += `• PPN 11%: ${formatRupiah(ppn)}\n`
@@ -408,6 +432,10 @@ async function createRAB() {
     const rabData = {
       tanggal_rab: tanggalRAB,
       jenis_rab: jenisRAB,
+      rok_percentage: rokPercentage,
+      rok_amount: rok,
+      use_ppn: usePPN,
+      ppn_amount: ppn,
       items: selectedMaterials.map(item => ({
         nomor_lh05: item.nomor_lh05,
         part_number: item.part_number,
