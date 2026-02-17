@@ -5760,17 +5760,17 @@ function getDashboardCreateRABHTML() {
                     
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto border rounded-lg">
                         <table class="min-w-full border-collapse">
-                            <thead class="bg-gray-50 sticky top-0 z-10 shadow-sm">
+                            <thead class="bg-green-600 sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Pilih</th>
-                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Nomor LH05</th>
-                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Part Number</th>
-                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Material</th>
-                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Jenis Barang</th>
-                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Mesin</th>
-                                    <th class="px-4 py-3 border text-center font-semibold text-gray-700">Jumlah</th>
-                                    <th class="px-4 py-3 border text-left font-semibold text-gray-700">Unit/ULD</th>
-                                    <th class="px-4 py-3 border text-right font-semibold text-gray-700">Harga Satuan (Rp)</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-white">Pilih</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-white">Nomor LH05</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-white">Part Number</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-white">Material</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-white">Jenis Barang</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-white">Mesin</th>
+                                    <th class="px-4 py-3 border text-center font-semibold text-white">Jumlah</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-white">Unit/ULD</th>
+                                    <th class="px-4 py-3 border text-right font-semibold text-white">Harga Satuan (Rp)</th>
                                 </tr>
                             </thead>
                             <tbody id="materialPengadaanTable">
