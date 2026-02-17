@@ -255,15 +255,21 @@ function toggleMaterial(materialId) {
     const material = allMaterialPengadaan.find(m => m.id === materialId)
     if (!material) return
     
-    const hargaSatuan = parseInt(hargaInput.value) || 0
+    const hargaSatuanDasar = parseInt(hargaInput.value) || 0
     
-    if (hargaSatuan === 0) {
+    if (hargaSatuanDasar === 0) {
       alert('Mohon masukkan harga satuan!')
       checkbox.checked = false
       return
     }
     
-    const subtotal = material.jumlah * hargaSatuan
+    // Apply ROK directly to unit price
+    const rokPercentage = parseFloat(document.getElementById('rokPercentage')?.value) || 0
+    const hargaSatuanWithROK = rokPercentage > 0 
+      ? hargaSatuanDasar * (1 + rokPercentage / 100)
+      : hargaSatuanDasar
+    
+    const subtotal = material.jumlah * hargaSatuanWithROK
     
     selectedMaterials.push({
       id: materialId,
@@ -274,11 +280,13 @@ function toggleMaterial(materialId) {
       mesin: material.mesin,
       jumlah: material.jumlah,
       unit_uld: material.lokasi_tujuan,
-      harga_satuan: hargaSatuan,
+      harga_satuan_dasar: hargaSatuanDasar, // Store base price
+      rok_percentage: rokPercentage, // Store ROK percentage
+      harga_satuan: hargaSatuanWithROK, // Final price with ROK
       subtotal: subtotal
     })
     
-    console.log('Material added:', material)
+    console.log('Material added with ROK:', material, 'ROK%:', rokPercentage, 'Final Price:', hargaSatuanWithROK)
   } else {
     // Remove from selected
     selectedMaterials = selectedMaterials.filter(m => m.id !== materialId)
@@ -333,8 +341,10 @@ function renderSelectedMaterials() {
       rowNumber++
       html += `<tr class="hover:bg-gray-50">`
       
-      // No - always show
-      html += `<td class="px-4 py-3 border text-center">${rowNumber}</td>`
+      // No - merged (only first row)
+      if (index === 0) {
+        html += `<td class="px-4 py-3 border text-center bg-blue-50 font-semibold" rowspan="${itemCount}">${rowNumber}</td>`
+      }
       
       // Nomor LH05 - always show
       html += `<td class="px-4 py-3 border font-mono text-sm">${item.nomor_lh05}</td>`
@@ -408,29 +418,23 @@ function removeMaterial(materialId) {
 
 // Update total harga
 function updateTotalHarga() {
+  // Subtotal is already calculated with ROK in item prices
   const subtotal = selectedMaterials.reduce((sum, item) => sum + item.subtotal, 0)
   
-  // ROK (Risiko dan Overhead Kontraktor)
-  const rokPercentage = parseFloat(document.getElementById('rokPercentage')?.value) || 0
-  const rok = rokPercentage > 0 ? (subtotal * rokPercentage / 100) : 0
-  
-  // PPN
+  // PPN (applied to subtotal that already includes ROK)
   const usePPN = document.getElementById('usePPN')?.checked || false
-  const subtotalAfterROK = subtotal + rok
-  const ppn = usePPN ? subtotalAfterROK * 0.11 : 0
+  const ppn = usePPN ? subtotal * 0.11 : 0
   
   // Total
-  const total = subtotalAfterROK + ppn
+  const total = subtotal + ppn
   
-  // Update subtotal
+  // Update subtotal (already includes ROK per material)
   document.getElementById('subtotalHarga').textContent = formatRupiah(subtotal)
   
-  // Show/hide and update ROK row
+  // Hide ROK row since it's now per-material
   const rokRow = document.getElementById('rokRow')
   if (rokRow) {
-    rokRow.style.display = rokPercentage > 0 ? 'table-row' : 'none'
-    document.getElementById('rokHarga').textContent = formatRupiah(rok)
-    document.getElementById('rokPercentDisplay').textContent = rokPercentage.toFixed(1)
+    rokRow.style.display = 'none'
   }
   
   // Show/hide and update PPN row

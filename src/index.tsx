@@ -5751,6 +5751,9 @@ function getDashboardCreateRABHTML() {
                                step="0.1"
                                value="0"
                                onchange="updateTotalHarga()">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>ROK diterapkan langsung ke harga satuan masing-masing material
+                        </p>
                     </div>
                     
                     <!-- PPN Toggle -->
@@ -5827,15 +5830,8 @@ function getDashboardCreateRABHTML() {
                             </tbody>
                             <tfoot class="bg-gray-100 font-bold">
                                 <tr id="subtotalRow">
-                                    <td colspan="9" class="px-4 py-3 border text-right">Subtotal:</td>
+                                    <td colspan="9" class="px-4 py-3 border text-right">Subtotal (termasuk ROK):</td>
                                     <td class="px-4 py-3 border text-right text-lg" id="subtotalHarga">Rp 0</td>
-                                    <td class="px-4 py-3 border"></td>
-                                </tr>
-                                <tr id="rokRow" style="display:none;">
-                                    <td colspan="9" class="px-4 py-3 border text-right">
-                                        ROK (<span id="rokPercentDisplay">0</span>%):
-                                    </td>
-                                    <td class="px-4 py-3 border text-right text-lg" id="rokHarga">Rp 0</td>
                                     <td class="px-4 py-3 border"></td>
                                 </tr>
                                 <tr id="ppnRow" style="display:none;">
