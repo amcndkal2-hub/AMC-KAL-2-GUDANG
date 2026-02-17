@@ -304,25 +304,92 @@ function renderSelectedMaterials() {
   
   section.classList.remove('hidden')
   
-  tbody.innerHTML = selectedMaterials.map((item, index) => `
-    <tr class="hover:bg-gray-50">
-      <td class="px-4 py-3 border text-center">${index + 1}</td>
-      <td class="px-4 py-3 border font-mono text-sm">${item.nomor_lh05}</td>
-      <td class="px-4 py-3 border font-mono text-sm">${item.part_number}</td>
-      <td class="px-4 py-3 border">${item.material}</td>
-      <td class="px-4 py-3 border text-sm">${item.mesin || '-'}</td>
-      <td class="px-4 py-3 border text-center">${item.jumlah}</td>
-      <td class="px-4 py-3 border">${item.unit_uld || '-'}</td>
-      <td class="px-4 py-3 border text-right">${formatRupiah(item.harga_satuan)}</td>
-      <td class="px-4 py-3 border text-right font-semibold">${formatRupiah(item.subtotal)}</td>
-      <td class="px-4 py-3 border text-center">
-        <button onclick="removeMaterial(${item.id})" 
-                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">
-          <i class="fas fa-times"></i>
-        </button>
-      </td>
-    </tr>
-  `).join('')
+  // Group materials by part_number
+  const groupedMaterials = {}
+  selectedMaterials.forEach(item => {
+    const key = item.part_number
+    if (!groupedMaterials[key]) {
+      groupedMaterials[key] = []
+    }
+    groupedMaterials[key].push(item)
+  })
+  
+  // Build HTML with merged cells
+  let html = ''
+  let rowNumber = 0
+  
+  Object.keys(groupedMaterials).sort().forEach(partNumber => {
+    const items = groupedMaterials[partNumber]
+    const itemCount = items.length
+    
+    // Calculate total quantity and total subtotal for this part number
+    const totalJumlah = items.reduce((sum, item) => sum + item.jumlah, 0)
+    const totalSubtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
+    
+    // First item of the group (with merged cells)
+    const firstItem = items[0]
+    
+    items.forEach((item, index) => {
+      rowNumber++
+      html += `<tr class="hover:bg-gray-50">`
+      
+      // No - always show
+      html += `<td class="px-4 py-3 border text-center">${rowNumber}</td>`
+      
+      // Nomor LH05 - always show
+      html += `<td class="px-4 py-3 border font-mono text-sm">${item.nomor_lh05}</td>`
+      
+      // Part Number - merged (only first row)
+      if (index === 0) {
+        html += `<td class="px-4 py-3 border font-mono text-sm bg-blue-50" rowspan="${itemCount}">${item.part_number}</td>`
+      }
+      
+      // Material - merged (only first row)
+      if (index === 0) {
+        html += `<td class="px-4 py-3 border bg-blue-50" rowspan="${itemCount}">${item.material}</td>`
+      }
+      
+      // Mesin - merged (only first row)
+      if (index === 0) {
+        html += `<td class="px-4 py-3 border text-sm bg-blue-50" rowspan="${itemCount}">${item.mesin || '-'}</td>`
+      }
+      
+      // Jumlah (individual) - always show
+      html += `<td class="px-4 py-3 border text-center">${item.jumlah}</td>`
+      
+      // Unit/ULD - always show
+      html += `<td class="px-4 py-3 border">${item.unit_uld || '-'}</td>`
+      
+      // Jumlah Total - merged (only first row)
+      if (index === 0) {
+        html += `<td class="px-4 py-3 border text-center font-bold bg-yellow-50" rowspan="${itemCount}">${totalJumlah}</td>`
+      }
+      
+      // Harga Satuan - merged (only first row)
+      if (index === 0) {
+        html += `<td class="px-4 py-3 border text-right bg-blue-50" rowspan="${itemCount}">${formatRupiah(item.harga_satuan)}</td>`
+      }
+      
+      // Subtotal - merged (only first row, show total for all items with same part)
+      if (index === 0) {
+        html += `<td class="px-4 py-3 border text-right font-semibold bg-blue-50" rowspan="${itemCount}">${formatRupiah(totalSubtotal)}</td>`
+      }
+      
+      // Aksi - always show
+      html += `
+        <td class="px-4 py-3 border text-center">
+          <button onclick="removeMaterial(${item.id})" 
+                  class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">
+            <i class="fas fa-times"></i>
+          </button>
+        </td>
+      `
+      
+      html += `</tr>`
+    })
+  })
+  
+  tbody.innerHTML = html
 }
 
 // Remove material from selected

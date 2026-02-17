@@ -5817,6 +5817,7 @@ function getDashboardCreateRABHTML() {
                                     <th class="px-4 py-2 border text-left">Mesin</th>
                                     <th class="px-4 py-2 border text-center">Jumlah</th>
                                     <th class="px-4 py-2 border text-left">Unit/ULD</th>
+                                    <th class="px-4 py-2 border text-center">Jumlah Total</th>
                                     <th class="px-4 py-2 border text-right">Harga Satuan</th>
                                     <th class="px-4 py-2 border text-right">Subtotal</th>
                                     <th class="px-4 py-2 border text-center">Aksi</th>
@@ -5826,24 +5827,24 @@ function getDashboardCreateRABHTML() {
                             </tbody>
                             <tfoot class="bg-gray-100 font-bold">
                                 <tr id="subtotalRow">
-                                    <td colspan="8" class="px-4 py-3 border text-right">Subtotal:</td>
+                                    <td colspan="9" class="px-4 py-3 border text-right">Subtotal:</td>
                                     <td class="px-4 py-3 border text-right text-lg" id="subtotalHarga">Rp 0</td>
                                     <td class="px-4 py-3 border"></td>
                                 </tr>
                                 <tr id="rokRow" style="display:none;">
-                                    <td colspan="8" class="px-4 py-3 border text-right">
+                                    <td colspan="9" class="px-4 py-3 border text-right">
                                         ROK (<span id="rokPercentDisplay">0</span>%):
                                     </td>
                                     <td class="px-4 py-3 border text-right text-lg" id="rokHarga">Rp 0</td>
                                     <td class="px-4 py-3 border"></td>
                                 </tr>
                                 <tr id="ppnRow" style="display:none;">
-                                    <td colspan="8" class="px-4 py-3 border text-right">PPN 11%:</td>
+                                    <td colspan="9" class="px-4 py-3 border text-right">PPN 11%:</td>
                                     <td class="px-4 py-3 border text-right text-lg" id="ppnHarga">Rp 0</td>
                                     <td class="px-4 py-3 border"></td>
                                 </tr>
                                 <tr class="bg-green-50">
-                                    <td colspan="8" class="px-4 py-3 border text-right text-xl">TOTAL HARGA:</td>
+                                    <td colspan="9" class="px-4 py-3 border text-right text-xl">TOTAL HARGA:</td>
                                     <td class="px-4 py-3 border text-right text-xl text-blue-600" id="totalHarga">Rp 0</td>
                                     <td class="px-4 py-3 border"></td>
                                 </tr>
