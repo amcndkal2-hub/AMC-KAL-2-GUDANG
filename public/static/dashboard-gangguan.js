@@ -450,9 +450,18 @@ function showLH05Modal(gangguan) {
     minute: '2-digit'
   })
   
+  // Store nomor LH05 in escaped format for use in onclick
+  const nomorLH05Escaped = gangguan.nomorLH05.replace(/'/g, "\\'")
+  
+  console.log('🔍 showLH05Modal - hasEditDeletePermission:', hasEditDeletePermission)
+  console.log('🔍 showLH05Modal - nomorLH05:', gangguan.nomorLH05)
+  console.log('🔍 showLH05Modal - materials count:', gangguan.materials?.length || 0)
+  
   const materialsHtml = (gangguan.materials && Array.isArray(gangguan.materials)) 
-    ? gangguan.materials.map((mat, index) => `
-    <tr class="border-b hover:bg-gray-50" id="material-row-${mat.id || index}">
+    ? gangguan.materials.map((mat, index) => {
+        console.log(`🔍 Material ${index + 1} - id: ${mat.id}, partNumber: ${mat.partNumber}`)
+        return `
+    <tr class="border-b hover:bg-gray-50" id="material-row-${mat.id || index}" data-material-id="${mat.id || index}" data-lh05="${nomorLH05Escaped}">
       <td class="px-4 py-2 text-center">${index + 1}</td>
       <td class="px-4 py-2">${mat.partNumber ?? '-'}</td>
       <td class="px-4 py-2">${mat.material ?? '-'}</td>
@@ -460,7 +469,7 @@ function showLH05Modal(gangguan) {
       <td class="px-4 py-2">${mat.mesin ?? '-'}</td>
       <td class="px-4 py-2" id="sn-mesin-${mat.id || index}">
         <span class="sn-display">${mat.snMesin ?? mat.status ?? '-'}</span>
-        <input type="text" class="sn-edit hidden w-full border rounded px-2 py-1" value="${mat.snMesin ?? mat.status ?? ''}" />
+        <input type="text" class="sn-edit hidden w-full border rounded px-2 py-1" value="${(mat.snMesin ?? mat.status ?? '').replace(/"/g, '&quot;')}" />
       </td>
       <td class="px-4 py-2 text-center" id="jumlah-${mat.id || index}">
         <span class="jumlah-display">${mat.jumlah ?? 0}</span>
@@ -468,11 +477,11 @@ function showLH05Modal(gangguan) {
       </td>
       ${hasEditDeletePermission ? `
       <td class="px-4 py-2 text-center">
-        <button onclick="editMaterialInline(${mat.id || index}, '${gangguan.nomorLH05}')" 
+        <button onclick="editMaterialInline(${mat.id || index}, '${nomorLH05Escaped}')" 
           class="edit-btn bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 text-xs mr-1" title="Edit S/N Mesin dan Jumlah">
           <i class="fas fa-edit"></i>
         </button>
-        <button onclick="saveMaterialInline(${mat.id || index}, '${gangguan.nomorLH05}')" 
+        <button onclick="saveMaterialInline(${mat.id || index}, '${nomorLH05Escaped}')" 
           class="save-btn hidden bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 text-xs mr-1" title="Simpan">
           <i class="fas fa-save"></i>
         </button>
@@ -480,14 +489,15 @@ function showLH05Modal(gangguan) {
           class="cancel-btn hidden bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700 text-xs mr-1" title="Batal">
           <i class="fas fa-times"></i>
         </button>
-        <button onclick="deleteMaterialFromLH05(${mat.id || index}, '${gangguan.nomorLH05}')" 
+        <button onclick="deleteMaterialFromLH05(${mat.id || index}, '${nomorLH05Escaped}')" 
           class="delete-btn bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 text-xs" title="Hapus Material">
           <i class="fas fa-trash"></i>
         </button>
       </td>
       ` : ''}
     </tr>
-  `).join('')
+  `
+      }).join('')
     : `<tr><td colspan="${hasEditDeletePermission ? '8' : '7'}" class="px-4 py-2 text-center text-gray-500">Tidak ada data material</td></tr>`
   
   const modal = document.createElement('div')
