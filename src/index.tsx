@@ -62,44 +62,154 @@ function initializeSampleGangguanData() {
   
   // SAMPLE DATA - Ini akan muncul di Dashboard Gangguan setelah restart
   // User bisa submit form baru untuk menambah data
-  gangguanTransactions.push({
-    id: "sample_" + Date.now(),
-    nomorLH05: "SAMPLE001/ND KAL 2/LH05/2025",
-    hariTanggal: new Date().toISOString().slice(0, 16),
-    unitULD: "TELAGA",
-    kelompokSPD: "MEKANIK",
-    komponenRusak: "Cylinder Liner",
-    gejala: "Kebocoran pada cylinder liner unit TELAGA",
-    uraianKejadian: "Ditemukan kebocoran oli pada cylinder liner bagian atas",
-    analisaPenyebab: "Seal cylinder liner sudah aus dan perlu diganti",
-    kesimpulan: "Perlu penggantian cylinder liner segera",
-    bebanPuncak: 300,
-    dayaMampu: 250,
-    pemadaman: "NORMAL",
-    tindakanPenanggulangan: "Isolasi unit sementara dan monitoring ketat",
-    rencanaPerbaikan: "Ganti cylinder liner dalam 24 jam",
-    materials: [
-      {
-        partNumber: "0490 1316",
-        jenisBarang: "SPARE PART UTAMA",
-        material: "CYLINDER LINER",
-        mesin: "TCD 2013",
-        jumlah: 1,
-        status: "Pengadaan"
-      }
-    ],
-    namaPelapor: "System Admin (Sample Data)",
-    ttdPelapor: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-    createdAt: new Date().toISOString()
-  })
+  const sampleData = [
+    {
+      id: "sample_001",
+      nomorLH05: "0127/ND KAL 2/LH05/2026",
+      tanggalLaporan: "2026-02-18",
+      hariTanggal: "2026-02-18T08:00",
+      unitULD: "TELAGA",
+      lokasiGangguan: "TELAGA",
+      jenisGangguan: "MEKANIK",
+      kelompokSPD: "MEKANIK",
+      komponenRusak: "Cylinder Liner",
+      gejala: "Kebocoran pada cylinder liner unit TELAGA",
+      uraianKejadian: "Ditemukan kebocoran oli pada cylinder liner bagian atas",
+      analisaPenyebab: "Seal cylinder liner sudah aus dan perlu diganti",
+      kesimpulan: "Perlu penggantian cylinder liner segera",
+      bebanPuncak: 300,
+      dayaMampu: 250,
+      pemadaman: "NORMAL",
+      status: "NORMAL",
+      tindakanPenanggulangan: "Isolasi unit sementara dan monitoring ketat",
+      catatanTindakan: "Isolasi unit sementara dan monitoring ketat",
+      rencanaPerbaikan: "Ganti cylinder liner dalam 24 jam",
+      materials: [
+        {
+          id: 415,
+          partNumber: "0117 4421",
+          jenisBarang: "FILTER",
+          material: "Lube Oil Filter / Filter Oli",
+          mesin: "TCD 2013",
+          snMesin: "11953974",
+          jumlah: 6
+        },
+        {
+          id: 416,
+          partNumber: "0118 1003",
+          jenisBarang: "FILTER",
+          material: "Air Filter / Filter Udara",
+          mesin: "TCD 2013",
+          snMesin: "11953974",
+          jumlah: 1
+        }
+      ],
+      userLaporan: "amc",
+      namaPelapor: "AMC KAL 2",
+      ttdPelapor: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      ttdTeknisi: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      ttdSupervisor: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      createdAt: "2026-02-18T08:00:00.000Z"
+    },
+    {
+      id: "sample_002",
+      nomorLH05: "0128/ND KAL 2/LH05/2026",
+      tanggalLaporan: "2026-02-17",
+      hariTanggal: "2026-02-17T14:30",
+      unitULD: "BABAI",
+      lokasiGangguan: "BABAI",
+      jenisGangguan: "ELEKTRIK",
+      kelompokSPD: "ELEKTRIK",
+      komponenRusak: "Generator AVR",
+      gejala: "Voltage tidak stabil",
+      uraianKejadian: "AVR generator mengalami kerusakan sehingga tegangan output tidak stabil",
+      analisaPenyebab: "Komponen AVR sudah lemah dan perlu penggantian",
+      kesimpulan: "Perlu penggantian AVR generator",
+      bebanPuncak: 280,
+      dayaMampu: 230,
+      pemadaman: "SIAGA",
+      status: "SIAGA",
+      tindakanPenanggulangan: "Mengurangi beban dan monitoring ketat",
+      catatanTindakan: "Mengurangi beban dan monitoring ketat",
+      rencanaPerbaikan: "Ganti AVR dalam 48 jam",
+      materials: [
+        {
+          id: 417,
+          partNumber: "E90-AVR",
+          jenisBarang: "SPARE PART UTAMA",
+          material: "AVR Generator",
+          mesin: "BF6M 1013",
+          snMesin: "11234567",
+          jumlah: 1
+        }
+      ],
+      userLaporan: "amc",
+      namaPelapor: "AMC KAL 2",
+      ttdPelapor: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      ttdTeknisi: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      ttdSupervisor: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      createdAt: "2026-02-17T14:30:00.000Z"
+    },
+    {
+      id: "sample_003",
+      nomorLH05: "0129/ND KAL 2/LH05/2026",
+      tanggalLaporan: "2026-02-16",
+      hariTanggal: "2026-02-16T10:15",
+      unitULD: "ANTAR",
+      lokasiGangguan: "ANTAR",
+      jenisGangguan: "MEKANIK",
+      kelompokSPD: "MEKANIK",
+      komponenRusak: "Fuel Pump",
+      gejala: "Engine sulit start dan rpm tidak stabil",
+      uraianKejadian: "Fuel pump mengalami kebocoran dan tekanan bahan bakar drop",
+      analisaPenyebab: "Seal fuel pump rusak dan perlu diganti",
+      kesimpulan: "Perlu penggantian fuel pump assembly",
+      bebanPuncak: 320,
+      dayaMampu: 270,
+      pemadaman: "NORMAL",
+      status: "NORMAL",
+      tindakanPenanggulangan: "Perbaikan sementara dengan sealing compound",
+      catatanTindakan: "Perbaikan sementara dengan sealing compound",
+      rencanaPerbaikan: "Ganti fuel pump dalam 72 jam",
+      materials: [
+        {
+          id: 418,
+          partNumber: "0427 2746",
+          jenisBarang: "SPARE PART UTAMA",
+          material: "Fuel Pump Assembly",
+          mesin: "TCD 2013",
+          snMesin: "11876543",
+          jumlah: 1
+        },
+        {
+          id: 419,
+          partNumber: "0117 4421",
+          jenisBarang: "FILTER",
+          material: "Fuel Filter / Filter BBM",
+          mesin: "TCD 2013",
+          snMesin: "11876543",
+          jumlah: 2
+        }
+      ],
+      userLaporan: "andalcekatan",
+      namaPelapor: "Andalcekatan",
+      ttdPelapor: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      ttdTeknisi: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      ttdSupervisor: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      createdAt: "2026-02-16T10:15:00.000Z"
+    }
+  ]
+  
+  gangguanTransactions.push(...sampleData)
   
   sampleDataInitialized = true
   console.log('✅ Sample gangguan data initialized:', gangguanTransactions.length, 'items')
 }
 
 // Initialize sample data saat app start
-// DISABLED: Sekarang menggunakan D1 Database untuk persistent storage
-// initializeSampleGangguanData()
+// TEMPORARY FIX: Re-enabled untuk menampilkan data sementara sambil migrate ke D1
+// TODO: Migrate all data to D1 Database untuk persistent storage
+initializeSampleGangguanData()
 
 // Counter untuk LH05 (mulai dari 1 atau dari sample data count + 1)
 let lh05Counter = gangguanTransactions.length + 1
@@ -1759,17 +1869,20 @@ app.get('/api/gangguan-transactions', async (c) => {
     // Get from D1 Database (persistent storage)
     const dbGangguan = await DB.getAllGangguan(env.DB)
     console.log('📊 Total gangguan from D1:', dbGangguan.length)
+    console.log('📊 Total gangguan from in-memory:', gangguanTransactions.length)
     
-    // NOTE: Tidak lagi merge dengan in-memory, hanya gunakan D1 Database
-    // const allGangguan = [...dbGangguan, ...gangguanTransactions]
+    // HYBRID SOLUTION: Merge D1 + in-memory (untuk backward compatibility)
+    // Priority: D1 Database > in-memory
+    const allGangguan = [...dbGangguan, ...gangguanTransactions]
+    console.log('📊 Total gangguan combined:', allGangguan.length)
     
-    console.log('🗂️ Gangguan list:', dbGangguan.slice(0, 5).map(g => ({
-      nomor: g.nomor_lh05,
-      unit: g.lokasi_gangguan,
-      kelompok: g.jenis_gangguan
+    console.log('🗂️ Gangguan list (first 5):', allGangguan.slice(0, 5).map(g => ({
+      nomor: g.nomor_lh05 || g.nomorLH05,
+      unit: g.lokasi_gangguan || g.lokasiGangguan,
+      kelompok: g.jenis_gangguan || g.jenisGangguan
     })))
     
-    return c.json({ gangguanTransactions: dbGangguan })
+    return c.json({ gangguanTransactions: allGangguan })
   } catch (error: any) {
     console.error('Failed to get gangguan:', error)
     // Fallback to in-memory if D1 fails
