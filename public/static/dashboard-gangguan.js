@@ -104,32 +104,39 @@ async function loadDashboardData() {
       allGangguanData = []
     } else {
       // Map snake_case API fields to camelCase for frontend compatibility
+      // Support BOTH formats: camelCase (from in-memory) and snake_case (from D1)
       allGangguanData = data.gangguanTransactions.map(item => ({
         ...item,
-        nomorLH05: item.nomor_lh05,
-        tanggalLaporan: item.tanggal_laporan,
-        jenisGangguan: item.jenis_gangguan,
-        lokasiGangguan: item.lokasi_gangguan,
-        userLaporan: item.user_laporan,
-        catatanTindakan: item.catatan_tindakan,
-        rencanaPerbaikan: item.rencana_perbaikan,
-        ttdTeknisi: item.ttd_teknisi,
-        ttdSupervisor: item.ttd_supervisor,
-        createdAt: item.created_at,
-        // NEW: Map form fields
-        komponenRusak: item.komponen_rusak,
+        // Priority: existing camelCase field > snake_case field
+        nomorLH05: item.nomorLH05 || item.nomor_lh05,
+        tanggalLaporan: item.tanggalLaporan || item.tanggal_laporan,
+        jenisGangguan: item.jenisGangguan || item.jenis_gangguan,
+        lokasiGangguan: item.lokasiGangguan || item.lokasi_gangguan,
+        userLaporan: item.userLaporan || item.user_laporan,
+        catatanTindakan: item.catatanTindakan || item.catatan_tindakan,
+        rencanaPerbaikan: item.rencanaPerbaikan || item.rencana_perbaikan,
+        ttdTeknisi: item.ttdTeknisi || item.ttd_teknisi,
+        ttdSupervisor: item.ttdSupervisor || item.ttd_supervisor,
+        ttdPelapor: item.ttdPelapor || item.ttd_pelapor || item.ttdTeknisi || item.ttd_teknisi,
+        namaPelapor: item.namaPelapor || item.nama_pelapor || item.userLaporan || item.user_laporan,
+        createdAt: item.createdAt || item.created_at,
+        // Form fields
+        komponenRusak: item.komponenRusak || item.komponen_rusak,
         gejala: item.gejala,
-        uraianKejadian: item.uraian_kejadian,
-        analisaPenyebab: item.analisa_penyebab,
+        uraianKejadian: item.uraianKejadian || item.uraian_kejadian,
+        analisaPenyebab: item.analisaPenyebab || item.analisa_penyebab,
         kesimpulan: item.kesimpulan,
-        bebanPuncak: item.beban_puncak,
-        dayaMampu: item.daya_mampu,
+        bebanPuncak: item.bebanPuncak || item.beban_puncak,
+        dayaMampu: item.dayaMampu || item.daya_mampu,
         pemadaman: item.pemadaman,
-        kelompokSPD: item.kelompok_spd || item.jenis_gangguan,
-        // For backward compatibility with old field names
-        unitULD: item.lokasi_gangguan
+        status: item.status || item.pemadaman,
+        kelompokSPD: item.kelompokSPD || item.kelompok_spd || item.jenisGangguan || item.jenis_gangguan,
+        // Backward compatibility
+        unitULD: item.unitULD || item.lokasiGangguan || item.lokasi_gangguan,
+        // Materials
+        materials: item.materials || []
       }))
-      console.log('✅ gangguanTransactions is valid array with field mapping')
+      console.log('✅ gangguanTransactions is valid array with hybrid field mapping (camelCase + snake_case)')
     }
     
     filteredData = [...allGangguanData]
