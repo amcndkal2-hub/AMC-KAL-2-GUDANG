@@ -386,8 +386,17 @@ function getKelompokBadge(kelompok) {
 
 async function viewLH05(nomorLH05) {
   try {
+    console.log('📋 Fetching gangguan detail for:', nomorLH05)
     const response = await fetch(`/api/gangguan/${encodeURIComponent(nomorLH05)}`)
+    
+    console.log('📡 Response status:', response.status, response.statusText)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
     const data = await response.json()
+    console.log('✅ Gangguan data:', data)
     
     if (data.gangguan) {
       // Map snake_case API fields to camelCase for modal
@@ -419,15 +428,20 @@ async function viewLH05(nomorLH05) {
       }
       showLH05Modal(mappedGangguan)
     } else {
-      alert('Data tidak ditemukan')
+      console.error('❌ Gangguan data not found in response')
+      alert('❌ Data tidak ditemukan untuk LH05: ' + nomorLH05)
     }
   } catch (error) {
-    console.error('View LH05 error:', error)
-    alert('Error loading data')
+    console.error('❌ View LH05 error:', error)
+    console.error('❌ Error stack:', error.stack)
+    alert('❌ Error loading data: ' + error.message + '\n\nSilakan cek console untuk detail lebih lanjut.')
   }
 }
 
 function showLH05Modal(gangguan) {
+  // Check if user can edit/delete (admin, amc, or andalcekatan)
+  const hasEditDeletePermission = typeof canEditDelete === 'function' ? canEditDelete() : false
+  
   const tanggal = new Date(gangguan.tanggalLaporan).toLocaleString('id-ID', {
     day: '2-digit',
     month: 'long',
@@ -436,7 +450,8 @@ function showLH05Modal(gangguan) {
     minute: '2-digit'
   })
   
-  const materialsHtml = gangguan.materials.map((mat, index) => `
+  const materialsHtml = (gangguan.materials && Array.isArray(gangguan.materials)) 
+    ? gangguan.materials.map((mat, index) => `
     <tr class="border-b">
       <td class="px-4 py-2 text-center">${index + 1}</td>
       <td class="px-4 py-2">${mat.partNumber ?? '-'}</td>
@@ -447,6 +462,7 @@ function showLH05Modal(gangguan) {
       <td class="px-4 py-2 text-center">${mat.jumlah ?? 0}</td>
     </tr>
   `).join('')
+    : '<tr><td colspan="7" class="px-4 py-2 text-center text-gray-500">Tidak ada data material</td></tr>'
   
   const modal = document.createElement('div')
   modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto'
