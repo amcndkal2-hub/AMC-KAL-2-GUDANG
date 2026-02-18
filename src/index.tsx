@@ -207,9 +207,8 @@ function initializeSampleGangguanData() {
 }
 
 // Initialize sample data saat app start
-// TEMPORARY FIX: Re-enabled untuk menampilkan data sementara sambil migrate ke D1
-// TODO: Migrate all data to D1 Database untuk persistent storage
-initializeSampleGangguanData()
+// DISABLED: Production database sudah punya 134+ gangguan records dari reconstruction
+// initializeSampleGangguanData()
 
 // Counter untuk LH05 (mulai dari 1 atau dari sample data count + 1)
 let lh05Counter = gangguanTransactions.length + 1
@@ -1823,6 +1822,134 @@ app.get('/api/check-session', async (c) => {
 
 // ==================== API FORM GANGGUAN LH05 ====================
 
+// API: DEBUG - Get material_gangguan without JOIN (to recover lost gangguan data)
+app.get('/api/debug/material-gangguan-raw', async (c) => {
+  try {
+    const { env } = c
+    const { results } = await env.DB.prepare(`
+      SELECT DISTINCT gangguan_id, unit_uld, created_at, COUNT(*) as material_count
+      FROM material_gangguan
+      GROUP BY gangguan_id
+      ORDER BY gangguan_id ASC
+    `).all()
+    
+    // Also test getAllGangguan function
+    const allGangguan = await DB.getAllGangguan(env.DB)
+    
+    return c.json({ 
+      total_gangguan: results.length,
+      gangguan_ids: results,
+      getAllGangguan_count: allGangguan.length,
+      getAllGangguan_sample: allGangguan.slice(0, 3)
+    })
+  } catch (error: any) {
+    console.error('Failed to get raw material_gangguan:', error)
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// API: RECONSTRUCTION - Rebuild gangguan table from material_gangguan
+app.post('/api/admin/reconstruct-gangguan', async (c) => {
+  try {
+    const { env } = c
+    const forceMode = c.req.query('force') === 'true'
+    
+    console.log(`🔧 Starting gangguan reconstruction (force=${forceMode})...`)
+    
+    // Step 0: If force mode, delete all RECONSTRUCTED records first
+    if (forceMode) {
+      const deleteResult = await env.DB.prepare(`
+        DELETE FROM gangguan WHERE jenis_gangguan = 'RECONSTRUCTED'
+      `).run()
+      console.log(`🗑️ Force mode: Deleted ${deleteResult.meta?.changes || 0} reconstructed records`)
+    }
+    
+    // Step 1: Get all unique gangguan_id from material_gangguan
+    const { results: materialResults } = await env.DB.prepare(`
+      SELECT DISTINCT gangguan_id, unit_uld, lokasi_tujuan, created_at, updated_at
+      FROM material_gangguan
+      ORDER BY gangguan_id ASC
+    `).all()
+    
+    console.log(`📊 Found ${materialResults.length} unique gangguan IDs in material_gangguan`)
+    
+    // Step 2: Check which gangguan_id already exist
+    const { results: existingResults } = await env.DB.prepare(`
+      SELECT id FROM gangguan
+    `).all()
+    
+    const existingIds = new Set(existingResults.map((r: any) => r.id))
+    console.log(`✅ Found ${existingIds.size} existing gangguan records`)
+    
+    // Step 3: Insert missing gangguan records
+    let insertedCount = 0
+    let errors: string[] = []
+    for (const mat of materialResults as any[]) {
+      if (!existingIds.has(mat.gangguan_id)) {
+        try {
+          const nomorLH05 = `${String(mat.gangguan_id).padStart(4, '0')}/ND KAL 2/LH05/2026`
+          const lokasiGangguan = mat.unit_uld || mat.lokasi_tujuan || 'UNKNOWN'
+          const tanggalLaporan = mat.created_at ? mat.created_at.split(' ')[0] : new Date().toISOString().split('T')[0]
+          
+          await env.DB.prepare(`
+            INSERT INTO gangguan (
+              id, nomor_lh05, tanggal_laporan, jenis_gangguan, lokasi_gangguan, 
+              user_laporan, status, catatan_tindakan, rencana_perbaikan,
+              ttd_teknisi, ttd_supervisor, created_at, updated_at,
+              komponen_rusak, gejala, uraian_kejadian, analisa_penyebab, kesimpulan,
+              beban_puncak, daya_mampu, pemadaman, kelompok_spd
+            ) VALUES (
+              ?, ?, ?, 'RECONSTRUCTED', ?, 
+              'System Reconstruction', 'Open', 'Data reconstructed from material_gangguan', 'Pending restoration',
+              'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', '', ?, ?,
+              'Component TBD', 'Symptoms TBD', 'Incident TBD', 'Analysis TBD', 'Conclusion TBD',
+              0, 0, 'NORMAL', 'MEKANIK'
+            )
+          `).bind(
+            mat.gangguan_id,
+            nomorLH05,
+            tanggalLaporan,
+            lokasiGangguan,
+            mat.created_at,
+            mat.updated_at || mat.created_at
+          ).run()
+          
+          insertedCount++
+          console.log(`✅ Inserted gangguan ID ${mat.gangguan_id}: ${nomorLH05}`)
+        } catch (insertError: any) {
+          const errorMsg = `Failed to insert gangguan ID ${mat.gangguan_id}: ${insertError.message}`
+          console.error(`❌ ${errorMsg}`)
+          errors.push(errorMsg)
+        }
+      }
+    }
+    
+    console.log(`✅ Reconstruction complete: ${insertedCount} gangguan records inserted`)
+    
+    // Step 4: Verify
+    const { results: verifyResults } = await env.DB.prepare(`
+      SELECT COUNT(*) as total FROM gangguan
+    `).all()
+    
+    const total = (verifyResults[0] as any).total
+    
+    return c.json({
+      success: true,
+      message: `Gangguan reconstruction completed successfully`,
+      statistics: {
+        material_gangguan_ids: materialResults.length,
+        existing_gangguan_before: existingIds.size,
+        newly_inserted: insertedCount,
+        total_gangguan_now: total,
+        errors: errors.length > 0 ? errors : undefined
+      }
+    })
+  } catch (error: any) {
+    console.error('❌ Reconstruction failed:', error)
+    return c.json({ error: error.message, stack: error.stack }, 500)
+  }
+})
+
 // API: Save Form Gangguan LH05
 app.post('/api/save-gangguan', async (c) => {
   try {
@@ -1861,14 +1988,23 @@ app.post('/api/save-gangguan', async (c) => {
 })
 
 // API: Get all gangguan transactions
+// API: Get all gangguan transactions
 app.get('/api/gangguan-transactions', async (c) => {
   try {
     const { env } = c
     console.log('🔍 GET /api/gangguan-transactions called')
     
-    // Get from D1 Database (persistent storage)
-    const dbGangguan = await DB.getAllGangguan(env.DB)
-    console.log('📊 Total gangguan from D1:', dbGangguan.length)
+    // Try normal getAllGangguan first
+    let dbGangguan = await DB.getAllGangguan(env.DB)
+    console.log('📊 Total gangguan from getAllGangguan:', dbGangguan.length)
+    
+    // If empty, use RECOVERY function from material_gangguan
+    if (dbGangguan.length === 0) {
+      console.log('⚠️ getAllGangguan returned 0, trying recovery from material_gangguan...')
+      dbGangguan = await DB.getAllGangguanFromMaterials(env.DB)
+      console.log('📦 Recovered gangguan from materials:', dbGangguan.length)
+    }
+    
     console.log('📊 Total gangguan from in-memory:', gangguanTransactions.length)
     
     // HYBRID SOLUTION: Merge D1 + in-memory (untuk backward compatibility)
