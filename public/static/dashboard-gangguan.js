@@ -452,17 +452,43 @@ function showLH05Modal(gangguan) {
   
   const materialsHtml = (gangguan.materials && Array.isArray(gangguan.materials)) 
     ? gangguan.materials.map((mat, index) => `
-    <tr class="border-b">
+    <tr class="border-b hover:bg-gray-50" id="material-row-${mat.id || index}">
       <td class="px-4 py-2 text-center">${index + 1}</td>
       <td class="px-4 py-2">${mat.partNumber ?? '-'}</td>
       <td class="px-4 py-2">${mat.material ?? '-'}</td>
       <td class="px-4 py-2"><span class="inline-block px-2 py-1 text-xs font-semibold rounded ${mat.jenisBarang === 'FILTER' ? 'bg-yellow-100 text-yellow-800' : mat.jenisBarang === 'MATERIAL BEKAS' ? 'bg-gray-100 text-gray-800' : 'bg-blue-100 text-blue-800'}">${mat.jenisBarang ?? 'Material Handal'}</span></td>
       <td class="px-4 py-2">${mat.mesin ?? '-'}</td>
-      <td class="px-4 py-2">${mat.snMesin ?? mat.status ?? '-'}</td>
-      <td class="px-4 py-2 text-center">${mat.jumlah ?? 0}</td>
+      <td class="px-4 py-2" id="sn-mesin-${mat.id || index}">
+        <span class="sn-display">${mat.snMesin ?? mat.status ?? '-'}</span>
+        <input type="text" class="sn-edit hidden w-full border rounded px-2 py-1" value="${mat.snMesin ?? mat.status ?? ''}" />
+      </td>
+      <td class="px-4 py-2 text-center" id="jumlah-${mat.id || index}">
+        <span class="jumlah-display">${mat.jumlah ?? 0}</span>
+        <input type="number" class="jumlah-edit hidden w-20 border rounded px-2 py-1 text-center" value="${mat.jumlah ?? 0}" min="1" />
+      </td>
+      ${hasEditDeletePermission ? `
+      <td class="px-4 py-2 text-center">
+        <button onclick="editMaterialInline(${mat.id || index}, '${gangguan.nomorLH05}')" 
+          class="edit-btn bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 text-xs mr-1" title="Edit S/N Mesin dan Jumlah">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button onclick="saveMaterialInline(${mat.id || index}, '${gangguan.nomorLH05}')" 
+          class="save-btn hidden bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 text-xs mr-1" title="Simpan">
+          <i class="fas fa-save"></i>
+        </button>
+        <button onclick="cancelEditMaterialInline(${mat.id || index})" 
+          class="cancel-btn hidden bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700 text-xs mr-1" title="Batal">
+          <i class="fas fa-times"></i>
+        </button>
+        <button onclick="deleteMaterialFromLH05(${mat.id || index}, '${gangguan.nomorLH05}')" 
+          class="delete-btn bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 text-xs" title="Hapus Material">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+      ` : ''}
     </tr>
   `).join('')
-    : '<tr><td colspan="7" class="px-4 py-2 text-center text-gray-500">Tidak ada data material</td></tr>'
+    : `<tr><td colspan="${hasEditDeletePermission ? '8' : '7'}" class="px-4 py-2 text-center text-gray-500">Tidak ada data material</td></tr>`
   
   const modal = document.createElement('div')
   modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto'
@@ -587,6 +613,7 @@ function showLH05Modal(gangguan) {
                   <th class="px-4 py-2 text-left">Mesin</th>
                   <th class="px-4 py-2 text-left">S/N Mesin</th>
                   <th class="px-4 py-2 text-center">Jumlah</th>
+                  ${hasEditDeletePermission ? '<th class="px-4 py-2 text-center">Aksi</th>' : ''}
                 </tr>
               </thead>
               <tbody class="bg-white">
@@ -648,6 +675,185 @@ function exportLH05PDF(nomorLH05) {
 function editLH05(nomorLH05) {
   // Navigate to Form Gangguan page with edit mode
   window.location.href = `/form-gangguan?edit=${encodeURIComponent(nomorLH05)}`
+}
+
+// Edit material inline (toggle to edit mode)
+function editMaterialInline(materialId, nomorLH05) {
+  console.log('✏️ Edit material inline:', materialId)
+  
+  const row = document.getElementById(`material-row-${materialId}`)
+  if (!row) {
+    console.error('❌ Row not found:', materialId)
+    return
+  }
+  
+  // Hide display, show input fields
+  const snDisplay = row.querySelector('.sn-display')
+  const snEdit = row.querySelector('.sn-edit')
+  const jumlahDisplay = row.querySelector('.jumlah-display')
+  const jumlahEdit = row.querySelector('.jumlah-edit')
+  
+  if (snDisplay) snDisplay.classList.add('hidden')
+  if (snEdit) snEdit.classList.remove('hidden')
+  if (jumlahDisplay) jumlahDisplay.classList.add('hidden')
+  if (jumlahEdit) jumlahEdit.classList.remove('hidden')
+  
+  // Toggle buttons
+  const editBtn = row.querySelector('.edit-btn')
+  const saveBtn = row.querySelector('.save-btn')
+  const cancelBtn = row.querySelector('.cancel-btn')
+  const deleteBtn = row.querySelector('.delete-btn')
+  
+  if (editBtn) editBtn.classList.add('hidden')
+  if (saveBtn) saveBtn.classList.remove('hidden')
+  if (cancelBtn) cancelBtn.classList.remove('hidden')
+  if (deleteBtn) deleteBtn.classList.add('hidden')
+}
+
+// Cancel edit material inline
+function cancelEditMaterialInline(materialId) {
+  console.log('❌ Cancel edit material:', materialId)
+  
+  const row = document.getElementById(`material-row-${materialId}`)
+  if (!row) return
+  
+  // Show display, hide input fields
+  const snDisplay = row.querySelector('.sn-display')
+  const snEdit = row.querySelector('.sn-edit')
+  const jumlahDisplay = row.querySelector('.jumlah-display')
+  const jumlahEdit = row.querySelector('.jumlah-edit')
+  
+  if (snDisplay) snDisplay.classList.remove('hidden')
+  if (snEdit) snEdit.classList.add('hidden')
+  if (jumlahDisplay) jumlahDisplay.classList.remove('hidden')
+  if (jumlahEdit) jumlahEdit.classList.add('hidden')
+  
+  // Toggle buttons
+  const editBtn = row.querySelector('.edit-btn')
+  const saveBtn = row.querySelector('.save-btn')
+  const cancelBtn = row.querySelector('.cancel-btn')
+  const deleteBtn = row.querySelector('.delete-btn')
+  
+  if (editBtn) editBtn.classList.remove('hidden')
+  if (saveBtn) saveBtn.classList.add('hidden')
+  if (cancelBtn) cancelBtn.classList.add('hidden')
+  if (deleteBtn) deleteBtn.classList.remove('hidden')
+}
+
+// Save material inline (update S/N Mesin and Jumlah)
+async function saveMaterialInline(materialId, nomorLH05) {
+  console.log('💾 Save material inline:', materialId, nomorLH05)
+  
+  const row = document.getElementById(`material-row-${materialId}`)
+  if (!row) {
+    alert('❌ Row tidak ditemukan')
+    return
+  }
+  
+  const snEdit = row.querySelector('.sn-edit')
+  const jumlahEdit = row.querySelector('.jumlah-edit')
+  
+  const newSnMesin = snEdit ? snEdit.value.trim() : ''
+  const newJumlah = jumlahEdit ? parseInt(jumlahEdit.value) : 0
+  
+  if (newJumlah <= 0) {
+    alert('❌ Jumlah harus lebih dari 0')
+    return
+  }
+  
+  if (!confirm(`Simpan perubahan?\n\nS/N Mesin: ${newSnMesin}\nJumlah: ${newJumlah}`)) {
+    return
+  }
+  
+  try {
+    const sessionToken = localStorage.getItem('sessionToken')
+    
+    const response = await fetch('/api/update-material-gangguan', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionToken}`
+      },
+      body: JSON.stringify({
+        material_id: materialId,
+        nomor_lh05: nomorLH05,
+        sn_mesin: newSnMesin,
+        jumlah: newJumlah
+      })
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    
+    const result = await response.json()
+    console.log('✅ Material updated:', result)
+    
+    // Update display values
+    const snDisplay = row.querySelector('.sn-display')
+    const jumlahDisplay = row.querySelector('.jumlah-display')
+    
+    if (snDisplay) snDisplay.textContent = newSnMesin || '-'
+    if (jumlahDisplay) jumlahDisplay.textContent = newJumlah
+    
+    // Exit edit mode
+    cancelEditMaterialInline(materialId)
+    
+    alert('✅ Material berhasil diupdate!')
+    
+  } catch (error) {
+    console.error('❌ Save material error:', error)
+    alert('❌ Gagal menyimpan perubahan: ' + error.message)
+  }
+}
+
+// Delete material from LH05
+async function deleteMaterialFromLH05(materialId, nomorLH05) {
+  console.log('🗑️ Delete material:', materialId, 'from LH05:', nomorLH05)
+  
+  if (!confirm(`⚠️ PERINGATAN!\n\nAnda akan menghapus material ini dari LH05:\n${nomorLH05}\n\nData yang terhapus TIDAK BISA dikembalikan!\n\nLanjutkan hapus?`)) {
+    return
+  }
+  
+  try {
+    const sessionToken = localStorage.getItem('sessionToken')
+    
+    const response = await fetch(`/api/delete-material-gangguan?material_id=${materialId}&nomor_lh05=${encodeURIComponent(nomorLH05)}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${sessionToken}`
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    
+    const result = await response.json()
+    console.log('✅ Material deleted:', result)
+    
+    // Remove row from table
+    const row = document.getElementById(`material-row-${materialId}`)
+    if (row) {
+      row.remove()
+    }
+    
+    alert('✅ Material berhasil dihapus!')
+    
+    // Refresh the modal by closing and reopening
+    setTimeout(() => {
+      // Close modal
+      const modal = document.querySelector('.fixed.inset-0')
+      if (modal) modal.remove()
+      
+      // Reload LH05 detail
+      viewLH05(nomorLH05)
+    }, 1000)
+    
+  } catch (error) {
+    console.error('❌ Delete material error:', error)
+    alert('❌ Gagal menghapus material: ' + error.message)
+  }
 }
 
 function exportAllLH05() {

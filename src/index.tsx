@@ -1490,6 +1490,101 @@ app.delete('/api/gangguan', async (c) => {
   }
 })
 
+// API: Update material in gangguan (S/N Mesin and Jumlah)
+app.put('/api/update-material-gangguan', async (c) => {
+  try {
+    // Check if user has edit permission (admin, amc, or andalcekatan)
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    if (!sessionToken) {
+      return c.json({ success: false, error: 'Unauthorized' }, 401)
+    }
+    
+    const { env } = c
+    const { material_id, nomor_lh05, sn_mesin, jumlah } = await c.req.json()
+    
+    if (!material_id || !nomor_lh05) {
+      return c.json({
+        success: false,
+        error: 'material_id and nomor_lh05 are required'
+      }, 400)
+    }
+    
+    console.log('📝 Updating material:', material_id, 'in LH05:', nomor_lh05)
+    
+    // Update material_gangguan in D1
+    const updateQuery = `
+      UPDATE material_gangguan 
+      SET sn_mesin = ?, jumlah = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `
+    
+    await env.DB.prepare(updateQuery)
+      .bind(sn_mesin || null, jumlah, material_id)
+      .run()
+    
+    console.log('✅ Material updated successfully')
+    
+    return c.json({ 
+      success: true, 
+      message: 'Material updated successfully',
+      material_id,
+      sn_mesin,
+      jumlah
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to update material:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to update material' 
+    }, 500)
+  }
+})
+
+// API: Delete material from gangguan
+app.delete('/api/delete-material-gangguan', async (c) => {
+  try {
+    // Check if user has delete permission
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    if (!sessionToken) {
+      return c.json({ success: false, error: 'Unauthorized' }, 401)
+    }
+    
+    const { env } = c
+    const materialId = c.req.query('material_id')
+    const nomorLH05 = c.req.query('nomor_lh05')
+    
+    if (!materialId || !nomorLH05) {
+      return c.json({
+        success: false,
+        error: 'material_id and nomor_lh05 are required'
+      }, 400)
+    }
+    
+    console.log('🗑️ Deleting material:', materialId, 'from LH05:', nomorLH05)
+    
+    // Delete material_gangguan from D1
+    const deleteQuery = `DELETE FROM material_gangguan WHERE id = ?`
+    
+    await env.DB.prepare(deleteQuery)
+      .bind(materialId)
+      .run()
+    
+    console.log('✅ Material deleted successfully')
+    
+    return c.json({ 
+      success: true, 
+      message: 'Material deleted successfully',
+      material_id: materialId
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to delete material:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to delete material' 
+    }, 500)
+  }
+})
+
 // ==================== API AUTHENTICATION ====================
 
 // API: Login
