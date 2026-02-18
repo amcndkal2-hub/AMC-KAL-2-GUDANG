@@ -193,6 +193,9 @@ function applyFilters() {
   const unitFilter = document.getElementById('filterUnit').value
   const searchNomor = document.getElementById('searchNomor').value.toLowerCase()
   
+  // Save filter state
+  saveFilterState()
+  
   filteredData = allGangguanData.filter(item => {
     let match = true
     
@@ -229,6 +232,9 @@ function resetFilters() {
   document.getElementById('filterPemadaman').value = ''
   document.getElementById('filterUnit').value = ''
   document.getElementById('searchNomor').value = ''
+  
+  // Clear sessionStorage
+  sessionStorage.removeItem('gangguanFilters')
   
   filteredData = [...allGangguanData]
   renderTable()
@@ -638,4 +644,47 @@ async function deleteGangguan(nomorLH05) {
         console.error('Delete error:', error);
         alert('❌ Terjadi kesalahan saat menghapus form gangguan');
     }
+}
+
+// =============================================
+// SessionStorage - Persist Filter State
+// =============================================
+
+function saveFilterState() {
+  const filterState = {
+    kelompok: document.getElementById('filterKelompok').value,
+    tanggal: document.getElementById('filterTanggal').value,
+    pemadaman: document.getElementById('filterPemadaman').value,
+    unit: document.getElementById('filterUnit').value,
+    searchNomor: document.getElementById('searchNomor').value
+  }
+  sessionStorage.setItem('gangguanFilters', JSON.stringify(filterState))
+  console.log('✅ Gangguan filter state saved:', filterState)
+}
+
+function restoreFilterState() {
+  try {
+    const savedState = sessionStorage.getItem('gangguanFilters')
+    if (!savedState) {
+      console.log('ℹ️ No saved Gangguan filter state found')
+      return
+    }
+    
+    const filterState = JSON.parse(savedState)
+    console.log('🔄 Restoring Gangguan filter state:', filterState)
+    
+    // Restore filter values
+    if (filterState.kelompok) document.getElementById('filterKelompok').value = filterState.kelompok
+    if (filterState.tanggal) document.getElementById('filterTanggal').value = filterState.tanggal
+    if (filterState.pemadaman) document.getElementById('filterPemadaman').value = filterState.pemadaman
+    if (filterState.unit) document.getElementById('filterUnit').value = filterState.unit
+    if (filterState.searchNomor) document.getElementById('searchNomor').value = filterState.searchNomor
+    
+    // Apply filters after restoration
+    applyFilters()
+    console.log('✅ Gangguan filter state restored')
+    
+  } catch (error) {
+    console.error('❌ Failed to restore Gangguan filter state:', error)
+  }
 }

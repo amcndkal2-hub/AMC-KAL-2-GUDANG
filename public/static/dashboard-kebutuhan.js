@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
   loadKebutuhanMaterial()
   populateFilters()
   
+  // Restore filter state from sessionStorage
+  restoreFilterState()
+  
   // Auto refresh every 30 seconds
   setInterval(loadKebutuhanMaterial, 30000)
   
@@ -134,6 +137,9 @@ function applyFilters() {
   const searchNomor = document.getElementById('searchNomor').value.toLowerCase()
   const searchMaterial = document.getElementById('searchMaterial').value.toLowerCase()
   
+  // Save filter state to sessionStorage
+  saveFilterState()
+  
   filteredMaterials = allMaterials.filter(item => {
     let match = true
     
@@ -205,6 +211,9 @@ function resetFilters() {
   document.getElementById('filterJenisBarang').value = ''
   document.getElementById('searchNomor').value = ''
   document.getElementById('searchMaterial').value = ''
+  
+  // Clear sessionStorage
+  sessionStorage.removeItem('kebutuhanFilters')
   
   filteredMaterials = [...allMaterials]
   renderTable()
@@ -410,4 +419,51 @@ function exportExcel() {
   window.URL.revokeObjectURL(url)
   
   showNotification('Export berhasil!', 'success')
+}
+
+// =============================================
+// SessionStorage - Persist Filter State
+// =============================================
+
+function saveFilterState() {
+  const filterState = {
+    status: document.getElementById('filterStatus').value,
+    mesin: document.getElementById('filterMesin').value,
+    unit: document.getElementById('filterUnit').value,
+    jenisBarang: document.getElementById('filterJenisBarang').value,
+    searchNomor: document.getElementById('searchNomor').value,
+    searchMaterial: document.getElementById('searchMaterial').value
+  }
+  sessionStorage.setItem('kebutuhanFilters', JSON.stringify(filterState))
+  console.log('✅ Filter state saved:', filterState)
+}
+
+function restoreFilterState() {
+  try {
+    const savedState = sessionStorage.getItem('kebutuhanFilters')
+    if (!savedState) {
+      console.log('ℹ️ No saved filter state found')
+      return
+    }
+    
+    const filterState = JSON.parse(savedState)
+    console.log('🔄 Restoring filter state:', filterState)
+    
+    // Wait for DOM elements to be ready
+    setTimeout(() => {
+      if (filterState.status) document.getElementById('filterStatus').value = filterState.status
+      if (filterState.mesin) document.getElementById('filterMesin').value = filterState.mesin
+      if (filterState.unit) document.getElementById('filterUnit').value = filterState.unit
+      if (filterState.jenisBarang) document.getElementById('filterJenisBarang').value = filterState.jenisBarang
+      if (filterState.searchNomor) document.getElementById('searchNomor').value = filterState.searchNomor
+      if (filterState.searchMaterial) document.getElementById('searchMaterial').value = filterState.searchMaterial
+      
+      // Apply filters after restoration
+      applyFilters()
+      console.log('✅ Filter state restored')
+    }, 500) // Wait 500ms for data to load
+    
+  } catch (error) {
+    console.error('❌ Failed to restore filter state:', error)
+  }
 }

@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Populate unit checkboxes
   populateUnitFilter()
+  
+  // Restore filter state from sessionStorage
+  setTimeout(() => restoreFilterState(), 1000)
 })
 
 // Load material with status Pengadaan
@@ -133,6 +136,9 @@ function applyFilters() {
   const selectedUnits = Array.from(document.querySelectorAll('.unit-checkbox:checked'))
     .map(cb => cb.value)
   
+  // Save filter state
+  saveFilterState()
+  
   filteredMaterialPengadaan = allMaterialPengadaan.filter(item => {
     let match = true
     
@@ -173,6 +179,9 @@ function resetFilters() {
   document.getElementById('filterJenisBarang').value = ''
   document.getElementById('checkAllUnits').checked = true
   document.querySelectorAll('.unit-checkbox').forEach(cb => cb.checked = true)
+  
+  // Clear sessionStorage
+  sessionStorage.removeItem('createRABFilters')
   
   filteredMaterialPengadaan = [...allMaterialPengadaan]
   renderMaterialPengadaan(filteredMaterialPengadaan)
@@ -611,5 +620,65 @@ function logout() {
       .then(() => {
         window.location.href = '/'
       })
+  }
+}
+
+// =============================================
+// SessionStorage - Persist Filter State
+// =============================================
+
+function saveFilterState() {
+  const jenisBarang = document.getElementById('filterJenisBarang').value
+  const selectedUnits = Array.from(document.querySelectorAll('.unit-checkbox:checked'))
+    .map(cb => cb.value)
+  
+  const filterState = {
+    jenisBarang: jenisBarang,
+    selectedUnits: selectedUnits
+  }
+  
+  sessionStorage.setItem('createRABFilters', JSON.stringify(filterState))
+  console.log('✅ Create RAB filter state saved:', filterState)
+}
+
+function restoreFilterState() {
+  try {
+    const savedState = sessionStorage.getItem('createRABFilters')
+    if (!savedState) {
+      console.log('ℹ️ No saved Create RAB filter state found')
+      return
+    }
+    
+    const filterState = JSON.parse(savedState)
+    console.log('🔄 Restoring Create RAB filter state:', filterState)
+    
+    // Restore Jenis Barang
+    if (filterState.jenisBarang) {
+      document.getElementById('filterJenisBarang').value = filterState.jenisBarang
+    }
+    
+    // Restore Unit checkboxes
+    if (filterState.selectedUnits && filterState.selectedUnits.length > 0) {
+      // First uncheck all
+      document.querySelectorAll('.unit-checkbox').forEach(cb => cb.checked = false)
+      
+      // Then check saved ones
+      filterState.selectedUnits.forEach(unit => {
+        const checkbox = document.querySelector(`.unit-checkbox[value="${unit}"]`)
+        if (checkbox) checkbox.checked = true
+      })
+      
+      // Update "Pilih Semua" checkbox
+      const allCheckboxes = document.querySelectorAll('.unit-checkbox')
+      const checkedCount = document.querySelectorAll('.unit-checkbox:checked').length
+      document.getElementById('checkAllUnits').checked = checkedCount === allCheckboxes.length
+    }
+    
+    // Apply filters after restoration
+    applyFilters()
+    console.log('✅ Create RAB filter state restored')
+    
+  } catch (error) {
+    console.error('❌ Failed to restore Create RAB filter state:', error)
   }
 }
