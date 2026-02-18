@@ -308,7 +308,9 @@ function renderTable() {
   
   console.log('✅ Rendering', filteredData.length, 'rows')
   
-  const isAdminUser = isAdmin();
+  // Check if user can edit/delete (admin, amc, or andalcekatan)
+  // Use canEditDelete() function from auth-check.js
+  const hasEditDeletePermission = typeof canEditDelete === 'function' ? canEditDelete() : false
   
   tbody.innerHTML = filteredData.map(item => {
     const tanggal = new Date(item.tanggalLaporan).toLocaleString('id-ID', {
@@ -353,9 +355,9 @@ function renderTable() {
             class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm mr-2">
             <i class="fas fa-eye mr-1"></i>Detail
           </button>
-          ${isAdminUser ? `
+          ${hasEditDeletePermission ? `
             <button onclick="deleteGangguan('${item.nomorLH05}')" 
-              class="admin-only btn-delete bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">
+              class="edit-delete-only bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">
               <i class="fas fa-trash mr-1"></i>Hapus
             </button>
           ` : ''}
@@ -591,6 +593,12 @@ function showLH05Modal(gangguan) {
       
       <!-- Footer -->
       <div class="bg-gray-100 p-4 rounded-b-lg flex justify-end space-x-2">
+        ${hasEditDeletePermission ? `
+        <button onclick="editLH05('${gangguan.nomorLH05}')" 
+          class="edit-delete-only bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">
+          <i class="fas fa-edit mr-2"></i>Edit
+        </button>
+        ` : ''}
         <button onclick="printLH05('${gangguan.nomorLH05}')" 
           class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           <i class="fas fa-print mr-2"></i>Print
@@ -619,6 +627,11 @@ function printLH05(nomorLH05) {
 function exportLH05PDF(nomorLH05) {
   alert('Export PDF: ' + nomorLH05 + '\n\nFungsi export PDF akan memerlukan library seperti jsPDF atau html2pdf')
   // TODO: Implement PDF export
+}
+
+function editLH05(nomorLH05) {
+  // Navigate to Form Gangguan page with edit mode
+  window.location.href = `/form-gangguan?edit=${encodeURIComponent(nomorLH05)}`
 }
 
 function exportAllLH05() {

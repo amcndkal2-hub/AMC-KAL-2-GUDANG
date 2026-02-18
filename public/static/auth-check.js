@@ -92,11 +92,14 @@ function setupActivityTracking() {
 
 function updateUIBasedOnRole(role) {
   try {
-    // Show delete buttons only for admin users
-    const deleteButtons = document.querySelectorAll('.admin-only, .btn-delete')
+    const username = localStorage.getItem('username')
+    const hasEditDeletePermission = role === 'admin' || username === 'amc' || username === 'andalcekatan'
+    
+    // Show delete buttons for admin, amc, and andalcekatan users
+    const deleteButtons = document.querySelectorAll('.admin-only, .btn-delete, .edit-delete-only')
     if (deleteButtons && deleteButtons.length > 0) {
       deleteButtons.forEach(btn => {
-        if (role === 'admin') {
+        if (hasEditDeletePermission) {
           btn.style.display = 'inline-block'
         } else {
           btn.style.display = 'none'
@@ -111,6 +114,13 @@ function updateUIBasedOnRole(role) {
 
 function isAdmin() {
   return localStorage.getItem('userRole') === 'admin'
+}
+
+// Check if user has edit/delete permissions (admin, amc, andalcekatan)
+function canEditDelete() {
+  const username = localStorage.getItem('username')
+  const role = localStorage.getItem('userRole')
+  return role === 'admin' || username === 'amc' || username === 'andalcekatan'
 }
 
 function redirectToLogin() {
