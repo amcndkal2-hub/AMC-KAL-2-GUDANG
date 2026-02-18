@@ -605,6 +605,7 @@ export async function getAllGangguan(db: D1Database) {
             'mesin', mg.mesin,
             'jumlah', mg.jumlah,
             'status', mg.status,
+            'snMesin', mg.sn_mesin,
             'unitULD', mg.unit_uld,
             'lokasiTujuan', mg.lokasi_tujuan,
             'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
