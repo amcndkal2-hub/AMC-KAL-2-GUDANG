@@ -440,6 +440,11 @@ async function viewLH05(nomorLH05) {
 
 function showLH05Modal(gangguan) {
   // Check if user can edit/delete (admin, amc, or andalcekatan)
+  console.log('🔍 Checking edit/delete permission...')
+  console.log('  - typeof canEditDelete:', typeof canEditDelete)
+  console.log('  - localStorage.username:', localStorage.getItem('username'))
+  console.log('  - localStorage.userRole:', localStorage.getItem('userRole'))
+  
   const hasEditDeletePermission = typeof canEditDelete === 'function' ? canEditDelete() : false
   
   const tanggal = new Date(gangguan.tanggalLaporan).toLocaleString('id-ID', {

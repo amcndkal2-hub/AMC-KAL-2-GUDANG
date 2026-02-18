@@ -620,13 +620,16 @@ export async function getAllGangguan(db: D1Database) {
     return results.map((g: any) => {
       const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
       
-      // DEDUPLICATE: Remove duplicate materials based on part_number
-      // Keep the one with highest id (latest insert)
+      // DEDUPLICATE: Remove duplicate materials based on part_number + snMesin
+      // This allows same part number but different S/N to coexist
+      // Keep the one with highest id (latest insert) only for exact duplicates
       const uniqueMaterialsMap = new Map()
       rawMaterials.forEach((mat: any) => {
-        const existing = uniqueMaterialsMap.get(mat.partNumber)
+        // Create unique key combining part_number and sn_mesin (or status as fallback)
+        const uniqueKey = `${mat.partNumber || ''}_${mat.snMesin || mat.status || ''}`
+        const existing = uniqueMaterialsMap.get(uniqueKey)
         if (!existing || mat.id > existing.id) {
-          uniqueMaterialsMap.set(mat.partNumber, mat)
+          uniqueMaterialsMap.set(uniqueKey, mat)
         }
       })
       const materials = Array.from(uniqueMaterialsMap.values())
@@ -676,13 +679,16 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
       const g: any = results[0]
       const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
       
-      // DEDUPLICATE: Remove duplicate materials based on part_number
-      // Keep the one with highest id (latest insert)
+      // DEDUPLICATE: Remove duplicate materials based on part_number + snMesin
+      // This allows same part number but different S/N to coexist
+      // Keep the one with highest id (latest insert) only for exact duplicates
       const uniqueMaterialsMap = new Map()
       rawMaterials.forEach((mat: any) => {
-        const existing = uniqueMaterialsMap.get(mat.partNumber)
+        // Create unique key combining part_number and sn_mesin (or status as fallback)
+        const uniqueKey = `${mat.partNumber || ''}_${mat.snMesin || mat.status || ''}`
+        const existing = uniqueMaterialsMap.get(uniqueKey)
         if (!existing || mat.id > existing.id) {
-          uniqueMaterialsMap.set(mat.partNumber, mat)
+          uniqueMaterialsMap.set(uniqueKey, mat)
         }
       })
       const materials = Array.from(uniqueMaterialsMap.values())
