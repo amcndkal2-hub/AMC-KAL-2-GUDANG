@@ -682,18 +682,18 @@ function restoreFilterState() {
     }
     
     const filterState = JSON.parse(savedState)
-    console.log('🔄 Restoring Gangguan filter UI values:' filterState)
+    console.log('🔄 Restoring Gangguan filter UI values:', filterState)
     
     // Restore filter UI values only (applyFilters will be called by loadDashboardData)
     if (filterState.kelompok) document.getElementById('filterKelompok').value = filterState.kelompok
     if (filterState.tanggal) document.getElementById('filterTanggal').value = filterState.tanggal
     if (filterState.pemadaman) document.getElementById('filterPemadaman').value = filterState.pemadaman
     if (filterState.unit) document.getElementById('filterUnit').value = filterState.unit
-    if (filterState.searchNomor) document.getElementById('filterSearchNomor').value = filterState.searchNomor
+    if (filterState.searchNomor) document.getElementById('searchNomor').value = filterState.searchNomor
     
     console.log('✅ Gangguan filter UI values restored')
     
   } catch (error) {
-    console.error('❌ Failed to restore Gangguan filter state:' error)
+    console.error('❌ Failed to restore Gangguan filter state:', error)
   }
 }
