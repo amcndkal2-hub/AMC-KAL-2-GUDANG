@@ -639,27 +639,39 @@ export async function getAllGangguanFromMaterials(db: D1Database) {
         ttd_supervisor: '',
         created_at: firstMaterial?.created_at || new Date().toISOString(),
         updated_at: firstMaterial?.updated_at || firstMaterial?.created_at || new Date().toISOString(),
-        komponen_rusak: 'To be identified',
-        gejala: 'To be identified',
-        uraian_kejadian: 'Data recovered from material records',
-        analisa_penyebab: 'Pending review',
-        kesimpulan: 'Pending review',
+        // Recovery: Try to populate with real data if available
+        komponen_rusak: firstMaterial?.komponen_rusak || null,
+        gejala: firstMaterial?.gejala || null,
+        uraian_kejadian: firstMaterial?.uraian_kejadian || null,
+        analisa_penyebab: firstMaterial?.analisa_penyebab || null,
+        kesimpulan: firstMaterial?.kesimpulan || null,
         beban_puncak: 0,
         daya_mampu: 0,
         pemadaman: 'NORMAL',
         kelompok_spd: 'MEKANIK',
-        materials: materials.map((m: any) => ({
-          id: m.id,
-          partNumber: m.part_number,
-          material: m.material,
-          mesin: m.mesin,
-          jumlah: m.jumlah,
-          status: m.status,
-          snMesin: m.sn_mesin,
-          unitULD: m.unit_uld,
-          lokasiTujuan: m.lokasi_tujuan,
-          jenisBarang: m.jenis_barang
-        }))
+        materials: materials.map((m: any) => {
+          // Extract S/N from status field if sn_mesin is null
+          let snMesinValue = m.sn_mesin
+          if (!snMesinValue && m.status) {
+            const snMatch = m.status.match(/^SN:(.+)$/)
+            if (snMatch) {
+              snMesinValue = snMatch[1]
+            }
+          }
+          
+          return {
+            id: m.id,
+            partNumber: m.part_number,
+            material: m.material,
+            mesin: m.mesin,
+            jumlah: m.jumlah,
+            status: m.status,
+            snMesin: snMesinValue, // Clean S/N without "SN:" prefix
+            unitULD: m.unit_uld,
+            lokasiTujuan: m.lokasi_tujuan,
+            jenisBarang: m.jenis_barang
+          }
+        })
       }
       
       gangguanList.push(gangguan)
@@ -721,27 +733,39 @@ export async function getGangguanByLH05FromMaterials(db: D1Database, nomorLH05: 
       ttd_supervisor: '',
       created_at: firstMaterial?.created_at || new Date().toISOString(),
       updated_at: firstMaterial?.updated_at || firstMaterial?.created_at || new Date().toISOString(),
-      komponen_rusak: 'To be identified',
-      gejala: 'To be identified',
-      uraian_kejadian: 'Data recovered from material records',
-      analisa_penyebab: 'Pending review',
-      kesimpulan: 'Pending review',
+      // Recovery: Try to populate with real data if available
+      komponen_rusak: firstMaterial?.komponen_rusak || null,
+      gejala: firstMaterial?.gejala || null,
+      uraian_kejadian: firstMaterial?.uraian_kejadian || null,
+      analisa_penyebab: firstMaterial?.analisa_penyebab || null,
+      kesimpulan: firstMaterial?.kesimpulan || null,
       beban_puncak: 0,
       daya_mampu: 0,
       pemadaman: 'NORMAL',
       kelompok_spd: 'MEKANIK',
-      materials: materials.map((m: any) => ({
-        id: m.id,
-        partNumber: m.part_number,
-        material: m.material,
-        mesin: m.mesin,
-        jumlah: m.jumlah,
-        status: m.status,
-        snMesin: m.sn_mesin,
-        unitULD: m.unit_uld,
-        lokasiTujuan: m.lokasi_tujuan,
-        jenisBarang: m.jenis_barang
-      }))
+      materials: materials.map((m: any) => {
+        // Extract S/N from status field if sn_mesin is null
+        let snMesinValue = m.sn_mesin
+        if (!snMesinValue && m.status) {
+          const snMatch = m.status.match(/^SN:(.+)$/)
+          if (snMatch) {
+            snMesinValue = snMatch[1]
+          }
+        }
+        
+        return {
+          id: m.id,
+          partNumber: m.part_number,
+          material: m.material,
+          mesin: m.mesin,
+          jumlah: m.jumlah,
+          status: m.status,
+          snMesin: snMesinValue, // Clean S/N without "SN:" prefix
+          unitULD: m.unit_uld,
+          lokasiTujuan: m.lokasi_tujuan,
+          jenisBarang: m.jenis_barang
+        }
+      })
     }
     
     console.log(`✅ Recovered gangguan ${nomorLH05} with ${materials.length} materials`)
