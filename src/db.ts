@@ -674,6 +674,85 @@ export async function getAllGangguanFromMaterials(db: D1Database) {
   }
 }
 
+// RECOVERY FUNCTION: Get single gangguan by LH05 from material_gangguan
+export async function getGangguanByLH05FromMaterials(db: D1Database, nomorLH05: string) {
+  try {
+    // Extract gangguan_id from nomor_lh05 format: "0143/ND KAL 2/LH05/2026" -> 143
+    const match = nomorLH05.match(/^(\d+)\//)
+    if (!match) {
+      console.log(`❌ Invalid LH05 format: ${nomorLH05}`)
+      return null
+    }
+    
+    const gangguanId = parseInt(match[1])
+    console.log(`🔍 Recovering gangguan ID ${gangguanId} from materials...`)
+    
+    // Get materials for this gangguan_id
+    const { results: materials } = await db.prepare(`
+      SELECT 
+        mg.*,
+        COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+      FROM material_gangguan mg
+      LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+      WHERE mg.gangguan_id = ?
+      ORDER BY mg.id ASC
+    `).bind(gangguanId).all()
+    
+    if (materials.length === 0) {
+      console.log(`❌ No materials found for gangguan ID ${gangguanId}`)
+      return null
+    }
+    
+    // Get first material's metadata
+    const firstMaterial = materials[0] as any
+    
+    // Construct gangguan record
+    const gangguan = {
+      id: gangguanId,
+      nomor_lh05: nomorLH05,
+      tanggal_laporan: firstMaterial?.created_at?.split(' ')[0] || new Date().toISOString().split('T')[0],
+      jenis_gangguan: 'RECOVERED',
+      lokasi_gangguan: firstMaterial?.unit_uld || firstMaterial?.lokasi_tujuan || 'UNKNOWN',
+      user_laporan: 'Data Recovery',
+      status: 'Open',
+      catatan_tindakan: 'Recovered from material_gangguan',
+      rencana_perbaikan: 'Data needs manual review',
+      ttd_teknisi: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      ttd_supervisor: '',
+      created_at: firstMaterial?.created_at || new Date().toISOString(),
+      updated_at: firstMaterial?.updated_at || firstMaterial?.created_at || new Date().toISOString(),
+      komponen_rusak: 'To be identified',
+      gejala: 'To be identified',
+      uraian_kejadian: 'Data recovered from material records',
+      analisa_penyebab: 'Pending review',
+      kesimpulan: 'Pending review',
+      beban_puncak: 0,
+      daya_mampu: 0,
+      pemadaman: 'NORMAL',
+      kelompok_spd: 'MEKANIK',
+      materials: materials.map((m: any) => ({
+        id: m.id,
+        partNumber: m.part_number,
+        material: m.material,
+        mesin: m.mesin,
+        jumlah: m.jumlah,
+        status: m.status,
+        snMesin: m.sn_mesin,
+        unitULD: m.unit_uld,
+        lokasiTujuan: m.lokasi_tujuan,
+        jenisBarang: m.jenis_barang
+      }))
+    }
+    
+    console.log(`✅ Recovered gangguan ${nomorLH05} with ${materials.length} materials`)
+    return gangguan
+    
+  } catch (error: any) {
+    console.error(`❌ Failed to recover gangguan ${nomorLH05}:`, error)
+    return null
+  }
+}
+
 export async function getAllGangguan(db: D1Database) {
   try {
     const { results } = await db.prepare(`

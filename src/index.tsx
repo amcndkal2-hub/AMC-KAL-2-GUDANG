@@ -2027,15 +2027,29 @@ app.get('/api/gangguan-transactions', async (c) => {
 })
 
 // API: Get gangguan by Nomor LH05
+// API: Get gangguan by Nomor LH05
 app.get('/api/gangguan/:nomor', async (c) => {
   try {
     const { env } = c
     const nomor = c.req.param('nomor')
     
-    // Get from D1 Database
-    const gangguan = await DB.getGangguanByLH05(env.DB, nomor)
+    console.log(`🔍 Fetching gangguan: ${nomor}`)
+    
+    // Try normal getGangguanByLH05 first
+    let gangguan = await DB.getGangguanByLH05(env.DB, nomor)
+    
+    // If not found, try recovery from material_gangguan
+    if (!gangguan) {
+      console.log(`⚠️ Not found in gangguan table, trying recovery from materials...`)
+      gangguan = await DB.getGangguanByLH05FromMaterials(env.DB, nomor)
+      
+      if (gangguan) {
+        console.log(`✅ Recovered from materials: ${nomor}`)
+      }
+    }
     
     if (!gangguan) {
+      console.log(`❌ LH05 not found: ${nomor}`)
       return c.json({ error: 'LH05 not found' }, 404)
     }
     
