@@ -47,6 +47,9 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('⏳ Starting data load...')
   updateDebugInfo('⏳ Memuat data dari server...', 'info')
   
+  // Restore filter UI values first
+  restoreFilterState()
+  
   loadDashboardData()
   populateUnitFilter()
   
@@ -139,7 +142,15 @@ async function loadDashboardData() {
     }
     
     updateStatistics()
-    renderTable()
+    
+    // Check if there are saved filters and apply them
+    const savedState = sessionStorage.getItem('gangguanFilters')
+    if (savedState) {
+      console.log('🔄 Re-applying saved filters after data load...')
+      applyFilters()
+    } else {
+      renderTable()
+    }
     
     console.log('✅ Dashboard data loaded successfully')
     updateDebugInfo(`✅ Data loaded: ${allGangguanData.length} gangguan`, 'success')
@@ -671,20 +682,18 @@ function restoreFilterState() {
     }
     
     const filterState = JSON.parse(savedState)
-    console.log('🔄 Restoring Gangguan filter state:', filterState)
+    console.log('🔄 Restoring Gangguan filter UI values:' filterState)
     
-    // Restore filter values
+    // Restore filter UI values only (applyFilters will be called by loadDashboardData)
     if (filterState.kelompok) document.getElementById('filterKelompok').value = filterState.kelompok
     if (filterState.tanggal) document.getElementById('filterTanggal').value = filterState.tanggal
     if (filterState.pemadaman) document.getElementById('filterPemadaman').value = filterState.pemadaman
     if (filterState.unit) document.getElementById('filterUnit').value = filterState.unit
-    if (filterState.searchNomor) document.getElementById('searchNomor').value = filterState.searchNomor
+    if (filterState.searchNomor) document.getElementById('filterSearchNomor').value = filterState.searchNomor
     
-    // Apply filters after restoration
-    applyFilters()
-    console.log('✅ Gangguan filter state restored')
+    console.log('✅ Gangguan filter UI values restored')
     
   } catch (error) {
-    console.error('❌ Failed to restore Gangguan filter state:', error)
+    console.error('❌ Failed to restore Gangguan filter state:' error)
   }
 }

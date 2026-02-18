@@ -7,11 +7,11 @@ let filteredMaterials = []
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+  // Restore filter UI values first (before loading data)
+  restoreFilterState()
+  
   loadKebutuhanMaterial()
   populateFilters()
-  
-  // Restore filter state from sessionStorage
-  restoreFilterState()
   
   // Auto refresh every 30 seconds
   setInterval(loadKebutuhanMaterial, 30000)
@@ -103,7 +103,17 @@ async function loadKebutuhanMaterial() {
     populateMesinFilter()
     
     updateStatistics()
-    renderTable()
+    
+    // Check if there are saved filters and apply them
+    const savedState = sessionStorage.getItem('kebutuhanFilters')
+    if (savedState) {
+      console.log('🔄 Re-applying saved filters after data load...')
+      // Don't call restoreFilterState() here, just apply existing filters
+      applyFilters()
+    } else {
+      // No saved filters, just render all data
+      renderTable()
+    }
   } catch (error) {
     console.error('Load data error:', error)
   }
@@ -447,21 +457,17 @@ function restoreFilterState() {
     }
     
     const filterState = JSON.parse(savedState)
-    console.log('🔄 Restoring filter state:', filterState)
+    console.log('🔄 Restoring filter UI values:', filterState)
     
-    // Wait for DOM elements to be ready
-    setTimeout(() => {
-      if (filterState.status) document.getElementById('filterStatus').value = filterState.status
-      if (filterState.mesin) document.getElementById('filterMesin').value = filterState.mesin
-      if (filterState.unit) document.getElementById('filterUnit').value = filterState.unit
-      if (filterState.jenisBarang) document.getElementById('filterJenisBarang').value = filterState.jenisBarang
-      if (filterState.searchNomor) document.getElementById('searchNomor').value = filterState.searchNomor
-      if (filterState.searchMaterial) document.getElementById('searchMaterial').value = filterState.searchMaterial
-      
-      // Apply filters after restoration
-      applyFilters()
-      console.log('✅ Filter state restored')
-    }, 500) // Wait 500ms for data to load
+    // Restore UI values only (applyFilters will be called by loadKebutuhanMaterial)
+    if (filterState.status) document.getElementById('filterStatus').value = filterState.status
+    if (filterState.mesin) document.getElementById('filterMesin').value = filterState.mesin
+    if (filterState.unit) document.getElementById('filterUnit').value = filterState.unit
+    if (filterState.jenisBarang) document.getElementById('filterJenisBarang').value = filterState.jenisBarang
+    if (filterState.searchNomor) document.getElementById('searchNomor').value = filterState.searchNomor
+    if (filterState.searchMaterial) document.getElementById('searchMaterial').value = filterState.searchMaterial
+    
+    console.log('✅ Filter UI values restored')
     
   } catch (error) {
     console.error('❌ Failed to restore filter state:', error)

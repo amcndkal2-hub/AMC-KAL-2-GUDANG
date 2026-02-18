@@ -13,14 +13,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const today = new Date().toISOString().split('T')[0]
   document.getElementById('tanggalRAB').value = today
   
+  // Restore filter UI values first (synchronously)
+  restoreFilterState()
+  
   // Load material pengadaan
   loadMaterialPengadaan()
   
   // Populate unit checkboxes
   populateUnitFilter()
-  
-  // Restore filter state from sessionStorage
-  setTimeout(() => restoreFilterState(), 1000)
 })
 
 // Load material with status Pengadaan
@@ -47,7 +47,15 @@ async function loadMaterialPengadaan() {
     
     allMaterialPengadaan = data
     filteredMaterialPengadaan = [...data]
-    renderMaterialPengadaan(filteredMaterialPengadaan)
+    
+    // Check if there are saved filters and apply them
+    const savedState = sessionStorage.getItem('createRABFilters')
+    if (savedState) {
+      console.log('🔄 Re-applying saved filters after data load...')
+      applyFilters()
+    } else {
+      renderMaterialPengadaan(filteredMaterialPengadaan)
+    }
     
   } catch (error) {
     console.error('Failed to load material pengadaan:', error)
@@ -98,9 +106,30 @@ async function populateUnitFilter() {
     // Set container HTML
     container.innerHTML = checkAllHTML + unitsHTML
     
-    // Check all by default
-    document.getElementById('checkAllUnits').checked = true
-    document.querySelectorAll('.unit-checkbox').forEach(cb => cb.checked = true)
+    // Restore saved unit selections if available
+    if (window._pendingUnitRestore && window._pendingUnitRestore.length > 0) {
+      console.log('🔄 Restoring unit checkboxes:', window._pendingUnitRestore)
+      // Uncheck all first
+      document.querySelectorAll('.unit-checkbox').forEach(cb => cb.checked = false)
+      
+      // Check saved ones
+      window._pendingUnitRestore.forEach(unit => {
+        const checkbox = document.querySelector(`.unit-checkbox[value="${unit}"]`)
+        if (checkbox) checkbox.checked = true
+      })
+      
+      // Update "Pilih Semua" checkbox
+      const allCheckboxes = document.querySelectorAll('.unit-checkbox')
+      const checkedCount = document.querySelectorAll('.unit-checkbox:checked').length
+      document.getElementById('checkAllUnits').checked = checkedCount === allCheckboxes.length
+      
+      // Clear pending restore
+      delete window._pendingUnitRestore
+    } else {
+      // No saved state - check all by default
+      document.getElementById('checkAllUnits').checked = true
+      document.querySelectorAll('.unit-checkbox').forEach(cb => cb.checked = true)
+    }
     
     // Add event listener for "Check All"
     document.getElementById('checkAllUnits').addEventListener('change', function() {
@@ -650,33 +679,20 @@ function restoreFilterState() {
     }
     
     const filterState = JSON.parse(savedState)
-    console.log('🔄 Restoring Create RAB filter state:', filterState)
+    console.log('🔄 Restoring Create RAB filter UI values:', filterState)
     
     // Restore Jenis Barang
     if (filterState.jenisBarang) {
       document.getElementById('filterJenisBarang').value = filterState.jenisBarang
     }
     
-    // Restore Unit checkboxes
+    // Restore Unit checkboxes (will be applied after unit list is populated)
     if (filterState.selectedUnits && filterState.selectedUnits.length > 0) {
-      // First uncheck all
-      document.querySelectorAll('.unit-checkbox').forEach(cb => cb.checked = false)
-      
-      // Then check saved ones
-      filterState.selectedUnits.forEach(unit => {
-        const checkbox = document.querySelector(`.unit-checkbox[value="${unit}"]`)
-        if (checkbox) checkbox.checked = true
-      })
-      
-      // Update "Pilih Semua" checkbox
-      const allCheckboxes = document.querySelectorAll('.unit-checkbox')
-      const checkedCount = document.querySelectorAll('.unit-checkbox:checked').length
-      document.getElementById('checkAllUnits').checked = checkedCount === allCheckboxes.length
+      // Store in a temporary variable for later restoration
+      window._pendingUnitRestore = filterState.selectedUnits
     }
     
-    // Apply filters after restoration
-    applyFilters()
-    console.log('✅ Create RAB filter state restored')
+    console.log('✅ Create RAB filter UI values restored')
     
   } catch (error) {
     console.error('❌ Failed to restore Create RAB filter state:', error)
