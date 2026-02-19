@@ -880,50 +880,99 @@ export async function getGangguanByLH05FromMaterials(db: D1Database, nomorLH05: 
 
 export async function getAllGangguan(db: D1Database) {
   try {
-    const { results } = await db.prepare(`
-      SELECT 
-        g.*,
-        json_group_array(
-          json_object(
-            'id', mg.id,
-            'partNumber', mg.part_number,
-            'material', mg.material,
-            'mesin', mg.mesin,
-            'jumlah', mg.jumlah,
-            'status', mg.status,
-            'snMesin', mg.sn_mesin,
-            'unitULD', mg.unit_uld,
-            'lokasiTujuan', mg.lokasi_tujuan,
-            'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
-          )
-        ) as materials
-      FROM gangguan g
-      LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
-      LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-      GROUP BY g.id
-      ORDER BY g.created_at DESC
-    `).all()
+    // Try with sn_mesin column first (new schema)
+    let results
+    let hasSnMesinColumn = true
+    
+    try {
+      const queryResult = await db.prepare(`
+        SELECT 
+          g.*,
+          json_group_array(
+            json_object(
+              'id', mg.id,
+              'partNumber', mg.part_number,
+              'material', mg.material,
+              'mesin', mg.mesin,
+              'jumlah', mg.jumlah,
+              'status', mg.status,
+              'snMesin', mg.sn_mesin,
+              'unitULD', mg.unit_uld,
+              'lokasiTujuan', mg.lokasi_tujuan,
+              'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
+            )
+          ) as materials
+        FROM gangguan g
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+        GROUP BY g.id
+        ORDER BY g.created_at DESC
+      `).all()
+      results = queryResult.results
+      console.log('✅ getAllGangguan with sn_mesin column successful')
+    } catch (schemaError) {
+      // Fallback: Query without sn_mesin column (old schema)
+      console.log('⚠️ sn_mesin column not found in getAllGangguan, using fallback query')
+      hasSnMesinColumn = false
+      const queryResult = await db.prepare(`
+        SELECT 
+          g.*,
+          json_group_array(
+            json_object(
+              'id', mg.id,
+              'partNumber', mg.part_number,
+              'material', mg.material,
+              'mesin', mg.mesin,
+              'jumlah', mg.jumlah,
+              'status', mg.status,
+              'unitULD', mg.unit_uld,
+              'lokasiTujuan', mg.lokasi_tujuan,
+              'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
+            )
+          ) as materials
+        FROM gangguan g
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+        GROUP BY g.id
+        ORDER BY g.created_at DESC
+      `).all()
+      results = queryResult.results
+      console.log('✅ getAllGangguan without sn_mesin column successful (fallback)')
+    }
 
     return results.map((g: any) => {
       const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
       
-      // DEDUPLICATE: Remove duplicate materials based on part_number + snMesin
-      // This allows same part number but different S/N to coexist
-      // Keep the one with highest id (latest insert) only for exact duplicates
-      const uniqueMaterialsMap = new Map()
-      rawMaterials.forEach((mat: any) => {
-        // Create unique key combining part_number and sn_mesin (or status as fallback)
-        const uniqueKey = `${mat.partNumber || ''}_${mat.snMesin || mat.status || ''}`
-        const existing = uniqueMaterialsMap.get(uniqueKey)
-        if (!existing || mat.id > existing.id) {
-          uniqueMaterialsMap.set(uniqueKey, mat)
+      // If old schema (no sn_mesin column), extract S/N from status field
+      const materials = rawMaterials.map((mat: any) => {
+        let snMesinValue = mat.snMesin
+        
+        // Extract S/N from status if snMesin is null and status contains "SN:"
+        if (!snMesinValue && mat.status && typeof mat.status === 'string') {
+          const snMatch = mat.status.match(/^SN:(.+)$/)
+          if (snMatch) {
+            snMesinValue = snMatch[1]
+          }
+        }
+        
+        return {
+          ...mat,
+          snMesin: snMesinValue
         }
       })
-      const materials = Array.from(uniqueMaterialsMap.values())
+      
+      // DEDUPLICATE: Remove duplicate materials based on id (keep unique only)
+      const uniqueMaterialsMap = new Map()
+      materials.forEach((mat: any) => {
+        if (!uniqueMaterialsMap.has(mat.id)) {
+          uniqueMaterialsMap.set(mat.id, mat)
+        }
+      })
+      const uniqueMaterials = Array.from(uniqueMaterialsMap.values())
       
       return {
         ...g,
-        materials: materials
+        materials: uniqueMaterials
       }
     })
   } catch (error: any) {
