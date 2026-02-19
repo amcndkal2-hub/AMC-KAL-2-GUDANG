@@ -521,40 +521,84 @@ export async function saveGangguan(db: D1Database, data: any) {
     console.log('✅ Materials validation passed, saving to DB with TRANSACTION...')
     
     // IMPORTANT: Use sequential execution to ensure gangguan_id is available for materials
-    // Step 1: Insert gangguan first
-    const gangguanResult = await db.prepare(`
-      INSERT INTO gangguan (
-        nomor_lh05, tanggal_laporan, jenis_gangguan, lokasi_gangguan, user_laporan, status,
-        komponen_rusak, gejala, uraian_kejadian, analisa_penyebab, kesimpulan,
-        beban_puncak, daya_mampu, pemadaman, kelompok_spd,
-        catatan_tindakan, rencana_perbaikan, ttd_teknisi, ttd_supervisor, nama_pelapor, ttd_pelapor
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      data.nomorLH05,
-      data.hariTanggal,
-      data.kelompokSPD || 'MEKANIK',
-      data.unitULD,
-      data.namaPelapor,
-      'Open',
-      data.komponenRusak,
-      data.gejala,
-      data.uraianKejadian,
-      data.analisaPenyebab,
-      data.kesimpulan,
-      data.bebanPuncak ? parseFloat(data.bebanPuncak) : null,
-      data.dayaMampu ? parseFloat(data.dayaMampu) : null,
-      data.pemadaman,
-      data.kelompokSPD || 'MEKANIK',
-      data.tindakanPenanggulangan,
-      data.rencanaPerbaikan,
-      data.ttdPelapor,
-      '',
-      data.namaPelapor,
-      data.ttdPelapor
-    ).run()
-
-    const gangguanId = gangguanResult.meta.last_row_id
+    // Step 1: Insert gangguan first (with backward compatibility for nama_pelapor/ttd_pelapor)
+    let gangguanResult
+    let gangguanId
+    
+    try {
+      // Try INSERT with nama_pelapor and ttd_pelapor columns (new schema)
+      console.log('📝 Attempting INSERT with nama_pelapor/ttd_pelapor columns...')
+      gangguanResult = await db.prepare(`
+        INSERT INTO gangguan (
+          nomor_lh05, tanggal_laporan, jenis_gangguan, lokasi_gangguan, user_laporan, status,
+          komponen_rusak, gejala, uraian_kejadian, analisa_penyebab, kesimpulan,
+          beban_puncak, daya_mampu, pemadaman, kelompok_spd,
+          catatan_tindakan, rencana_perbaikan, ttd_teknisi, ttd_supervisor, nama_pelapor, ttd_pelapor
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        data.nomorLH05,
+        data.hariTanggal,
+        data.kelompokSPD || 'MEKANIK',
+        data.unitULD,
+        data.namaPelapor,
+        'Open',
+        data.komponenRusak,
+        data.gejala,
+        data.uraianKejadian,
+        data.analisaPenyebab,
+        data.kesimpulan,
+        data.bebanPuncak ? parseFloat(data.bebanPuncak) : null,
+        data.dayaMampu ? parseFloat(data.dayaMampu) : null,
+        data.pemadaman,
+        data.kelompokSPD || 'MEKANIK',
+        data.tindakanPenanggulangan,
+        data.rencanaPerbaikan,
+        data.ttdPelapor,
+        '',
+        data.namaPelapor,
+        data.ttdPelapor
+      ).run()
+      
+      gangguanId = gangguanResult.meta.last_row_id
+      console.log('✅ INSERT successful with new schema')
+      
+    } catch (schemaError: any) {
+      // Fallback: INSERT without nama_pelapor/ttd_pelapor if columns don't exist (old schema)
+      console.log('⚠️ New columns not found, using fallback INSERT (old schema)...')
+      gangguanResult = await db.prepare(`
+        INSERT INTO gangguan (
+          nomor_lh05, tanggal_laporan, jenis_gangguan, lokasi_gangguan, user_laporan, status,
+          komponen_rusak, gejala, uraian_kejadian, analisa_penyebab, kesimpulan,
+          beban_puncak, daya_mampu, pemadaman, kelompok_spd,
+          catatan_tindakan, rencana_perbaikan, ttd_teknisi, ttd_supervisor
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        data.nomorLH05,
+        data.hariTanggal,
+        data.kelompokSPD || 'MEKANIK',
+        data.unitULD,
+        data.namaPelapor,
+        'Open',
+        data.komponenRusak,
+        data.gejala,
+        data.uraianKejadian,
+        data.analisaPenyebab,
+        data.kesimpulan,
+        data.bebanPuncak ? parseFloat(data.bebanPuncak) : null,
+        data.dayaMampu ? parseFloat(data.dayaMampu) : null,
+        data.pemadaman,
+        data.kelompokSPD || 'MEKANIK',
+        data.tindakanPenanggulangan,
+        data.rencanaPerbaikan,
+        data.ttdPelapor,
+        ''
+      ).run()
+      
+      gangguanId = gangguanResult.meta.last_row_id
+      console.log('✅ INSERT successful with old schema (backward compatible)')
+    }
     
     if (!gangguanId) {
       throw new Error('Failed to get gangguan ID after insert')
