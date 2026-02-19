@@ -1961,7 +1961,13 @@ app.post('/api/save-gangguan', async (c) => {
     const body = await c.req.json()
     
     console.log('💾 Saving gangguan form...')
-    console.log('📋 Form data received:', JSON.stringify(body).substring(0, 200) + '...')
+    console.log('📋 Materials count:', body.materials?.length || 0)
+    console.log('📋 Form data preview:', {
+      submissionId: body.submissionId,
+      unitULD: body.unitULD,
+      materialsCount: body.materials?.length,
+      firstMaterial: body.materials?.[0]?.partNumber
+    })
     
     // Check for duplicate submission ID
     const submissionId = body.submissionId
@@ -1970,7 +1976,8 @@ app.post('/api/save-gangguan', async (c) => {
       if (existingSubmission) {
         const age = Date.now() - existingSubmission.timestamp
         if (age < SUBMISSION_CACHE_DURATION) {
-          console.log(`⚠️ DUPLICATE submission detected! ID: ${submissionId}, returning cached result`)
+          console.log(`⚠️ DUPLICATE submission detected! ID: ${submissionId}`)
+          console.log(`⚠️ Returning cached LH05: ${existingSubmission.nomorLH05}`)
           return c.json({
             success: true,
             message: 'Form already submitted (duplicate prevented)',
@@ -1982,13 +1989,23 @@ app.post('/api/save-gangguan', async (c) => {
           recentSubmissions.delete(submissionId)
         }
       }
+    } else {
+      console.warn('⚠️ No submissionId provided! Duplicate prevention disabled.')
     }
     
+    // Validate materials array
+    if (!body.materials || !Array.isArray(body.materials) || body.materials.length === 0) {
+      console.error('❌ Invalid materials array:', body.materials)
+      return c.json({ error: 'Materials array is required' }, 400)
+    }
+    
+    console.log('✅ All materials will be saved in 1 LH05:', body.materials.map((m: any) => m.partNumber).join(', '))
+    
     // Generate Nomor LH05 dari D1 Database with year from tanggal_kejadian
-    const nomorLH05 = await DB.getNextLH05Number(env.DB, body.tanggal_kejadian)
+    const nomorLH05 = await DB.getNextLH05Number(env.DB, body.hariTanggal)
     console.log('🏷️ Generated Nomor LH05:', nomorLH05)
     
-    // Save ke D1 Database (persistent storage)
+    // Save ke D1 Database (persistent storage) - 1 gangguan with N materials
     const result = await DB.saveGangguan(env.DB, {
       nomorLH05,
       ...body
@@ -1996,6 +2013,7 @@ app.post('/api/save-gangguan', async (c) => {
     
     console.log('✅ Gangguan saved to D1 Database successfully')
     console.log('📊 Database ID:', result.id)
+    console.log('📊 Total materials saved:', body.materials.length)
     
     // Cache this submission ID to prevent duplicates
     if (submissionId) {
@@ -2003,7 +2021,7 @@ app.post('/api/save-gangguan', async (c) => {
         nomorLH05,
         timestamp: Date.now()
       })
-      console.log(`🔒 Cached submission ID: ${submissionId} for ${SUBMISSION_CACHE_DURATION}ms`)
+      console.log(`🔒 Cached submission ID: ${submissionId} → LH05: ${nomorLH05}`)
       
       // Clean up old entries
       const now = Date.now()
@@ -2019,9 +2037,10 @@ app.post('/api/save-gangguan', async (c) => {
     
     return c.json({ 
       success: true, 
-      message: 'Form gangguan saved successfully (D1 Database)',
+      message: `Form gangguan saved successfully with ${body.materials.length} materials (D1 Database)`,
       nomorLH05,
-      id: result.id
+      id: result.id,
+      materialsCount: body.materials.length
     })
   } catch (error: any) {
     console.error('❌ Error saving gangguan:', error)
