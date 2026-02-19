@@ -414,7 +414,7 @@ async function viewLH05(nomorLH05) {
         jenisGangguan: data.gangguan.jenis_gangguan,
         lokasiGangguan: data.gangguan.lokasi_gangguan,
         userLaporan: data.gangguan.user_laporan,
-        namaPelapor: data.gangguan.user_laporan, // Nama pelapor dari user_laporan
+        namaPelapor: data.gangguan.nama_pelapor || data.gangguan.user_laporan || '-', // Priority: nama_pelapor, fallback user_laporan
         komponenRusak: data.gangguan.komponen_rusak,
         gejala: data.gangguan.gejala,
         uraianKejadian: data.gangguan.uraian_kejadian,
@@ -428,7 +428,7 @@ async function viewLH05(nomorLH05) {
         tindakanPenanggulangan: data.gangguan.catatan_tindakan, // Use catatan_tindakan as fallback
         rencanaPerbaikan: data.gangguan.rencana_perbaikan,
         ttdTeknisi: data.gangguan.ttd_teknisi,
-        ttdPelapor: data.gangguan.ttd_teknisi, // TTD pelapor dari ttd_teknisi
+        ttdPelapor: data.gangguan.ttd_pelapor || data.gangguan.ttd_teknisi, // Priority: ttd_pelapor, fallback ttd_teknisi
         ttdSupervisor: data.gangguan.ttd_supervisor,
         unitULD: data.gangguan.lokasi_gangguan,
         materials: data.gangguan.materials || []
