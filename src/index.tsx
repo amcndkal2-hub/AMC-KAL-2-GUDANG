@@ -470,11 +470,60 @@ app.get('/api/search-part', async (c) => {
       return material.includes(query) || partNumber.includes(query)
     })
     
+    // 🔧 DEDUPLICATION: Remove duplicate PART_NUMBERs
+    // Priority:
+    // 1. FILTER > other JENIS_BARANG (if same MATERIAL)
+    // 2. Entry with most metadata (UNIT, Pemeriksa, Penerima)
+    const seenPartNumbers = new Map<string, any>()
+    
+    results.forEach((item: any) => {
+      const partNumber = String(item.PART_NUMBER || '').trim()
+      
+      if (!partNumber) return // Skip empty part numbers
+      
+      const existing = seenPartNumbers.get(partNumber)
+      
+      if (!existing) {
+        // First time seeing this part number
+        seenPartNumbers.set(partNumber, item)
+        return
+      }
+      
+      // Duplicate found - decide which to keep
+      const currentJenis = String(item.JENIS_BARANG || '').toUpperCase()
+      const existingJenis = String(existing.JENIS_BARANG || '').toUpperCase()
+      const currentMaterial = String(item.MATERIAL || '').toUpperCase()
+      const existingMaterial = String(existing.MATERIAL || '').toUpperCase()
+      
+      // Priority 1: FILTER > MATERIAL HANDAL (if same material name)
+      if (currentMaterial === existingMaterial) {
+        if (currentJenis === 'FILTER' && existingJenis !== 'FILTER') {
+          seenPartNumbers.set(partNumber, item) // Replace with FILTER entry
+          return
+        } else if (existingJenis === 'FILTER' && currentJenis !== 'FILTER') {
+          return // Keep existing FILTER entry
+        }
+      }
+      
+      // Priority 2: Entry with more metadata (UNIT, Pemeriksa, Penerima)
+      const currentMetadataCount = [item.UNIT, item.Pemeriksa, item.Penerima]
+        .filter(val => val && String(val).trim() !== '').length
+      const existingMetadataCount = [existing.UNIT, existing.Pemeriksa, existing.Penerima]
+        .filter(val => val && String(val).trim() !== '').length
+      
+      if (currentMetadataCount > existingMetadataCount) {
+        seenPartNumbers.set(partNumber, item) // Replace with more complete entry
+      }
+    })
+    
+    // Convert Map back to array
+    const deduplicatedResults = Array.from(seenPartNumbers.values())
+    
     // Sort results by relevance:
     // 1. Exact matches first (material or part number)
     // 2. Then starts-with matches
     // 3. Then contains matches
-    const sortedResults = results.sort((a: any, b: any) => {
+    const sortedResults = deduplicatedResults.sort((a: any, b: any) => {
       const aMaterial = String(a.MATERIAL || '').toLowerCase()
       const aPartNumber = String(a.PART_NUMBER || '').toLowerCase()
       const bMaterial = String(b.MATERIAL || '').toLowerCase()
