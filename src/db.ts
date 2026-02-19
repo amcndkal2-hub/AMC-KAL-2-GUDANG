@@ -1232,25 +1232,43 @@ export async function deleteTransaction(db: D1Database, nomorBA: string) {
 
 export async function deleteGangguan(db: D1Database, nomorLH05: string) {
   try {
-    // Get gangguan ID first
-    const gangguan = await getGangguanByLH05(db, nomorLH05)
+    // Get gangguan ID first (try normal table, then recovery)
+    let gangguan = await getGangguanByLH05(db, nomorLH05)
+    
+    // If not found in gangguan table, try recovery from materials
     if (!gangguan) {
-      throw new Error('Gangguan not found')
+      console.log(`⚠️ Gangguan ${nomorLH05} not in gangguan table, checking material_gangguan...`)
+      gangguan = await getGangguanByLH05FromMaterials(db, nomorLH05)
+    }
+    
+    if (!gangguan) {
+      throw new Error('Gangguan not found in both gangguan and material_gangguan tables')
     }
 
+    console.log(`🗑️ Deleting gangguan ID ${gangguan.id}: ${nomorLH05}`)
+
     // Delete materials first (foreign key constraint)
-    await db.prepare(`
+    const deleteMaterialsResult = await db.prepare(`
       DELETE FROM material_gangguan WHERE gangguan_id = ?
     `).bind(gangguan.id).run()
+    
+    console.log(`🗑️ Deleted ${deleteMaterialsResult.meta?.changes || 0} materials`)
 
-    // Delete gangguan
-    await db.prepare(`
+    // Delete gangguan (if exists in gangguan table)
+    const deleteGangguanResult = await db.prepare(`
       DELETE FROM gangguan WHERE nomor_lh05 = ?
     `).bind(nomorLH05).run()
+    
+    console.log(`🗑️ Deleted ${deleteGangguanResult.meta?.changes || 0} gangguan records`)
 
-    return { success: true, message: 'Gangguan deleted successfully' }
+    return { 
+      success: true, 
+      message: 'Gangguan deleted successfully',
+      deleted_materials: deleteMaterialsResult.meta?.changes || 0,
+      deleted_gangguan: deleteGangguanResult.meta?.changes || 0
+    }
   } catch (error: any) {
-    console.error('Failed to delete gangguan:', error)
+    console.error('❌ Failed to delete gangguan:', error)
     throw new Error(`Delete failed: ${error.message}`)
   }
 }
