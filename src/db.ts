@@ -606,15 +606,28 @@ export async function saveGangguan(db: D1Database, data: any) {
     
     console.log(`✅ Gangguan inserted with ID: ${gangguanId}, LH05: ${data.nomorLH05}`)
 
-    // Step 2: Build batch for all materials
+    // Step 2: Check if sn_mesin column exists in material_gangguan
+    let hasSnMesinColumn = false
+    try {
+      // Try a test query with sn_mesin column
+      await db.prepare(`SELECT sn_mesin FROM material_gangguan LIMIT 1`).all()
+      hasSnMesinColumn = true
+      console.log('✅ Table material_gangguan has sn_mesin column')
+    } catch (schemaCheckError) {
+      hasSnMesinColumn = false
+      console.log('⚠️ Table material_gangguan does NOT have sn_mesin column, using fallback')
+    }
+    
+    // Step 3: Build batch for all materials based on schema
     const materialBatch: D1PreparedStatement[] = []
     
     for (let i = 0; i < data.materials.length; i++) {
       const material = data.materials[i]
-      console.log(`📦 Preparing material ${i + 1}/${data.materials.length}:`, material.partNumber, material.snMesin)
+      const snMesin = material.snMesin || material.sn_mesin || ''
+      console.log(`📦 Preparing material ${i + 1}/${data.materials.length}:`, material.partNumber, 'S/N:', snMesin)
       
-      // Use sn_mesin column if available, fallback to status if not
-      try {
+      if (hasSnMesinColumn) {
+        // New schema: INSERT with sn_mesin column
         const stmt = db.prepare(`
           INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -627,13 +640,11 @@ export async function saveGangguan(db: D1Database, data: any) {
           material.status || 'N/A',
           data.unitULD,
           data.unitULD,
-          material.snMesin || material.sn_mesin || ''
+          snMesin
         )
         materialBatch.push(stmt)
-      } catch (columnError: any) {
-        // Fallback: INSERT without sn_mesin if column doesn't exist
-        console.log('⚠️ sn_mesin column not found, using fallback for material', material.partNumber)
-        const snMesin = material.snMesin || material.sn_mesin || ''
+      } else {
+        // Old schema: INSERT without sn_mesin, store in status field
         const statusValue = snMesin ? `SN:${snMesin}` : (material.status || 'N/A')
         
         const stmt = db.prepare(`
@@ -653,12 +664,12 @@ export async function saveGangguan(db: D1Database, data: any) {
       }
     }
     
-    // Step 3: Execute all materials in batch (atomic)
+    // Step 4: Execute all materials in batch (atomic)
     console.log(`🚀 Executing batch insert for ${materialBatch.length} materials...`)
     const batchResults = await db.batch(materialBatch)
     console.log(`✅ Batch complete: ${batchResults.length} materials inserted for LH05 ${data.nomorLH05}`)
     
-    // Verify
+    // Step 5: Verify
     const verification = await db.prepare(`
       SELECT COUNT(*) as count FROM material_gangguan WHERE gangguan_id = ?
     `).bind(gangguanId).first()
