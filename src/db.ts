@@ -1053,183 +1053,57 @@ export async function getAllGangguan(db: D1Database) {
 
 export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
   try {
-    // Try with BOTH sn_mesin AND is_issued columns (if migration applied)
-    try {
-      const { results } = await db.prepare(`
-        SELECT 
-          g.*,
-          json_group_array(
-            json_object(
-              'id', mg.id,
-              'partNumber', mg.part_number,
-              'material', mg.material,
-              'mesin', mg.mesin,
-              'jumlah', mg.jumlah,
-              'status', mg.status,
-              'unitULD', mg.unit_uld,
-              'lokasiTujuan', mg.lokasi_tujuan,
-              'snMesin', mg.sn_mesin,
-              'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
-            )
-          ) as materials
-        FROM gangguan g
-        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id 
-          AND (mg.is_issued IS NULL OR mg.is_issued = 0)
-        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-        WHERE g.nomor_lh05 = ?
-        GROUP BY g.id
-      `).bind(nomorLH05).all()
+    // Simple query without is_issued filter (backward compatible)
+    const { results } = await db.prepare(`
+      SELECT 
+        g.*,
+        json_group_array(
+          json_object(
+            'id', mg.id,
+            'partNumber', mg.part_number,
+            'material', mg.material,
+            'mesin', mg.mesin,
+            'jumlah', mg.jumlah,
+            'status', mg.status,
+            'unitULD', mg.unit_uld,
+            'lokasiTujuan', mg.lokasi_tujuan,
+            'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
+          )
+        ) as materials
+      FROM gangguan g
+      LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+      LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+      WHERE g.nomor_lh05 = ?
+      GROUP BY g.id
+    `).bind(nomorLH05).all()
 
-      if (results.length === 0) return null
-
-      const g: any = results[0]
-      const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
-      
-      // DEDUPLICATE: Remove duplicate materials based on part_number + snMesin
-      // This allows same part number but different S/N to coexist
-      // Keep the one with highest id (latest insert) only for exact duplicates
-      const uniqueMaterialsMap = new Map()
-      rawMaterials.forEach((mat: any) => {
-        // Create unique key combining part_number and sn_mesin (or status as fallback)
-        const uniqueKey = `${mat.partNumber || ''}_${mat.snMesin || mat.status || ''}`
-        const existing = uniqueMaterialsMap.get(uniqueKey)
-        if (!existing || mat.id > existing.id) {
-          uniqueMaterialsMap.set(uniqueKey, mat)
-        }
-      })
-      const materials = Array.from(uniqueMaterialsMap.values())
-      
-      return {
-        ...g,
-        materials: materials
-      }
-    } catch (columnError: any) {
-      // Fallback 1: Try without is_issued but with sn_mesin
-      console.log('⚠️ is_issued column not found, trying without it')
-      try {
-        const { results } = await db.prepare(`
-          SELECT 
-            g.*,
-            json_group_array(
-              json_object(
-                'id', mg.id,
-                'partNumber', mg.part_number,
-                'material', mg.material,
-                'mesin', mg.mesin,
-                'jumlah', mg.jumlah,
-                'status', mg.status,
-                'unitULD', mg.unit_uld,
-                'lokasiTujuan', mg.lokasi_tujuan,
-                'snMesin', mg.sn_mesin,
-                'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
-              )
-            ) as materials
-          FROM gangguan g
-          LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
-          LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-          WHERE g.nomor_lh05 = ?
-          GROUP BY g.id
-        `).bind(nomorLH05).all()
-
-        if (results.length === 0) return null
-
-        const g: any = results[0]
-        const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
-        
-        // Extract S/N from status if snMesin is null
-        const materials = rawMaterials.map((mat: any) => {
-          let snMesinValue = mat.snMesin
-          if (!snMesinValue && mat.status && typeof mat.status === 'string') {
-            const snMatch = mat.status.match(/^SN:(.+)$/)
-            if (snMatch) {
-              snMesinValue = snMatch[1]
-            }
-          }
-          return {
-            ...mat,
-            snMesin: snMesinValue
-          }
-        })
-        
-        // DEDUPLICATE: Remove duplicate materials based on ID (unique constraint)
-        const uniqueMaterialsMap = new Map()
-        materials.forEach((mat: any) => {
-          if (!uniqueMaterialsMap.has(mat.id)) {
-            uniqueMaterialsMap.set(mat.id, mat)
-          }
-        })
-        const uniqueMaterials = Array.from(uniqueMaterialsMap.values())
-        
-        return {
-          ...g,
-          materials: uniqueMaterials
-        }
-      } catch (snMesinError: any) {
-        // Fallback 2: Query without BOTH sn_mesin AND is_issued
-        console.log('⚠️ sn_mesin column also not found, using basic query')
-        const { results } = await db.prepare(`
-          SELECT 
-          g.*,
-          json_group_array(
-            json_object(
-              'id', mg.id,
-              'partNumber', mg.part_number,
-              'material', mg.material,
-              'mesin', mg.mesin,
-              'jumlah', mg.jumlah,
-              'status', mg.status,
-              'unitULD', mg.unit_uld,
-              'lokasiTujuan', mg.lokasi_tujuan,
-              'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
-            )
-          ) as materials
-        FROM gangguan g
-        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
-        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-        WHERE g.nomor_lh05 = ?
-        GROUP BY g.id
-      `).bind(nomorLH05).all()
-
-      if (results.length === 0) return null
-
-      const g: any = results[0]
-      const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
-      
-      // Parse S/N Mesin from status field (format: "SN:serial_number")
-      // Only for backward compatibility with old data
-      const parsedMaterials = rawMaterials.map((mat: any) => {
-        // If status starts with "SN:", extract serial number and reset status to N/A
-        if (mat.status && mat.status.startsWith('SN:')) {
-          return {
-            ...mat,
-            snMesin: mat.status.substring(3), // Extract S/N after "SN:"
-            status: 'N/A' // Reset status to default for old SN format
-          }
-        }
-        // Keep valid status values unchanged (Pengadaan, Tersedia, Terkirim, Tunda, Reject, N/A)
-        return { ...mat, snMesin: null }
-      })
-      
-      // DEDUPLICATE: Remove duplicate materials based on part_number
-      // Keep the one with highest id (latest insert)
-      const uniqueMaterialsMap = new Map()
-      parsedMaterials.forEach((mat: any) => {
-        const existing = uniqueMaterialsMap.get(mat.partNumber)
-        if (!existing || mat.id > existing.id) {
-          uniqueMaterialsMap.set(mat.partNumber, mat)
-        }
-      })
-      const materials = Array.from(uniqueMaterialsMap.values())
-      
-      return {
-        ...g,
-        materials: materials
-      }
-      }
+    if (results.length === 0) {
+      console.log(`⚠️ Gangguan ${nomorLH05} not found, trying recovery...`)
+      return await getGangguanByLH05FromMaterials(db, nomorLH05)
     }
+
+    const g: any = results[0]
+    const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
+    
+    // Extract S/N from status field if needed (old schema)
+    const materials = rawMaterials.map((mat: any) => {
+      let snMesinValue = mat.snMesin
+      if (!snMesinValue && mat.status && typeof mat.status === 'string') {
+        const snMatch = mat.status.match(/^SN:(.+)$/)
+        if (snMatch) snMesinValue = snMatch[1]
+      }
+      return { ...mat, snMesin: snMesinValue }
+    })
+    
+    // Deduplicate by ID only
+    const uniqueMaterials = Array.from(new Map(materials.map(m => [m.id, m])).values())
+    
+    console.log(`✅ Found ${nomorLH05} with ${uniqueMaterials.length} materials`)
+    
+    return { ...g, materials: uniqueMaterials }
   } catch (error: any) {
-    console.error('Failed to get gangguan by LH05:', error)
-    return null
+    console.error(`❌ Failed to get ${nomorLH05}:`, error.message)
+    return await getGangguanByLH05FromMaterials(db, nomorLH05)
   }
 }
 
