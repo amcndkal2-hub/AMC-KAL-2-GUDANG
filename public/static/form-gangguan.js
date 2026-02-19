@@ -292,6 +292,13 @@ function selectMaterial(rowId, item) {
 async function handleFormSubmit(e) {
   e.preventDefault()
   
+  // Prevent double submit
+  const submitBtn = document.querySelector('button[type="submit"]')
+  if (submitBtn.disabled) {
+    console.log('⚠️ Form already submitting, ignoring duplicate submit')
+    return
+  }
+  
   // Validate signature
   if (isCanvasEmpty(canvasPelapor)) {
     alert('Tanda tangan Pelapor harus diisi!')
@@ -355,6 +362,13 @@ async function handleFormSubmit(e) {
     ttdPelapor: canvasPelapor.toDataURL('image/png')
   }
   
+  // Disable submit button and show loading
+  submitBtn.disabled = true
+  const originalBtnText = submitBtn.innerHTML
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...'
+  
+  console.log('📤 Submitting form with', materials.length, 'materials...')
+  
   try {
     const response = await fetch('/api/save-gangguan', {
       method: 'POST',
@@ -367,12 +381,19 @@ async function handleFormSubmit(e) {
     const result = await response.json()
     
     if (result.success) {
+      console.log('✅ Form submitted successfully, LH05:', result.nomorLH05)
       // Show success modal (will auto-redirect to Dashboard Gangguan)
       showSuccessModal(result.nomorLH05)
     } else {
+      // Re-enable submit button on error
+      submitBtn.disabled = false
+      submitBtn.innerHTML = originalBtnText
       alert('Gagal menyimpan: ' + (result.error || 'Unknown error'))
     }
   } catch (error) {
+    // Re-enable submit button on error
+    submitBtn.disabled = false
+    submitBtn.innerHTML = originalBtnText
     console.error('Submit error:', error)
     alert('Error: ' + error.message)
   }
