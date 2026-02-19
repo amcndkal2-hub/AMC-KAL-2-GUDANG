@@ -1743,6 +1743,132 @@ app.delete('/api/delete-material-gangguan', async (c) => {
   }
 })
 
+// API: Bulk fix JENIS_BARANG for materials with wrong category
+app.post('/api/fix-jenis-barang', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔧 Starting JENIS_BARANG bulk fix...')
+    
+    // Fetch correct data from Google Sheets (with deduplication)
+    const correctData = await fetchGoogleSheetsData()
+    
+    // Create a map of Part Number -> Correct JENIS_BARANG
+    const correctJenisMap = new Map<string, string>()
+    
+    // Apply same deduplication logic as /api/search-part
+    const seenPartNumbers = new Map<string, any>()
+    
+    correctData.forEach((item: any) => {
+      const partNumber = String(item.PART_NUMBER || '').trim()
+      if (!partNumber) return
+      
+      const existing = seenPartNumbers.get(partNumber)
+      
+      if (!existing) {
+        seenPartNumbers.set(partNumber, item)
+        return
+      }
+      
+      const currentJenis = String(item.JENIS_BARANG || '').toUpperCase()
+      const existingJenis = String(existing.JENIS_BARANG || '').toUpperCase()
+      const currentMaterial = String(item.MATERIAL || '').toUpperCase()
+      const existingMaterial = String(existing.MATERIAL || '').toUpperCase()
+      
+      // Priority 1: FILTER > MATERIAL HANDAL
+      if (currentMaterial === existingMaterial) {
+        if (currentJenis === 'FILTER' && existingJenis !== 'FILTER') {
+          seenPartNumbers.set(partNumber, item)
+          return
+        } else if (existingJenis === 'FILTER' && currentJenis !== 'FILTER') {
+          return
+        }
+      }
+      
+      // Priority 2: More metadata
+      const currentMetadataCount = [item.UNIT, item.Pemeriksa, item.Penerima]
+        .filter(val => val && String(val).trim() !== '').length
+      const existingMetadataCount = [existing.UNIT, existing.Pemeriksa, existing.Penerima]
+        .filter(val => val && String(val).trim() !== '').length
+      
+      if (currentMetadataCount > existingMetadataCount) {
+        seenPartNumbers.set(partNumber, item)
+      }
+    })
+    
+    // Build correct JENIS_BARANG map
+    seenPartNumbers.forEach((item, partNumber) => {
+      correctJenisMap.set(partNumber, item.JENIS_BARANG || '')
+    })
+    
+    console.log(`📊 Loaded ${correctJenisMap.size} unique Part Numbers with correct JENIS_BARANG`)
+    
+    // Get all materials from database that need fixing
+    const checkQuery = `
+      SELECT id, part_number, jenis_barang, material 
+      FROM material_gangguan 
+      WHERE part_number IS NOT NULL AND part_number != ''
+    `
+    
+    const allMaterials = await env.DB.prepare(checkQuery).all()
+    
+    console.log(`🔍 Checking ${allMaterials.results.length} materials in database...`)
+    
+    let fixedCount = 0
+    const updates: any[] = []
+    
+    // Check each material and prepare update if needed
+    for (const material of allMaterials.results) {
+      const partNumber = String(material.part_number || '').trim()
+      const currentJenis = String(material.jenis_barang || '').trim()
+      const correctJenis = correctJenisMap.get(partNumber)
+      
+      if (correctJenis && currentJenis !== correctJenis) {
+        console.log(`❌ Part ${partNumber}: "${currentJenis}" → "${correctJenis}"`)
+        
+        updates.push(
+          env.DB.prepare(`
+            UPDATE material_gangguan 
+            SET jenis_barang = ?, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+          `).bind(correctJenis, material.id)
+        )
+        
+        fixedCount++
+      }
+    }
+    
+    if (updates.length === 0) {
+      console.log('✅ No materials need fixing - all JENIS_BARANG are correct')
+      return c.json({ 
+        success: true, 
+        message: 'No materials need fixing - all correct',
+        checked: allMaterials.results.length,
+        fixed: 0
+      })
+    }
+    
+    // Execute all updates in batch
+    console.log(`🔄 Executing ${updates.length} updates...`)
+    await env.DB.batch(updates)
+    
+    console.log(`✅ Fixed ${fixedCount} materials with wrong JENIS_BARANG`)
+    
+    return c.json({ 
+      success: true, 
+      message: `Successfully fixed ${fixedCount} materials`,
+      checked: allMaterials.results.length,
+      fixed: fixedCount
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to fix JENIS_BARANG:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to fix JENIS_BARANG' 
+    }, 500)
+  }
+})
+
 // ==================== API AUTHENTICATION ====================
 
 // API: Login

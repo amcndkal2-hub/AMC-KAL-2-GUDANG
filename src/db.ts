@@ -627,10 +627,10 @@ export async function saveGangguan(db: D1Database, data: any) {
       console.log(`📦 Preparing material ${i + 1}/${data.materials.length}:`, material.partNumber, 'S/N:', snMesin)
       
       if (hasSnMesinColumn) {
-        // New schema: INSERT with sn_mesin column
+        // New schema: INSERT with sn_mesin and jenis_barang columns
         const stmt = db.prepare(`
-          INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin, jenis_barang)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           gangguanId,
           material.partNumber,
@@ -640,7 +640,8 @@ export async function saveGangguan(db: D1Database, data: any) {
           material.status || 'N/A',
           data.unitULD,
           data.unitULD,
-          snMesin
+          snMesin,
+          material.jenisBarang || 'FILTER'
         )
         materialBatch.push(stmt)
       } else {
@@ -648,8 +649,8 @@ export async function saveGangguan(db: D1Database, data: any) {
         const statusValue = snMesin ? `SN:${snMesin}` : (material.status || 'N/A')
         
         const stmt = db.prepare(`
-          INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, jenis_barang)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           gangguanId,
           material.partNumber,
@@ -658,7 +659,8 @@ export async function saveGangguan(db: D1Database, data: any) {
           material.jumlah,
           statusValue,
           data.unitULD,
-          data.unitULD
+          data.unitULD,
+          material.jenisBarang || 'FILTER'
         )
         materialBatch.push(stmt)
       }
@@ -693,8 +695,8 @@ export async function saveGangguan(db: D1Database, data: any) {
         try {
           if (hasSnMesinColumn) {
             await db.prepare(`
-              INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin, jenis_barang)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
               gangguanId,
               material.partNumber,
@@ -704,13 +706,14 @@ export async function saveGangguan(db: D1Database, data: any) {
               material.status || 'N/A',
               data.unitULD,
               data.unitULD,
-              snMesin
+              snMesin,
+              material.jenisBarang || 'FILTER'
             ).run()
           } else {
             const statusValue = snMesin ? `SN:${snMesin}` : (material.status || 'N/A')
             await db.prepare(`
-              INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, jenis_barang)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).bind(
               gangguanId,
               material.partNumber,
@@ -719,7 +722,8 @@ export async function saveGangguan(db: D1Database, data: any) {
               material.jumlah,
               statusValue,
               data.unitULD,
-              data.unitULD
+              data.unitULD,
+              material.jenisBarang || 'FILTER'
             ).run()
           }
           
@@ -781,7 +785,7 @@ export async function getAllGangguanFromMaterials(db: D1Database) {
       const { results: materials } = await db.prepare(`
         SELECT 
           mg.*,
-          COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+          COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
         FROM material_gangguan mg
         LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
         WHERE mg.gangguan_id = ?
@@ -872,7 +876,7 @@ export async function getGangguanByLH05FromMaterials(db: D1Database, nomorLH05: 
     const { results: materials } = await db.prepare(`
       SELECT 
         mg.*,
-        COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+        COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
       FROM material_gangguan mg
       LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
       WHERE mg.gangguan_id = ?
@@ -969,7 +973,7 @@ export async function getAllGangguan(db: D1Database) {
               'snMesin', mg.sn_mesin,
               'unitULD', mg.unit_uld,
               'lokasiTujuan', mg.lokasi_tujuan,
-              'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
+              'jenisBarang', COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal')
             )
           ) as materials
         FROM gangguan g
@@ -997,7 +1001,7 @@ export async function getAllGangguan(db: D1Database) {
               'status', mg.status,
               'unitULD', mg.unit_uld,
               'lokasiTujuan', mg.lokasi_tujuan,
-              'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
+              'jenisBarang', COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal')
             )
           ) as materials
         FROM gangguan g
@@ -1067,7 +1071,7 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
             'status', mg.status,
             'unitULD', mg.unit_uld,
             'lokasiTujuan', mg.lokasi_tujuan,
-            'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
+            'jenisBarang', COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal')
           )
         ) as materials
       FROM gangguan g
@@ -1135,7 +1139,7 @@ export async function getAllMaterialKebutuhan(db: D1Database) {
         g.tanggal_laporan,
         g.lokasi_gangguan,
         g.status as gangguan_status,
-        COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+        COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
       FROM material_gangguan mg
       JOIN gangguan g ON mg.gangguan_id = g.id
       LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
@@ -1676,7 +1680,7 @@ export async function getMaterialPengadaan(db: D1Database) {
           mg.sn_mesin,
           mg.no_po,
           mg.no_grpo,
-          COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+          COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
         FROM material_gangguan mg
         JOIN gangguan g ON mg.gangguan_id = g.id
         LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
@@ -1702,7 +1706,7 @@ export async function getMaterialPengadaan(db: D1Database) {
           mg.unit_uld as lokasi_tujuan,
           mg.status,
           mg.is_rab_created,
-          COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+          COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
         FROM material_gangguan mg
         JOIN gangguan g ON mg.gangguan_id = g.id
         LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
