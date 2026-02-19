@@ -664,17 +664,87 @@ export async function saveGangguan(db: D1Database, data: any) {
       }
     }
     
-    // Step 4: Execute all materials in batch (atomic)
-    console.log(`🚀 Executing batch insert for ${materialBatch.length} materials...`)
-    const batchResults = await db.batch(materialBatch)
-    console.log(`✅ Batch complete: ${batchResults.length} materials inserted for LH05 ${data.nomorLH05}`)
+    // Step 4: Execute all materials insert (with error handling)
+    console.log(`🚀 Inserting ${materialBatch.length} materials...`)
+    let insertedCount = 0
     
-    // Step 5: Verify
+    try {
+      // Try batch insert first (faster if supported)
+      const batchResults = await db.batch(materialBatch)
+      insertedCount = batchResults.length
+      console.log(`✅ Batch insert complete: ${insertedCount} results`)
+      
+      // Verify each result for errors
+      batchResults.forEach((result: any, index: number) => {
+        if (result.error) {
+          console.error(`❌ Material ${index + 1} batch insert error:`, result.error)
+        } else {
+          console.log(`✅ Material ${index + 1} inserted successfully`)
+        }
+      })
+    } catch (batchError: any) {
+      // Fallback: Sequential insert if batch fails
+      console.warn(`⚠️ Batch insert failed, falling back to sequential insert:`, batchError.message)
+      
+      for (let i = 0; i < data.materials.length; i++) {
+        const material = data.materials[i]
+        const snMesin = material.snMesin || material.sn_mesin || ''
+        
+        try {
+          if (hasSnMesinColumn) {
+            await db.prepare(`
+              INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(
+              gangguanId,
+              material.partNumber,
+              material.material,
+              material.mesin,
+              material.jumlah,
+              material.status || 'N/A',
+              data.unitULD,
+              data.unitULD,
+              snMesin
+            ).run()
+          } else {
+            const statusValue = snMesin ? `SN:${snMesin}` : (material.status || 'N/A')
+            await db.prepare(`
+              INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `).bind(
+              gangguanId,
+              material.partNumber,
+              material.material,
+              material.mesin,
+              material.jumlah,
+              statusValue,
+              data.unitULD,
+              data.unitULD
+            ).run()
+          }
+          
+          insertedCount++
+          console.log(`✅ Sequential insert ${i + 1}/${data.materials.length}: ${material.partNumber} S/N:${snMesin}`)
+        } catch (materialError: any) {
+          console.error(`❌ Failed to insert material ${i + 1}:`, materialError.message, material)
+          throw new Error(`Material insert failed for ${material.partNumber}: ${materialError.message}`)
+        }
+      }
+    }
+    
+    // Step 5: Verify actual count in database
     const verification = await db.prepare(`
       SELECT COUNT(*) as count FROM material_gangguan WHERE gangguan_id = ?
     `).bind(gangguanId).first()
     
-    console.log(`✅ Verification: ${verification?.count} materials in DB for gangguan ID ${gangguanId}`)
+    const dbCount = verification?.count || 0
+    console.log(`✅ Verification: ${dbCount} materials in DB for gangguan ID ${gangguanId}`)
+    
+    // CRITICAL: Check if count matches
+    if (dbCount !== data.materials.length) {
+      console.error(`❌ MISMATCH: Expected ${data.materials.length} materials, but DB has ${dbCount}!`)
+      throw new Error(`Material count mismatch: Expected ${data.materials.length}, got ${dbCount}`)
+    }
 
     return { success: true, id: gangguanId, nomorLH05: data.nomorLH05 }
   } catch (error: any) {
@@ -1066,20 +1136,33 @@ export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
         const g: any = results[0]
         const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
         
-        // DEDUPLICATE: Remove duplicate materials based on part_number
-        // Keep the one with highest id (latest insert)
-        const uniqueMaterialsMap = new Map()
-        rawMaterials.forEach((mat: any) => {
-          const existing = uniqueMaterialsMap.get(mat.partNumber)
-          if (!existing || mat.id > existing.id) {
-            uniqueMaterialsMap.set(mat.partNumber, mat)
+        // Extract S/N from status if snMesin is null
+        const materials = rawMaterials.map((mat: any) => {
+          let snMesinValue = mat.snMesin
+          if (!snMesinValue && mat.status && typeof mat.status === 'string') {
+            const snMatch = mat.status.match(/^SN:(.+)$/)
+            if (snMatch) {
+              snMesinValue = snMatch[1]
+            }
+          }
+          return {
+            ...mat,
+            snMesin: snMesinValue
           }
         })
-        const materials = Array.from(uniqueMaterialsMap.values())
+        
+        // DEDUPLICATE: Remove duplicate materials based on ID (unique constraint)
+        const uniqueMaterialsMap = new Map()
+        materials.forEach((mat: any) => {
+          if (!uniqueMaterialsMap.has(mat.id)) {
+            uniqueMaterialsMap.set(mat.id, mat)
+          }
+        })
+        const uniqueMaterials = Array.from(uniqueMaterialsMap.values())
         
         return {
           ...g,
-          materials: materials
+          materials: uniqueMaterials
         }
       } catch (snMesinError: any) {
         // Fallback 2: Query without BOTH sn_mesin AND is_issued
