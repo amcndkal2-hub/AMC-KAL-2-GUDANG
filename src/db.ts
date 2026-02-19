@@ -511,15 +511,25 @@ export async function getTransactionByBA(db: D1Database, nomorBA: string) {
 
 export async function saveGangguan(db: D1Database, data: any) {
   try {
-    // Insert gangguan dengan semua kolom
+    console.log('💾 saveGangguan called with materials:', data.materials?.length)
+    
+    // CRITICAL: Validate materials array
+    if (!data.materials || !Array.isArray(data.materials) || data.materials.length === 0) {
+      throw new Error('Materials array is required and must not be empty')
+    }
+    
+    console.log('✅ Materials validation passed, saving to DB with TRANSACTION...')
+    
+    // IMPORTANT: Use sequential execution to ensure gangguan_id is available for materials
+    // Step 1: Insert gangguan first
     const gangguanResult = await db.prepare(`
       INSERT INTO gangguan (
         nomor_lh05, tanggal_laporan, jenis_gangguan, lokasi_gangguan, user_laporan, status,
         komponen_rusak, gejala, uraian_kejadian, analisa_penyebab, kesimpulan,
         beban_puncak, daya_mampu, pemadaman, kelompok_spd,
-        catatan_tindakan, rencana_perbaikan, ttd_teknisi, ttd_supervisor
+        catatan_tindakan, rencana_perbaikan, ttd_teknisi, ttd_supervisor, nama_pelapor, ttd_pelapor
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       data.nomorLH05,
       data.hariTanggal,
@@ -539,16 +549,29 @@ export async function saveGangguan(db: D1Database, data: any) {
       data.tindakanPenanggulangan,
       data.rencanaPerbaikan,
       data.ttdPelapor,
-      ''
+      '',
+      data.namaPelapor,
+      data.ttdPelapor
     ).run()
 
     const gangguanId = gangguanResult.meta.last_row_id
+    
+    if (!gangguanId) {
+      throw new Error('Failed to get gangguan ID after insert')
+    }
+    
+    console.log(`✅ Gangguan inserted with ID: ${gangguanId}, LH05: ${data.nomorLH05}`)
 
-    // Insert materials for gangguan
-    for (const material of data.materials) {
+    // Step 2: Build batch for all materials
+    const materialBatch: D1PreparedStatement[] = []
+    
+    for (let i = 0; i < data.materials.length; i++) {
+      const material = data.materials[i]
+      console.log(`📦 Preparing material ${i + 1}/${data.materials.length}:`, material.partNumber, material.snMesin)
+      
+      // Use sn_mesin column if available, fallback to status if not
       try {
-        // Try INSERT with sn_mesin column
-        await db.prepare(`
+        const stmt = db.prepare(`
           INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
@@ -561,15 +584,15 @@ export async function saveGangguan(db: D1Database, data: any) {
           data.unitULD,
           data.unitULD,
           material.snMesin || material.sn_mesin || ''
-        ).run()
+        )
+        materialBatch.push(stmt)
       } catch (columnError: any) {
         // Fallback: INSERT without sn_mesin if column doesn't exist
-        // Store S/N Mesin in status field with prefix "SN:" if provided
-        console.log('⚠️ sn_mesin column not found in INSERT, using fallback with status field')
+        console.log('⚠️ sn_mesin column not found, using fallback for material', material.partNumber)
         const snMesin = material.snMesin || material.sn_mesin || ''
         const statusValue = snMesin ? `SN:${snMesin}` : (material.status || 'N/A')
         
-        await db.prepare(`
+        const stmt = db.prepare(`
           INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
@@ -581,13 +604,32 @@ export async function saveGangguan(db: D1Database, data: any) {
           statusValue,
           data.unitULD,
           data.unitULD
-        ).run()
+        )
+        materialBatch.push(stmt)
       }
     }
+    
+    // Step 3: Execute all materials in batch (atomic)
+    console.log(`🚀 Executing batch insert for ${materialBatch.length} materials...`)
+    const batchResults = await db.batch(materialBatch)
+    console.log(`✅ Batch complete: ${batchResults.length} materials inserted for LH05 ${data.nomorLH05}`)
+    
+    // Verify
+    const verification = await db.prepare(`
+      SELECT COUNT(*) as count FROM material_gangguan WHERE gangguan_id = ?
+    `).bind(gangguanId).first()
+    
+    console.log(`✅ Verification: ${verification?.count} materials in DB for gangguan ID ${gangguanId}`)
 
     return { success: true, id: gangguanId, nomorLH05: data.nomorLH05 }
   } catch (error: any) {
-    console.error('Failed to save gangguan:', error)
+    console.error('❌ Failed to save gangguan:', error)
+    console.error('❌ Error details:', error.message)
+    console.error('❌ Data received:', {
+      nomorLH05: data.nomorLH05,
+      unitULD: data.unitULD,
+      materialsCount: data.materials?.length
+    })
     throw new Error(`Database error: ${error.message}`)
   }
 }
