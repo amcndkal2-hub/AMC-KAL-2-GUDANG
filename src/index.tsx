@@ -1743,6 +1743,54 @@ app.delete('/api/delete-material-gangguan', async (c) => {
   }
 })
 
+// API: Apply migration - Add jenis_barang column (one-time setup)
+app.post('/api/apply-migration', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔧 Applying migration: Add jenis_barang column...')
+    
+    // Check if column exists
+    const checkResult = await env.DB.prepare(`
+      PRAGMA table_info(material_gangguan)
+    `).all()
+    
+    const hasJenisBarang = checkResult.results?.some((col: any) => col.name === 'jenis_barang')
+    
+    if (hasJenisBarang) {
+      return c.json({
+        success: true,
+        message: 'Column jenis_barang already exists',
+        alreadyApplied: true
+      })
+    }
+    
+    // Add column
+    await env.DB.prepare(`
+      ALTER TABLE material_gangguan ADD COLUMN jenis_barang TEXT
+    `).run()
+    
+    // Create index
+    await env.DB.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_material_gangguan_jenis_barang 
+      ON material_gangguan(jenis_barang)
+    `).run()
+    
+    console.log('✅ Migration applied successfully')
+    
+    return c.json({
+      success: true,
+      message: 'Migration applied: jenis_barang column added with index'
+    })
+  } catch (error: any) {
+    console.error('❌ Migration failed:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to apply migration'
+    }, 500)
+  }
+})
+
 // API: Bulk fix JENIS_BARANG for materials with wrong category
 app.post('/api/fix-jenis-barang', async (c) => {
   try {
