@@ -2271,7 +2271,7 @@ app.get('/api/gangguan/:nomor', async (c) => {
     
     console.log(`🔍 Fetching gangguan: ${nomor}`)
     
-    // Try normal getGangguanByLH05 first
+    // Try normal getGangguanByLH05 first (from D1 Database)
     let gangguan = await DB.getGangguanByLH05(env.DB, nomor)
     
     // If not found, try recovery from material_gangguan
@@ -2284,8 +2284,20 @@ app.get('/api/gangguan/:nomor', async (c) => {
       }
     }
     
+    // FALLBACK: Check in-memory gangguanTransactions (for backward compatibility)
     if (!gangguan) {
-      console.log(`❌ LH05 not found: ${nomor}`)
+      console.log(`⚠️ Not found in D1, checking in-memory gangguanTransactions...`)
+      gangguan = gangguanTransactions.find((g: any) => 
+        (g.nomor_lh05 === nomor || g.nomorLH05 === nomor)
+      )
+      
+      if (gangguan) {
+        console.log(`✅ Found in in-memory: ${nomor}`)
+      }
+    }
+    
+    if (!gangguan) {
+      console.log(`❌ LH05 not found anywhere: ${nomor}`)
       return c.json({ error: 'LH05 not found' }, 404)
     }
     
