@@ -1951,6 +1951,10 @@ app.post('/api/admin/reconstruct-gangguan', async (c) => {
 })
 
 // API: Save Form Gangguan LH05
+// Track recent submission IDs to prevent duplicates (in-memory cache)
+const recentSubmissions = new Map<string, { nomorLH05: string; timestamp: number }>()
+const SUBMISSION_CACHE_DURATION = 60000 // 60 seconds
+
 app.post('/api/save-gangguan', async (c) => {
   try {
     const { env } = c
@@ -1958,6 +1962,27 @@ app.post('/api/save-gangguan', async (c) => {
     
     console.log('💾 Saving gangguan form...')
     console.log('📋 Form data received:', JSON.stringify(body).substring(0, 200) + '...')
+    
+    // Check for duplicate submission ID
+    const submissionId = body.submissionId
+    if (submissionId) {
+      const existingSubmission = recentSubmissions.get(submissionId)
+      if (existingSubmission) {
+        const age = Date.now() - existingSubmission.timestamp
+        if (age < SUBMISSION_CACHE_DURATION) {
+          console.log(`⚠️ DUPLICATE submission detected! ID: ${submissionId}, returning cached result`)
+          return c.json({
+            success: true,
+            message: 'Form already submitted (duplicate prevented)',
+            nomorLH05: existingSubmission.nomorLH05,
+            duplicate: true
+          })
+        } else {
+          // Expired, remove from cache
+          recentSubmissions.delete(submissionId)
+        }
+      }
+    }
     
     // Generate Nomor LH05 dari D1 Database with year from tanggal_kejadian
     const nomorLH05 = await DB.getNextLH05Number(env.DB, body.tanggal_kejadian)
@@ -1971,6 +1996,23 @@ app.post('/api/save-gangguan', async (c) => {
     
     console.log('✅ Gangguan saved to D1 Database successfully')
     console.log('📊 Database ID:', result.id)
+    
+    // Cache this submission ID to prevent duplicates
+    if (submissionId) {
+      recentSubmissions.set(submissionId, {
+        nomorLH05,
+        timestamp: Date.now()
+      })
+      console.log(`🔒 Cached submission ID: ${submissionId} for ${SUBMISSION_CACHE_DURATION}ms`)
+      
+      // Clean up old entries
+      const now = Date.now()
+      for (const [id, data] of recentSubmissions.entries()) {
+        if (now - data.timestamp > SUBMISSION_CACHE_DURATION) {
+          recentSubmissions.delete(id)
+        }
+      }
+    }
     
     // NOTE: Tidak perlu push ke in-memory lagi, karena semua data dari D1
     // gangguanTransactions.push(gangguan) // REMOVED - use D1 only

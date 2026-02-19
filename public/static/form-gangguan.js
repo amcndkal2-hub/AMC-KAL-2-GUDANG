@@ -342,8 +342,12 @@ async function handleFormSubmit(e) {
     return
   }
   
+  // Generate unique submission ID to prevent server-side duplicates
+  const submissionId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
+  
   // Collect form data
   const formData = {
+    submissionId: submissionId, // Add unique ID
     hariTanggal: document.getElementById('hariTanggal').value,
     unitULD: document.getElementById('unitULD').value,
     kelompokSPD: document.getElementById('kelompokSPD').value,
@@ -368,6 +372,7 @@ async function handleFormSubmit(e) {
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...'
   
   console.log('📤 Submitting form with', materials.length, 'materials...')
+  console.log('🆔 Submission ID:', submissionId)
   
   try {
     const response = await fetch('/api/save-gangguan', {
