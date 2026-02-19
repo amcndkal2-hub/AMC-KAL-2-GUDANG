@@ -781,16 +781,32 @@ export async function getAllGangguanFromMaterials(db: D1Database) {
     for (const row of gangguanIds as any[]) {
       const gangguanId = row.gangguan_id
       
-      // Get materials for this gangguan_id
-      const { results: materials } = await db.prepare(`
-        SELECT 
-          mg.*,
-          COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
-        FROM material_gangguan mg
-        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-        WHERE mg.gangguan_id = ?
-        ORDER BY mg.id ASC
-      `).bind(gangguanId).all()
+      // Get materials for this gangguan_id (with fallback for jenis_barang)
+      let materials: any[]
+      try {
+        const { results } = await db.prepare(`
+          SELECT 
+            mg.*,
+            COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+          FROM material_gangguan mg
+          LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+          WHERE mg.gangguan_id = ?
+          ORDER BY mg.id ASC
+        `).bind(gangguanId).all()
+        materials = results as any[]
+      } catch (schemaError) {
+        // Fallback: without jenis_barang column
+        const { results } = await db.prepare(`
+          SELECT 
+            mg.*,
+            COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+          FROM material_gangguan mg
+          LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+          WHERE mg.gangguan_id = ?
+          ORDER BY mg.id ASC
+        `).bind(gangguanId).all()
+        materials = results as any[]
+      }
       
       // Get first material's metadata
       const firstMaterial = materials[0] as any
@@ -872,16 +888,32 @@ export async function getGangguanByLH05FromMaterials(db: D1Database, nomorLH05: 
     const gangguanId = parseInt(match[1])
     console.log(`🔍 Recovering gangguan ID ${gangguanId} from materials...`)
     
-    // Get materials for this gangguan_id
-    const { results: materials } = await db.prepare(`
-      SELECT 
-        mg.*,
-        COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
-      FROM material_gangguan mg
-      LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-      WHERE mg.gangguan_id = ?
-      ORDER BY mg.id ASC
-    `).bind(gangguanId).all()
+    // Get materials for this gangguan_id (with fallback for jenis_barang)
+    let materials: any[]
+    try {
+      const { results } = await db.prepare(`
+        SELECT 
+          mg.*,
+          COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+        FROM material_gangguan mg
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+        WHERE mg.gangguan_id = ?
+        ORDER BY mg.id ASC
+      `).bind(gangguanId).all()
+      materials = results as any[]
+    } catch (schemaError) {
+      // Fallback: without jenis_barang column
+      const { results } = await db.prepare(`
+        SELECT 
+          mg.*,
+          COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+        FROM material_gangguan mg
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+        WHERE mg.gangguan_id = ?
+        ORDER BY mg.id ASC
+      `).bind(gangguanId).all()
+      materials = results as any[]
+    }
     
     if (materials.length === 0) {
       console.log(`❌ No materials found for gangguan ID ${gangguanId}`)
@@ -954,7 +986,7 @@ export async function getGangguanByLH05FromMaterials(db: D1Database, nomorLH05: 
 
 export async function getAllGangguan(db: D1Database) {
   try {
-    // Try with sn_mesin column first (new schema)
+    // Try with sn_mesin AND jenis_barang columns first (newest schema)
     let results
     let hasSnMesinColumn = true
     
@@ -983,35 +1015,65 @@ export async function getAllGangguan(db: D1Database) {
         ORDER BY g.created_at DESC
       `).all()
       results = queryResult.results
-      console.log('✅ getAllGangguan with sn_mesin column successful')
-    } catch (schemaError) {
-      // Fallback: Query without sn_mesin column (old schema)
-      console.log('⚠️ sn_mesin column not found in getAllGangguan, using fallback query')
-      hasSnMesinColumn = false
-      const queryResult = await db.prepare(`
-        SELECT 
-          g.*,
-          json_group_array(
-            json_object(
-              'id', mg.id,
-              'partNumber', mg.part_number,
-              'material', mg.material,
-              'mesin', mg.mesin,
-              'jumlah', mg.jumlah,
-              'status', mg.status,
-              'unitULD', mg.unit_uld,
-              'lokasiTujuan', mg.lokasi_tujuan,
-              'jenisBarang', COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal')
-            )
-          ) as materials
-        FROM gangguan g
-        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
-        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-        GROUP BY g.id
-        ORDER BY g.created_at DESC
-      `).all()
-      results = queryResult.results
-      console.log('✅ getAllGangguan without sn_mesin column successful (fallback)')
+      console.log('✅ getAllGangguan with sn_mesin + jenis_barang columns successful')
+    } catch (schemaError1: any) {
+      // Fallback 1: Try without jenis_barang column (has sn_mesin, no jenis_barang)
+      console.log('⚠️ jenis_barang column not found, trying without it...')
+      try {
+        const queryResult = await db.prepare(`
+          SELECT 
+            g.*,
+            json_group_array(
+              json_object(
+                'id', mg.id,
+                'partNumber', mg.part_number,
+                'material', mg.material,
+                'mesin', mg.mesin,
+                'jumlah', mg.jumlah,
+                'status', mg.status,
+                'snMesin', mg.sn_mesin,
+                'unitULD', mg.unit_uld,
+                'lokasiTujuan', mg.lokasi_tujuan,
+                'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
+              )
+            ) as materials
+          FROM gangguan g
+          LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+          LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+          GROUP BY g.id
+          ORDER BY g.created_at DESC
+        `).all()
+        results = queryResult.results
+        console.log('✅ getAllGangguan with sn_mesin only (no jenis_barang) successful')
+      } catch (schemaError2) {
+        // Fallback 2: Query without both sn_mesin and jenis_barang columns (oldest schema)
+        console.log('⚠️ sn_mesin + jenis_barang not found, using oldest schema query')
+        hasSnMesinColumn = false
+        const queryResult = await db.prepare(`
+          SELECT 
+            g.*,
+            json_group_array(
+              json_object(
+                'id', mg.id,
+                'partNumber', mg.part_number,
+                'material', mg.material,
+                'mesin', mg.mesin,
+                'jumlah', mg.jumlah,
+                'status', mg.status,
+                'unitULD', mg.unit_uld,
+                'lokasiTujuan', mg.lokasi_tujuan,
+                'jenisBarang', COALESCE(mm.JENIS_BARANG, 'Material Handal')
+              )
+            ) as materials
+          FROM gangguan g
+          LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+          LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+          GROUP BY g.id
+          ORDER BY g.created_at DESC
+        `).all()
+        results = queryResult.results
+        console.log('✅ getAllGangguan with oldest schema (no sn_mesin, no jenis_barang) successful')
+      }
     }
 
     return results.map((g: any) => {
@@ -1132,21 +1194,42 @@ export async function updateMaterialGangguanStatus(db: D1Database, gangguanId: n
 
 export async function getAllMaterialKebutuhan(db: D1Database) {
   try {
-    const { results } = await db.prepare(`
-      SELECT 
-        mg.*,
-        g.nomor_lh05,
-        g.tanggal_laporan,
-        g.lokasi_gangguan,
-        g.status as gangguan_status,
-        COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
-      FROM material_gangguan mg
-      JOIN gangguan g ON mg.gangguan_id = g.id
-      LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-      ORDER BY mg.created_at DESC
-    `).all()
+    // Try with jenis_barang column first
+    try {
+      const { results } = await db.prepare(`
+        SELECT 
+          mg.*,
+          g.nomor_lh05,
+          g.tanggal_laporan,
+          g.lokasi_gangguan,
+          g.status as gangguan_status,
+          COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+        FROM material_gangguan mg
+        JOIN gangguan g ON mg.gangguan_id = g.id
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+        ORDER BY mg.created_at DESC
+      `).all()
 
-    return results
+      return results
+    } catch (schemaError) {
+      // Fallback: Query without jenis_barang column
+      console.log('⚠️ jenis_barang not found in getAllMaterialKebutuhan, using fallback')
+      const { results } = await db.prepare(`
+        SELECT 
+          mg.*,
+          g.nomor_lh05,
+          g.tanggal_laporan,
+          g.lokasi_gangguan,
+          g.status as gangguan_status,
+          COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+        FROM material_gangguan mg
+        JOIN gangguan g ON mg.gangguan_id = g.id
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+        ORDER BY mg.created_at DESC
+      `).all()
+
+      return results
+    }
   } catch (error: any) {
     console.error('Failed to get material kebutuhan:', error)
     return []
