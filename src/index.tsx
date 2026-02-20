@@ -2708,33 +2708,26 @@ app.get('/api/kebutuhan-material', async (c) => {
       
       const stok = stokMasuk - stokKeluar
       
-      // Auto-update status based on stock and shipment
-      let finalStatus = mat.status
+      // Get original status from database
+      let finalStatus = mat.status || 'N/A'
       let snMesin = mat.sn_mesin || null
       
-      // Parse S/N Mesin from status field if in format "SN:serial_number"
-      if (!snMesin && mat.status && mat.status.startsWith('SN:')) {
+      // Parse S/N Mesin from status field if in format "SN:serial_number" (old schema)
+      if (!snMesin && mat.status && typeof mat.status === 'string' && mat.status.startsWith('SN:')) {
         snMesin = mat.status.substring(3) // Extract S/N after "SN:"
-        finalStatus = 'N/A' // Reset status to default when S/N is found
+        // Don't change status - keep original value from database
       }
       
-      if (isTerkirim) {
-        // Priority 1: If already sent (Terkirim), keep it
-        finalStatus = 'Terkirim'
-      } else if (stok > 0 && (finalStatus === 'N/A' || !finalStatus)) {
-        // Priority 2: If stock available and status is N/A, change to Tersedia
-        finalStatus = 'Tersedia'
-      } else if (stok === 0 && finalStatus === 'Tersedia') {
-        // Priority 3: If stock became 0 but status was Tersedia, revert to N/A
-        finalStatus = 'N/A'
-      }
+      // IMPORTANT: Do NOT auto-change status!
+      // Status should remain as set by user (N/A, Pengadaan, Tersedia, Tunda, Reject)
+      // isTerkirim is just a flag for UI, not a status replacement
       
       return {
         ...mat,
         sn_mesin: snMesin,
         stok: stok,
-        status: finalStatus,
-        isTerkirim: isTerkirim
+        status: finalStatus, // Keep original status from database
+        isTerkirim: isTerkirim // Separate flag for "sent" indicator
       }
     }))
     
@@ -7877,6 +7870,71 @@ app.post('/api/migrate-sn-mesin', async (c) => {
       success: false,
       error: error.message || 'Migration failed',
       stack: error.stack
+    }, 500)
+  }
+})
+
+// API: Fix status column for materials with SN: prefix
+app.post('/api/fix-status-column', async (c) => {
+  try {
+    const { env } = c
+    const db = env.DB
+    
+    console.log('🔧 Fixing status column for materials with SN: prefix...')
+    
+    // Find all materials where status starts with "SN:"
+    const { results: materials } = await db.prepare(`
+      SELECT id, part_number, material, status, sn_mesin
+      FROM material_gangguan
+      WHERE status LIKE 'SN:%'
+    `).all()
+    
+    console.log(`📊 Found ${materials.length} materials with SN: in status`)
+    
+    if (materials.length === 0) {
+      return c.json({
+        success: true,
+        message: 'No materials need fixing',
+        fixed: 0
+      })
+    }
+    
+    let fixedCount = 0
+    
+    for (const mat of materials) {
+      try {
+        // Update status to N/A (default status)
+        await db.prepare(`
+          UPDATE material_gangguan
+          SET status = 'N/A',
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).bind(mat.id).run()
+        
+        fixedCount++
+        
+        if (fixedCount % 50 === 0) {
+          console.log(`✅ Fixed ${fixedCount}/${materials.length}...`)
+        }
+      } catch (err: any) {
+        console.error(`❌ Failed to fix ID ${mat.id}:`, err.message)
+      }
+    }
+    
+    console.log(`✅ Fixed ${fixedCount} materials`)
+    
+    return c.json({
+      success: true,
+      message: `Successfully fixed ${fixedCount} materials`,
+      checked: materials.length,
+      fixed: fixedCount
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Fix failed:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message 
     }, 500)
   }
 })
