@@ -7881,6 +7881,155 @@ app.post('/api/migrate-sn-mesin', async (c) => {
   }
 })
 
+// API: TEST - Direct query transactions
+app.get('/api/test-query-transactions', async (c) => {
+  try {
+    const { env } = c
+    const db = env.DB
+    
+    console.log('🧪 Testing direct transaction query...')
+    
+    // Simple query without complex columns
+    const { results } = await db.prepare(`
+      SELECT 
+        t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi,
+        t.lokasi_asal, t.lokasi_tujuan, t.from_lh05
+      FROM transactions t
+      ORDER BY t.created_at DESC
+      LIMIT 5
+    `).all()
+    
+    console.log(`✅ Found ${results.length} transactions`)
+    
+    return c.json({
+      success: true,
+      count: results.length,
+      transactions: results
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Query failed:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message,
+      stack: error.stack
+    }, 500)
+  }
+})
+
+// API: Apply missing columns to transactions table
+app.post('/api/fix-transactions-table', async (c) => {
+  try {
+    const { env } = c
+    const db = env.DB
+    
+    console.log('🔧 Fixing transactions table schema...')
+    
+    const fixes = []
+    
+    // Add from_lh05 column
+    try {
+      await db.prepare(`ALTER TABLE transactions ADD COLUMN from_lh05 TEXT`).run()
+      await db.prepare(`CREATE INDEX IF NOT EXISTS idx_transactions_from_lh05 ON transactions(from_lh05)`).run()
+      fixes.push('from_lh05 column added')
+      console.log('✅ Added from_lh05 column')
+    } catch (e: any) {
+      if (e.message && e.message.includes('duplicate column')) {
+        fixes.push('from_lh05 already exists')
+      } else {
+        throw e
+      }
+    }
+    
+    // Add jenis_pengeluaran column
+    try {
+      await db.prepare(`ALTER TABLE transactions ADD COLUMN jenis_pengeluaran TEXT`).run()
+      fixes.push('jenis_pengeluaran column added')
+      console.log('✅ Added jenis_pengeluaran column')
+    } catch (e: any) {
+      if (e.message && e.message.includes('duplicate column')) {
+        fixes.push('jenis_pengeluaran already exists')
+      } else {
+        throw e
+      }
+    }
+    
+    return c.json({
+      success: true,
+      message: 'Transactions table schema fixed',
+      fixes
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Fix failed:', error)
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// API: TEST - Create 1 transaction manually
+app.post('/api/test-create-transaction', async (c) => {
+  try {
+    const { env } = c
+    const db = env.DB
+    
+    console.log('🧪 Testing transaction creation...')
+    
+    // Insert test transaction
+    const txRes = await db.prepare(`
+      INSERT INTO transactions (
+        nomor_ba, tanggal, jenis_transaksi,
+        lokasi_asal, lokasi_tujuan,
+        pemeriksa, penerima, from_lh05,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `).bind(
+      '0001/BA/TEST/2026',
+      '2026-02-19',
+      'Keluar (Pengeluaran Gudang)',
+      'Gudang KAL 2',
+      'Test Location',
+      'Test Pemeriksa',
+      'Test Penerima',
+      '0170/ND KAL 2/LH05/2026'
+    ).run()
+    
+    const txId = txRes.meta.last_row_id
+    console.log(`✅ Transaction created with ID: ${txId}`)
+    
+    // Insert test material
+    await db.prepare(`
+      INSERT INTO materials (
+        transaction_id, part_number, jenis_barang,
+        material, mesin, sn_mesin, jumlah, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `).bind(
+      txId,
+      '4904822',
+      'FILTER',
+      'TURBOCHARGER',
+      'ALL MESIN',
+      '12022517',
+      1
+    ).run()
+    
+    console.log(`✅ Material inserted for TX ${txId}`)
+    
+    return c.json({
+      success: true,
+      message: 'Test transaction created',
+      txId
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Test failed:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message,
+      stack: error.stack
+    }, 500)
+  }
+})
+
 // API: SIMPLE MIGRATE - Create 1 transaction per material with S/N
 app.post('/api/simple-migrate-ba', async (c) => {
   try {
