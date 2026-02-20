@@ -230,8 +230,11 @@ function renderMutasiTable(data = transactions) {
 async function viewBA(nomorBA) {
     console.log('🔍 viewBA called with:', nomorBA);
     try {
+        // Encode the BA number properly (escape slashes)
+        const encodedBA = encodeURIComponent(nomorBA);
+        console.log('📝 Encoded BA:', encodedBA);
         console.log('📡 Fetching BA from API...');
-        const response = await fetch(`/api/ba/${nomorBA}`);
+        const response = await fetch(`/api/ba/${encodedBA}`);
         console.log('📦 Response status:', response.status);
         const data = await response.json();
         console.log('📊 BA data received:', data);
