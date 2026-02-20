@@ -241,13 +241,18 @@ async function viewBA(nomorBA) {
 }
 
 function showBAModal(ba) {
+    // Remove any existing modals first
+    const existingModals = document.querySelectorAll('.ba-modal-overlay');
+    existingModals.forEach(m => m.remove());
+    
     const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.className = 'ba-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center';
+    modal.style.cssText = 'z-index: 9999 !important; position: fixed !important;';
     modal.innerHTML = `
-        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8" style="position: relative; z-index: 10000;">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold">Berita Acara - ${ba.nomor_ba}</h2>
-                <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
+                <button onclick="document.querySelector('.ba-modal-overlay').remove()" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
