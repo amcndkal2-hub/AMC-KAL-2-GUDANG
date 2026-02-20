@@ -183,7 +183,7 @@ function renderMutasiTable(data = transactions) {
                 <tr class="border-b hover:bg-gray-50">
                     ${idx === 0 ? `
                         <td class="px-4 py-3 font-bold" rowspan="${materials.length}">
-                            <a href="#" onclick="viewBA('${tx.nomor_ba}')" class="text-blue-600 hover:underline">
+                            <a href="#" onclick="event.preventDefault(); viewBA('${tx.nomor_ba}'); return false;" class="text-blue-600 hover:underline cursor-pointer">
                                 ${tx.nomor_ba}
                             </a>
                         </td>
@@ -205,9 +205,9 @@ function renderMutasiTable(data = transactions) {
                         <td class="px-4 py-3" rowspan="${materials.length}">${tx.pemeriksa || '-'}</td>
                         <td class="px-4 py-3" rowspan="${materials.length}">${tx.penerima || '-'}</td>
                         <td class="px-4 py-3 text-center" rowspan="${materials.length}">
-                            <button onclick="exportBA('${tx.nomor_ba}')" 
+                            <button onclick="event.preventDefault(); exportBA('${tx.nomor_ba}'); return false;" 
                                 class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">
-                                <i class="fas fa-download mr-1"></i>Terkirim
+                                <i class="fas fa-download mr-1"></i>Export
                             </button>
                         </td>
                         <td class="px-4 py-3 text-center" rowspan="${materials.length}">
@@ -228,23 +228,36 @@ function renderMutasiTable(data = transactions) {
 }
 
 async function viewBA(nomorBA) {
+    console.log('🔍 viewBA called with:', nomorBA);
     try {
+        console.log('📡 Fetching BA from API...');
         const response = await fetch(`/api/ba/${nomorBA}`);
+        console.log('📦 Response status:', response.status);
         const data = await response.json();
+        console.log('📊 BA data received:', data);
         
         if (data.ba) {
+            console.log('✅ Showing BA modal...');
             showBAModal(data.ba);
+        } else {
+            console.error('❌ No BA data found');
+            alert('BA tidak ditemukan');
         }
     } catch (error) {
-        console.error('Failed to load BA:', error);
+        console.error('❌ Failed to load BA:', error);
+        alert('Gagal memuat BA: ' + error.message);
     }
 }
 
 function showBAModal(ba) {
+    console.log('🎨 showBAModal called with BA:', ba.nomor_ba);
+    
     // Remove any existing modals first
     const existingModals = document.querySelectorAll('.ba-modal-overlay');
+    console.log('🗑️ Removing existing modals:', existingModals.length);
     existingModals.forEach(m => m.remove());
     
+    console.log('🎭 Creating new modal...');
     const modal = document.createElement('div');
     modal.className = 'ba-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center';
     modal.style.cssText = 'z-index: 9999 !important; position: fixed !important;';
@@ -328,7 +341,13 @@ function showBAModal(ba) {
         </div>
     `;
     
+    console.log('📌 Appending modal to body...');
     document.body.appendChild(modal);
+    console.log('✅ Modal appended successfully!');
+    
+    // Force reflow to ensure visibility
+    modal.offsetHeight;
+    console.log('🎉 Modal should now be visible!');
 }
 
 function exportBA(nomorBA) {
