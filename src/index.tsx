@@ -7881,6 +7881,406 @@ app.post('/api/migrate-sn-mesin', async (c) => {
   }
 })
 
+// API: MIGRATE MATERIAL TO BA (Auto-create BA for materials with S/N) - BATCH MODE
+app.post('/api/migrate-material-to-ba', async (c) => {
+  try {
+    const { env } = c
+    const db = env.DB
+    const body = await c.req.json().catch(() => ({}))
+    const limit = body.limit || 10 // Process 10 LH05 at a time
+    const offset = body.offset || 0
+    
+    if (!db) {
+      return c.json({ error: 'Database not available' }, 500)
+    }
+    
+    console.log(`🚀 Starting migration batch: offset=${offset}, limit=${limit}`)
+    
+    // Get distinct LH05 with materials that have S/N
+    const { results: lh05List } = await db.prepare(`
+      SELECT DISTINCT g.nomor_lh05, g.tanggal_laporan, g.created_at
+      FROM material_gangguan mg
+      JOIN gangguan g ON mg.gangguan_id = g.id
+      WHERE (mg.sn_mesin IS NOT NULL AND mg.sn_mesin != '' AND mg.sn_mesin NOT IN ('N/A', '-', 'Tersedia', 'Pengadaan', 'Tunda', 'Reject'))
+         OR (mg.status LIKE 'SN:%')
+      ORDER BY g.created_at ASC
+      LIMIT ? OFFSET ?
+    `).bind(limit, offset).all()
+    
+    console.log(`📊 Found ${lh05List.length} LH05 to process`)
+    
+    if (lh05List.length === 0) {
+      return c.json({
+        success: true,
+        message: 'No more LH05 to process',
+        hasMore: false,
+        offset,
+        limit
+      })
+    }
+    
+    let transactionCreated = 0
+    const createdBAs = []
+    
+    for (const lh05 of lh05List) {
+      try {
+        // Check if BA already exists for this LH05
+        const { results: existingTx } = await db.prepare(`
+          SELECT id FROM transactions WHERE from_lh05 = ? LIMIT 1
+        `).bind(lh05.nomor_lh05).all()
+        
+        if (existingTx.length > 0) {
+          console.log(`⏭️  Skip ${lh05.nomor_lh05} - BA already exists`)
+          continue
+        }
+        
+        // Get all materials for this LH05
+        const { results: materials } = await db.prepare(`
+          SELECT 
+            mg.id,
+            mg.part_number,
+            mg.material,
+            mg.mesin,
+            mg.jumlah,
+            mg.status,
+            mg.sn_mesin,
+            mg.unit_uld,
+            mg.lokasi_tujuan,
+            mg.gangguan_id,
+            g.nomor_lh05,
+            g.tanggal_laporan,
+            g.user_laporan,
+            g.lokasi_gangguan,
+            mg.jenis_barang
+          FROM material_gangguan mg
+          JOIN gangguan g ON mg.gangguan_id = g.id
+          WHERE g.nomor_lh05 = ?
+            AND ((mg.sn_mesin IS NOT NULL AND mg.sn_mesin != '' AND mg.sn_mesin NOT IN ('N/A', '-', 'Tersedia', 'Pengadaan', 'Tunda', 'Reject'))
+                 OR (mg.status LIKE 'SN:%'))
+        `).bind(lh05.nomor_lh05).all()
+        
+        if (materials.length === 0) continue
+        
+        const firstMat = materials[0]
+        const lokasiTujuan = firstMat.unit_uld || firstMat.lokasi_tujuan || firstMat.lokasi_gangguan || 'Lokasi Tidak Diketahui'
+        
+        // Generate BA number
+        const tanggalBA = firstMat.tanggal_laporan || lh05.tanggal_laporan || lh05.created_at
+        const baDate = new Date(tanggalBA)
+        const baYear = baDate.getFullYear()
+        const baMonth = String(baDate.getMonth() + 1).padStart(2, '0')
+        
+        // Get next BA number
+        const { results: existingBAs } = await db.prepare(`
+          SELECT nomor_ba FROM transactions 
+          WHERE nomor_ba LIKE ?
+          ORDER BY nomor_ba DESC LIMIT 1
+        `).bind(`%/BA/${baMonth}/${baYear}`).all()
+        
+        let baNumber = transactionCreated + 1
+        if (existingBAs.length > 0) {
+          const lastBA = existingBAs[0].nomor_ba
+          const match = lastBA.match(/^(\d+)\//)
+          if (match) {
+            baNumber = parseInt(match[1]) + 1
+          }
+        }
+        
+        const nomorBA = `${String(baNumber).padStart(4, '0')}/BA/${baMonth}/${baYear}`
+        
+        // Create transaction
+        const txResult = await db.prepare(`
+          INSERT INTO transactions (
+            nomor_ba, tanggal, jenis_transaksi,
+            lokasi_asal, lokasi_tujuan, pemeriksa, penerima,
+            from_lh05, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `).bind(
+          nomorBA,
+          tanggalBA,
+          'Keluar (Pengeluaran Gudang)',
+          'Gudang KAL 2',
+          lokasiTujuan,
+          firstMat.user_laporan || 'System',
+          'Operator Lokasi',
+          lh05.nomor_lh05
+        ).run()
+        
+        const txId = txResult.meta.last_row_id
+        
+        // Insert materials
+        for (const mat of materials) {
+          let snMesin = mat.sn_mesin
+          if (!snMesin || ['N/A', '-', 'Tersedia', 'Pengadaan'].includes(snMesin)) {
+            if (mat.status && mat.status.startsWith('SN:')) {
+              snMesin = mat.status.replace('SN:', '')
+            }
+          }
+          
+          if (!snMesin) continue
+          
+          await db.prepare(`
+            INSERT INTO materials (
+              transaction_id, part_number, jenis_barang,
+              material, mesin, sn_mesin, jumlah, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          `).bind(
+            txId,
+            mat.part_number,
+            mat.jenis_barang || 'Material',
+            mat.material,
+            mat.mesin,
+            snMesin,
+            mat.jumlah
+          ).run()
+        }
+        
+        transactionCreated++
+        createdBAs.push({
+          nomorBA,
+          fromLH05: lh05.nomor_lh05,
+          lokasiTujuan,
+          materialsCount: materials.length
+        })
+        
+        console.log(`✅ Created BA ${nomorBA} for ${lh05.nomor_lh05} (${materials.length} materials)`)
+        
+      } catch (error: any) {
+        console.error(`❌ Failed for ${lh05.nomor_lh05}:`, error.message)
+      }
+    }
+    
+    const hasMore = lh05List.length === limit
+    
+    return c.json({
+      success: true,
+      message: `Batch complete: ${transactionCreated} BA created`,
+      transactionCreated,
+      processed: lh05List.length,
+      hasMore,
+      nextOffset: offset + limit,
+      limit,
+      details: createdBAs
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Migration failed:', error)
+    return c.json({ 
+      success: false,
+      error: error.message,
+      stack: error.stack
+    }, 500)
+  }
+})
+
+// API: MIGRATE MATERIAL TO BA (LEGACY - Full batch)
+app.post('/api/migrate-material-to-ba-full', async (c) => {
+  try {
+    const { env } = c
+    const db = env.DB
+    
+    if (!db) {
+      return c.json({ error: 'Database not available' }, 500)
+    }
+    
+    // Get batch size from query param (default: 50)
+    const batchSize = parseInt(c.req.query('limit') || '50', 10)
+    
+    console.log(`🚀 Starting material to BA migration (batch size: ${batchSize})...`)
+    
+    // Step 1: Get materials with S/N from material_gangguan (LIMIT to avoid timeout)
+    const { results: materials } = await db.prepare(`
+      SELECT 
+        mg.id,
+        mg.part_number,
+        mg.material,
+        mg.mesin,
+        mg.jumlah,
+        mg.status,
+        mg.sn_mesin,
+        mg.unit_uld,
+        mg.lokasi_tujuan,
+        mg.gangguan_id,
+        g.nomor_lh05,
+        g.tanggal_laporan,
+        g.user_laporan,
+        g.lokasi_gangguan,
+        mg.jenis_barang,
+        mg.created_at
+      FROM material_gangguan mg
+      JOIN gangguan g ON mg.gangguan_id = g.id
+      WHERE (mg.sn_mesin IS NOT NULL AND mg.sn_mesin != '' AND mg.sn_mesin NOT IN ('N/A', '-', 'Tersedia', 'Pengadaan', 'Tunda', 'Reject'))
+         OR (mg.status LIKE 'SN:%')
+      ORDER BY mg.created_at ASC
+      LIMIT ?
+    `).bind(batchSize).all()
+    
+    console.log(`📊 Found ${materials.length} materials with S/N`)
+    
+    if (materials.length === 0) {
+      return c.json({
+        success: true,
+        message: 'No materials with S/N found',
+        baCreated: 0
+      })
+    }
+    
+    // Step 2: Group materials by LH05 + Lokasi Tujuan
+    const groupedMaterials = new Map<string, any[]>()
+    
+    materials.forEach((mat: any) => {
+      // Get S/N from sn_mesin or status
+      let snMesin = mat.sn_mesin
+      if (!snMesin || snMesin === 'N/A' || snMesin === '-') {
+        // Try to get from status field (for old data)
+        if (mat.status && mat.status.startsWith('SN:')) {
+          snMesin = mat.status.replace('SN:', '')
+        }
+      }
+      
+      if (!snMesin) return // Skip if no S/N
+      
+      const lokasiTujuan = mat.unit_uld || mat.lokasi_tujuan || mat.lokasi_gangguan || 'Lokasi Tidak Diketahui'
+      const key = `${mat.nomor_lh05}_${lokasiTujuan}`
+      
+      if (!groupedMaterials.has(key)) {
+        groupedMaterials.set(key, [])
+      }
+      
+      groupedMaterials.get(key)!.push({
+        ...mat,
+        snMesin
+      })
+    })
+    
+    console.log(`📦 Grouped into ${groupedMaterials.size} BA batches`)
+    
+    // Step 3: Create transactions for each group
+    let transactionCreated = 0
+    const createdBAs = []
+    
+    for (const [key, mats] of groupedMaterials.entries()) {
+      try {
+        const firstMat = mats[0]
+        const lokasiTujuan = firstMat.unit_uld || firstMat.lokasi_tujuan || firstMat.lokasi_gangguan || 'Lokasi Tidak Diketahui'
+        
+        // Generate BA number
+        const tanggalBA = firstMat.tanggal_laporan || firstMat.created_at
+        const baDate = new Date(tanggalBA)
+        const baYear = baDate.getFullYear()
+        const baMonth = String(baDate.getMonth() + 1).padStart(2, '0')
+        
+        // Get next BA number for this month
+        const { results: existingBAs } = await db.prepare(`
+          SELECT nomor_ba FROM transactions 
+          WHERE nomor_ba LIKE ?
+          ORDER BY nomor_ba DESC LIMIT 1
+        `).bind(`%/BA/${baMonth}/${baYear}`).all()
+        
+        let baNumber = 1
+        if (existingBAs.length > 0) {
+          const lastBA = existingBAs[0].nomor_ba
+          const match = lastBA.match(/^(\d+)\//)
+          if (match) {
+            baNumber = parseInt(match[1]) + 1
+          }
+        }
+        
+        const nomorBA = `${String(baNumber).padStart(4, '0')}/BA/${baMonth}/${baYear}`
+        
+        // Create transaction (for Mutasi & Umur)
+        const txResult = await db.prepare(`
+          INSERT INTO transactions (
+            nomor_ba,
+            tanggal,
+            jenis_transaksi,
+            lokasi_asal,
+            lokasi_tujuan,
+            pemeriksa,
+            penerima,
+            from_lh05,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `).bind(
+          nomorBA,
+          tanggalBA,
+          'Keluar (Pengeluaran Gudang)',
+          'Gudang KAL 2',
+          lokasiTujuan,
+          firstMat.user_laporan || 'System',
+          'Operator Lokasi',
+          firstMat.nomor_lh05
+        ).run()
+        
+        const txId = txResult.meta.last_row_id
+        console.log(`✅ Created transaction ${nomorBA} (ID: ${txId})`)
+        
+        // Insert materials for transaction
+        let materialsInserted = 0
+        for (const mat of mats) {
+          await db.prepare(`
+            INSERT INTO materials (
+              transaction_id,
+              part_number,
+              jenis_barang,
+              material,
+              mesin,
+              sn_mesin,
+              jumlah,
+              created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          `).bind(
+            txId,
+            mat.part_number,
+            mat.jenis_barang || 'Material',
+            mat.material,
+            mat.mesin,
+            mat.snMesin,
+            mat.jumlah
+          ).run()
+          
+          materialsInserted++
+        }
+        
+        console.log(`📦 Inserted ${materialsInserted} materials for TX ${nomorBA}`)
+        
+        transactionCreated++
+        
+        createdBAs.push({
+          nomorBA,
+          fromLH05: firstMat.nomor_lh05,
+          lokasiTujuan,
+          materialsCount: mats.length,
+          tanggal: tanggalBA
+        })
+        
+      } catch (baError: any) {
+        console.error(`❌ Failed to create BA for ${key}:`, baError.message)
+      }
+    }
+    
+    console.log(`✅ Migration complete: ${transactionCreated} transactions created`)
+    
+    return c.json({
+      success: true,
+      message: `Successfully migrated ${materials.length} materials into ${transactionCreated} Berita Acara`,
+      materialsFound: materials.length,
+      baCreated: transactionCreated,
+      transactionCreated,
+      details: createdBAs
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Migration failed:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Migration failed',
+      stack: error.stack
+    }, 500)
+  }
+})
+
 export default app
 
 function getDashboardListRABHTML() {
