@@ -8751,6 +8751,91 @@ app.post('/api/reset-filter-racor-feb17-19', async (c) => {
   }
 })
 
+// CANCEL ALL OUTGOING TRANSACTIONS FOR FILTER AND RACOR (OPTIMIZED)
+app.post('/api/cancel-filter-racor-transactions', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔄 Starting to cancel FILTER/RACOR outgoing transactions (OPTIMIZED)...')
+    
+    // Step 1: Find transaction IDs that have FILTER/RACOR materials (Keluar only)
+    const filterRacorTxQuery = await env.DB.prepare(`
+      SELECT DISTINCT t.id, t.nomor_ba, t.jenis_transaksi
+      FROM transactions t
+      JOIN materials m ON m.transaction_id = t.id
+      WHERE (
+        UPPER(m.material) LIKE '%FILTER%' 
+        OR UPPER(m.material) LIKE '%RACOR%'
+        OR UPPER(m.jenis_barang) LIKE '%FILTER%'
+      )
+      AND (
+        t.jenis_transaksi LIKE '%Keluar%'
+        OR t.jenis_transaksi LIKE '%Pengeluaran%'
+      )
+    `).all()
+    
+    const txIds = filterRacorTxQuery.results.map((tx: any) => tx.id)
+    console.log(`📦 Found ${txIds.length} FILTER/RACOR outgoing transactions`)
+    
+    if (txIds.length === 0) {
+      return c.json({
+        success: true,
+        message: 'No FILTER/RACOR outgoing transactions found',
+        deletedTransactions: 0,
+        deletedMaterials: 0,
+        resetMaterials: 0
+      })
+    }
+    
+    // Step 2: Delete materials for these transactions
+    const deleteMaterialsResult = await env.DB.prepare(`
+      DELETE FROM materials 
+      WHERE transaction_id IN (${txIds.join(',')})
+    `).run()
+    
+    const deletedMaterials = deleteMaterialsResult.meta.changes || 0
+    console.log(`🗑️ Deleted ${deletedMaterials} materials`)
+    
+    // Step 3: Delete transactions
+    const deleteTransactionsResult = await env.DB.prepare(`
+      DELETE FROM transactions 
+      WHERE id IN (${txIds.join(',')})
+    `).run()
+    
+    const deletedTransactions = deleteTransactionsResult.meta.changes || 0
+    console.log(`🗑️ Deleted ${deletedTransactions} transactions`)
+    
+    // Step 4: Reset all FILTER/RACOR materials to N/A
+    const resetResult = await env.DB.prepare(`
+      UPDATE material_gangguan
+      SET status = 'N/A', sn_mesin = NULL
+      WHERE UPPER(material) LIKE '%FILTER%' 
+         OR UPPER(material) LIKE '%RACOR%'
+    `).run()
+    
+    const resetCount = resetResult.meta.changes || 0
+    console.log(`🔄 Reset ${resetCount} FILTER/RACOR materials to N/A`)
+    
+    console.log('✅ Operation complete!')
+    
+    return c.json({
+      success: true,
+      message: `Canceled ${deletedTransactions} FILTER/RACOR outgoing transactions and reset ${resetCount} materials to N/A`,
+      deletedTransactions,
+      deletedMaterials,
+      resetMaterials: resetCount,
+      transactionIds: txIds.slice(0, 20) // Return first 20 IDs
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Cancel failed:', error)
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500)
+  }
+})
+
 export default app
 
 function getDashboardListRABHTML() {
