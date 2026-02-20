@@ -8836,6 +8836,113 @@ app.post('/api/cancel-filter-racor-transactions', async (c) => {
   }
 })
 
+// Create outgoing transactions based on Umur data (non-FILTER only)
+app.post('/api/create-transactions-from-umur', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🚀 Starting transaction sync from Umur data...')
+    
+    // Get all existing outgoing transactions with non-FILTER materials
+    const umurData = await env.DB.prepare(`
+      SELECT 
+        t.id as transaction_id,
+        t.nomor_ba,
+        t.tanggal,
+        t.from_lh05,
+        m.part_number,
+        m.jenis_barang,
+        m.material,
+        m.mesin,
+        m.sn_mesin,
+        m.jumlah
+      FROM transactions t
+      JOIN materials m ON t.id = m.transaction_id
+      WHERE t.jenis_transaksi = 'Keluar (Pengeluaran Gudang)'
+        AND m.jenis_barang != 'FILTER'
+        AND m.sn_mesin IS NOT NULL
+        AND m.sn_mesin != ''
+    `).all()
+    
+    console.log(`📊 Found ${umurData.results.length} non-FILTER materials in existing transactions`)
+    
+    let updatedCount = 0
+    const processedDetails: any[] = []
+    
+    // Process each material from transactions
+    for (const item of umurData.results as any[]) {
+      if (!item.from_lh05 || !item.part_number) {
+        console.log(`⚠️ Skipping item with missing from_lh05 or part_number`)
+        continue
+      }
+      
+      // Find material in material_gangguan by LH05 and part number
+      const dbMaterial = await env.DB.prepare(`
+        SELECT mg.*, g.nomor_lh05
+        FROM material_gangguan mg
+        JOIN gangguan g ON mg.gangguan_id = g.id
+        WHERE g.nomor_lh05 = ?
+          AND mg.part_number = ?
+        LIMIT 1
+      `).bind(item.from_lh05, item.part_number).first()
+      
+      if (!dbMaterial) {
+        console.log(`⚠️ Material not found in Kebutuhan for LH05 ${item.from_lh05}, part ${item.part_number}`)
+        continue
+      }
+      
+      // Extract S/N (remove "SN:" prefix if exists)
+      let snMesin = item.sn_mesin || ''
+      if (snMesin.startsWith('SN:')) {
+        snMesin = snMesin.substring(3).trim()
+      }
+      
+      // Update material status to Terkirim and set S/N
+      await env.DB.prepare(`
+        UPDATE material_gangguan
+        SET status = 'Terkirim', sn_mesin = ?
+        WHERE id = ?
+      `).bind(snMesin, dbMaterial.id).run()
+      
+      updatedCount++
+      
+      processedDetails.push({
+        id: dbMaterial.id,
+        nomor_lh05: item.from_lh05,
+        nomor_ba: item.nomor_ba,
+        part_number: item.part_number,
+        material: item.material,
+        sn_mesin: snMesin,
+        jenis_barang: item.jenis_barang,
+        old_status: dbMaterial.status,
+        new_status: 'Terkirim'
+      })
+      
+      if (updatedCount % 10 === 0) {
+        console.log(`⏳ Processed ${updatedCount} materials...`)
+      }
+    }
+    
+    console.log(`✅ Transaction sync complete`)
+    console.log(`   - Updated materials: ${updatedCount}`)
+    
+    return c.json({
+      success: true,
+      message: `Synced ${updatedCount} non-FILTER materials from Umur data to Kebutuhan (status: Terkirim)`,
+      updatedCount,
+      totalUmurRecords: umurData.results.length,
+      details: processedDetails.slice(0, 20)
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Transaction sync failed:', error)
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500)
+  }
+})
+
 export default app
 
 function getDashboardListRABHTML() {
