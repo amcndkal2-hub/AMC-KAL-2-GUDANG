@@ -5199,7 +5199,7 @@ function getDashboardMutasiHTML() {
         </div>
 
         <script src="/auth-check.js?v=1770101032"></script>
-        <script src="/dashboard-mutasi-63f7bc43.js?v=1770101032"></script>
+        <script src="/static/dashboard-mutasi-63f7bc43.js?v=1770101032"></script>
     </body>
     </html>
   `
