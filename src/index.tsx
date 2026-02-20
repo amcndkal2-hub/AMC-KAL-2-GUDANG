@@ -8659,6 +8659,98 @@ app.get('/api/debug/count/:table', async (c) => {
   }
 })
 
+// Reset Filter/Racor dari Feb 17-19 yang belum terkirim
+app.post('/api/reset-filter-racor-feb17-19', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔄 Starting reset Filter/Racor Feb 17-19...')
+    
+    // Find all Filter/Racor from Feb 17-19 with JOIN to gangguan table
+    const materials = await env.DB.prepare(`
+      SELECT 
+        mg.id, 
+        g.nomor_lh05, 
+        mg.part_number, 
+        mg.material, 
+        mg.status, 
+        mg.sn_mesin, 
+        mg.created_at
+      FROM material_gangguan mg
+      JOIN gangguan g ON mg.gangguan_id = g.id
+      WHERE (
+        UPPER(mg.material) LIKE '%FILTER%' 
+        OR UPPER(mg.material) LIKE '%RACOR%'
+      )
+      AND (
+        DATE(mg.created_at) = '2026-02-17'
+        OR DATE(mg.created_at) = '2026-02-18'
+        OR DATE(mg.created_at) = '2026-02-19'
+      )
+    `).all()
+    
+    console.log(`📊 Found ${materials.results.length} Filter/Racor materials from Feb 17-19`)
+    
+    // Get all transactions to check isTerkirim
+    const allTransactions = await env.DB.prepare(`
+      SELECT nomor_ba, from_lh05, jenis_transaksi
+      FROM transactions
+    `).all()
+    
+    let resetCount = 0
+    const resetDetails: any[] = []
+    
+    for (const mat of materials.results as any[]) {
+      // Check if this material was sent
+      const isTerkirim = allTransactions.results.some((tx: any) => 
+        tx.jenis_transaksi && 
+        tx.jenis_transaksi.includes('Keluar') &&
+        tx.from_lh05 === mat.nomor_lh05
+      )
+      
+      if (!isTerkirim) {
+        // Reset to N/A and clear S/N
+        await env.DB.prepare(`
+          UPDATE material_gangguan
+          SET status = 'N/A', sn_mesin = NULL
+          WHERE id = ?
+        `).bind(mat.id).run()
+        
+        resetCount++
+        resetDetails.push({
+          id: mat.id,
+          nomor_lh05: mat.nomor_lh05,
+          part_number: mat.part_number,
+          material: mat.material,
+          old_status: mat.status,
+          old_sn: mat.sn_mesin,
+          new_status: 'N/A',
+          new_sn: null
+        })
+        
+        console.log(`✅ Reset ID ${mat.id}: ${mat.material} (${mat.nomor_lh05})`)
+      }
+    }
+    
+    console.log(`✅ Reset complete: ${resetCount} materials updated`)
+    
+    return c.json({
+      success: true,
+      message: `Reset ${resetCount} Filter/Racor materials to N/A`,
+      resetCount,
+      totalFound: materials.results.length,
+      details: resetDetails.slice(0, 10) // Return first 10 for verification
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Reset failed:', error)
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500)
+  }
+})
+
 export default app
 
 function getDashboardListRABHTML() {
