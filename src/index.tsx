@@ -1834,6 +1834,145 @@ app.post('/api/apply-migration', async (c) => {
   }
 })
 
+// API: Restore corrupted S/N Mesin from BA history
+app.post('/api/restore-sn-mesin', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔧 Starting S/N Mesin restoration from BA history...')
+    
+    let corruptedMaterials: any
+    let usedSnMesinColumn = false
+    
+    // Try with sn_mesin column first (new schema)
+    try {
+      corruptedMaterials = await env.DB.prepare(`
+        SELECT 
+          mg.id,
+          mg.part_number,
+          mg.material,
+          mg.sn_mesin,
+          mg.gangguan_id,
+          g.nomor_lh05
+        FROM material_gangguan mg
+        JOIN gangguan g ON mg.gangguan_id = g.id
+        WHERE mg.sn_mesin IN ('Tersedia', 'Pengadaan', 'N/A', 'Tunda', 'Reject', 'Habis', 'Hampir Habis')
+        ORDER BY mg.created_at DESC
+      `).all()
+      usedSnMesinColumn = true
+    } catch (schemaError) {
+      // Fallback to status column (old schema)
+      console.log('⚠️ sn_mesin column not found, using status column')
+      corruptedMaterials = await env.DB.prepare(`
+        SELECT 
+          mg.id,
+          mg.part_number,
+          mg.material,
+          mg.status as sn_mesin,
+          mg.gangguan_id,
+          g.nomor_lh05
+        FROM material_gangguan mg
+        JOIN gangguan g ON mg.gangguan_id = g.id
+        WHERE mg.status LIKE 'SN:%'
+        ORDER BY mg.created_at DESC
+      `).all()
+    }
+    
+    const materials = corruptedMaterials.results || []
+    console.log(`📊 Found ${materials.length} materials with corrupted S/N Mesin`)
+    
+    if (materials.length === 0) {
+      return c.json({
+        success: true,
+        message: 'No corrupted S/N Mesin found',
+        checked: 0,
+        fixed: 0,
+        schemaUsed: usedSnMesinColumn ? 'sn_mesin' : 'status'
+      })
+    }
+    
+    let fixedCount = 0
+    let notFoundCount = 0
+    
+    // For each corrupted material, try to find the correct S/N from BA history
+    for (const mat of materials) {
+      try {
+        // Find BA (transaction) that came from this LH05 and has this part_number
+        let ba: any
+        try {
+          ba = await env.DB.prepare(`
+            SELECT t.id, t.nomor_ba, m.sn_mesin, m.status
+            FROM transactions t
+            JOIN materials m ON t.id = m.transaction_id
+            WHERE t.from_lh05 = ? 
+            AND m.part_number = ?
+            AND m.sn_mesin IS NOT NULL
+            AND m.sn_mesin != ''
+            AND m.sn_mesin NOT IN ('Tersedia', 'Pengadaan', 'N/A', 'Tunda', 'Reject', 'Habis', 'Hampir Habis')
+            ORDER BY t.created_at DESC
+            LIMIT 1
+          `).bind(mat.nomor_lh05, mat.part_number).first()
+        } catch (baSchemaError) {
+          // Fallback: materials table doesn't have sn_mesin, use status
+          ba = await env.DB.prepare(`
+            SELECT t.id, t.nomor_ba, m.status as sn_mesin
+            FROM transactions t
+            JOIN materials m ON t.id = m.transaction_id
+            WHERE t.from_lh05 = ? 
+            AND m.part_number = ?
+            AND m.status IS NOT NULL
+            AND m.status != ''
+            AND m.status NOT IN ('Tersedia', 'Pengadaan', 'N/A', 'Tunda', 'Reject', 'Habis', 'Hampir Habis')
+            ORDER BY t.created_at DESC
+            LIMIT 1
+          `).bind(mat.nomor_lh05, mat.part_number).first()
+        }
+        
+        if (ba && ba.sn_mesin) {
+          // Restore correct S/N
+          if (usedSnMesinColumn) {
+            await env.DB.prepare(`
+              UPDATE material_gangguan
+              SET sn_mesin = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(ba.sn_mesin, mat.id).run()
+          } else {
+            // Update status column with SN: prefix
+            await env.DB.prepare(`
+              UPDATE material_gangguan
+              SET status = ?, updated_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+            `).bind(`SN:${ba.sn_mesin}`, mat.id).run()
+          }
+          
+          console.log(`✅ Fixed material ${mat.id}: ${mat.sn_mesin} → ${ba.sn_mesin}`)
+          fixedCount++
+        } else {
+          console.log(`⚠️ No BA found for LH05 ${mat.nomor_lh05}, part ${mat.part_number}`)
+          notFoundCount++
+        }
+      } catch (error: any) {
+        console.error(`❌ Error fixing material ${mat.id}:`, error.message)
+      }
+    }
+    
+    return c.json({
+      success: true,
+      message: `Successfully restored ${fixedCount} S/N Mesin values`,
+      checked: materials.length,
+      fixed: fixedCount,
+      notFound: notFoundCount,
+      schemaUsed: usedSnMesinColumn ? 'sn_mesin' : 'status'
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to restore S/N Mesin:', error)
+    return c.json({
+      success: false,
+      error: error.message || 'Failed to restore S/N Mesin'
+    }, 500)
+  }
+})
+
 // API: Bulk fix JENIS_BARANG for materials with wrong category
 app.post('/api/fix-jenis-barang', async (c) => {
   try {
