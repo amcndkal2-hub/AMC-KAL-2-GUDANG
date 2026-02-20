@@ -172,6 +172,66 @@ export async function saveTransaction(db: D1Database, data: any) {
 
 export async function getAllTransactions(db: D1Database) {
   try {
+    console.log('🔍 Getting all transactions with json_group_array...')
+    
+    const { results } = await db.prepare(`
+      SELECT 
+        t.id, t.nomor_ba, t.tanggal, t.jenis_transaksi,
+        t.lokasi_asal, t.lokasi_tujuan, t.pemeriksa, t.penerima,
+        t.from_lh05, t.created_at,
+        json_group_array(
+          json_object(
+            'partNumber', m.part_number,
+            'jenisBarang', m.jenis_barang,
+            'material', m.material,
+            'mesin', m.mesin,
+            'snMesin', m.sn_mesin,
+            'sn_mesin', m.sn_mesin,
+            'jumlah', m.jumlah
+          )
+        ) as materials
+      FROM transactions t
+      LEFT JOIN materials m ON t.id = m.transaction_id
+      GROUP BY t.id
+      ORDER BY t.created_at DESC
+    `).all()
+
+    console.log(`✅ Found ${results.length} transactions`)
+    
+    const processed = results.map((tx: any) => {
+      let materials = []
+      try {
+        materials = JSON.parse(tx.materials || '[]')
+        materials = materials.filter((m: any) => m.partNumber !== null)
+      } catch (parseError) {
+        console.error('Failed to parse materials:', parseError)
+        materials = []
+      }
+      
+      return {
+        ...tx,
+        jenisTransaksi: tx.jenis_transaksi,
+        nomorBA: tx.nomor_ba,
+        fromLH05: tx.from_lh05,
+        lokasiAsal: tx.lokasi_asal,
+        lokasiTujuan: tx.lokasi_tujuan,
+        materials
+      }
+    })
+    
+    console.log(`✅ Returning ${processed.length} transactions`)
+    return processed
+    
+  } catch (error: any) {
+    console.error('❌ getAllTransactions FAILED:', error.message)
+    // Return empty array instead of throwing
+    return []
+  }
+}
+
+// OLD CODE REMOVED - Keeping only simple working version
+export async function getAllTransactionsOLD(db: D1Database) {
+  try {
     // Level 1: Try with jenis_pengeluaran + status columns (latest schema)
     try {
       console.log('🔍 Trying Level 1: WITH jenis_pengeluaran + status')
