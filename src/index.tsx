@@ -1658,7 +1658,10 @@ app.put('/api/update-material-gangguan', async (c) => {
     }
     
     const { env } = c
-    const { material_id, nomor_lh05, sn_mesin, jumlah } = await c.req.json()
+    const body = await c.req.json()
+    const { material_id, nomor_lh05, sn_mesin, jumlah } = body
+    
+    console.log('📝 Update request body:', JSON.stringify(body))
     
     if (!material_id || !nomor_lh05) {
       return c.json({
@@ -1668,32 +1671,72 @@ app.put('/api/update-material-gangguan', async (c) => {
     }
     
     console.log('📝 Updating material:', material_id, 'in LH05:', nomor_lh05)
+    console.log('   New S/N Mesin:', sn_mesin)
+    console.log('   New Jumlah:', jumlah)
     
-    // Update material_gangguan in D1
-    const updateQuery = `
-      UPDATE material_gangguan 
-      SET sn_mesin = ?, jumlah = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `
+    // Validate jumlah is a number
+    const jumlahNum = parseInt(jumlah)
+    if (isNaN(jumlahNum) || jumlahNum <= 0) {
+      return c.json({
+        success: false,
+        error: 'Jumlah must be a positive number'
+      }, 400)
+    }
     
-    await env.DB.prepare(updateQuery)
-      .bind(sn_mesin || null, jumlah, material_id)
-      .run()
+    // Try update with sn_mesin column first
+    try {
+      const updateQuery = `
+        UPDATE material_gangguan 
+        SET sn_mesin = ?, jumlah = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `
+      
+      const result = await env.DB.prepare(updateQuery)
+        .bind(sn_mesin || null, jumlahNum, material_id)
+        .run()
+      
+      console.log('✅ Material updated successfully:', result)
+      
+      return c.json({ 
+        success: true, 
+        message: 'Material updated successfully',
+        material_id,
+        sn_mesin,
+        jumlah: jumlahNum
+      })
+      
+    } catch (schemaError: any) {
+      // Fallback: If sn_mesin column doesn't exist, update only jumlah
+      console.log('⚠️ sn_mesin column not found, updating jumlah only')
+      
+      const fallbackQuery = `
+        UPDATE material_gangguan 
+        SET jumlah = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `
+      
+      const result = await env.DB.prepare(fallbackQuery)
+        .bind(jumlahNum, material_id)
+        .run()
+      
+      console.log('✅ Material updated (fallback):', result)
+      
+      return c.json({ 
+        success: true, 
+        message: 'Material updated successfully (jumlah only)',
+        material_id,
+        jumlah: jumlahNum,
+        warning: 'sn_mesin column not available in database'
+      })
+    }
     
-    console.log('✅ Material updated successfully')
-    
-    return c.json({ 
-      success: true, 
-      message: 'Material updated successfully',
-      material_id,
-      sn_mesin,
-      jumlah
-    })
   } catch (error: any) {
     console.error('❌ Failed to update material:', error)
+    console.error('❌ Error stack:', error.stack)
     return c.json({ 
       success: false, 
-      error: error.message || 'Failed to update material' 
+      error: error.message || 'Failed to update material',
+      details: error.stack
     }, 500)
   }
 })
