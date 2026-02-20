@@ -2718,18 +2718,14 @@ app.get('/api/kebutuhan-material', async (c) => {
         finalStatus = 'N/A' // Reset status to default when S/N is found in status field
       }
       
-      // Auto-update status logic (CORRECT - Feb 19 logic)
       if (isTerkirim) {
-        // Priority 1: Material sudah dikirim (ada BA)
+        // Priority 1: If already sent (Terkirim), keep it
         finalStatus = 'Terkirim'
-      } else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
-        // Priority 2: Material ada S/N tapi belum ada BA = Tersedia (ada di gudang)
-        finalStatus = 'Tersedia'
       } else if (stok > 0 && (finalStatus === 'N/A' || !finalStatus)) {
-        // Priority 3: Material ada stok tapi tidak ada S/N = Tersedia
+        // Priority 2: If stock available and status is N/A, change to Tersedia
         finalStatus = 'Tersedia'
       } else if (stok === 0 && finalStatus === 'Tersedia') {
-        // Priority 4: Stok habis, kembali ke N/A
+        // Priority 3: If stock became 0 but status was Tersedia, revert to N/A
         finalStatus = 'N/A'
       }
       
