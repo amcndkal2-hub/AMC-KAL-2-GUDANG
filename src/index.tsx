@@ -2708,26 +2708,34 @@ app.get('/api/kebutuhan-material', async (c) => {
       
       const stok = stokMasuk - stokKeluar
       
-      // Get original status from database
+      // Auto-update status based on stock and shipment (konsep 19 Februari)
       let finalStatus = mat.status || 'N/A'
       let snMesin = mat.sn_mesin || null
       
       // Parse S/N Mesin from status field if in format "SN:serial_number" (old schema)
       if (!snMesin && mat.status && typeof mat.status === 'string' && mat.status.startsWith('SN:')) {
         snMesin = mat.status.substring(3) // Extract S/N after "SN:"
-        // Don't change status - keep original value from database
+        finalStatus = 'N/A' // Reset status to default when S/N is found in status field
       }
       
-      // IMPORTANT: Do NOT auto-change status!
-      // Status should remain as set by user (N/A, Pengadaan, Tersedia, Tunda, Reject)
-      // isTerkirim is just a flag for UI, not a status replacement
+      // Auto-update status logic (sama seperti 19 Februari)
+      if (isTerkirim) {
+        // Priority 1: If already sent (Terkirim), mark as Terkirim
+        finalStatus = 'Terkirim'
+      } else if (stok > 0 && (finalStatus === 'N/A' || !finalStatus)) {
+        // Priority 2: If stock available and status is N/A, change to Tersedia
+        finalStatus = 'Tersedia'
+      } else if (stok === 0 && finalStatus === 'Tersedia') {
+        // Priority 3: If stock became 0 but status was Tersedia, revert to N/A
+        finalStatus = 'N/A'
+      }
       
       return {
         ...mat,
         sn_mesin: snMesin,
         stok: stok,
-        status: finalStatus, // Keep original status from database
-        isTerkirim: isTerkirim // Separate flag for "sent" indicator
+        status: finalStatus, // Status with auto-update logic
+        isTerkirim: isTerkirim
       }
     }))
     
