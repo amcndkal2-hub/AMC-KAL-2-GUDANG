@@ -7881,6 +7881,139 @@ app.post('/api/migrate-sn-mesin', async (c) => {
   }
 })
 
+// API: SIMPLE MIGRATE - Create 1 transaction per material with S/N
+app.post('/api/simple-migrate-ba', async (c) => {
+  try {
+    const { env } = c
+    const db = env.DB
+    const body = await c.req.json().catch(() => ({}))
+    const limit = body.limit || 20
+    
+    if (!db) {
+      return c.json({ error: 'Database not available' }, 500)
+    }
+    
+    console.log('🚀 Simple migration starting...')
+    
+    // Get materials with S/N from sn_mesin column
+    const { results: materials } = await db.prepare(`
+      SELECT 
+        mg.id, mg.part_number, mg.material, mg.mesin, mg.jumlah,
+        mg.status, mg.sn_mesin, mg.unit_uld, mg.lokasi_tujuan, mg.jenis_barang,
+        g.nomor_lh05, g.tanggal_laporan, g.user_laporan, g.lokasi_gangguan
+      FROM material_gangguan mg
+      JOIN gangguan g ON mg.gangguan_id = g.id
+      WHERE mg.sn_mesin IS NOT NULL 
+        AND mg.sn_mesin != ''
+        AND mg.sn_mesin != 'N/A'
+        AND mg.sn_mesin != '-'
+        AND mg.sn_mesin NOT LIKE '%Tersedia%'
+        AND mg.sn_mesin NOT LIKE '%Pengadaan%'
+      ORDER BY mg.created_at ASC
+      LIMIT ?
+    `).bind(limit).all()
+    
+    console.log(`📊 Found ${materials.length} materials to migrate`)
+    
+    if (materials.length === 0) {
+      return c.json({
+        success: true,
+        message: 'No materials to migrate (all done or no S/N found)',
+        created: 0
+      })
+    }
+    
+    // Group by LH05
+    const lh05Groups = new Map<string, any[]>()
+    materials.forEach((mat: any) => {
+      if (!lh05Groups.has(mat.nomor_lh05)) {
+        lh05Groups.set(mat.nomor_lh05, [])
+      }
+      lh05Groups.get(mat.nomor_lh05)!.push(mat)
+    })
+    
+    let txCreated = 0
+    const details = []
+    
+    for (const [lh05, mats] of lh05Groups.entries()) {
+      const firstMat = mats[0]
+      const tanggal = firstMat.tanggal_laporan
+      const lokasi = firstMat.unit_uld || firstMat.lokasi_tujuan || firstMat.lokasi_gangguan || 'Unknown'
+      
+      const date = new Date(tanggal)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      
+      // Simple BA number
+      const baNum = String(txCreated + 1).padStart(4, '0')
+      const nomorBA = `${baNum}/BA/${month}/${year}`
+      
+      try {
+        // Insert transaction
+        const txRes = await db.prepare(`
+          INSERT INTO transactions (
+            nomor_ba, tanggal, jenis_transaksi,
+            lokasi_asal, lokasi_tujuan,
+            pemeriksa, penerima, from_lh05,
+            created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `).bind(
+          nomorBA,
+          tanggal,
+          'Keluar (Pengeluaran Gudang)',
+          'Gudang KAL 2',
+          lokasi,
+          firstMat.user_laporan || 'System',
+          'Operator',
+          lh05
+        ).run()
+        
+        const txId = txRes.meta.last_row_id
+        
+        // Insert materials
+        for (const mat of mats) {
+          const snMesin = mat.sn_mesin
+          
+          if (!snMesin || snMesin === 'N/A' || snMesin === '-') continue
+          
+          await db.prepare(`
+            INSERT INTO materials (
+              transaction_id, part_number, jenis_barang,
+              material, mesin, sn_mesin, jumlah, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          `).bind(
+            txId,
+            mat.part_number,
+            mat.jenis_barang || 'Material',
+            mat.material,
+            mat.mesin,
+            snMesin,
+            mat.jumlah
+          ).run()
+        }
+        
+        txCreated++
+        details.push({ nomorBA, lh05, materials: mats.length })
+        console.log(`✅ Created ${nomorBA} for ${lh05}`)
+        
+      } catch (err: any) {
+        console.error(`❌ Failed ${lh05}:`, err.message)
+      }
+    }
+    
+    return c.json({
+      success: true,
+      message: `Created ${txCreated} transactions`,
+      created: txCreated,
+      details
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Migration error:', error)
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
 // API: MIGRATE MATERIAL TO BA (Auto-create BA for materials with S/N) - BATCH MODE
 app.post('/api/migrate-material-to-ba', async (c) => {
   try {
@@ -7901,8 +8034,9 @@ app.post('/api/migrate-material-to-ba', async (c) => {
       SELECT DISTINCT g.nomor_lh05, g.tanggal_laporan, g.created_at
       FROM material_gangguan mg
       JOIN gangguan g ON mg.gangguan_id = g.id
-      WHERE (mg.sn_mesin IS NOT NULL AND mg.sn_mesin != '' AND mg.sn_mesin NOT IN ('N/A', '-', 'Tersedia', 'Pengadaan', 'Tunda', 'Reject'))
-         OR (mg.status LIKE 'SN:%')
+      WHERE mg.sn_mesin IS NOT NULL 
+        AND mg.sn_mesin != '' 
+        AND mg.sn_mesin NOT IN ('N/A', '-', 'Tersedia', 'Pengadaan', 'Tunda', 'Reject', 'Draft')
       ORDER BY g.created_at ASC
       LIMIT ? OFFSET ?
     `).bind(limit, offset).all()
@@ -7937,26 +8071,16 @@ app.post('/api/migrate-material-to-ba', async (c) => {
         // Get all materials for this LH05
         const { results: materials } = await db.prepare(`
           SELECT 
-            mg.id,
-            mg.part_number,
-            mg.material,
-            mg.mesin,
-            mg.jumlah,
-            mg.status,
-            mg.sn_mesin,
-            mg.unit_uld,
-            mg.lokasi_tujuan,
-            mg.gangguan_id,
-            g.nomor_lh05,
-            g.tanggal_laporan,
-            g.user_laporan,
-            g.lokasi_gangguan,
-            mg.jenis_barang
+            mg.id, mg.part_number, mg.material, mg.mesin, mg.jumlah,
+            mg.status, mg.sn_mesin, mg.unit_uld, mg.lokasi_tujuan,
+            mg.gangguan_id, g.nomor_lh05, g.tanggal_laporan,
+            g.user_laporan, g.lokasi_gangguan, mg.jenis_barang
           FROM material_gangguan mg
           JOIN gangguan g ON mg.gangguan_id = g.id
           WHERE g.nomor_lh05 = ?
-            AND ((mg.sn_mesin IS NOT NULL AND mg.sn_mesin != '' AND mg.sn_mesin NOT IN ('N/A', '-', 'Tersedia', 'Pengadaan', 'Tunda', 'Reject'))
-                 OR (mg.status LIKE 'SN:%'))
+            AND mg.sn_mesin IS NOT NULL
+            AND mg.sn_mesin != ''
+            AND mg.sn_mesin NOT IN ('N/A', '-', 'Tersedia', 'Pengadaan', 'Tunda', 'Reject', 'Draft')
         `).bind(lh05.nomor_lh05).all()
         
         if (materials.length === 0) continue
@@ -8010,12 +8134,7 @@ app.post('/api/migrate-material-to-ba', async (c) => {
         
         // Insert materials
         for (const mat of materials) {
-          let snMesin = mat.sn_mesin
-          if (!snMesin || ['N/A', '-', 'Tersedia', 'Pengadaan'].includes(snMesin)) {
-            if (mat.status && mat.status.startsWith('SN:')) {
-              snMesin = mat.status.replace('SN:', '')
-            }
-          }
+          const snMesin = mat.sn_mesin
           
           if (!snMesin) continue
           
@@ -8278,6 +8397,48 @@ app.post('/api/migrate-material-to-ba-full', async (c) => {
       error: error.message || 'Migration failed',
       stack: error.stack
     }, 500)
+  }
+})
+
+// API: Check database schema (for debugging)
+app.get('/api/debug/schema/:table', async (c) => {
+  try {
+    const { env } = c
+    const tableName = c.req.param('table')
+    
+    const { results } = await env.DB.prepare(`
+      PRAGMA table_info(${tableName})
+    `).all()
+    
+    return c.json({
+      table: tableName,
+      columns: results.map((col: any) => ({
+        name: col.name,
+        type: col.type,
+        nullable: col.notnull === 0
+      }))
+    })
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
+  }
+})
+
+// API: Count rows in table (for debugging)
+app.get('/api/debug/count/:table', async (c) => {
+  try {
+    const { env } = c
+    const tableName = c.req.param('table')
+    
+    const { results } = await env.DB.prepare(`
+      SELECT COUNT(*) as count FROM ${tableName}
+    `).all()
+    
+    return c.json({
+      table: tableName,
+      count: results[0]?.count || 0
+    })
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500)
   }
 })
 
