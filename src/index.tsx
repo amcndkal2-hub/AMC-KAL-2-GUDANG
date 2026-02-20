@@ -1834,6 +1834,95 @@ app.post('/api/apply-migration', async (c) => {
   }
 })
 
+// API: Apply Migration for sn_mesin column
+app.post('/api/apply-migration-sn-mesin', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔧 Applying migration: Add sn_mesin column to material_gangguan...')
+    
+    // Check if column exists
+    const checkResult = await env.DB.prepare(`
+      PRAGMA table_info(material_gangguan)
+    `).all()
+    
+    const hasSnMesin = checkResult.results?.some((col: any) => col.name === 'sn_mesin')
+    
+    if (hasSnMesin) {
+      return c.json({
+        success: true,
+        message: 'Column sn_mesin already exists',
+        alreadyApplied: true
+      })
+    }
+    
+    // Add sn_mesin column
+    await env.DB.prepare(`
+      ALTER TABLE material_gangguan ADD COLUMN sn_mesin TEXT
+    `).run()
+    
+    console.log('✅ sn_mesin column added')
+    
+    // Create index for faster queries
+    await env.DB.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_material_gangguan_sn_mesin 
+      ON material_gangguan(sn_mesin)
+    `).run()
+    
+    console.log('✅ Index created for sn_mesin')
+    
+    // Now migrate existing data from 'status' column to 'sn_mesin' column
+    // Find all materials with numeric-looking status (likely serial numbers)
+    console.log('🔄 Migrating existing S/N data from status column...')
+    
+    const { results: materialsToMigrate } = await env.DB.prepare(`
+      SELECT 
+        id,
+        status,
+        part_number,
+        material
+      FROM material_gangguan
+      WHERE status IS NOT NULL
+        AND status NOT IN ('Tersedia', 'Pengadaan', 'N/A', 'Tunda', 'Reject', 'Habis', 'Hampir Habis', 'Draft', '-', '')
+        AND LENGTH(status) > 3
+    `).all()
+    
+    console.log(`📊 Found ${materialsToMigrate.length} materials to migrate`)
+    
+    let migratedCount = 0
+    for (const mat of materialsToMigrate) {
+      try {
+        // Copy status to sn_mesin
+        await env.DB.prepare(`
+          UPDATE material_gangguan
+          SET sn_mesin = ?
+          WHERE id = ?
+        `).bind(mat.status, mat.id).run()
+        
+        migratedCount++
+        console.log(`✅ Migrated ID ${mat.id}: ${mat.status}`)
+      } catch (migError: any) {
+        console.error(`❌ Failed to migrate ID ${mat.id}:`, migError.message)
+      }
+    }
+    
+    console.log(`✅ Migration complete: ${migratedCount}/${materialsToMigrate.length} migrated`)
+    
+    return c.json({
+      success: true,
+      message: `Migration applied: sn_mesin column added, ${migratedCount} materials migrated`,
+      migratedCount,
+      totalFound: materialsToMigrate.length
+    })
+  } catch (error: any) {
+    console.error('❌ Migration failed:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || 'Failed to apply migration'
+    }, 500)
+  }
+})
+
 // API: Restore corrupted S/N Mesin from BA history
 app.post('/api/restore-sn-mesin', async (c) => {
   try {
@@ -7672,6 +7761,123 @@ app.get('/api/get-target-umur', async (c) => {
       count: 0,
       error: error.message
     })
+  }
+})
+
+// API: MIGRATE CORRUPTED S/N MESIN (Fix "Tersedia", "Pengadaan" in sn_mesin column)
+app.post('/api/migrate-sn-mesin', async (c) => {
+  try {
+    const { env } = c
+    const db = env.DB
+    
+    if (!db) {
+      return c.json({ error: 'Database not available' }, 500)
+    }
+    
+    console.log('🔧 Starting S/N Mesin migration...')
+    
+    // Step 1: Find all materials where sn_mesin is NULL or looks like status ("Tersedia", "Pengadaan", etc)
+    const { results: materials } = await db.prepare(`
+      SELECT 
+        mg.id,
+        mg.part_number,
+        mg.material,
+        mg.mesin,
+        mg.status,
+        mg.sn_mesin,
+        mg.gangguan_id,
+        g.nomor_lh05
+      FROM material_gangguan mg
+      JOIN gangguan g ON mg.gangguan_id = g.id
+      WHERE mg.sn_mesin IS NULL 
+         OR mg.sn_mesin IN ('Tersedia', 'Pengadaan', 'N/A', '-', 'Tunda', 'Reject', 'Draft')
+      ORDER BY mg.id DESC
+    `).all()
+    
+    console.log(`📊 Found ${materials.length} materials with corrupted S/N`)
+    
+    if (materials.length === 0) {
+      return c.json({
+        success: true,
+        message: 'No corrupted S/N Mesin found',
+        checked: 0,
+        migrated: 0
+      })
+    }
+    
+    let migratedCount = 0
+    const migratedDetails = []
+    
+    // Step 2: For each material, find correct S/N from BA
+    for (const mat of materials) {
+      try {
+        // Find BA that contains this material (same LH05 + part_number)
+        const { results: baList } = await db.prepare(`
+          SELECT 
+            ba.nomor_ba,
+            ba.from_lh05,
+            m.sn_mesin,
+            m.status
+          FROM berita_acara ba
+          JOIN materials m ON ba.id = m.ba_id
+          WHERE ba.from_lh05 = ?
+            AND m.part_number = ?
+            AND m.sn_mesin IS NOT NULL
+            AND m.sn_mesin NOT IN ('Tersedia', 'Pengadaan', 'N/A', '-', 'Tunda', 'Reject', 'Draft', '')
+          ORDER BY ba.created_at DESC
+          LIMIT 1
+        `).bind(mat.nomor_lh05, mat.part_number).all()
+        
+        if (baList.length > 0) {
+          const ba = baList[0]
+          const correctSnMesin = ba.sn_mesin
+          
+          console.log(`✅ Found BA for ${mat.part_number}: S/N = ${correctSnMesin}`)
+          
+          // Update material_gangguan with correct S/N
+          await db.prepare(`
+            UPDATE material_gangguan
+            SET sn_mesin = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).bind(correctSnMesin, mat.id).run()
+          
+          migratedCount++
+          migratedDetails.push({
+            id: mat.id,
+            partNumber: mat.part_number,
+            material: mat.material,
+            lh05: mat.nomor_lh05,
+            oldSnMesin: mat.sn_mesin || 'NULL',
+            newSnMesin: correctSnMesin
+          })
+          
+          console.log(`✅ Migrated ID ${mat.id}: ${mat.sn_mesin || 'NULL'} → ${correctSnMesin}`)
+        } else {
+          console.log(`⚠️ No BA found for ${mat.part_number} (LH05: ${mat.nomor_lh05})`)
+        }
+      } catch (matError: any) {
+        console.error(`❌ Failed to migrate ID ${mat.id}:`, matError.message)
+      }
+    }
+    
+    console.log(`✅ Migration complete: ${migratedCount}/${materials.length} migrated`)
+    
+    return c.json({
+      success: true,
+      message: `Successfully migrated ${migratedCount} materials`,
+      checked: materials.length,
+      migrated: migratedCount,
+      details: migratedDetails
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Migration failed:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Migration failed',
+      stack: error.stack
+    }, 500)
   }
 })
 
