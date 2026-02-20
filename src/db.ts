@@ -187,8 +187,8 @@ export async function getAllTransactions(db: D1Database) {
               'material', m.material,
               'mesin', m.mesin,
               'status', m.status,
-              'snMesin', m.status,
-              'sn_mesin', m.status,
+              'snMesin', m.sn_mesin,
+              'sn_mesin', m.sn_mesin,
               'jumlah', m.jumlah
             )
           ) as materials
@@ -271,7 +271,8 @@ export async function getAllTransactions(db: D1Database) {
                     'jenisBarang', m.jenis_barang,
                     'material', m.material,
                     'mesin', m.mesin,
-                    'status', m.sn_mesin,
+                    'status', m.status,
+                    'sn_mesin', m.sn_mesin,
                     'snMesin', m.sn_mesin,
                     'sn_mesin', m.sn_mesin,
                     'jumlah', m.jumlah
@@ -314,7 +315,8 @@ export async function getAllTransactions(db: D1Database) {
                       'jenisBarang', m.jenis_barang,
                       'material', m.material,
                       'mesin', m.mesin,
-                      'status', m.sn_mesin,
+                      'status', m.status,
+                    'sn_mesin', m.sn_mesin,
                       'jumlah', m.jumlah
                     )
                   ) as materials
@@ -399,7 +401,8 @@ export async function getAllTransactions(db: D1Database) {
                     'jenisBarang', m.jenis_barang,
                     'material', m.material,
                     'mesin', m.mesin,
-                    'status', m.sn_mesin,
+                    'status', m.status,
+                    'sn_mesin', m.sn_mesin,
                     'snMesin', m.sn_mesin,
                     'sn_mesin', m.sn_mesin,
                     'jumlah', m.jumlah
@@ -451,8 +454,8 @@ export async function getTransactionByBA(db: D1Database, nomorBA: string) {
               'material', m.material,
               'mesin', m.mesin,
               'status', m.status,
-              'snMesin', m.status,
-              'sn_mesin', m.status,
+              'snMesin', m.sn_mesin,
+              'sn_mesin', m.sn_mesin,
               'jumlah', m.jumlah
             )
           ) as materials
