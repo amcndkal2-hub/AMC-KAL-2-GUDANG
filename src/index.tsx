@@ -8943,6 +8943,153 @@ app.post('/api/create-transactions-from-umur', async (c) => {
   }
 })
 
+// Sync S/N from material_gangguan to materials table (for BA/Mutasi and Umur)
+app.post('/api/sync-sn-to-materials', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🚀 Starting S/N sync from material_gangguan to materials...')
+    
+    // Use a single query with JOIN to get all data at once
+    const syncData = await env.DB.prepare(`
+      SELECT 
+        m.id as material_id,
+        m.part_number,
+        m.sn_mesin as current_sn,
+        t.from_lh05,
+        t.nomor_ba,
+        mg.sn_mesin as correct_sn,
+        g.nomor_lh05
+      FROM materials m
+      JOIN transactions t ON m.transaction_id = t.id
+      JOIN gangguan g ON t.from_lh05 = g.nomor_lh05
+      JOIN material_gangguan mg ON mg.gangguan_id = g.id AND mg.part_number = m.part_number
+      WHERE t.jenis_transaksi = 'Keluar (Pengeluaran Gudang)'
+        AND t.from_lh05 IS NOT NULL
+        AND mg.sn_mesin IS NOT NULL
+        AND mg.sn_mesin != ''
+        AND mg.sn_mesin != 'null'
+        AND (m.sn_mesin != mg.sn_mesin OR m.sn_mesin IS NULL)
+    `).all()
+    
+    console.log(`📊 Found ${syncData.results.length} materials to update`)
+    
+    let updatedCount = 0
+    const updatedDetails: any[] = []
+    
+    // Update each material
+    for (const item of syncData.results as any[]) {
+      await env.DB.prepare(`
+        UPDATE materials
+        SET sn_mesin = ?
+        WHERE id = ?
+      `).bind(item.correct_sn, item.material_id).run()
+      
+      updatedCount++
+      
+      updatedDetails.push({
+        material_id: item.material_id,
+        nomor_ba: item.nomor_ba,
+        nomor_lh05: item.from_lh05,
+        part_number: item.part_number,
+        old_sn: item.current_sn,
+        new_sn: item.correct_sn
+      })
+      
+      if (updatedCount % 10 === 0) {
+        console.log(`⏳ Updated ${updatedCount}/${syncData.results.length} materials...`)
+      }
+    }
+    
+    console.log(`✅ S/N sync complete: ${updatedCount} materials updated`)
+    
+    return c.json({
+      success: true,
+      message: `Synced S/N for ${updatedCount} materials from LH05 to BA/Mutasi`,
+      updatedCount,
+      details: updatedDetails.slice(0, 20)
+    })
+    
+  } catch (error: any) {
+    console.error('❌ S/N sync failed:', error)
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500)
+  }
+})
+
+// Fix remaining "Tersedia" S/N in materials table
+app.post('/api/fix-tersedia-sn', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🚀 Fixing remaining "Tersedia" S/N in materials...')
+    
+    // Get all materials with "Tersedia" S/N
+    const tersediaData = await env.DB.prepare(`
+      SELECT 
+        m.id as material_id,
+        m.part_number,
+        m.sn_mesin as current_sn,
+        t.from_lh05,
+        t.nomor_ba,
+        mg.sn_mesin as correct_sn
+      FROM materials m
+      JOIN transactions t ON m.transaction_id = t.id
+      LEFT JOIN gangguan g ON t.from_lh05 = g.nomor_lh05
+      LEFT JOIN material_gangguan mg ON mg.gangguan_id = g.id AND mg.part_number = m.part_number
+      WHERE (m.sn_mesin = 'Tersedia' OR m.sn_mesin IS NULL OR m.sn_mesin = '')
+        AND t.from_lh05 IS NOT NULL
+        AND mg.sn_mesin IS NOT NULL
+        AND mg.sn_mesin != ''
+        AND mg.sn_mesin != 'null'
+    `).all()
+    
+    console.log(`📊 Found ${tersediaData.results.length} materials with "Tersedia" S/N`)
+    
+    let updatedCount = 0
+    const updatedDetails: any[] = []
+    
+    for (const item of tersediaData.results as any[]) {
+      await env.DB.prepare(`
+        UPDATE materials
+        SET sn_mesin = ?
+        WHERE id = ?
+      `).bind(item.correct_sn, item.material_id).run()
+      
+      updatedCount++
+      
+      updatedDetails.push({
+        material_id: item.material_id,
+        nomor_ba: item.nomor_ba,
+        nomor_lh05: item.from_lh05,
+        part_number: item.part_number,
+        old_sn: item.current_sn || '(empty)',
+        new_sn: item.correct_sn
+      })
+      
+      console.log(`✅ Fixed material ID ${item.material_id} in BA ${item.nomor_ba}: "${item.current_sn}" → "${item.correct_sn}"`)
+    }
+    
+    console.log(`✅ Fixed ${updatedCount} "Tersedia" S/N materials`)
+    
+    return c.json({
+      success: true,
+      message: `Fixed ${updatedCount} materials with "Tersedia" S/N`,
+      updatedCount,
+      details: updatedDetails
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Fix Tersedia S/N failed:', error)
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500)
+  }
+})
+
 export default app
 
 function getDashboardListRABHTML() {
