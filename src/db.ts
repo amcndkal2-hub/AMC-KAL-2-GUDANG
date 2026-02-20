@@ -1122,54 +1122,99 @@ export async function getAllGangguan(db: D1Database) {
 
 export async function getGangguanByLH05(db: D1Database, nomorLH05: string) {
   try {
-    // Simple query without is_issued filter (backward compatible)
-    const { results } = await db.prepare(`
-      SELECT 
-        g.*,
-        json_group_array(
-          json_object(
-            'id', mg.id,
-            'partNumber', mg.part_number,
-            'material', mg.material,
-            'mesin', mg.mesin,
-            'jumlah', mg.jumlah,
-            'status', mg.status,
-            'unitULD', mg.unit_uld,
-            'lokasiTujuan', mg.lokasi_tujuan,
-            'jenisBarang', COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal')
-          )
-        ) as materials
-      FROM gangguan g
-      LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
-      LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-      WHERE g.nomor_lh05 = ?
-      GROUP BY g.id
-    `).bind(nomorLH05).all()
+    // Try with sn_mesin column first (new schema)
+    try {
+      const { results } = await db.prepare(`
+        SELECT 
+          g.*,
+          json_group_array(
+            json_object(
+              'id', mg.id,
+              'partNumber', mg.part_number,
+              'material', mg.material,
+              'mesin', mg.mesin,
+              'jumlah', mg.jumlah,
+              'status', mg.status,
+              'snMesin', mg.sn_mesin,
+              'unitULD', mg.unit_uld,
+              'lokasiTujuan', mg.lokasi_tujuan,
+              'jenisBarang', COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal')
+            )
+          ) as materials
+        FROM gangguan g
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+        WHERE g.nomor_lh05 = ?
+        GROUP BY g.id
+      `).bind(nomorLH05).all()
 
-    if (results.length === 0) {
-      console.log(`⚠️ Gangguan ${nomorLH05} not found, trying recovery...`)
-      return await getGangguanByLH05FromMaterials(db, nomorLH05)
-    }
-
-    const g: any = results[0]
-    const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
-    
-    // Extract S/N from status field if needed (old schema)
-    const materials = rawMaterials.map((mat: any) => {
-      let snMesinValue = mat.snMesin
-      if (!snMesinValue && mat.status && typeof mat.status === 'string') {
-        const snMatch = mat.status.match(/^SN:(.+)$/)
-        if (snMatch) snMesinValue = snMatch[1]
+      if (results.length === 0) {
+        console.log(`⚠️ Gangguan ${nomorLH05} not found, trying recovery...`)
+        return await getGangguanByLH05FromMaterials(db, nomorLH05)
       }
-      return { ...mat, snMesin: snMesinValue }
-    })
-    
-    // Deduplicate by ID only
-    const uniqueMaterials = Array.from(new Map(materials.map(m => [m.id, m])).values())
-    
-    console.log(`✅ Found ${nomorLH05} with ${uniqueMaterials.length} materials`)
-    
-    return { ...g, materials: uniqueMaterials }
+
+      const g: any = results[0]
+      const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
+      
+      // Deduplicate by ID only
+      const uniqueMaterials = Array.from(new Map(rawMaterials.map(m => [m.id, m])).values())
+      
+      console.log(`✅ Found ${nomorLH05} with ${uniqueMaterials.length} materials (sn_mesin column)`)
+      
+      return { ...g, materials: uniqueMaterials }
+      
+    } catch (schemaError) {
+      // Fallback: Query without sn_mesin column (old schema)
+      console.log('⚠️ sn_mesin column not found, using status fallback')
+      
+      const { results } = await db.prepare(`
+        SELECT 
+          g.*,
+          json_group_array(
+            json_object(
+              'id', mg.id,
+              'partNumber', mg.part_number,
+              'material', mg.material,
+              'mesin', mg.mesin,
+              'jumlah', mg.jumlah,
+              'status', mg.status,
+              'unitULD', mg.unit_uld,
+              'lokasiTujuan', mg.lokasi_tujuan,
+              'jenisBarang', COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal')
+            )
+          ) as materials
+        FROM gangguan g
+        LEFT JOIN material_gangguan mg ON g.id = mg.gangguan_id
+        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+        WHERE g.nomor_lh05 = ?
+        GROUP BY g.id
+      `).bind(nomorLH05).all()
+
+      if (results.length === 0) {
+        console.log(`⚠️ Gangguan ${nomorLH05} not found, trying recovery...`)
+        return await getGangguanByLH05FromMaterials(db, nomorLH05)
+      }
+
+      const g: any = results[0]
+      const rawMaterials = JSON.parse(g.materials).filter((m: any) => m.id !== null)
+      
+      // Extract S/N from status field (old schema: status stored as "SN:12345")
+      const materials = rawMaterials.map((mat: any) => {
+        let snMesinValue = mat.snMesin
+        if (!snMesinValue && mat.status && typeof mat.status === 'string') {
+          const snMatch = mat.status.match(/^SN:(.+)$/)
+          if (snMatch) snMesinValue = snMatch[1]
+        }
+        return { ...mat, snMesin: snMesinValue }
+      })
+      
+      // Deduplicate by ID only
+      const uniqueMaterials = Array.from(new Map(materials.map(m => [m.id, m])).values())
+      
+      console.log(`✅ Found ${nomorLH05} with ${uniqueMaterials.length} materials (status fallback)`)
+      
+      return { ...g, materials: uniqueMaterials }
+    }
   } catch (error: any) {
     console.error(`❌ Failed to get ${nomorLH05}:`, error.message)
     return await getGangguanByLH05FromMaterials(db, nomorLH05)
