@@ -2719,13 +2719,16 @@ app.get('/api/kebutuhan-material', async (c) => {
       }
       
       if (isTerkirim) {
-        // Priority 1: If already sent (Terkirim), keep it
+        // Priority 1: Material sudah dikirim (ada di transaksi Keluar)
         finalStatus = 'Terkirim'
+      } else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
+        // Priority 2: Material punya S/N tapi belum dikirim = Tersedia di gudang
+        finalStatus = 'Tersedia'
       } else if (stok > 0 && (finalStatus === 'N/A' || !finalStatus)) {
-        // Priority 2: If stock available and status is N/A, change to Tersedia
+        // Priority 3: Material ada stok (dari transaksi Masuk) = Tersedia
         finalStatus = 'Tersedia'
       } else if (stok === 0 && finalStatus === 'Tersedia') {
-        // Priority 3: If stock became 0 but status was Tersedia, revert to N/A
+        // Priority 4: Stok habis, kembali ke N/A
         finalStatus = 'N/A'
       }
       
