@@ -115,7 +115,7 @@ function renderLH05MaterialsList() {
         const isAvailable = mat.stok >= mat.jumlah;
         const isAlreadySent = mat.alreadySent || false;
         const isAlreadyAdded = addedMaterialIds.has(mat.id); // Check if already added to preview
-        const isDisabled = mat.stok === 0 || isAlreadySent || isAlreadyAdded;
+        const isDisabled = !isAvailable || isAlreadySent || isAlreadyAdded; // FIXED: Disable if stock insufficient
         
         let stockBadge = '';
         if (isAlreadyAdded) {
@@ -158,8 +158,8 @@ function renderLH05MaterialsList() {
                         </div>
                         ${isAlreadyAdded ? '<p class="mt-2 text-xs text-blue-600"><i class="fas fa-check-circle mr-1"></i>Material ini sudah ditambahkan ke preview table</p>' : ''}
                         ${isAlreadySent ? '<p class="mt-2 text-xs text-purple-600"><i class="fas fa-check-circle mr-1"></i>Material ini sudah dikirim sebelumnya dan tidak dapat dipilih lagi</p>' : ''}
-                        ${isDisabled && !isAlreadySent && !isAlreadyAdded ? '<p class="mt-2 text-xs text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>Material ini tidak dapat dipilih karena stok habis</p>' : ''}
-                        ${!isAvailable && mat.stok > 0 && !isAlreadySent && !isAlreadyAdded ? '<p class="mt-2 text-xs text-yellow-600"><i class="fas fa-exclamation-triangle mr-1"></i>Stok tidak mencukupi permintaan</p>' : ''}
+                        ${!isAvailable && mat.stok === 0 && !isAlreadySent && !isAlreadyAdded ? '<p class="mt-2 text-xs text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>Stok habis! Material tidak dapat dipilih.</p>' : ''}
+                        ${!isAvailable && mat.stok > 0 && !isAlreadySent && !isAlreadyAdded ? '<p class="mt-2 text-xs text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>Stok tidak mencukupi! Tersedia: ' + mat.stok + ', Diminta: ' + mat.jumlah + '. Material tidak dapat dipilih.</p>' : ''}
                     </div>
                 </div>
             </div>
