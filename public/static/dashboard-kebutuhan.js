@@ -304,8 +304,19 @@ function renderTable() {
       `
       isDisabled = true
     }
-    // Case 4: Tersedia (stok > 0) → Dropdown: can change to Pengadaan (re-order)
-    else if (stok > 0 && (status === 'Tersedia' || !status || status === 'N/A')) {
+    // Case 4a: Tersedia + RAB Created → Locked, no dropdown (cannot re-order)
+    else if ((stok > 0 || status === 'Tersedia') && isRabCreated) {
+      statusColor = 'bg-purple-100 text-purple-800 border-purple-300'
+      statusDisplay = `
+        <span class="inline-block px-3 py-2 rounded ${statusColor} font-semibold text-sm w-full">
+          🔒 Tersedia (RAB)
+          <span class="text-xs block mt-1">📦 Stok: ${stok} | 📋 Dalam proses RAB</span>
+        </span>
+      `
+      isDisabled = true
+    }
+    // Case 4b: Tersedia + No RAB → Dropdown: can change to Pengadaan (re-order)
+    else if (stok > 0 && (status === 'Tersedia' || !status || status === 'N/A') && !isRabCreated) {
       statusColor = 'bg-purple-100 text-purple-800 border-purple-300'
       statusDisplay = `
         <select 
