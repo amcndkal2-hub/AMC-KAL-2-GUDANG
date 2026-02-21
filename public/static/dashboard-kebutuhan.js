@@ -75,7 +75,8 @@ async function loadKebutuhanMaterial() {
       unitULD: item.unit_uld,
       stok: item.stok || 0, // Include stock info
       isTerkirim: item.isTerkirim || false, // Include shipment status
-      jenisBarang: item.jenis_barang || 'Material Handal' // Include jenis barang
+      jenisBarang: item.jenis_barang || 'Material Handal', // Include jenis barang
+      isRabCreated: item.is_rab_created || false // Include RAB flag
     }))
     filteredMaterials = [...allMaterials]
     
@@ -248,6 +249,7 @@ function renderTable() {
     const stok = item.stok || 0
     const status = item.status || 'N/A'
     const isTerkirim = item.isTerkirim || status === 'Terkirim'
+    const isRabCreated = item.is_rab_created || item.isRabCreated || false
     
     // Jenis Barang badge with color
     const jenisBarang = item.jenisBarang || 'Material Handal'
@@ -267,54 +269,101 @@ function renderTable() {
     let statusColor = ''
     let isDisabled = false
     
-    // Case 3: Sudah terkirim (read-only, blue)
-    if (isTerkirim) {
+    // ========================================
+    // STATUS LOGIC WITH DROPDOWN BEHAVIOR
+    // ========================================
+    
+    // Case 1: Terkirim → Fixed, no dropdown (already shipped)
+    if (isTerkirim || status === 'Terkirim') {
+      statusColor = 'bg-green-100 text-green-800 border-green-300'
       statusDisplay = `
-        <span class="inline-block px-3 py-2 rounded bg-blue-100 text-blue-800 font-semibold text-sm w-full">
-          🚚 Terkirim
+        <span class="inline-block px-3 py-2 rounded ${statusColor} font-semibold text-sm w-full">
+          ✅ Terkirim
         </span>
       `
       isDisabled = true
-    } 
-    // Case 1: Stok > 0 → Status "Tersedia" (green, disabled, show stock)
-    else if (stok > 0) {
+    }
+    // Case 2: Pengadaan + RAB Created → Locked, no dropdown (in RAB process)
+    else if (status === 'Pengadaan' && isRabCreated) {
+      statusColor = 'bg-blue-100 text-blue-800 border-blue-300'
       statusDisplay = `
-        <span class="inline-block px-3 py-2 rounded bg-green-100 text-green-800 font-semibold text-sm w-full">
-          ✅ Tersedia
-          <span class="text-xs block mt-1">Stok: ${stok}</span>
+        <span class="inline-block px-3 py-2 rounded ${statusColor} font-semibold text-sm w-full">
+          🔒 Pengadaan (RAB)
+          <span class="text-xs block mt-1">📋 Dalam proses RAB</span>
         </span>
       `
       isDisabled = true
-    } 
-    // Case 2: Stok = 0 → Status "N/A" or "Pengadaan" (gray/yellow, editable, show stock 0)
-    else if (stok === 0) {
-      if (status === 'Pengadaan') {
-        statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-300'
-        statusDisplay = `
-          <select 
-            onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
-            class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
-            <option value="N/A" ${status === 'N/A' ? 'selected' : ''}>N/A</option>
-            <option value="Pengadaan" ${status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
-            <option value="Tunda" ${status === 'Tunda' ? 'selected' : ''}>Tunda</option>
-            <option value="Reject" ${status === 'Reject' ? 'selected' : ''}>Reject</option>
-          </select>
-          <p class="text-xs text-gray-500 mt-1">📦 Stok: 0</p>
-        `
-      } else {
-        statusColor = 'bg-gray-100 text-gray-800 border-gray-300'
-        statusDisplay = `
-          <select 
-            onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
-            class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
-            <option value="N/A" ${status === 'N/A' ? 'selected' : ''}>N/A</option>
-            <option value="Pengadaan" ${status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
-            <option value="Tunda" ${status === 'Tunda' ? 'selected' : ''}>Tunda</option>
-            <option value="Reject" ${status === 'Reject' ? 'selected' : ''}>Reject</option>
-          </select>
-          <p class="text-xs text-gray-500 mt-1">📦 Stok: 0</p>
-        `
-      }
+    }
+    // Case 3: Reject → Fixed, no dropdown (rejected)
+    else if (status === 'Reject') {
+      statusColor = 'bg-red-100 text-red-800 border-red-300'
+      statusDisplay = `
+        <span class="inline-block px-3 py-2 rounded ${statusColor} font-semibold text-sm w-full">
+          ❌ Reject
+        </span>
+      `
+      isDisabled = true
+    }
+    // Case 4: Tersedia (stok > 0) → Dropdown: can change to Pengadaan (re-order)
+    else if (stok > 0 && (status === 'Tersedia' || !status || status === 'N/A')) {
+      statusColor = 'bg-purple-100 text-purple-800 border-purple-300'
+      statusDisplay = `
+        <select 
+          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
+          class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
+          <option value="Tersedia" ${status === 'Tersedia' || !status ? 'selected' : ''}>Tersedia</option>
+          <option value="Pengadaan">Pengadaan (Re-order)</option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">📦 Stok: ${stok}</p>
+      `
+      isDisabled = false
+    }
+    // Case 5: Pengadaan (no RAB yet) → Dropdown: can change to N/A, Tunda, Reject
+    else if (status === 'Pengadaan' && !isRabCreated) {
+      statusColor = 'bg-blue-100 text-blue-800 border-blue-300'
+      statusDisplay = `
+        <select 
+          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
+          class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
+          <option value="Pengadaan" selected>Pengadaan</option>
+          <option value="N/A">N/A</option>
+          <option value="Tunda">Tunda</option>
+          <option value="Reject">Reject</option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">📦 Stok: ${stok}</p>
+      `
+      isDisabled = false
+    }
+    // Case 6: Tunda → Dropdown: can change to N/A, Pengadaan, Reject
+    else if (status === 'Tunda') {
+      statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-300'
+      statusDisplay = `
+        <select 
+          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
+          class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
+          <option value="Tunda" selected>Tunda</option>
+          <option value="N/A">N/A</option>
+          <option value="Pengadaan">Pengadaan</option>
+          <option value="Reject">Reject</option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">📦 Stok: ${stok}</p>
+      `
+      isDisabled = false
+    }
+    // Case 7: N/A or default → Dropdown: can change to Pengadaan, Tunda, Reject
+    else {
+      statusColor = 'bg-gray-100 text-gray-800 border-gray-300'
+      statusDisplay = `
+        <select 
+          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
+          class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
+          <option value="N/A" ${status === 'N/A' ? 'selected' : ''}>N/A</option>
+          <option value="Pengadaan" ${status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
+          <option value="Tunda" ${status === 'Tunda' ? 'selected' : ''}>Tunda</option>
+          <option value="Reject" ${status === 'Reject' ? 'selected' : ''}>Reject</option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">📦 Stok: ${stok}</p>
+      `
       isDisabled = false
     }
     
