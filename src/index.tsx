@@ -9090,6 +9090,211 @@ app.post('/api/fix-tersedia-sn', async (c) => {
   }
 })
 
+// Cleanup duplicate BA for same LH05+Part Number
+app.post('/api/cleanup-duplicate-ba', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🚀 Starting cleanup duplicate BA transactions...')
+    
+    // Step 1: Find all duplicate groups (1 LH05 + 1 Part → Multiple BA)
+    const duplicatesQuery = await env.DB.prepare(`
+      SELECT 
+        t.from_lh05,
+        m.part_number,
+        COUNT(DISTINCT t.id) as ba_count,
+        GROUP_CONCAT(DISTINCT t.nomor_ba) as ba_list,
+        GROUP_CONCAT(DISTINCT t.id) as transaction_ids
+      FROM transactions t
+      JOIN materials m ON m.transaction_id = t.id
+      WHERE t.jenis_transaksi LIKE '%Keluar%'
+        AND t.from_lh05 IS NOT NULL
+        AND t.from_lh05 != ''
+      GROUP BY t.from_lh05, m.part_number
+      HAVING COUNT(DISTINCT t.id) > 1
+      ORDER BY ba_count DESC
+    `).all()
+    
+    const duplicateGroups = duplicatesQuery.results as any[]
+    console.log(`📊 Found ${duplicateGroups.length} groups with duplicate BA`)
+    
+    if (duplicateGroups.length === 0) {
+      return c.json({
+        success: true,
+        message: 'No duplicate BA found',
+        deletedCount: 0,
+        groups: []
+      })
+    }
+    
+    let totalDeleted = 0
+    const cleanupDetails: any[] = []
+    
+    // Step 2: For each duplicate group, keep the latest BA (highest nomor_ba), delete others
+    for (const group of duplicateGroups) {
+      const lh05 = group.from_lh05
+      const partNumber = group.part_number
+      const baCount = group.ba_count
+      
+      console.log(`\n🔍 Processing: LH05=${lh05}, Part=${partNumber}, BA Count=${baCount}`)
+      
+      // Get all BA for this LH05+Part combination
+      const baTransactions = await env.DB.prepare(`
+        SELECT DISTINCT
+          t.id,
+          t.nomor_ba,
+          t.tanggal,
+          t.jenis_transaksi,
+          m.jumlah
+        FROM transactions t
+        JOIN materials m ON m.transaction_id = t.id
+        WHERE t.from_lh05 = ?
+          AND m.part_number = ?
+          AND t.jenis_transaksi LIKE '%Keluar%'
+        ORDER BY t.nomor_ba DESC
+      `).bind(lh05, partNumber).all()
+      
+      const transactions = baTransactions.results as any[]
+      
+      if (transactions.length <= 1) {
+        console.log(`⚠️ Skip: Only ${transactions.length} BA found`)
+        continue
+      }
+      
+      // Keep the first one (highest nomor_ba), delete the rest
+      const keepBA = transactions[0]
+      const deleteTransactions = transactions.slice(1)
+      
+      console.log(`✅ KEEP: ${keepBA.nomor_ba}`)
+      console.log(`❌ DELETE: ${deleteTransactions.map(t => t.nomor_ba).join(', ')}`)
+      
+      // Delete duplicate transactions and their materials
+      for (const txToDelete of deleteTransactions) {
+        // Delete materials first (foreign key constraint)
+        await env.DB.prepare(`
+          DELETE FROM materials WHERE transaction_id = ?
+        `).bind(txToDelete.id).run()
+        
+        // Delete transaction
+        await env.DB.prepare(`
+          DELETE FROM transactions WHERE id = ?
+        `).bind(txToDelete.id).run()
+        
+        totalDeleted++
+        
+        console.log(`🗑️ Deleted BA ${txToDelete.nomor_ba} (ID: ${txToDelete.id})`)
+      }
+      
+      // Record cleanup details
+      cleanupDetails.push({
+        lh05,
+        partNumber,
+        originalCount: baCount,
+        kept: keepBA.nomor_ba,
+        deleted: deleteTransactions.map(t => t.nomor_ba),
+        deletedCount: deleteTransactions.length
+      })
+    }
+    
+    console.log(`\n✅ Cleanup complete! Deleted ${totalDeleted} duplicate BA`)
+    
+    return c.json({
+      success: true,
+      message: `Deleted ${totalDeleted} duplicate BA transactions`,
+      deletedCount: totalDeleted,
+      groupsProcessed: duplicateGroups.length,
+      details: cleanupDetails
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Cleanup duplicate BA failed:', error)
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500)
+  }
+})
+
+// Fix stock after cleanup duplicate BA
+app.post('/api/fix-stock-after-cleanup', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🚀 Fixing stock after BA cleanup...')
+    
+    // Get all materials with their transaction counts
+    const stockQuery = await env.DB.prepare(`
+      SELECT 
+        mg.part_number,
+        mg.jenis_barang,
+        mg.material,
+        mg.jumlah as original_quantity,
+        COUNT(DISTINCT t.id) as keluar_count,
+        SUM(CASE WHEN t.jenis_transaksi LIKE '%Masuk%' THEN m.jumlah ELSE 0 END) as total_masuk,
+        SUM(CASE WHEN t.jenis_transaksi LIKE '%Keluar%' THEN m.jumlah ELSE 0 END) as total_keluar
+      FROM material_gangguan mg
+      LEFT JOIN transactions t ON t.from_lh05 = mg.gangguan_id || '/' || (SELECT nomor_lh05 FROM gangguan WHERE id = mg.gangguan_id)
+      LEFT JOIN materials m ON m.transaction_id = t.id AND m.part_number = mg.part_number
+      WHERE mg.status = 'Terkirim'
+      GROUP BY mg.part_number, mg.jenis_barang, mg.material, mg.jumlah
+    `).all()
+    
+    const stockData = stockQuery.results as any[]
+    console.log(`📊 Found ${stockData.length} materials to check`)
+    
+    let fixedCount = 0
+    const fixedDetails: any[] = []
+    
+    for (const item of stockData) {
+      const expectedStock = (item.total_masuk || 0) - (item.total_keluar || 0)
+      
+      // Get current stock from stok table
+      const currentStockQuery = await env.DB.prepare(`
+        SELECT stok FROM stok WHERE part_number = ?
+      `).bind(item.part_number).all()
+      
+      const currentStock = currentStockQuery.results[0]?.stok || 0
+      
+      if (currentStock !== expectedStock) {
+        // Update stock
+        await env.DB.prepare(`
+          INSERT INTO stok (part_number, jenis_barang, material, stok)
+          VALUES (?, ?, ?, ?)
+          ON CONFLICT(part_number) DO UPDATE SET stok = excluded.stok
+        `).bind(item.part_number, item.jenis_barang, item.material, expectedStock).run()
+        
+        fixedCount++
+        fixedDetails.push({
+          partNumber: item.part_number,
+          material: item.material,
+          oldStock: currentStock,
+          newStock: expectedStock,
+          masuk: item.total_masuk || 0,
+          keluar: item.total_keluar || 0
+        })
+        
+        console.log(`✅ Fixed stock for ${item.part_number}: ${currentStock} → ${expectedStock}`)
+      }
+    }
+    
+    console.log(`✅ Fixed ${fixedCount} stock entries`)
+    
+    return c.json({
+      success: true,
+      message: `Fixed ${fixedCount} stock entries`,
+      fixedCount,
+      details: fixedDetails.slice(0, 20) // Return first 20
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Fix stock failed:', error)
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500)
+  }
+})
+
 export default app
 
 function getDashboardListRABHTML() {
