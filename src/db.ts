@@ -1854,61 +1854,36 @@ export async function getRABById(db: D1Database, rabId: number) {
 
 export async function getMaterialPengadaan(db: D1Database) {
   try {
-    // Try with all new columns (sn_mesin, no_po, no_grpo) and jenis_barang
-    try {
-      const result = await db.prepare(`
-        SELECT 
-          mg.id,
-          mg.gangguan_id,
-          g.nomor_lh05,
-          mg.part_number,
-          mg.material,
-          mg.mesin,
-          mg.jumlah,
-          mg.unit_uld as lokasi_tujuan,
-          mg.status,
-          mg.is_rab_created,
-          mg.sn_mesin,
-          mg.no_po,
-          mg.no_grpo,
-          COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
-        FROM material_gangguan mg
-        JOIN gangguan g ON mg.gangguan_id = g.id
-        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-        WHERE UPPER(TRIM(mg.status)) = 'PENGADAAN'
-        AND (mg.is_rab_created IS NULL OR mg.is_rab_created = 0)
-        ORDER BY g.created_at DESC
-      `).all()
-      
-      console.log('📦 getMaterialPengadaan: Found', result.results?.length || 0, 'materials')
-      return result.results || []
-    } catch (columnError) {
-      // Fallback: Query without new columns
-      console.log('⚠️ New columns not found in getMaterialPengadaan, using fallback')
-      const result = await db.prepare(`
-        SELECT 
-          mg.id,
-          mg.gangguan_id,
-          g.nomor_lh05,
-          mg.part_number,
-          mg.material,
-          mg.mesin,
-          mg.jumlah,
-          mg.unit_uld as lokasi_tujuan,
-          mg.status,
-          mg.is_rab_created,
-          COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
-        FROM material_gangguan mg
-        JOIN gangguan g ON mg.gangguan_id = g.id
-        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-        WHERE UPPER(TRIM(mg.status)) = 'PENGADAAN'
-        AND (mg.is_rab_created IS NULL OR mg.is_rab_created = 0)
-        ORDER BY g.created_at DESC
-      `).all()
-      
-      console.log('📦 getMaterialPengadaan (fallback): Found', result.results?.length || 0, 'materials')
-      return result.results || []
+    // Use mg.* to get all columns including sn_mesin, no_po, no_grpo automatically
+    // This approach is more robust and matches getAllMaterialKebutuhan pattern
+    const result = await db.prepare(`
+      SELECT 
+        mg.*,
+        g.nomor_lh05,
+        COALESCE(mg.jenis_barang, mm.JENIS_BARANG, 'Material Handal') as jenis_barang
+      FROM material_gangguan mg
+      JOIN gangguan g ON mg.gangguan_id = g.id
+      LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
+      WHERE UPPER(TRIM(mg.status)) = 'PENGADAAN'
+      AND (mg.is_rab_created IS NULL OR mg.is_rab_created = 0)
+      ORDER BY g.created_at DESC
+    `).all()
+    
+    // Map to ensure consistent field names (unit_uld -> lokasi_tujuan)
+    const materials = (result.results || []).map((mat: any) => ({
+      ...mat,
+      lokasi_tujuan: mat.unit_uld || mat.lokasi_tujuan
+    }))
+    
+    console.log('📦 getMaterialPengadaan: Found', materials.length, 'materials')
+    if (materials.length > 0) {
+      console.log('📋 Sample material fields:', Object.keys(materials[0]).join(', '))
+      // Log if sn_mesin is present
+      const hasSN = materials.some((m: any) => m.sn_mesin !== undefined)
+      console.log(`   ${hasSN ? '✅' : '❌'} sn_mesin field ${hasSN ? 'present' : 'MISSING'}`)
     }
+    
+    return materials
   } catch (error) {
     console.error('Failed to get material pengadaan:', error)
     return []
