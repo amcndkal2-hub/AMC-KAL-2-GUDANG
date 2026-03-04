@@ -3053,6 +3053,36 @@ app.get('/api/material-pengadaan', async (c) => {
     const { env } = c
     let materials = await DB.getMaterialPengadaan(env.DB)
     
+    // FALLBACK: If database is empty, use in-memory gangguanTransactions
+    if (materials.length === 0 && gangguanTransactions.length > 0) {
+      console.log('⚠️ Database empty, using in-memory fallback for material-pengadaan')
+      
+      // Build materials from in-memory gangguan transactions
+      materials = gangguanTransactions.flatMap((gangguan: any) => {
+        if (!gangguan.materials || gangguan.materials.length === 0) return []
+        
+        return gangguan.materials
+          .filter((mat: any) => mat.status === 'Pengadaan' || mat.status === 'PENGADAAN' || mat.status === 'pengadaan')
+          .map((mat: any) => ({
+            id: mat.id || `${gangguan.id}_${mat.partNumber}`,
+            gangguan_id: gangguan.id,
+            part_number: mat.partNumber,
+            sn_mesin: mat.snMesin || null,
+            material: mat.material,
+            jumlah: mat.jumlah || 1,
+            mesin: gangguan.mesin || '-',
+            lokasi_tujuan: gangguan.lokasi_tujuan || gangguan.unitULD || '-',
+            nomor_lh05: gangguan.baNumber,
+            jenis_barang: mat.jenisBarang || 'Material Handal',
+            status: mat.status || 'Pengadaan',
+            no_po: mat.noPO || null,
+            no_grpo: mat.noGRPO || null
+          }))
+      })
+      
+      console.log(`✅ Fallback: Found ${materials.length} materials with status Pengadaan`)
+    }
+    
     // DEDUPLICATE: Remove duplicate materials based on nomor_lh05 + part_number + sn_mesin
     // Keep the one with highest id (latest insert)
     // IMPORTANT: Include sn_mesin in the key so materials with different S/N are treated as separate items
@@ -6772,6 +6802,7 @@ function getDashboardCreateRABHTML() {
                                     <th class="px-4 py-3 border text-left font-semibold text-white">Pilih</th>
                                     <th class="px-4 py-3 border text-left font-semibold text-white">Nomor LH05</th>
                                     <th class="px-4 py-3 border text-left font-semibold text-white">Part Number</th>
+                                    <th class="px-4 py-3 border text-left font-semibold text-white">S/N Mesin</th>
                                     <th class="px-4 py-3 border text-left font-semibold text-white">Material</th>
                                     <th class="px-4 py-3 border text-left font-semibold text-white">Jenis Barang</th>
                                     <th class="px-4 py-3 border text-left font-semibold text-white">Mesin</th>
@@ -6782,7 +6813,7 @@ function getDashboardCreateRABHTML() {
                             </thead>
                             <tbody id="materialPengadaanTable">
                                 <tr>
-                                    <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+                                    <td colspan="10" class="px-4 py-8 text-center text-gray-500">
                                         <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                         <p>Memuat data material...</p>
                                     </td>
@@ -6805,6 +6836,7 @@ function getDashboardCreateRABHTML() {
                                     <th class="px-4 py-3 border border-gray-300 text-center font-semibold text-white">No</th>
                                     <th class="px-4 py-3 border border-gray-300 text-left font-semibold text-white">Nomor LH05</th>
                                     <th class="px-4 py-3 border border-gray-300 text-left font-semibold text-white">Part Number</th>
+                                    <th class="px-4 py-3 border border-gray-300 text-left font-semibold text-white">S/N Mesin</th>
                                     <th class="px-4 py-3 border border-gray-300 text-left font-semibold text-white">Material</th>
                                     <th class="px-4 py-3 border border-gray-300 text-left font-semibold text-white">Mesin</th>
                                     <th class="px-4 py-3 border border-gray-300 text-center font-semibold text-white">Jumlah</th>
@@ -6819,17 +6851,17 @@ function getDashboardCreateRABHTML() {
                             </tbody>
                             <tfoot class="bg-gray-100 font-bold">
                                 <tr id="subtotalRow">
-                                    <td colspan="9" class="px-4 py-3 border border-gray-300 text-right">Subtotal (termasuk ROK):</td>
+                                    <td colspan="10" class="px-4 py-3 border border-gray-300 text-right">Subtotal (termasuk ROK):</td>
                                     <td class="px-4 py-3 border border-gray-300 text-right text-lg" id="subtotalHarga">Rp 0</td>
                                     <td class="px-4 py-3 border border-gray-300"></td>
                                 </tr>
                                 <tr id="ppnRow" style="display:none;">
-                                    <td colspan="9" class="px-4 py-3 border border-gray-300 text-right">PPN 11%:</td>
+                                    <td colspan="10" class="px-4 py-3 border border-gray-300 text-right">PPN 11%:</td>
                                     <td class="px-4 py-3 border border-gray-300 text-right text-lg" id="ppnHarga">Rp 0</td>
                                     <td class="px-4 py-3 border border-gray-300"></td>
                                 </tr>
                                 <tr class="bg-green-50">
-                                    <td colspan="9" class="px-4 py-3 border border-gray-300 text-right text-xl">TOTAL HARGA:</td>
+                                    <td colspan="10" class="px-4 py-3 border border-gray-300 text-right text-xl">TOTAL HARGA:</td>
                                     <td class="px-4 py-3 border border-gray-300 text-right text-xl text-blue-600" id="totalHarga">Rp 0</td>
                                     <td class="px-4 py-3 border border-gray-300"></td>
                                 </tr>

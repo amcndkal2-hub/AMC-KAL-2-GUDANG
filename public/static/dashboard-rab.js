@@ -223,7 +223,7 @@ function renderMaterialPengadaan(materials) {
   if (materials.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="10" class="px-4 py-8 text-center text-gray-500">
           <i class="fas fa-inbox text-4xl mb-2"></i>
           <p>Tidak ada material dengan status Pengadaan</p>
           <p class="text-sm mt-2">Material akan muncul setelah input gangguan dengan status Pengadaan</p>
@@ -252,6 +252,9 @@ function renderMaterialPengadaan(materials) {
     const disabledClass = isSelected ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
     const rowClass = isSelected ? 'bg-green-50' : 'hover:bg-gray-50'
     
+    // S/N Mesin display
+    const snMesin = item.sn_mesin || '-'
+    
     return `
     <tr class="${rowClass}">
       <td class="px-4 py-3 border text-center">
@@ -264,6 +267,7 @@ function renderMaterialPengadaan(materials) {
       </td>
       <td class="px-4 py-3 border font-mono text-sm">${item.nomor_lh05 || '-'}</td>
       <td class="px-4 py-3 border font-mono text-sm">${item.part_number || '-'}</td>
+      <td class="px-4 py-3 border font-mono text-sm text-blue-600 font-semibold">${snMesin}</td>
       <td class="px-4 py-3 border">${item.material || '-'}</td>
       <td class="px-4 py-3 border">${jenisBadge}</td>
       <td class="px-4 py-3 border text-sm">${item.mesin || '-'}</td>
@@ -314,6 +318,7 @@ function toggleMaterial(materialId) {
       material_gangguan_id: materialId, // Add this for tracking
       nomor_lh05: material.nomor_lh05,
       part_number: material.part_number,
+      sn_mesin: material.sn_mesin || null, // ✅ ADD S/N MESIN!
       material: material.material,
       mesin: material.mesin,
       jumlah: material.jumlah,
@@ -350,9 +355,19 @@ function renderSelectedMaterials() {
   
   section.classList.remove('hidden')
   
-  // Group materials by part_number
+  // Sort by part_number, then by sn_mesin for display order
+  const sortedMaterials = [...selectedMaterials].sort((a, b) => {
+    if (a.part_number !== b.part_number) {
+      return a.part_number.localeCompare(b.part_number)
+    }
+    const snA = a.sn_mesin || ''
+    const snB = b.sn_mesin || ''
+    return snA.localeCompare(snB)
+  })
+  
+  // Group materials by part_number for summary calculations
   const groupedMaterials = {}
-  selectedMaterials.forEach(item => {
+  sortedMaterials.forEach(item => {
     const key = item.part_number
     if (!groupedMaterials[key]) {
       groupedMaterials[key] = []
@@ -360,7 +375,7 @@ function renderSelectedMaterials() {
     groupedMaterials[key].push(item)
   })
   
-  // Build HTML with merged cells
+  // Build HTML with merged cells for part_number and material only
   let html = ''
   let rowNumber = 0
   
@@ -372,25 +387,26 @@ function renderSelectedMaterials() {
     const totalJumlah = items.reduce((sum, item) => sum + item.jumlah, 0)
     const totalSubtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
     
-    // First item of the group (with merged cells)
-    const firstItem = items[0]
-    
     items.forEach((item, index) => {
       rowNumber++
       html += `<tr class="hover:bg-gray-50 bg-white">`
       
-      // No - merged (only first row)
+      // No - merged (only first row of part number group)
       if (index === 0) {
         html += `<td class="px-4 py-3 border border-gray-300 text-center font-semibold" rowspan="${itemCount}">${rowNumber}</td>`
       }
       
-      // Nomor LH05 - always show
+      // Nomor LH05 - always show (each S/N might have different LH05)
       html += `<td class="px-4 py-3 border border-gray-300 font-mono text-sm">${item.nomor_lh05}</td>`
       
       // Part Number - merged (only first row)
       if (index === 0) {
         html += `<td class="px-4 py-3 border border-gray-300 font-mono text-sm" rowspan="${itemCount}">${item.part_number}</td>`
       }
+      
+      // S/N Mesin - always show (this is the key difference!)
+      const snMesin = item.sn_mesin || '-'
+      html += `<td class="px-4 py-3 border border-gray-300 font-mono text-sm text-blue-600 font-semibold">${snMesin}</td>`
       
       // Material - merged (only first row)
       if (index === 0) {
