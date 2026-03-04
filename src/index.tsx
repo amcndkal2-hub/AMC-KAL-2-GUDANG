@@ -2713,6 +2713,7 @@ app.get('/api/kebutuhan-material', async (c) => {
       const stok = stokMasuk - stokKeluar
       
       // Auto-update status based on stock and shipment (konsep 19 Februari)
+      // IMPORTANT: Preserve manual status set by user (Pengadaan, Tunda, Reject)
       let finalStatus = mat.status || 'N/A'
       let snMesin = mat.sn_mesin || null
       
@@ -2722,19 +2723,27 @@ app.get('/api/kebutuhan-material', async (c) => {
         finalStatus = 'N/A' // Reset status to default when S/N is found in status field
       }
       
+      // Define manual statuses that should NOT be overridden by auto-update
+      const manualStatuses = ['Pengadaan', 'Tunda', 'Reject']
+      const isManualStatus = manualStatuses.includes(finalStatus)
+      
       if (isTerkirim) {
         // Priority 1: Material sudah dikirim (ada di transaksi Keluar)
         finalStatus = 'Terkirim'
-      } else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
+      } else if (!isManualStatus && snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
         // Priority 2: Material punya S/N tapi belum dikirim = Tersedia di gudang
+        // BUT: Don't override if user manually set status to Pengadaan/Tunda/Reject
         finalStatus = 'Tersedia'
-      } else if (stok > 0 && (finalStatus === 'N/A' || !finalStatus)) {
+      } else if (!isManualStatus && stok > 0 && (finalStatus === 'N/A' || !finalStatus)) {
         // Priority 3: Material ada stok (dari transaksi Masuk) = Tersedia
+        // BUT: Don't override manual status
         finalStatus = 'Tersedia'
-      } else if (stok === 0 && finalStatus === 'Tersedia') {
+      } else if (!isManualStatus && stok === 0 && finalStatus === 'Tersedia') {
         // Priority 4: Stok habis, kembali ke N/A
+        // BUT: Don't override manual status
         finalStatus = 'N/A'
       }
+      // ELSE: Keep manual status (Pengadaan, Tunda, Reject) as-is
       
       return {
         ...mat,
@@ -2946,9 +2955,9 @@ app.get('/api/kebutuhan-detail', async (c) => {
 app.post('/api/update-material-status', async (c) => {
   try {
     const { env } = c
-    const { nomorLH05, partNumber, status } = await c.req.json()
+    const { nomorLH05, partNumber, status, snMesin } = await c.req.json()
     
-    console.log('📝 Updating material status:', { nomorLH05, partNumber, status })
+    console.log('📝 Updating material status:', { nomorLH05, partNumber, status, snMesin })
     
     // Find gangguan by nomor_lh05
     const gangguan = await env.DB.prepare(`
@@ -2960,23 +2969,23 @@ app.post('/api/update-material-status', async (c) => {
       return c.json({ error: 'Gangguan not found' }, 404)
     }
     
-    // Find material_gangguan record
+    // Find material_gangguan record - INCLUDE sn_mesin to identify exact material
     const material = await env.DB.prepare(`
       SELECT * FROM material_gangguan 
-      WHERE gangguan_id = ? AND part_number = ?
-    `).bind(gangguan.id, partNumber).first()
+      WHERE gangguan_id = ? AND part_number = ? AND (sn_mesin = ? OR (sn_mesin IS NULL AND ? IS NULL))
+    `).bind(gangguan.id, partNumber, snMesin, snMesin).first()
     
     if (!material) {
-      console.error('❌ Material not found:', { gangguan_id: gangguan.id, partNumber })
+      console.error('❌ Material not found:', { gangguan_id: gangguan.id, partNumber, snMesin })
       return c.json({ error: 'Material not found' }, 404)
     }
     
-    // Update status in database
+    // Update status in database - INCLUDE sn_mesin in WHERE clause
     const updateResult = await env.DB.prepare(`
       UPDATE material_gangguan 
       SET status = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE gangguan_id = ? AND part_number = ?
-    `).bind(status, gangguan.id, partNumber).run()
+      WHERE gangguan_id = ? AND part_number = ? AND (sn_mesin = ? OR (sn_mesin IS NULL AND ? IS NULL))
+    `).bind(status, gangguan.id, partNumber, snMesin, snMesin).run()
     
     if (!updateResult.success) {
       console.error('❌ Failed to update status in DB')
@@ -3000,6 +3009,7 @@ app.post('/api/update-material-status', async (c) => {
       message: 'Status berhasil diupdate!',
       nomorLH05,
       partNumber,
+      snMesin,
       status
     })
   } catch (error) {

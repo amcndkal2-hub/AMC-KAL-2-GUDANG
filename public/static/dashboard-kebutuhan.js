@@ -320,7 +320,7 @@ function renderTable() {
       statusColor = 'bg-purple-100 text-purple-800 border-purple-300'
       statusDisplay = `
         <select 
-          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
+          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
           class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
           <option value="Tersedia" ${status === 'Tersedia' || !status ? 'selected' : ''}>Tersedia</option>
           <option value="Pengadaan">Pengadaan (Re-order)</option>
@@ -334,7 +334,7 @@ function renderTable() {
       statusColor = 'bg-blue-100 text-blue-800 border-blue-300'
       statusDisplay = `
         <select 
-          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
+          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
           class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
           <option value="Pengadaan" selected>Pengadaan</option>
           <option value="N/A">N/A</option>
@@ -350,7 +350,7 @@ function renderTable() {
       statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-300'
       statusDisplay = `
         <select 
-          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
+          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
           class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
           <option value="Tunda" selected>Tunda</option>
           <option value="N/A">N/A</option>
@@ -366,7 +366,7 @@ function renderTable() {
       statusColor = 'bg-gray-100 text-gray-800 border-gray-300'
       statusDisplay = `
         <select 
-          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value)"
+          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
           class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
           <option value="N/A" ${status === 'N/A' ? 'selected' : ''}>N/A</option>
           <option value="Pengadaan" ${status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
@@ -413,7 +413,7 @@ function getStatusColor(status) {
   return colors[status] || 'bg-gray-100 text-gray-800'
 }
 
-async function updateStatus(nomorLH05, partNumber, newStatus) {
+async function updateStatus(nomorLH05, partNumber, newStatus, snMesin) {
   try {
     const response = await fetch('/api/update-material-status', {
       method: 'POST',
@@ -423,6 +423,7 @@ async function updateStatus(nomorLH05, partNumber, newStatus) {
       body: JSON.stringify({
         nomorLH05,
         partNumber,
+        snMesin,
         status: newStatus
       })
     })
@@ -430,9 +431,11 @@ async function updateStatus(nomorLH05, partNumber, newStatus) {
     const result = await response.json()
     
     if (result.success) {
-      // Update local data
+      // Update local data - find by LH05 + Part + S/N
       const material = allMaterials.find(m => 
-        m.nomorLH05 === nomorLH05 && m.partNumber === partNumber
+        m.nomorLH05 === nomorLH05 && 
+        m.partNumber === partNumber && 
+        (m.sn_mesin === snMesin || m.snMesin === snMesin)
       )
       if (material) {
         material.status = newStatus
