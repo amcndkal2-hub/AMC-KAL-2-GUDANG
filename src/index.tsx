@@ -9339,19 +9339,43 @@ function getDashboardListRABHTML() {
                 <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
             </div>
 
-            <!-- RAB List -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="overflow-x-auto">
+            <!-- Filter Status -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <div class="flex items-center space-x-4">
+                    <label class="font-semibold text-gray-700">
+                        <i class="fas fa-filter mr-2 text-blue-600"></i>Filter Status:
+                    </label>
+                    <button onclick="filterByStatus('All')" id="btnAll" class="status-filter-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-th-large mr-2"></i>Semua
+                    </button>
+                    <button onclick="filterByStatus('Draft')" id="btnDraft" class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
+                        <i class="fas fa-edit mr-2"></i>Draft
+                    </button>
+                    <button onclick="filterByStatus('Pengadaan')" id="btnPengadaan" class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
+                        <i class="fas fa-shopping-cart mr-2"></i>Pengadaan
+                    </button>
+                    <button onclick="filterByStatus('Tersedia')" id="btnTersedia" class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
+                        <i class="fas fa-check-circle mr-2"></i>Tersedia
+                    </button>
+                    <button onclick="filterByStatus('Masuk Gudang')" id="btnMasukGudang" class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
+                        <i class="fas fa-warehouse mr-2"></i>Masuk Gudang
+                    </button>
+                </div>
+            </div>
+
+            <!-- RAB List with Sticky Header -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
                     <table class="min-w-full border">
-                        <thead class="bg-blue-50">
+                        <thead class="bg-blue-50 sticky top-0 z-10 shadow-md">
                             <tr>
-                                <th class="px-4 py-3 border text-center">No</th>
-                                <th class="px-4 py-3 border text-left">Nomor RAB</th>
-                                <th class="px-4 py-3 border text-center">Tanggal</th>
-                                <th class="px-4 py-3 border text-center">Jumlah Item</th>
-                                <th class="px-4 py-3 border text-right">Total Harga</th>
-                                <th class="px-4 py-3 border text-center">Status</th>
-                                <th class="px-4 py-3 border text-center">Aksi</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50">No</th>
+                                <th class="px-4 py-3 border text-left bg-blue-50">Nomor RAB</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50">Tanggal</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50">Jumlah Item</th>
+                                <th class="px-4 py-3 border text-right bg-blue-50">Total Harga</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50">Status</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">

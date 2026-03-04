@@ -2,7 +2,9 @@
 console.log('Dashboard List RAB loaded')
 
 let allRABList = []
+let filteredRABList = []
 let currentRABDetail = null
+let currentStatusFilter = 'All' // Changed from 'Semua' to 'All'
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,12 +26,86 @@ async function loadRABList() {
     console.log('RAB list loaded:', data)
     
     allRABList = data
-    renderRABList(data)
+    filteredRABList = data
+    
+    // Sort by status priority: Draft > Pengadaan > Tersedia > Masuk Gudang
+    sortRABByStatus()
+    
+    renderRABList(filteredRABList)
     
   } catch (error) {
     console.error('Failed to load RAB list:', error)
     showError('Gagal memuat daftar RAB')
   }
+}
+
+// Sort RAB by status priority
+function sortRABByStatus() {
+  const statusPriority = {
+    'Draft': 1,
+    'Pengadaan': 2,
+    'Tersedia': 3,
+    'Masuk Gudang': 4,
+    'Masuk Gudang (Auto)': 4 // Same as Masuk Gudang
+  }
+  
+  filteredRABList.sort((a, b) => {
+    const priorityA = statusPriority[a.status] || 999
+    const priorityB = statusPriority[b.status] || 999
+    
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB
+    }
+    
+    // If same status, sort by date (newest first)
+    return new Date(b.tanggal_rab) - new Date(a.tanggal_rab)
+  })
+}
+
+// Filter RAB by status
+function filterRABByStatus() {
+  if (currentStatusFilter === 'All') {
+    filteredRABList = [...allRABList]
+  } else if (currentStatusFilter === 'Masuk Gudang') {
+    // Include both "Masuk Gudang" and "Masuk Gudang (Auto)"
+    filteredRABList = allRABList.filter(rab => 
+      rab.status === 'Masuk Gudang' || rab.status === 'Masuk Gudang (Auto)'
+    )
+  } else {
+    filteredRABList = allRABList.filter(rab => rab.status === currentStatusFilter)
+  }
+  
+  // Sort after filtering
+  sortRABByStatus()
+  renderRABList(filteredRABList)
+}
+
+// Handle status filter button click (UPDATED FOR BUTTON INTERFACE)
+function filterByStatus(status) {
+  console.log('Filter by status:', status)
+  currentStatusFilter = status
+  
+  // Update button styling
+  document.querySelectorAll('.status-filter-btn').forEach(btn => {
+    btn.classList.remove('bg-blue-600', 'text-white')
+    btn.classList.add('bg-gray-200', 'text-gray-700')
+  })
+  
+  // Highlight active button
+  const activeBtn = document.getElementById('btn' + status.replace(' ', ''))
+  if (activeBtn) {
+    activeBtn.classList.remove('bg-gray-200', 'text-gray-700')
+    activeBtn.classList.add('bg-blue-600', 'text-white')
+  }
+  
+  // Apply filter
+  filterRABByStatus()
+}
+
+// Handle status filter change (LEGACY - kept for compatibility)
+function handleStatusFilterChange(value) {
+  currentStatusFilter = value
+  filterRABByStatus()
 }
 
 // Render RAB list table
