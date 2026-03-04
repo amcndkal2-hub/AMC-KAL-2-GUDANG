@@ -2666,11 +2666,15 @@ app.get('/api/kebutuhan-material', async (c) => {
     // Get from D1 Database
     let materials = await DB.getAllMaterialKebutuhan(env.DB)
     
-    // DEDUPLICATE: Remove duplicate entries based on nomor_lh05 + part_number combination
+    // DEDUPLICATE: Remove duplicate entries based on nomor_lh05 + part_number + sn_mesin combination
     // Keep the latest entry (highest id) for each unique combination
+    // IMPORTANT: Include sn_mesin in the key so materials with different S/N are treated as separate items
     const uniqueMaterialsMap = new Map()
     materials.forEach((mat: any) => {
-      const key = `${mat.nomor_lh05}-${mat.part_number}`
+      // Use nomor_lh05 + part_number + sn_mesin as unique key
+      // This ensures materials with same part but different S/N appear as separate rows
+      const snMesin = mat.sn_mesin || 'NO_SN' // Handle null/empty S/N
+      const key = `${mat.nomor_lh05}-${mat.part_number}-${snMesin}`
       const existing = uniqueMaterialsMap.get(key)
       // Keep the one with higher id (latest insert)
       if (!existing || mat.id > existing.id) {
@@ -3017,11 +3021,13 @@ app.get('/api/material-pengadaan', async (c) => {
     const { env } = c
     let materials = await DB.getMaterialPengadaan(env.DB)
     
-    // DEDUPLICATE: Remove duplicate materials based on nomor_lh05 + part_number
+    // DEDUPLICATE: Remove duplicate materials based on nomor_lh05 + part_number + sn_mesin
     // Keep the one with highest id (latest insert)
+    // IMPORTANT: Include sn_mesin in the key so materials with different S/N are treated as separate items
     const uniqueMaterialsMap = new Map()
     materials.forEach((mat: any) => {
-      const key = `${mat.nomor_lh05}-${mat.part_number}`
+      const snMesin = mat.sn_mesin || 'NO_SN' // Handle null/empty S/N
+      const key = `${mat.nomor_lh05}-${mat.part_number}-${snMesin}`
       const existing = uniqueMaterialsMap.get(key)
       if (!existing || mat.id > existing.id) {
         uniqueMaterialsMap.set(key, mat)
