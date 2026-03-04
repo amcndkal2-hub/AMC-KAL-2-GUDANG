@@ -2969,30 +2969,46 @@ app.post('/api/update-material-status', async (c) => {
       return c.json({ error: 'Gangguan not found' }, 404)
     }
     
-    // Find material_gangguan record - INCLUDE sn_mesin to identify exact material
-    const material = await env.DB.prepare(`
-      SELECT * FROM material_gangguan 
-      WHERE gangguan_id = ? AND part_number = ? AND (sn_mesin = ? OR (sn_mesin IS NULL AND ? IS NULL))
-    `).bind(gangguan.id, partNumber, snMesin, snMesin).first()
+    // Check if there are multiple materials with same LH05 + Part but different S/N
+    const allMaterialsWithSamePart = await env.DB.prepare(`
+      SELECT id, sn_mesin FROM material_gangguan 
+      WHERE gangguan_id = ? AND part_number = ?
+    `).bind(gangguan.id, partNumber).all()
     
-    if (!material) {
-      console.error('❌ Material not found:', { gangguan_id: gangguan.id, partNumber, snMesin })
-      return c.json({ error: 'Material not found' }, 404)
+    const materialsCount = allMaterialsWithSamePart.results?.length || 0
+    console.log(`📦 Found ${materialsCount} materials with LH05 ${nomorLH05} + Part ${partNumber}`)
+    
+    // Strategy: If multiple materials exist (e.g., 8 DEEPSEA with different S/N),
+    // update ALL of them at once to keep them in sync
+    let updateResult
+    let updatedCount = 0
+    
+    if (materialsCount > 1) {
+      // Multiple materials detected → Bulk update ALL materials with same LH05 + Part
+      console.log(`🔄 Bulk updating ${materialsCount} materials with same part number...`)
+      updateResult = await env.DB.prepare(`
+        UPDATE material_gangguan 
+        SET status = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE gangguan_id = ? AND part_number = ?
+      `).bind(status, gangguan.id, partNumber).run()
+      updatedCount = updateResult.meta.changes || 0
+      console.log(`✅ Bulk update completed: ${updatedCount} materials updated`)
+    } else {
+      // Single material → Update only the specific one with S/N match
+      console.log(`🔄 Single material update with S/N: ${snMesin}`)
+      updateResult = await env.DB.prepare(`
+        UPDATE material_gangguan 
+        SET status = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE gangguan_id = ? AND part_number = ? AND (sn_mesin = ? OR (sn_mesin IS NULL AND ? IS NULL))
+      `).bind(status, gangguan.id, partNumber, snMesin, snMesin).run()
+      updatedCount = updateResult.meta.changes || 0
+      console.log(`✅ Single update completed: ${updatedCount} material updated`)
     }
-    
-    // Update status in database - INCLUDE sn_mesin in WHERE clause
-    const updateResult = await env.DB.prepare(`
-      UPDATE material_gangguan 
-      SET status = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE gangguan_id = ? AND part_number = ? AND (sn_mesin = ? OR (sn_mesin IS NULL AND ? IS NULL))
-    `).bind(status, gangguan.id, partNumber, snMesin, snMesin).run()
     
     if (!updateResult.success) {
       console.error('❌ Failed to update status in DB')
       return c.json({ error: 'Database update failed' }, 500)
     }
-    
-    console.log('✅ Status updated successfully in DB')
     
     // Also update in-memory cache for backward compatibility
     const gangguanCache = gangguanTransactions.find(g => g.nomorLH05 === nomorLH05)
@@ -3004,13 +3020,19 @@ app.post('/api/update-material-status', async (c) => {
       }
     }
     
+    const message = materialsCount > 1 
+      ? `Status berhasil diupdate untuk ${updatedCount} material dengan part number yang sama!`
+      : 'Status berhasil diupdate!'
+    
     return c.json({ 
       success: true, 
-      message: 'Status berhasil diupdate!',
+      message,
       nomorLH05,
       partNumber,
       snMesin,
-      status
+      status,
+      updatedCount,
+      bulkUpdate: materialsCount > 1
     })
   } catch (error) {
     console.error('❌ Update status error:', error)
@@ -3046,6 +3068,29 @@ app.get('/api/material-pengadaan', async (c) => {
     materials = Array.from(uniqueMaterialsMap.values())
     
     console.log('✅ material-pengadaan API: Returning', materials.length, 'unique materials')
+    
+    // DEBUG: Log detailed material info for debugging
+    if (materials.length > 0) {
+      console.log('📋 Sample materials (first 5):')
+      materials.slice(0, 5).forEach((mat: any, idx: number) => {
+        console.log(`  ${idx + 1}. LH05: ${mat.nomor_lh05}, Part: ${mat.part_number}, S/N: ${mat.sn_mesin}, Material: ${mat.material}`)
+      })
+    }
+    
+    // DEBUG: Group by LH05 + Part to show counts
+    const groupedByPart = new Map()
+    materials.forEach((mat: any) => {
+      const key = `${mat.nomor_lh05}-${mat.part_number}`
+      if (!groupedByPart.has(key)) {
+        groupedByPart.set(key, [])
+      }
+      groupedByPart.get(key).push(mat.sn_mesin || 'NO_SN')
+    })
+    
+    console.log('📊 Materials grouped by LH05 + Part:')
+    groupedByPart.forEach((snList: any[], key: string) => {
+      console.log(`  ${key}: ${snList.length} materials, S/N: [${snList.join(', ')}]`)
+    })
     return c.json(materials)
   } catch (error) {
     console.error('Failed to get material pengadaan:', error)
