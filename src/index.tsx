@@ -7288,10 +7288,10 @@ function getDashboardPengadaanHTML() {
                         <table class="w-full">
                             <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                 <tr>
+                                    <th class="px-6 py-4 text-left text-base font-semibold w-48">No. RAB</th>
                                     <th class="px-6 py-4 text-left text-base font-semibold w-52">Nomor Ijin Prinsip</th>
                                     <th class="px-6 py-4 text-left text-base font-semibold w-32">Jenis Item</th>
                                     <th class="px-6 py-4 text-right text-base font-semibold w-44">Nilai + PPN</th>
-                                    <th class="px-6 py-4 text-left text-base font-semibold">Project</th>
                                     <th class="px-6 py-4 text-left text-base font-semibold">Keterangan</th>
                                     <th class="px-6 py-4 text-center text-base font-semibold w-56">Status</th>
                                 </tr>
@@ -7470,14 +7470,14 @@ function getDashboardPengadaanHTML() {
                 }
                 
                 tbody.innerHTML = filteredData.map((item, index) => {
-                    // Column mapping based on Kolom_X (FIXED)
+                    // Column mapping based on Kolom_X
+                    const nomorRAB = '-';  // Placeholder for now
                     const nomorIjin = item.Kolom_2 || item['Kolom_2'] || '-';
                     const jenisItem = item.Kolom_6 || item['Kolom_6'] || '-';
                     const totalNilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString();
                     // Remove dots using split/join (no regex escape issues)
                     const totalNilai = parseFloat(totalNilaiStr.split('.').join('')) || 0;
-                    const project = item.Kolom_10 || item['Kolom_10'] || '-';  // FIXED: was Kolom_4
-                    const keterangan = item.Kolom_11 || item['Kolom_11'] || '-';  // FIXED: was Kolom_5
+                    const keterangan = item.Kolom_11 || item['Kolom_11'] || '-';
                     const status = item.Kolom_12 || item['Kolom_12'] || '-';
                     
                     // Status badge color
@@ -7490,6 +7490,9 @@ function getDashboardPengadaanHTML() {
                     
                     return \`
                     <tr class="border-b hover:bg-gray-50">
+                        <td class="px-6 py-4 text-base text-gray-600">
+                            <span class="text-gray-400">\${nomorRAB}</span>
+                        </td>
                         <td class="px-6 py-4 text-base text-gray-800">
                             <span class="font-mono">\${nomorIjin}</span>
                         </td>
@@ -7500,11 +7503,6 @@ function getDashboardPengadaanHTML() {
                         </td>
                         <td class="px-6 py-4 text-right text-base font-semibold text-gray-800">
                             \${formatRupiah(totalNilai)}
-                        </td>
-                        <td class="px-6 py-4 text-base text-gray-700">
-                            <div class="line-clamp-3" title="\${project}">
-                                \${project}
-                            </div>
                         </td>
                         <td class="px-6 py-4 text-base text-gray-600">
                             <div class="line-clamp-3" title="\${keterangan}">
