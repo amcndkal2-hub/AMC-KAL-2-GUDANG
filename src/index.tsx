@@ -7247,28 +7247,138 @@ function getDashboardPengadaanHTML() {
 
         <script src="/static/auth-check.js"></script>
         <script>
-            // Empty data - ready for JSON input
+            // Google Sheets JSON URL
+            const PENGADAAN_URL = 'https://script.google.com/macros/s/AKfycbynUyVrOfSXn-X6V4HFE6YbanXJZo2tBGWEvBbTMie1DyK2wL0RM9UOvVpfoWDmuxhm/exec';
+            
             let pengadaanData = [];
+            let filteredData = [];
 
             // Load data on page load
             document.addEventListener('DOMContentLoaded', function() {
-                // Initialize empty state
-                updateSummary();
-                displayTable();
+                loadPengadaanData();
             });
 
+            async function loadPengadaanData() {
+                try {
+                    console.log('Fetching data from Google Sheets...');
+                    const response = await fetch(PENGADAAN_URL);
+                    const jsonData = await response.json();
+                    
+                    // Extract data from "data KR" key
+                    const allData = jsonData['data KR'] || [];
+                    console.log('Total rows fetched:', allData.length);
+                    
+                    // Filter only PEMBANGKITAN (skip header row at index 0)
+                    pengadaanData = allData.slice(1).filter(item => {
+                        const bidang = item.Kolom_3 || item['Kolom_3'] || '';
+                        return bidang.toUpperCase().includes('PEMBANGKITAN');
+                    });
+                    
+                    console.log('Filtered PEMBANGKITAN rows:', pengadaanData.length);
+                    filteredData = pengadaanData;
+                    
+                    // Update summary
+                    updateSummary();
+                    
+                    // Display table
+                    displayTable();
+                    
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    document.getElementById('pengadaanTable').innerHTML = \`
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-red-500">
+                                <i class="fas fa-exclamation-triangle text-3xl mb-3"></i>
+                                <p>Gagal memuat data pengadaan</p>
+                            </td>
+                        </tr>
+                    \`;
+                }
+            }
+
             function updateSummary() {
-                // Set all to 0 or "-"
-                document.getElementById('totalPengadaan').textContent = '0';
-                document.getElementById('totalNilai').textContent = '-';
-                document.getElementById('totalMitra').textContent = '0';
+                // Total pengadaan
+                document.getElementById('totalPengadaan').textContent = filteredData.length;
+                
+                // Total nilai (from Kolom_9: Total Nilai + PPN)
+                const totalNilai = filteredData.reduce((sum, item) => {
+                    const nilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString().replace(/\./g, '');
+                    const nilai = parseFloat(nilaiStr) || 0;
+                    return sum + nilai;
+                }, 0);
+                document.getElementById('totalNilai').textContent = formatRupiah(totalNilai);
+                
+                // Total project (unique Unit Pelaksana - Kolom_4)
+                const uniqueProjects = new Set(filteredData.map(item => 
+                    item.Kolom_4 || item['Kolom_4'] || ''
+                ).filter(p => p));
+                document.getElementById('totalMitra').textContent = uniqueProjects.size;
             }
 
             function displayTable() {
                 const tbody = document.getElementById('pengadaanTable');
                 
-                // Always show empty state
-                tbody.innerHTML = '';
+                if (filteredData.length === 0) {
+                    tbody.innerHTML = \`
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                <i class="fas fa-inbox text-3xl mb-3"></i>
+                                <p>Tidak ada data PEMBANGKIT</p>
+                            </td>
+                        </tr>
+                    \`;
+                    return;
+                }
+                
+                tbody.innerHTML = filteredData.map((item, index) => {
+                    // Column mapping based on Kolom_X
+                    const nomorIjin = item.Kolom_2 || item['Kolom_2'] || '-';
+                    const jenisItem = item.Kolom_6 || item['Kolom_6'] || '-';
+                    const totalNilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString().replace(/\./g, '');
+                    const totalNilai = parseFloat(totalNilaiStr) || 0;
+                    const project = item.Kolom_4 || item['Kolom_4'] || '-';
+                    const keterangan = item.Kolom_5 || item['Kolom_5'] || '-';
+                    const status = item.Kolom_12 || item['Kolom_12'] || '-';
+                    
+                    // Status badge color
+                    let statusColor = 'bg-gray-100 text-gray-800';
+                    if (status.includes('Acc Direktur') || status.includes('Disetujui')) {
+                        statusColor = 'bg-green-100 text-green-800';
+                    } else if (status.includes('Menunggu')) {
+                        statusColor = 'bg-yellow-100 text-yellow-800';
+                    }
+                    
+                    return \`
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-800">
+                            <span class="font-mono">\${nomorIjin}</span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-800">
+                            <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                                \${jenisItem}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800">
+                            \${formatRupiah(totalNilai)}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">
+                            <div class="line-clamp-2" title="\${project}">
+                                \${project}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            <div class="line-clamp-2" title="\${keterangan}">
+                                \${keterangan}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm">
+                            <span class="inline-block px-3 py-1 \${statusColor} rounded-full text-xs font-semibold">
+                                \${status}
+                            </span>
+                        </td>
+                    </tr>
+                    \`;
+                }).join('');
             }
 
             function formatRupiah(number) {
