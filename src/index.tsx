@@ -7181,49 +7181,109 @@ function getDashboardPengadaanHTML() {
             </div>
         </nav>
 
-        <!-- Summary Cards with padding -->
-        <div class="px-6 py-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-600 text-sm">Total Pengadaan</p>
-                            <h3 id="totalPengadaan" class="text-3xl font-bold text-blue-600">-</h3>
-                        </div>
-                        <div class="bg-blue-100 p-4 rounded-full">
-                            <i class="fas fa-shopping-cart text-3xl text-blue-600"></i>
-                        </div>
+        <!-- Main Layout: Sidebar + Content -->
+        <div class="flex">
+            <!-- Left Sidebar Filter -->
+            <div class="w-72 bg-gray-800 text-white min-h-screen p-6">
+                <div class="mb-6">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-filter mr-2"></i>Filter Data
+                    </h3>
+                    
+                    <!-- Filter Project -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold mb-2">Project</label>
+                        <select id="filterProject" class="w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Project</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filter Tahun -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2">Tahun</label>
+                        <select id="filterTahun" class="w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Tahun</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Buttons -->
+                    <div class="space-y-2">
+                        <button onclick="applyFilter()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center">
+                            <i class="fas fa-search mr-2"></i>Terapkan Filter
+                        </button>
+                        <button onclick="resetFilter()" class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center">
+                            <i class="fas fa-redo mr-2"></i>Reset Filter
+                        </button>
                     </div>
                 </div>
-
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-600 text-sm">Total Nilai</p>
-                            <h3 id="totalNilai" class="text-2xl font-bold text-green-600">-</h3>
+                
+                <!-- Statistics Section -->
+                <div class="border-t border-gray-700 pt-6">
+                    <h4 class="text-sm font-semibold mb-3 flex items-center">
+                        <i class="fas fa-chart-bar mr-2"></i>Statistik
+                    </h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Total Pengadaan:</span>
+                            <span class="font-bold" id="statTotalPengadaan">0</span>
                         </div>
-                        <div class="bg-green-100 p-4 rounded-full">
-                            <i class="fas fa-money-bill-wave text-3xl text-green-600"></i>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Total Nilai:</span>
+                            <span class="font-bold text-green-400" id="statTotalNilai">Rp 0</span>
                         </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-600 text-sm">Total Mitra</p>
-                            <h3 id="totalMitra" class="text-3xl font-bold text-purple-600">-</h3>
-                        </div>
-                        <div class="bg-purple-100 p-4 rounded-full">
-                            <i class="fas fa-handshake text-3xl text-purple-600"></i>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Total Project:</span>
+                            <span class="font-bold text-purple-400" id="statTotalProject">0</span>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+            
+            <!-- Right Content Area -->
+            <div class="flex-1">
+                <!-- Summary Cards -->
+                <div class="px-6 py-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Total Pengadaan</p>
+                                    <h3 id="totalPengadaan" class="text-3xl font-bold text-blue-600">-</h3>
+                                </div>
+                                <div class="bg-blue-100 p-4 rounded-full">
+                                    <i class="fas fa-shopping-cart text-3xl text-blue-600"></i>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Table with left padding -->
-        <div class="bg-white shadow-md overflow-hidden ml-6">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Total Nilai</p>
+                                    <h3 id="totalNilai" class="text-2xl font-bold text-green-600">-</h3>
+                                </div>
+                                <div class="bg-green-100 p-4 rounded-full">
+                                    <i class="fas fa-money-bill-wave text-3xl text-green-600"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Total Project</p>
+                                    <h3 id="totalMitra" class="text-3xl font-bold text-purple-600">-</h3>
+                                </div>
+                                <div class="bg-purple-100 p-4 rounded-full">
+                                    <i class="fas fa-handshake text-3xl text-purple-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="bg-white shadow-md overflow-hidden ml-6 mr-6">
                     <div class="overflow-x-auto" style="max-height: calc(100vh - 400px); overflow-y: auto;">
                         <table class="w-full">
                             <thead class="bg-blue-600 text-white sticky top-0 z-10">
@@ -7242,6 +7302,8 @@ function getDashboardPengadaanHTML() {
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
 
         <script src="/static/auth-check.js"></script>
         <script>
@@ -7275,6 +7337,9 @@ function getDashboardPengadaanHTML() {
                     console.log('Filtered PEMBANGKITAN rows:', pengadaanData.length);
                     filteredData = pengadaanData;
                     
+                    // Populate filter dropdowns
+                    populateFilters();
+                    
                     // Update summary
                     updateSummary();
                     
@@ -7294,9 +7359,80 @@ function getDashboardPengadaanHTML() {
                 }
             }
 
+            function populateFilters() {
+                // Get unique projects (Kolom_10)
+                const projects = [...new Set(pengadaanData.map(item => 
+                    item.Kolom_10 || item['Kolom_10'] || ''
+                ).filter(p => p))].sort();
+                
+                const projectSelect = document.getElementById('filterProject');
+                projectSelect.innerHTML = '<option value="">Semua Project</option>';
+                projects.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project;
+                    option.textContent = project;
+                    projectSelect.appendChild(option);
+                });
+                
+                // Get unique years from last 4 digits of Nomor Ijin Prinsip (Kolom_2)
+                const years = [...new Set(pengadaanData.map(item => {
+                    const nomorIjin = item.Kolom_2 || item['Kolom_2'] || '';
+                    const yearMatch = nomorIjin.match(/(\d{4})$/);
+                    return yearMatch ? yearMatch[1] : '';
+                }).filter(y => y))].sort().reverse();
+                
+                const tahunSelect = document.getElementById('filterTahun');
+                tahunSelect.innerHTML = '<option value="">Semua Tahun</option>';
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    tahunSelect.appendChild(option);
+                });
+                
+                console.log('Filters populated - Projects:', projects.length, 'Years:', years);
+            }
+
+            function applyFilter() {
+                const selectedProject = document.getElementById('filterProject').value;
+                const selectedTahun = document.getElementById('filterTahun').value;
+                
+                filteredData = pengadaanData.filter(item => {
+                    // Filter by Project
+                    if (selectedProject) {
+                        const project = item.Kolom_10 || item['Kolom_10'] || '';
+                        if (project !== selectedProject) return false;
+                    }
+                    
+                    // Filter by Tahun (from last 4 digits of Nomor Ijin Prinsip)
+                    if (selectedTahun) {
+                        const nomorIjin = item.Kolom_2 || item['Kolom_2'] || '';
+                        const yearMatch = nomorIjin.match(/(\d{4})$/);
+                        const year = yearMatch ? yearMatch[1] : '';
+                        if (year !== selectedTahun) return false;
+                    }
+                    
+                    return true;
+                });
+                
+                console.log('Filtered results:', filteredData.length);
+                updateSummary();
+                displayTable();
+            }
+
+            function resetFilter() {
+                document.getElementById('filterProject').value = '';
+                document.getElementById('filterTahun').value = '';
+                filteredData = pengadaanData;
+                updateSummary();
+                displayTable();
+            }
+
             function updateSummary() {
                 // Total pengadaan
-                document.getElementById('totalPengadaan').textContent = filteredData.length;
+                const totalCount = filteredData.length;
+                document.getElementById('totalPengadaan').textContent = totalCount;
+                document.getElementById('statTotalPengadaan').textContent = totalCount;
                 
                 // Total nilai (from Kolom_9: Total Nilai + PPN)
                 const totalNilai = filteredData.reduce((sum, item) => {
@@ -7305,13 +7441,17 @@ function getDashboardPengadaanHTML() {
                     const nilai = parseFloat(nilaiStr.split('.').join('')) || 0;
                     return sum + nilai;
                 }, 0);
-                document.getElementById('totalNilai').textContent = formatRupiah(totalNilai);
+                const formattedNilai = formatRupiah(totalNilai);
+                document.getElementById('totalNilai').textContent = formattedNilai;
+                document.getElementById('statTotalNilai').textContent = formattedNilai;
                 
                 // Total project (unique Project - Kolom_10)
                 const uniqueProjects = new Set(filteredData.map(item => 
                     item.Kolom_10 || item['Kolom_10'] || ''
                 ).filter(p => p));
-                document.getElementById('totalMitra').textContent = uniqueProjects.size;
+                const projectCount = uniqueProjects.size;
+                document.getElementById('totalMitra').textContent = projectCount;
+                document.getElementById('statTotalProject').textContent = projectCount;
             }
 
             function displayTable() {
