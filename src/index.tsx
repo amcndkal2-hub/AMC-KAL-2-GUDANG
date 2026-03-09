@@ -7181,7 +7181,7 @@ function getDashboardPengadaanHTML() {
             </div>
         </nav>
 
-        <div class="container mx-auto p-6">
+        <div class="max-w-[1600px] mx-auto p-6">
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div class="bg-white rounded-lg shadow-md p-6">
@@ -7227,12 +7227,12 @@ function getDashboardPengadaanHTML() {
                         <table class="w-full">
                             <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">Nomor Ijin Prinsip</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">Jenis Item</th>
-                                    <th class="px-4 py-3 text-right text-sm font-semibold">Total Nilai + PPN (Rp)</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">Project</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">Keterangan</th>
-                                    <th class="px-4 py-3 text-center text-sm font-semibold">Status</th>
+                                    <th class="px-6 py-4 text-left text-base font-semibold w-52">Nomor Ijin Prinsip</th>
+                                    <th class="px-6 py-4 text-left text-base font-semibold w-32">Jenis Item</th>
+                                    <th class="px-6 py-4 text-right text-base font-semibold w-44">Total Nilai + PPN (Rp)</th>
+                                    <th class="px-6 py-4 text-left text-base font-semibold">Project</th>
+                                    <th class="px-6 py-4 text-left text-base font-semibold">Keterangan</th>
+                                    <th class="px-6 py-4 text-center text-base font-semibold w-56">Status</th>
                                 </tr>
                             </thead>
                             <tbody id="pengadaanTable">
@@ -7352,29 +7352,29 @@ function getDashboardPengadaanHTML() {
                     
                     return \`
                     <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-3 text-sm text-gray-800">
+                        <td class="px-6 py-4 text-base text-gray-800">
                             <span class="font-mono">\${nomorIjin}</span>
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-800">
-                            <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                        <td class="px-6 py-4 text-base text-gray-800">
+                            <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm font-semibold">
                                 \${jenisItem}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800">
+                        <td class="px-6 py-4 text-right text-base font-semibold text-gray-800">
                             \${formatRupiah(totalNilai)}
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-700">
-                            <div class="line-clamp-2" title="\${project}">
+                        <td class="px-6 py-4 text-base text-gray-700">
+                            <div class="line-clamp-3" title="\${project}">
                                 \${project}
                             </div>
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-600">
-                            <div class="line-clamp-2" title="\${keterangan}">
+                        <td class="px-6 py-4 text-base text-gray-600">
+                            <div class="line-clamp-3" title="\${keterangan}">
                                 \${keterangan}
                             </div>
                         </td>
-                        <td class="px-4 py-3 text-center text-sm">
-                            <span class="inline-block px-3 py-1 \${statusColor} rounded-full text-xs font-semibold">
+                        <td class="px-6 py-4 text-center text-base">
+                            <span class="inline-block px-4 py-2 \${statusColor} rounded-full text-sm font-semibold">
                                 \${status}
                             </span>
                         </td>
