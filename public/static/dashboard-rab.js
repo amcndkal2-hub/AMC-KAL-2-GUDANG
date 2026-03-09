@@ -555,23 +555,18 @@ async function createRAB() {
     }
     
     // Confirm
+    // Subtotal already includes ROK (applied per material)
     const subtotal = selectedMaterials.reduce((sum, item) => sum + item.subtotal, 0)
     const rokPercentage = parseFloat(document.getElementById('rokPercentage')?.value) || 0
-    const rok = rokPercentage > 0 ? (subtotal * rokPercentage / 100) : 0
     const usePPN = document.getElementById('usePPN')?.checked || false
-    const subtotalAfterROK = subtotal + rok
-    const ppn = usePPN ? subtotalAfterROK * 0.11 : 0
-    const totalHarga = subtotalAfterROK + ppn
+    const ppn = usePPN ? subtotal * 0.11 : 0
+    const totalHarga = subtotal + ppn
     
     let confirmMessage = `Create RAB dengan:\n\n` +
       `• Jenis RAB: ${jenisRAB}\n` +
       `• Tanggal: ${tanggalRAB}\n` +
       `• Total Material: ${selectedMaterials.length} items\n` +
-      `• Subtotal: ${formatRupiah(subtotal)}\n`
-    
-    if (rokPercentage > 0) {
-      confirmMessage += `• ROK ${rokPercentage}%: ${formatRupiah(rok)}\n`
-    }
+      `• Subtotal (termasuk ROK ${rokPercentage}%): ${formatRupiah(subtotal)}\n`
     
     if (usePPN) {
       confirmMessage += `• PPN 11%: ${formatRupiah(ppn)}\n`
@@ -591,7 +586,7 @@ async function createRAB() {
       tanggal_rab: tanggalRAB,
       jenis_rab: jenisRAB,
       rok_percentage: rokPercentage,
-      rok_amount: rok,
+      rok_amount: 0, // ROK already included in item prices
       use_ppn: usePPN,
       ppn_amount: ppn,
       items: selectedMaterials.map(item => ({
@@ -601,7 +596,7 @@ async function createRAB() {
         mesin: item.mesin || '',
         jumlah: item.jumlah,
         unit_uld: item.unit_uld || '',
-        harga_satuan: item.harga_satuan,
+        harga_satuan: item.harga_satuan, // Already includes ROK
         subtotal: item.subtotal
       })),
       status: 'Draft',
