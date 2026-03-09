@@ -7626,18 +7626,26 @@ function getDashboardPengadaanHTML() {
                     
                     // Build dropdown options for RAB
                     const savedRAB = rabLinks[nomorIjin] || '';
-                    const rabOptions = availableRAB.map(rab => {
-                        const selected = rab.nomor_rab === savedRAB ? 'selected' : '';
-                        return \`<option value="\${rab.nomor_rab}" \${selected}>\${rab.nomor_rab}</option>\`;
-                    }).join('');
+                    
+                    // If this row has saved RAB, show it as selected (even if status changed)
+                    let rabOptions = '';
+                    if (savedRAB) {
+                        rabOptions = \`<option value="\${savedRAB}" selected>\${savedRAB} ✓</option>\`;
+                    } else {
+                        // Show available Draft RAB
+                        rabOptions = availableRAB.map(rab => {
+                            return \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab}</option>\`;
+                        }).join('');
+                    }
                     
                     return \`
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-3 text-base">
                             <select 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 \${savedRAB ? 'bg-gray-100' : ''}"
                                 data-ijin-prinsip="\${nomorIjin}"
-                                onchange="handleRABSelection(this)">
+                                onchange="handleRABSelection(this)"
+                                \${savedRAB ? 'disabled' : ''}>
                                 <option value="">- Pilih RAB -</option>
                                 \${rabOptions}
                             </select>
