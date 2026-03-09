@@ -7181,48 +7181,49 @@ function getDashboardPengadaanHTML() {
             </div>
         </nav>
 
-        <div class="max-w-[1600px] mx-auto p-6">
-                <!-- Summary Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-600 text-sm">Total Pengadaan</p>
-                                <h3 id="totalPengadaan" class="text-3xl font-bold text-blue-600">-</h3>
-                            </div>
-                            <div class="bg-blue-100 p-4 rounded-full">
-                                <i class="fas fa-shopping-cart text-3xl text-blue-600"></i>
-                            </div>
+        <!-- Summary Cards with padding -->
+        <div class="px-6 py-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Total Pengadaan</p>
+                            <h3 id="totalPengadaan" class="text-3xl font-bold text-blue-600">-</h3>
                         </div>
-                    </div>
-
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-600 text-sm">Total Nilai</p>
-                                <h3 id="totalNilai" class="text-2xl font-bold text-green-600">-</h3>
-                            </div>
-                            <div class="bg-green-100 p-4 rounded-full">
-                                <i class="fas fa-money-bill-wave text-3xl text-green-600"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-600 text-sm">Total Mitra</p>
-                                <h3 id="totalMitra" class="text-3xl font-bold text-purple-600">-</h3>
-                            </div>
-                            <div class="bg-purple-100 p-4 rounded-full">
-                                <i class="fas fa-handshake text-3xl text-purple-600"></i>
-                            </div>
+                        <div class="bg-blue-100 p-4 rounded-full">
+                            <i class="fas fa-shopping-cart text-3xl text-blue-600"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- Table -->
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Total Nilai</p>
+                            <h3 id="totalNilai" class="text-2xl font-bold text-green-600">-</h3>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded-full">
+                            <i class="fas fa-money-bill-wave text-3xl text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Total Mitra</p>
+                            <h3 id="totalMitra" class="text-3xl font-bold text-purple-600">-</h3>
+                        </div>
+                        <div class="bg-purple-100 p-4 rounded-full">
+                            <i class="fas fa-handshake text-3xl text-purple-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Full Width (no container) -->
+        <div class="bg-white shadow-md overflow-hidden">
                     <div class="overflow-x-auto" style="max-height: calc(100vh - 400px); overflow-y: auto;">
                         <table class="w-full">
                             <thead class="bg-blue-600 text-white sticky top-0 z-10">
@@ -7241,9 +7242,6 @@ function getDashboardPengadaanHTML() {
                         </table>
                     </div>
                 </div>
-
-                <!-- Pagination removed - showing all data with scroll -->
-        </div>
 
         <script src="/static/auth-check.js"></script>
         <script>
