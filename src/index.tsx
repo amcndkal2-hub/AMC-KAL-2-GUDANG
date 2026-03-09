@@ -7147,34 +7147,34 @@ function getDashboardPengadaanHTML() {
         <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
                     </a>
-                    <a href="/dashboard/analytics" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/analytics" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-tools mr-1"></i>Gangguan
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/pengadaan" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
+                    <a href="/dashboard/pengadaan" class="px-4 py-2 bg-blue-800 rounded text-lg font-bold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
-                    <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
+                    <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-lg font-bold">
                         <i class="fas fa-sign-out-alt mr-1"></i>Logout
                     </button>
                 </div>
