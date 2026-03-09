@@ -7302,8 +7302,9 @@ function getDashboardPengadaanHTML() {
                 
                 // Total nilai (from Kolom_9: Total Nilai + PPN)
                 const totalNilai = filteredData.reduce((sum, item) => {
-                    const nilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString().replace(/\./g, '');
-                    const nilai = parseFloat(nilaiStr) || 0;
+                    const nilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString();
+                    // Remove dots using split/join (no regex needed)
+                    const nilai = parseFloat(nilaiStr.split('.').join('')) || 0;
                     return sum + nilai;
                 }, 0);
                 document.getElementById('totalNilai').textContent = formatRupiah(totalNilai);
@@ -7334,8 +7335,9 @@ function getDashboardPengadaanHTML() {
                     // Column mapping based on Kolom_X (FIXED)
                     const nomorIjin = item.Kolom_2 || item['Kolom_2'] || '-';
                     const jenisItem = item.Kolom_6 || item['Kolom_6'] || '-';
-                    const totalNilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString().replace(/\./g, '');
-                    const totalNilai = parseFloat(totalNilaiStr) || 0;
+                    const totalNilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString();
+                    // Remove dots using split/join (no regex escape issues)
+                    const totalNilai = parseFloat(totalNilaiStr.split('.').join('')) || 0;
                     const project = item.Kolom_10 || item['Kolom_10'] || '-';  // FIXED: was Kolom_4
                     const keterangan = item.Kolom_11 || item['Kolom_11'] || '-';  // FIXED: was Kolom_5
                     const status = item.Kolom_12 || item['Kolom_12'] || '-';
