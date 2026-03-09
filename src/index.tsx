@@ -7308,9 +7308,9 @@ function getDashboardPengadaanHTML() {
                 }, 0);
                 document.getElementById('totalNilai').textContent = formatRupiah(totalNilai);
                 
-                // Total project (unique Unit Pelaksana - Kolom_4)
+                // Total project (unique Project - Kolom_10)
                 const uniqueProjects = new Set(filteredData.map(item => 
-                    item.Kolom_4 || item['Kolom_4'] || ''
+                    item.Kolom_10 || item['Kolom_10'] || ''
                 ).filter(p => p));
                 document.getElementById('totalMitra').textContent = uniqueProjects.size;
             }
@@ -7331,13 +7331,13 @@ function getDashboardPengadaanHTML() {
                 }
                 
                 tbody.innerHTML = filteredData.map((item, index) => {
-                    // Column mapping based on Kolom_X
+                    // Column mapping based on Kolom_X (FIXED)
                     const nomorIjin = item.Kolom_2 || item['Kolom_2'] || '-';
                     const jenisItem = item.Kolom_6 || item['Kolom_6'] || '-';
                     const totalNilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString().replace(/\./g, '');
                     const totalNilai = parseFloat(totalNilaiStr) || 0;
-                    const project = item.Kolom_4 || item['Kolom_4'] || '-';
-                    const keterangan = item.Kolom_5 || item['Kolom_5'] || '-';
+                    const project = item.Kolom_10 || item['Kolom_10'] || '-';  // FIXED: was Kolom_4
+                    const keterangan = item.Kolom_11 || item['Kolom_11'] || '-';  // FIXED: was Kolom_5
                     const status = item.Kolom_12 || item['Kolom_12'] || '-';
                     
                     // Status badge color
