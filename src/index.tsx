@@ -7227,13 +7227,12 @@ function getDashboardPengadaanHTML() {
                         <table class="w-full">
                             <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">No. Kontrak</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold">Mitra</th>
-                                    <th class="px-4 py-3 text-center text-sm font-semibold">No. PO</th>
-                                    <th class="px-4 py-3 text-center text-sm font-semibold">No. GRPO</th>
-                                    <th class="px-4 py-3 text-right text-sm font-semibold">Total (Rp)</th>
-                                    <th class="px-4 py-3 text-center text-sm font-semibold">SPM Proses UP</th>
-                                    <th class="px-4 py-3 text-center text-sm font-semibold">Berkas</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">Nomor Ijin Prinsip</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">Jenis Item</th>
+                                    <th class="px-4 py-3 text-right text-sm font-semibold">Total Nilai + PPN (Rp)</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">Project</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold">Keterangan</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold">Status</th>
                                 </tr>
                             </thead>
                             <tbody id="pengadaanTable">
