@@ -3159,6 +3159,80 @@ app.post('/api/update-po-grpo', async (c) => {
   }
 })
 
+// API: Get Ref. Harga (Material Price Reference from RAB history)
+app.get('/api/ref-harga', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('📋 Fetching material price reference from RAB history...')
+    
+    // Simple query first to check if tables exist
+    const result = await env.DB.prepare(`
+      SELECT 
+        ri.*,
+        r.nomor_rab,
+        r.tanggal_rab,
+        r.jenis_rab
+      FROM rab_items ri
+      JOIN rab r ON ri.rab_id = r.id
+      ORDER BY r.tanggal_rab DESC
+      LIMIT 100
+    `).all()
+    
+    console.log(`📦 RAB items query result: ${result.results?.length || 0} rows`)
+    
+    if (!result.results || result.results.length === 0) {
+      console.log('⚠️ No RAB data found in database')
+      return c.json([])
+    }
+    
+    // Get material_gangguan data separately
+    const mgIds = result.results
+      .map((item: any) => item.material_gangguan_id)
+      .filter((id: any) => id != null)
+    
+    let mgMap = new Map()
+    if (mgIds.length > 0) {
+      const mgResult = await env.DB.prepare(`
+        SELECT id, nomor_lh05 
+        FROM material_gangguan 
+        WHERE id IN (${mgIds.join(',')})
+      `).all()
+      
+      mgResult.results?.forEach((mg: any) => {
+        mgMap.set(mg.id, mg.nomor_lh05)
+      })
+    }
+    
+    const materials = result.results.map((item: any) => {
+      const hargaSatuan = item.harga_satuan || 0
+      const nomorLH05 = item.nomor_lh05 || mgMap.get(item.material_gangguan_id) || '-'
+      
+      return {
+        id: item.id,
+        nomor_lh05: nomorLH05,
+        nomor_rab: item.nomor_rab,
+        tanggal: item.tanggal_rab,
+        jenis_rab: item.jenis_rab || '-',
+        part_number: item.part_number,
+        material: item.material,
+        mesin: item.mesin || '-',
+        unit_uld: item.unit_uld || '-',
+        rok_percentage: 0,
+        harga_sebelum_rok: hargaSatuan,
+        harga_setelah_rok: hargaSatuan,
+        jumlah: item.jumlah || 1
+      }
+    })
+    
+    console.log(`✅ Ref. Harga API: Returning ${materials.length} material price references`)
+    return c.json(materials)
+  } catch (error) {
+    console.error('❌ Failed to get ref-harga:', error)
+    return c.json({ error: 'Failed to fetch price reference data', details: (error as Error).message }, 500)
+  }
+})
+
 // API: Create RAB
 app.post('/api/create-rab', async (c) => {
   try {
@@ -3875,6 +3949,11 @@ app.get('/dashboard/list-rab', (c) => {
   return c.html(getDashboardListRABHTML())
 })
 
+// Dashboard Ref. Harga (PROTECTED - auth required)
+app.get('/dashboard/ref-harga', (c) => {
+  return c.html(getDashboardRefHargaHTML())
+})
+
 // Dashboard Resume (PROTECTED - auth required)
 app.get('/dashboard/resume', (c) => {
   return c.html(getDashboardResumeHTML())
@@ -3936,6 +4015,9 @@ function getDashboardMainHTML() {
                     </a>
                     <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
@@ -4125,6 +4207,9 @@ function getInputFormHTML() {
                     </a>
                     <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
@@ -4827,6 +4912,9 @@ function getDashboardStokHTML() {
                     <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
@@ -4995,6 +5083,9 @@ function getDashboardUmurHTML() {
                     <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
@@ -5149,6 +5240,9 @@ function getDashboardMutasiHTML() {
                     </a>
                     <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
@@ -5892,6 +5986,9 @@ function getDashboardKebutuhanMaterialHTML() {
                     <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
@@ -6109,6 +6206,9 @@ function getDashboardGangguanHTML() {
                     <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
@@ -6261,6 +6361,146 @@ function getDashboardGangguanHTML() {
             }, 1000)
           })
         </script>
+    </body>
+    </html>
+  `
+}
+
+function getDashboardRefHargaHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Referensi Harga Material - Sistem Material AMC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="/url-redirect.js?v=1770101032"></script>
+    </head>
+    <body class="bg-gray-50">
+        <!-- Navigation Bar -->
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-plus mr-1"></i>Input Material
+                    </a>
+                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    </a>
+                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                    </a>
+                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/create-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-file-invoice-dollar mr-1"></i>Create RAB
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-list mr-1"></i>List RAB
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    </a>
+                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    </a>
+                    <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto p-6">
+            <!-- Header -->
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                    <i class="fas fa-tags text-blue-600 mr-3"></i>
+                    Referensi Harga Material
+                </h1>
+                <p class="text-gray-600">Cari dan lihat harga historis material dari RAB yang pernah dibuat</p>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-search text-gray-500 mr-2"></i>Cari Material
+                        </label>
+                        <input type="text" 
+                               id="searchInput" 
+                               placeholder="Ketik nama material, part number, atau mesin..."
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                               oninput="filterMaterials()">
+                        <p class="text-xs text-gray-500 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Hasil pencarian akan tampil secara otomatis
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600 mb-1">Total Data</p>
+                        <p class="text-3xl font-bold text-blue-600" id="totalCount">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto" style="max-height: calc(100vh - 400px); overflow-y: auto;">
+                    <table class="min-w-full border-collapse">
+                        <thead class="bg-blue-600 sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th class="px-4 py-3 border text-left font-semibold text-white">No</th>
+                                <th class="px-4 py-3 border text-left font-semibold text-white">Nomor LH05</th>
+                                <th class="px-4 py-3 border text-left font-semibold text-white">Nomor RAB</th>
+                                <th class="px-4 py-3 border text-left font-semibold text-white">Part Number</th>
+                                <th class="px-4 py-3 border text-left font-semibold text-white">Material</th>
+                                <th class="px-4 py-3 border text-left font-semibold text-white">Mesin</th>
+                                <th class="px-4 py-3 border text-left font-semibold text-white">Unit/ULD</th>
+                                <th class="px-4 py-3 border text-right font-semibold text-white">Harga Sebelum ROK</th>
+                                <th class="px-4 py-3 border text-right font-semibold text-white">Harga Setelah ROK</th>
+                            </tr>
+                        </thead>
+                        <tbody id="refHargaTable">
+                            <tr>
+                                <td colspan="9" class="px-4 py-12 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-5xl mb-4 text-blue-500"></i>
+                                    <p class="text-lg">Memuat data referensi harga...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Info Stats -->
+            <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center space-x-4 text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        <span class="text-gray-700">Menampilkan <span id="displayCount" class="font-bold text-blue-600">0</span> dari <span id="totalCountBottom" class="font-bold text-blue-600">0</span> data</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-database text-blue-600 mr-2"></i>
+                        <span class="text-gray-700">Data dari RAB historis</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/ref-harga.js"></script>
     </body>
     </html>
   `
@@ -6654,6 +6894,7 @@ function getDashboardCreateRABHTML() {
                     <a href="/dashboard/mutasi" class="hover:text-blue-200"><i class="fas fa-exchange-alt mr-2"></i>Mutasi</a>
                     <a href="/dashboard/umur" class="hover:text-blue-200"><i class="fas fa-calendar-alt mr-2"></i>Umur</a>
                     <a href="/dashboard/gangguan" class="hover:text-blue-200"><i class="fas fa-exclamation-triangle mr-2"></i>Gangguan</a>
+                    <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         <i class="fas fa-sign-out-alt mr-2"></i>Logout
@@ -6927,6 +7168,9 @@ function getDashboardPengadaanHTML() {
                     <a href="/dashboard/pengadaan" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
                     </a>
@@ -6937,44 +7181,7 @@ function getDashboardPengadaanHTML() {
             </div>
         </nav>
 
-        <div class="flex">
-            <!-- Sidebar Filter (Kiri) -->
-            <div class="w-80 bg-white shadow-lg min-h-screen p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-6">
-                    <i class="fas fa-filter text-blue-600 mr-2"></i>
-                    Filter Data
-                </h2>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Mitra/Vendor</label>
-                        <select id="filterMitra" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="">Semua Mitra</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Bidang</label>
-                        <select id="filterBidang" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="">Semua Bidang</option>
-                            <option value="1. Distribusi">1. Distribusi</option>
-                            <option value="2. Pelayanan Pelanggan">2. Pelayanan Pelanggan</option>
-                            <option value="3. Transmisi">3. Transmisi</option>
-                            <option value="4. Beyond kWh">4. Beyond kWh</option>
-                            <option value="5. Pembangkit">5. Pembangkit</option>
-                        </select>
-                    </div>
-                    
-                    <div class="pt-4">
-                        <button onclick="applyFilter()" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-semibold transition">
-                            <i class="fas fa-search mr-2"></i>Terapkan Filter
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Main Content (Kanan) -->
-            <div class="flex-1 p-6">
+        <div class="container mx-auto p-6">
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div class="bg-white rounded-lg shadow-md p-6">
@@ -7030,181 +7237,39 @@ function getDashboardPengadaanHTML() {
                                 </tr>
                             </thead>
                             <tbody id="pengadaanTable">
-                                <tr>
-                                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                                        <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
-                                        <p>Memuat data...</p>
-                                    </td>
-                                </tr>
+                                <!-- Empty table ready for data -->
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 <!-- Pagination removed - showing all data with scroll -->
-            </div>
         </div>
 
         <script src="/static/auth-check.js"></script>
         <script>
-            const PENGADAAN_URL = 'https://script.google.com/macros/s/AKfycbxDcBjksuaGABwPxQ3kQTyVrGskxH_wvqsMlga42ycgThYvqrUr2WoOa8ZxK9Qx58BMBg/exec';
-            let allData = [];
-            let filteredData = [];
+            // Empty data - ready for JSON input
+            let pengadaanData = [];
 
             // Load data on page load
             document.addEventListener('DOMContentLoaded', function() {
-                loadPengadaanData();
-            });
-
-            async function loadPengadaanData() {
-                try {
-                    const response = await fetch(PENGADAAN_URL);
-                    allData = await response.json();
-                    filteredData = allData;
-                    
-                    // Populate mitra dropdown
-                    populateMitraDropdown();
-                    
-                    // Update summary
-                    updateSummary();
-                    
-                    // Display table
-                    displayTable();
-                    
-                } catch (error) {
-                    console.error('Error loading data:', error);
-                    document.getElementById('pengadaanTable').innerHTML = \`
-                        <tr>
-                            <td colspan="7" class="px-6 py-8 text-center text-red-500">
-                                <i class="fas fa-exclamation-triangle text-3xl mb-3"></i>
-                                <p>Gagal memuat data pengadaan</p>
-                            </td>
-                        </tr>
-                    \`;
-                }
-            }
-
-            function populateMitraDropdown() {
-                const mitraSet = new Set();
-                allData.forEach(item => {
-                    if (item.mitra) mitraSet.add(item.mitra);
-                });
-                
-                const mitraSelect = document.getElementById('filterMitra');
-                const sortedMitra = Array.from(mitraSet).sort();
-                
-                sortedMitra.forEach(mitra => {
-                    const option = document.createElement('option');
-                    option.value = mitra;
-                    option.textContent = mitra;
-                    mitraSelect.appendChild(option);
-                });
-            }
-
-            function applyFilter() {
-                const mitraFilter = document.getElementById('filterMitra').value;
-                const bidangFilter = document.getElementById('filterBidang').value;
-                
-                filteredData = allData.filter(item => {
-                    const matchMitra = !mitraFilter || item.mitra === mitraFilter;
-                    const matchBidang = !bidangFilter || item.bidang === bidangFilter;
-                    return matchMitra && matchBidang;
-                });
-                
+                // Initialize empty state
                 updateSummary();
                 displayTable();
-            }
+            });
 
             function updateSummary() {
-                // Total pengadaan
-                document.getElementById('totalPengadaan').textContent = filteredData.length;
-                
-                // Total nilai
-                const totalNilai = filteredData.reduce((sum, item) => {
-                    const nilai = parseFloat(item['rp._total_+_ppn']) || 0;
-                    return sum + nilai;
-                }, 0);
-                document.getElementById('totalNilai').textContent = formatRupiah(totalNilai);
-                
-                // Total mitra
-                const uniqueMitra = new Set(filteredData.map(item => item.mitra));
-                document.getElementById('totalMitra').textContent = uniqueMitra.size;
-            }
-
-            // Helper function to fix GRPO data
-            // For "RIGHT OF WAY" contracts, GRPO should be "Jasa", not contract number
-            function fixGRPO(item) {
-                const grpo = item['no._gr_po_barang'];
-                const kontrak = item.no_kontrak_pekerjaan || '';
-                
-                // If GRPO equals contract number (wrong data), return "Jasa"
-                if (grpo && grpo === kontrak) {
-                    return 'Jasa';
-                }
-                
-                return grpo;
+                // Set all to 0 or "-"
+                document.getElementById('totalPengadaan').textContent = '0';
+                document.getElementById('totalNilai').textContent = '-';
+                document.getElementById('totalMitra').textContent = '0';
             }
 
             function displayTable() {
                 const tbody = document.getElementById('pengadaanTable');
                 
-                if (filteredData.length === 0) {
-                    tbody.innerHTML = \`
-                        <tr>
-                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                                <i class="fas fa-inbox text-3xl mb-3"></i>
-                                <p>Tidak ada data pengadaan</p>
-                            </td>
-                        </tr>
-                    \`;
-                    return;
-                }
-                
-                tbody.innerHTML = filteredData.map(item => {
-                    const correctedGRPO = fixGRPO(item);
-                    
-                    return \`
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-3 text-sm text-gray-800">
-                            \${item.no_kontrak_pekerjaan || '-'}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-800">
-                            \${item.mitra || '-'}
-                        </td>
-                        <td class="px-4 py-3 text-center text-sm font-semibold text-blue-600">
-                            \${item['no._po'] ? item['no._po'] : '<span class="text-gray-400">-</span>'}
-                        </td>
-                        <td class="px-4 py-3 text-center text-sm font-mono text-green-600">
-                            \${correctedGRPO ? correctedGRPO : '<span class="text-gray-400">-</span>'}
-                        </td>
-                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-800">
-                            \${formatRupiah(item['rp._total_+_ppn'] || 0)}
-                        </td>
-                        <td class="px-4 py-3 text-center text-sm text-purple-600">
-                            \${item['spm_proses_up_(no._surat_ams)'] ? 
-                                \`<div class="flex items-center justify-center space-x-2">
-                                    <span class="font-semibold">\${item['spm_proses_up_(no._surat_ams)']}</span>
-                                    \${item['link_spm_up_(link_surat_ams)'] ? 
-                                        \`<a href="\${item['link_spm_up_(link_surat_ams)']}" target="_blank" 
-                                           class="inline-block bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700 transition"
-                                           title="Lihat Dokumen SPM">
-                                            <i class="fas fa-external-link-alt text-sm"></i>
-                                        </a>\`
-                                        : ''}
-                                </div>\` 
-                                : '<span class="text-gray-400">-</span>'}
-                        </td>
-                        <td class="px-4 py-3 text-center">
-                            \${item.link_berkas_tagihan ? 
-                                \`<a href="\${item.link_berkas_tagihan}" target="_blank" 
-                                   class="inline-block bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition">
-                                    <i class="fas fa-file-pdf text-lg"></i>
-                                </a>\` 
-                                : '<span class="text-gray-400">-</span>'}
-                        </td>
-                    </tr>
-                    \`;
-                }).join('');
+                // Always show empty state
+                tbody.innerHTML = '';
             }
 
             function formatRupiah(number) {
@@ -7259,6 +7324,9 @@ function getDashboardPengadaanMaterialHTML() {
                     </a>
                     <a href="/dashboard/pengadaan-material" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
@@ -9412,6 +9480,7 @@ function getDashboardListRABHTML() {
                 <div class="flex items-center space-x-4">
                     <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
+                    <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         <i class="fas fa-sign-out-alt mr-2"></i>Logout
