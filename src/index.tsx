@@ -7642,7 +7642,7 @@ function getDashboardPengadaanHTML() {
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-3 text-base">
                             <select 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 \${savedRAB ? 'bg-gray-100' : ''}"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 \${savedRAB ? 'bg-green-50 border-green-500 text-green-700 font-semibold' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'}"
                                 data-ijin-prinsip="\${nomorIjin}"
                                 onchange="handleRABSelection(this)"
                                 \${savedRAB ? 'disabled' : ''}>
