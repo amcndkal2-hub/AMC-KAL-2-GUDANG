@@ -3642,6 +3642,99 @@ app.delete('/api/rab/:id', async (c) => {
   }
 })
 
+// API: Get all Pengadaan RAB links
+app.get('/api/pengadaan/links', async (c) => {
+  try {
+    const { env } = c
+    const result = await env.DB.prepare(`
+      SELECT * FROM pengadaan_rab_links 
+      ORDER BY linked_at DESC
+    `).all()
+    
+    return c.json({
+      success: true,
+      links: result.results || []
+    })
+  } catch (error: any) {
+    console.error('Failed to get pengadaan links:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message 
+    }, 500)
+  }
+})
+
+// API: Link RAB to Pengadaan
+app.post('/api/pengadaan/link-rab', async (c) => {
+  try {
+    const { env } = c
+    const { nomor_ijin_prinsip, nomor_rab, linked_by } = await c.req.json()
+    
+    if (!nomor_ijin_prinsip || !nomor_rab) {
+      return c.json({ 
+        success: false, 
+        error: 'Nomor Ijin Prinsip dan Nomor RAB harus diisi' 
+      }, 400)
+    }
+    
+    console.log('📌 Linking RAB ' + nomor_rab + ' to Pengadaan ' + nomor_ijin_prinsip)
+    
+    // Check if already linked
+    const existing = await env.DB.prepare(`
+      SELECT * FROM pengadaan_rab_links 
+      WHERE nomor_ijin_prinsip = ?
+    `).bind(nomor_ijin_prinsip).first()
+    
+    if (existing) {
+      // Update existing link
+      await env.DB.prepare(`
+        UPDATE pengadaan_rab_links 
+        SET nomor_rab = ?, 
+            linked_by = ?,
+            updated_at = datetime('now')
+        WHERE nomor_ijin_prinsip = ?
+      `).bind(nomor_rab, linked_by || 'system', nomor_ijin_prinsip).run()
+      
+      console.log('✅ Updated existing link for ' + nomor_ijin_prinsip)
+    } else {
+      // Insert new link
+      await env.DB.prepare(`
+        INSERT INTO pengadaan_rab_links 
+        (nomor_ijin_prinsip, nomor_rab, linked_by)
+        VALUES (?, ?, ?)
+      `).bind(nomor_ijin_prinsip, nomor_rab, linked_by || 'system').run()
+      
+      console.log('✅ Created new link for ' + nomor_ijin_prinsip)
+    }
+    
+    // Update RAB status to 'Pengadaan'
+    try {
+      const rabResult = await env.DB.prepare(`
+        UPDATE rab 
+        SET status = 'Pengadaan', updated_at = datetime('now')
+        WHERE nomor_rab = ? AND status = 'Draft'
+      `).bind(nomor_rab).run()
+      
+      if (rabResult.meta.changes > 0) {
+        console.log('✅ Updated RAB ' + nomor_rab + ' status to Pengadaan')
+      }
+    } catch (rabError) {
+      console.error('Failed to update RAB status:', rabError)
+    }
+    
+    return c.json({
+      success: true,
+      message: 'RAB ' + nomor_rab + ' berhasil di-link ke ' + nomor_ijin_prinsip
+    })
+  } catch (error: any) {
+    console.error('Failed to link RAB:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message 
+    }, 500)
+  }
+})
+
 // API: Fix orphaned materials (reset is_rab_created for materials not in any active RAB)
 app.post('/api/fix-orphaned-materials', async (c) => {
   try {
@@ -7313,10 +7406,12 @@ function getDashboardPengadaanHTML() {
             let pengadaanData = [];
             let filteredData = [];
             let availableRAB = [];  // Available RAB (Draft + SPK)
+            let rabLinks = {};  // Store RAB links (key: nomorIjin, value: nomorRAB)
 
             // Load data on page load
             document.addEventListener('DOMContentLoaded', function() {
-                loadAvailableRAB();  // Load RAB first
+                loadRABLinks();  // Load links first
+                loadAvailableRAB();  // Load RAB
                 loadPengadaanData();
             });
 
@@ -7358,6 +7453,26 @@ function getDashboardPengadaanHTML() {
                             </td>
                         </tr>
                     \`;
+                }
+            }
+
+            async function loadRABLinks() {
+                try {
+                    console.log('Loading RAB links...');
+                    const response = await fetch('/api/pengadaan/links');
+                    const data = await response.json();
+                    
+                    if (data.success && data.links) {
+                        // Convert array to object for quick lookup
+                        rabLinks = {};
+                        data.links.forEach(link => {
+                            rabLinks[link.nomor_ijin_prinsip] = link.nomor_rab;
+                        });
+                        console.log(\`✅ Loaded \${data.links.length} RAB links\`);
+                    }
+                } catch (error) {
+                    console.error('Error loading RAB links:', error);
+                    rabLinks = {};
                 }
             }
 
@@ -7510,9 +7625,11 @@ function getDashboardPengadaanHTML() {
                     }
                     
                     // Build dropdown options for RAB
-                    const rabOptions = availableRAB.map(rab => 
-                        \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab}</option>\`
-                    ).join('');
+                    const savedRAB = rabLinks[nomorIjin] || '';
+                    const rabOptions = availableRAB.map(rab => {
+                        const selected = rab.nomor_rab === savedRAB ? 'selected' : '';
+                        return \`<option value="\${rab.nomor_rab}" \${selected}>\${rab.nomor_rab}</option>\`;
+                    }).join('');
                     
                     return \`
                     <tr class="border-b hover:bg-gray-50">
@@ -7572,8 +7689,40 @@ function getDashboardPengadaanHTML() {
                 
                 console.log(\`RAB Selected: \${nomorRAB} for Ijin Prinsip: \${nomorIjin}\`);
                 
-                // TODO: Save link and update RAB status
-                alert(\`RAB \${nomorRAB} akan di-link ke \${nomorIjin}\`);
+                // Save link to database
+                saveLinkRAB(nomorIjin, nomorRAB);
+            }
+
+            async function saveLinkRAB(nomorIjin, nomorRAB) {
+                try {
+                    const response = await fetch('/api/pengadaan/link-rab', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            nomor_ijin_prinsip: nomorIjin,
+                            nomor_rab: nomorRAB,
+                            linked_by: 'system'  // TODO: get actual username
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        console.log(\`✅ \${data.message}\`);
+                        // Update local cache
+                        rabLinks[nomorIjin] = nomorRAB;
+                        // Show success notification
+                        alert(\`✅ RAB \${nomorRAB} berhasil di-link!\nStatus RAB telah diubah ke Pengadaan.\`);
+                    } else {
+                        console.error('Failed to save link:', data.error);
+                        alert(\`❌ Gagal menyimpan: \${data.error}\`);
+                    }
+                } catch (error) {
+                    console.error('Error saving link:', error);
+                    alert('❌ Terjadi kesalahan saat menyimpan link');
+                }
             }
         </script>
     </body>
