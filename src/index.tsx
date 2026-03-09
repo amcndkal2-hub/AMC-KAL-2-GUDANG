@@ -7222,15 +7222,15 @@ function getDashboardPengadaanHTML() {
             </div>
         </div>
 
-        <!-- Table Full Width (no container) -->
-        <div class="bg-white shadow-md overflow-hidden">
+        <!-- Table with left padding -->
+        <div class="bg-white shadow-md overflow-hidden ml-6">
                     <div class="overflow-x-auto" style="max-height: calc(100vh - 400px); overflow-y: auto;">
                         <table class="w-full">
                             <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                 <tr>
                                     <th class="px-6 py-4 text-left text-base font-semibold w-52">Nomor Ijin Prinsip</th>
                                     <th class="px-6 py-4 text-left text-base font-semibold w-32">Jenis Item</th>
-                                    <th class="px-6 py-4 text-right text-base font-semibold w-44">Total Nilai + PPN (Rp)</th>
+                                    <th class="px-6 py-4 text-right text-base font-semibold w-44">Nilai + PPN</th>
                                     <th class="px-6 py-4 text-left text-base font-semibold">Project</th>
                                     <th class="px-6 py-4 text-left text-base font-semibold">Keterangan</th>
                                     <th class="px-6 py-4 text-center text-base font-semibold w-56">Status</th>
