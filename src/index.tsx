@@ -7312,9 +7312,11 @@ function getDashboardPengadaanHTML() {
             
             let pengadaanData = [];
             let filteredData = [];
+            let availableRAB = [];  // Available RAB (Draft + SPK)
 
             // Load data on page load
             document.addEventListener('DOMContentLoaded', function() {
+                loadAvailableRAB();  // Load RAB first
                 loadPengadaanData();
             });
 
@@ -7356,6 +7358,26 @@ function getDashboardPengadaanHTML() {
                             </td>
                         </tr>
                     \`;
+                }
+            }
+
+            async function loadAvailableRAB() {
+                try {
+                    console.log('Loading available RAB (Draft + SPK)...');
+                    const response = await fetch('/api/rab');
+                    const rabList = await response.json();
+                    
+                    // Filter: Status = 'Draft' AND jenis_rab contains 'SPK'
+                    availableRAB = rabList.filter(rab => {
+                        const isDraft = rab.status === 'Draft';
+                        const isSPK = rab.jenis_rab && rab.jenis_rab.includes('SPK');
+                        return isDraft && isSPK;
+                    });
+                    
+                    console.log(\`✅ Found \${availableRAB.length} available RAB (Draft + SPK)\`);
+                } catch (error) {
+                    console.error('Error loading RAB:', error);
+                    availableRAB = [];
                 }
             }
 
@@ -7471,7 +7493,6 @@ function getDashboardPengadaanHTML() {
                 
                 tbody.innerHTML = filteredData.map((item, index) => {
                     // Column mapping based on Kolom_X
-                    const nomorRAB = '-';  // Placeholder for now
                     const nomorIjin = item.Kolom_2 || item['Kolom_2'] || '-';
                     const jenisItem = item.Kolom_6 || item['Kolom_6'] || '-';
                     const totalNilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString();
@@ -7488,10 +7509,21 @@ function getDashboardPengadaanHTML() {
                         statusColor = 'bg-yellow-100 text-yellow-800';
                     }
                     
+                    // Build dropdown options for RAB
+                    const rabOptions = availableRAB.map(rab => 
+                        \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab}</option>\`
+                    ).join('');
+                    
                     return \`
                     <tr class="border-b hover:bg-gray-50">
-                        <td class="px-6 py-4 text-base text-gray-600">
-                            <span class="text-gray-400">\${nomorRAB}</span>
+                        <td class="px-4 py-3 text-base">
+                            <select 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                data-ijin-prinsip="\${nomorIjin}"
+                                onchange="handleRABSelection(this)">
+                                <option value="">- Pilih RAB -</option>
+                                \${rabOptions}
+                            </select>
                         </td>
                         <td class="px-6 py-4 text-base text-gray-800">
                             <span class="font-mono">\${nomorIjin}</span>
@@ -7527,6 +7559,21 @@ function getDashboardPengadaanHTML() {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
                 }).format(num);
+            }
+
+            function handleRABSelection(selectElement) {
+                const nomorRAB = selectElement.value;
+                const nomorIjin = selectElement.dataset.ijinPrinsip;
+                
+                if (!nomorRAB) {
+                    console.log('No RAB selected');
+                    return;
+                }
+                
+                console.log(\`RAB Selected: \${nomorRAB} for Ijin Prinsip: \${nomorIjin}\`);
+                
+                // TODO: Save link and update RAB status
+                alert(\`RAB \${nomorRAB} akan di-link ke \${nomorIjin}\`);
             }
         </script>
     </body>
