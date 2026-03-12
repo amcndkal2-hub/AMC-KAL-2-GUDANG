@@ -7410,42 +7410,78 @@ function getDashboardPengadaanHTML() {
             
             <!-- Right Content Area -->
             <div class="flex-1">
-                <!-- Summary Cards -->
+                <!-- Status Summary Cards (6 cards) -->
                 <div class="px-6 py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white rounded-lg shadow-md p-6">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-gray-600 text-sm">Total Pengadaan</p>
-                                    <h3 id="totalPengadaan" class="text-3xl font-bold text-blue-600">-</h3>
-                                </div>
-                                <div class="bg-blue-100 p-4 rounded-full">
-                                    <i class="fas fa-shopping-cart text-3xl text-blue-600"></i>
-                                </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Card 1: Menunggu Verifikasi Asisten Manager Region -->
+                        <div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow-md p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-clock text-orange-500 mr-2"></i>
+                                <p class="text-sm font-semibold text-gray-700">Menunggu Verifikasi Assman Region</p>
+                            </div>
+                            <div class="mt-2">
+                                <p class="text-xs text-gray-600">📦 Jumlah: <span id="countAssman" class="font-bold">0</span> item</p>
+                                <p class="text-xs text-gray-600">💰 Total: <span id="totalAssman" class="font-bold text-orange-600">Rp 0</span></p>
                             </div>
                         </div>
 
-                        <div class="bg-white rounded-lg shadow-md p-6">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-gray-600 text-sm">Total Nilai</p>
-                                    <h3 id="totalNilai" class="text-2xl font-bold text-green-600">-</h3>
-                                </div>
-                                <div class="bg-green-100 p-4 rounded-full">
-                                    <i class="fas fa-money-bill-wave text-3xl text-green-600"></i>
-                                </div>
+                        <!-- Card 2: Menunggu Verifikasi Manager Bidang -->
+                        <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow-md p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-clock text-blue-500 mr-2"></i>
+                                <p class="text-sm font-semibold text-gray-700">Menunggu Verifikasi Manager Bidang</p>
+                            </div>
+                            <div class="mt-2">
+                                <p class="text-xs text-gray-600">📦 Jumlah: <span id="countManagerBidang" class="font-bold">0</span> item</p>
+                                <p class="text-xs text-gray-600">💰 Total: <span id="totalManagerBidang" class="font-bold text-blue-600">Rp 0</span></p>
                             </div>
                         </div>
 
-                        <div class="bg-white rounded-lg shadow-md p-6">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-gray-600 text-sm">Total Project</p>
-                                    <h3 id="totalMitra" class="text-3xl font-bold text-purple-600">-</h3>
-                                </div>
-                                <div class="bg-purple-100 p-4 rounded-full">
-                                    <i class="fas fa-handshake text-3xl text-purple-600"></i>
-                                </div>
+                        <!-- Card 3: Menunggu Verifikasi Manager Region -->
+                        <div class="bg-purple-50 border-l-4 border-purple-500 rounded-lg shadow-md p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-clock text-purple-500 mr-2"></i>
+                                <p class="text-sm font-semibold text-gray-700">Menunggu Verifikasi Manager Region</p>
+                            </div>
+                            <div class="mt-2">
+                                <p class="text-xs text-gray-600">📦 Jumlah: <span id="countManagerRegion" class="font-bold">0</span> item</p>
+                                <p class="text-xs text-gray-600">💰 Total: <span id="totalManagerRegion" class="font-bold text-purple-600">Rp 0</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Menunggu Verifikasi VP -->
+                        <div class="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg shadow-md p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-clock text-yellow-600 mr-2"></i>
+                                <p class="text-sm font-semibold text-gray-700">Menunggu Verifikasi VP</p>
+                            </div>
+                            <div class="mt-2">
+                                <p class="text-xs text-gray-600">📦 Jumlah: <span id="countVP" class="font-bold">0</span> item</p>
+                                <p class="text-xs text-gray-600">💰 Total: <span id="totalVP" class="font-bold text-yellow-600">Rp 0</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Card 5: Menunggu Acc Direktur Operasi -->
+                        <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg shadow-md p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-clock text-indigo-500 mr-2"></i>
+                                <p class="text-sm font-semibold text-gray-700">Menunggu Acc Direktur Operasi</p>
+                            </div>
+                            <div class="mt-2">
+                                <p class="text-xs text-gray-600">📦 Jumlah: <span id="countDirekturWait" class="font-bold">0</span> item</p>
+                                <p class="text-xs text-gray-600">💰 Total: <span id="totalDirekturWait" class="font-bold text-indigo-600">Rp 0</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Card 6: Acc Direktur Operasi (Approved) -->
+                        <div class="bg-green-50 border-l-4 border-green-500 rounded-lg shadow-md p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <p class="text-sm font-semibold text-gray-700">Acc Direktur Operasi ✅</p>
+                            </div>
+                            <div class="mt-2">
+                                <p class="text-xs text-gray-600">📦 Jumlah: <span id="countDirekturAcc" class="font-bold">0</span> item</p>
+                                <p class="text-xs text-gray-600">💰 Total: <span id="totalDirekturAcc" class="font-bold text-green-600">Rp 0</span></p>
                             </div>
                         </div>
                     </div>
@@ -7642,29 +7678,76 @@ function getDashboardPengadaanHTML() {
             }
 
             function updateSummary() {
-                // Total pengadaan
-                const totalCount = filteredData.length;
-                document.getElementById('totalPengadaan').textContent = totalCount;
-                document.getElementById('statTotalPengadaan').textContent = totalCount;
+                // Helper function to calculate status data
+                function calculateStatusData(statusKeyword) {
+                    const filtered = filteredData.filter(item => {
+                        const status = item.Kolom_12 || item['Kolom_12'] || '';
+                        return status.includes(statusKeyword);
+                    });
+                    
+                    const count = filtered.length;
+                    const total = filtered.reduce((sum, item) => {
+                        const nilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString();
+                        const nilai = parseFloat(nilaiStr.split('.').join('')) || 0;
+                        return sum + nilai;
+                    }, 0);
+                    
+                    return { count, total };
+                }
                 
-                // Total nilai (from Kolom_9: Total Nilai + PPN)
-                const totalNilai = filteredData.reduce((sum, item) => {
+                // 1. Menunggu Verifikasi Asisten Manager Region
+                const assman = calculateStatusData('Menunggu Verifikasi Asisten Manager Region');
+                document.getElementById('countAssman').textContent = assman.count;
+                document.getElementById('totalAssman').textContent = formatRupiah(assman.total);
+                
+                // 2. Menunggu Verifikasi Manager Bidang
+                const managerBidang = calculateStatusData('Menunggu Verifikasi Manager Bidang');
+                document.getElementById('countManagerBidang').textContent = managerBidang.count;
+                document.getElementById('totalManagerBidang').textContent = formatRupiah(managerBidang.total);
+                
+                // 3. Menunggu Verifikasi Manager Region
+                const managerRegion = calculateStatusData('Menunggu Verifikasi Manager Region');
+                document.getElementById('countManagerRegion').textContent = managerRegion.count;
+                document.getElementById('totalManagerRegion').textContent = formatRupiah(managerRegion.total);
+                
+                // 4. Menunggu Verifikasi VP
+                const vp = calculateStatusData('Menunggu Verifikasi VP');
+                document.getElementById('countVP').textContent = vp.count;
+                document.getElementById('totalVP').textContent = formatRupiah(vp.total);
+                
+                // 5. Menunggu Acc Direktur Operasi & Pengembangan Usaha
+                const direkturWait = calculateStatusData('Menunggu Acc Direktur Operasi');
+                document.getElementById('countDirekturWait').textContent = direkturWait.count;
+                document.getElementById('totalDirekturWait').textContent = formatRupiah(direkturWait.total);
+                
+                // 6. Acc Direktur Operasi & Pengembangan Usaha (Approved)
+                const direkturAcc = filteredData.filter(item => {
+                    const status = item.Kolom_12 || item['Kolom_12'] || '';
+                    return status.includes('Acc Direktur Operasi') && !status.includes('Menunggu');
+                });
+                const direkturAccCount = direkturAcc.length;
+                const direkturAccTotal = direkturAcc.reduce((sum, item) => {
                     const nilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString();
-                    // Remove dots using split/join (no regex needed)
                     const nilai = parseFloat(nilaiStr.split('.').join('')) || 0;
                     return sum + nilai;
                 }, 0);
-                const formattedNilai = formatRupiah(totalNilai);
-                document.getElementById('totalNilai').textContent = formattedNilai;
-                document.getElementById('statTotalNilai').textContent = formattedNilai;
+                document.getElementById('countDirekturAcc').textContent = direkturAccCount;
+                document.getElementById('totalDirekturAcc').textContent = formatRupiah(direkturAccTotal);
                 
-                // Total project (unique Project - Kolom_10)
+                // Update sidebar statistics
+                const totalCount = filteredData.length;
+                const totalNilai = filteredData.reduce((sum, item) => {
+                    const nilaiStr = (item.Kolom_9 || item['Kolom_9'] || '0').toString();
+                    const nilai = parseFloat(nilaiStr.split('.').join('')) || 0;
+                    return sum + nilai;
+                }, 0);
                 const uniqueProjects = new Set(filteredData.map(item => 
                     item.Kolom_10 || item['Kolom_10'] || ''
                 ).filter(p => p));
-                const projectCount = uniqueProjects.size;
-                document.getElementById('totalMitra').textContent = projectCount;
-                document.getElementById('statTotalProject').textContent = projectCount;
+                
+                document.getElementById('statTotalPengadaan').textContent = totalCount;
+                document.getElementById('statTotalNilai').textContent = formatRupiah(totalNilai);
+                document.getElementById('statTotalProject').textContent = uniqueProjects.size;
             }
 
             function displayTable() {
