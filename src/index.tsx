@@ -3679,11 +3679,29 @@ app.post('/api/pengadaan/link-rab', async (c) => {
     
     console.log('📌 Linking RAB ' + nomor_rab + ' to Pengadaan ' + nomor_ijin_prinsip)
     
-    // Check if already linked
+    // Check if already linked to a different RAB
     const existing = await env.DB.prepare(`
       SELECT * FROM pengadaan_rab_links 
       WHERE nomor_ijin_prinsip = ?
     `).bind(nomor_ijin_prinsip).first()
+    
+    // If changing RAB, revert old RAB status to Draft
+    if (existing && existing.nomor_rab !== nomor_rab) {
+      const oldRAB = existing.nomor_rab
+      console.log('🔄 Changing RAB from ' + oldRAB + ' to ' + nomor_rab)
+      
+      try {
+        await env.DB.prepare(`
+          UPDATE rab 
+          SET status = 'Draft', updated_at = datetime('now')
+          WHERE nomor_rab = ?
+        `).bind(oldRAB).run()
+        
+        console.log('✅ Reverted old RAB ' + oldRAB + ' status to Draft')
+      } catch (revertError) {
+        console.error('Failed to revert old RAB status:', revertError)
+      }
+    }
     
     if (existing) {
       // Update existing link
@@ -3707,7 +3725,7 @@ app.post('/api/pengadaan/link-rab', async (c) => {
       console.log('✅ Created new link for ' + nomor_ijin_prinsip)
     }
     
-    // Update RAB status to 'Pengadaan'
+    // Update new RAB status to 'Pengadaan'
     try {
       const rabResult = await env.DB.prepare(`
         UPDATE rab 
@@ -3728,6 +3746,64 @@ app.post('/api/pengadaan/link-rab', async (c) => {
     })
   } catch (error: any) {
     console.error('Failed to link RAB:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message 
+    }, 500)
+  }
+})
+
+// API: Unlink RAB from Pengadaan (Andalcekatan only)
+app.post('/api/pengadaan/unlink-rab', async (c) => {
+  try {
+    const { env } = c
+    const { nomor_ijin_prinsip, nomor_rab } = await c.req.json()
+    
+    if (!nomor_ijin_prinsip || !nomor_rab) {
+      return c.json({ 
+        success: false, 
+        error: 'Nomor Ijin Prinsip dan Nomor RAB harus diisi' 
+      }, 400)
+    }
+    
+    console.log('🔓 Unlinking RAB ' + nomor_rab + ' from Pengadaan ' + nomor_ijin_prinsip)
+    
+    // Delete link from database
+    const deleteResult = await env.DB.prepare(`
+      DELETE FROM pengadaan_rab_links 
+      WHERE nomor_ijin_prinsip = ? AND nomor_rab = ?
+    `).bind(nomor_ijin_prinsip, nomor_rab).run()
+    
+    if (deleteResult.meta.changes > 0) {
+      console.log('✅ Deleted link for ' + nomor_ijin_prinsip)
+      
+      // Update RAB status back to 'Draft'
+      try {
+        const rabResult = await env.DB.prepare(`
+          UPDATE rab 
+          SET status = 'Draft', updated_at = datetime('now')
+          WHERE nomor_rab = ?
+        `).bind(nomor_rab).run()
+        
+        if (rabResult.meta.changes > 0) {
+          console.log('✅ Updated RAB ' + nomor_rab + ' status back to Draft')
+        }
+      } catch (rabError) {
+        console.error('Failed to update RAB status:', rabError)
+      }
+      
+      return c.json({
+        success: true,
+        message: 'Link RAB ' + nomor_rab + ' berhasil dihapus dari ' + nomor_ijin_prinsip
+      })
+    } else {
+      return c.json({
+        success: false,
+        error: 'Link tidak ditemukan'
+      }, 404)
+    }
+  } catch (error: any) {
+    console.error('Failed to unlink RAB:', error)
     return c.json({ 
       success: false, 
       error: error.message 
@@ -7627,10 +7703,23 @@ function getDashboardPengadaanHTML() {
                     // Build dropdown options for RAB
                     const savedRAB = rabLinks[nomorIjin] || '';
                     
+                    // Check if user is Andalcekatan (can edit linked RAB)
+                    const currentUsername = localStorage.getItem('username') || '';
+                    const isAndalcekatan = currentUsername.toLowerCase() === 'andalcekatan';
+                    
                     // If this row has saved RAB, show it as selected (even if status changed)
                     let rabOptions = '';
                     if (savedRAB) {
-                        rabOptions = \`<option value="\${savedRAB}" selected>\${savedRAB} ✓</option>\`;
+                        if (isAndalcekatan) {
+                            // Andalcekatan: show saved RAB + available draft RABs
+                            rabOptions = \`<option value="\${savedRAB}" selected>\${savedRAB} ✓</option>\`;
+                            rabOptions += availableRAB.map(rab => {
+                                return \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab}</option>\`;
+                            }).join('');
+                        } else {
+                            // Other users: only show saved RAB (locked)
+                            rabOptions = \`<option value="\${savedRAB}" selected>\${savedRAB} ✓</option>\`;
+                        }
                     } else {
                         // Show available Draft RAB
                         rabOptions = availableRAB.map(rab => {
@@ -7638,14 +7727,18 @@ function getDashboardPengadaanHTML() {
                         }).join('');
                     }
                     
+                    // Dropdown disabled ONLY if savedRAB exists AND user is NOT Andalcekatan
+                    const isDisabled = savedRAB && !isAndalcekatan;
+                    
                     return \`
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-3 text-base">
                             <select 
                                 class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 \${savedRAB ? 'bg-green-50 border-green-500 text-green-700 font-semibold' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'}"
                                 data-ijin-prinsip="\${nomorIjin}"
+                                data-old-rab="\${savedRAB}"
                                 onchange="handleRABSelection(this)"
-                                \${savedRAB ? 'disabled' : ''}>
+                                \${isDisabled ? 'disabled' : ''}>
                                 <option value="">- Pilih RAB -</option>
                                 \${rabOptions}
                             </select>
@@ -7689,9 +7782,30 @@ function getDashboardPengadaanHTML() {
             function handleRABSelection(selectElement) {
                 const nomorRAB = selectElement.value;
                 const nomorIjin = selectElement.dataset.ijinPrinsip;
+                const oldRAB = selectElement.dataset.oldRab || '';
                 
+                // If empty value selected (unlink)
                 if (!nomorRAB) {
-                    console.log('No RAB selected');
+                    if (oldRAB) {
+                        // Confirm unlink
+                        if (confirm(\`Hapus link RAB \${oldRAB} dari Ijin Prinsip \${nomorIjin}?\n\nStatus RAB akan kembali ke Draft.\`)) {
+                            unlinkRAB(nomorIjin, oldRAB);
+                        } else {
+                            // Restore old value
+                            selectElement.value = oldRAB;
+                        }
+                    }
+                    return;
+                }
+                
+                // If changing from one RAB to another
+                if (oldRAB && oldRAB !== nomorRAB) {
+                    if (confirm(\`Ganti RAB dari \${oldRAB} ke \${nomorRAB}?\n\nStatus RAB lama akan kembali ke Draft.\`)) {
+                        saveLinkRAB(nomorIjin, nomorRAB, oldRAB);
+                    } else {
+                        // Restore old value
+                        selectElement.value = oldRAB;
+                    }
                     return;
                 }
                 
@@ -7701,7 +7815,7 @@ function getDashboardPengadaanHTML() {
                 saveLinkRAB(nomorIjin, nomorRAB);
             }
 
-            async function saveLinkRAB(nomorIjin, nomorRAB) {
+            async function saveLinkRAB(nomorIjin, nomorRAB, oldRAB = '') {
                 try {
                     const response = await fetch('/api/pengadaan/link-rab', {
                         method: 'POST',
@@ -7730,6 +7844,41 @@ function getDashboardPengadaanHTML() {
                 } catch (error) {
                     console.error('Error saving link:', error);
                     alert('❌ Terjadi kesalahan saat menyimpan link');
+                }
+            }
+
+            async function unlinkRAB(nomorIjin, oldRAB) {
+                try {
+                    console.log(\`🔓 Unlinking RAB \${oldRAB} from \${nomorIjin}\`);
+                    
+                    const response = await fetch('/api/pengadaan/unlink-rab', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            nomor_ijin_prinsip: nomorIjin,
+                            nomor_rab: oldRAB
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        console.log(\`✅ \${data.message}\`);
+                        // Remove from local cache
+                        delete rabLinks[nomorIjin];
+                        // Show success notification
+                        alert(\`✅ Link RAB \${oldRAB} berhasil dihapus!\nStatus RAB telah kembali ke Draft.\`);
+                        // Reload page to reflect changes
+                        window.location.reload();
+                    } else {
+                        console.error('Failed to unlink:', data.error);
+                        alert(\`❌ Gagal menghapus link: \${data.error}\`);
+                    }
+                } catch (error) {
+                    console.error('Error unlinking RAB:', error);
+                    alert('❌ Terjadi kesalahan saat menghapus link');
                 }
             }
         </script>
