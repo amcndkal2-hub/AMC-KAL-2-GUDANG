@@ -7410,9 +7410,9 @@ function getDashboardPengadaanHTML() {
             
             <!-- Right Content Area -->
             <div class="flex-1">
-                <!-- Status Summary Cards (6 cards) -->
+                <!-- Status Summary Cards (6 cards in 1 row) -->
                 <div class="px-6 py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
                         <!-- Card 1: Menunggu Verifikasi Asisten Manager Region -->
                         <div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow-md p-4">
                             <div class="flex items-center mb-2">
