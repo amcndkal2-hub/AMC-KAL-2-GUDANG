@@ -1779,7 +1779,7 @@ async function insertRABItems(db: D1Database, rabId: number, nomorRAB: string, t
 
 export async function getAllRAB(db: D1Database) {
   try {
-    // Try with jenis_rab column first
+    // Try with nomor_tor and jenis_rab columns first
     try {
       const result = await db.prepare(`
         SELECT 
@@ -1801,26 +1801,48 @@ export async function getAllRAB(db: D1Database) {
       
       return result.results || []
     } catch (columnError) {
-      // Fallback: Query without jenis_rab
-      console.log('⚠️ jenis_rab column not found, using fallback query')
-      const result = await db.prepare(`
-        SELECT 
-          r.id,
-          r.nomor_rab,
-          r.nomor_tor,
-          r.tanggal_rab,
-          r.total_harga,
-          r.status,
-          r.created_by,
-          r.created_at,
-          COUNT(ri.id) as item_count
-        FROM rab r
-        LEFT JOIN rab_items ri ON r.id = ri.rab_id
-        GROUP BY r.id
-        ORDER BY r.created_at DESC
-      `).all()
-      
-      return result.results || []
+      // Fallback 1: Query without nomor_tor (column doesn't exist in production yet)
+      console.log('⚠️ nomor_tor column not found, trying without it')
+      try {
+        const result = await db.prepare(`
+          SELECT 
+            r.id,
+            r.nomor_rab,
+            r.tanggal_rab,
+            r.jenis_rab,
+            r.total_harga,
+            r.status,
+            r.created_by,
+            r.created_at,
+            COUNT(ri.id) as item_count
+          FROM rab r
+          LEFT JOIN rab_items ri ON r.id = ri.rab_id
+          GROUP BY r.id
+          ORDER BY r.created_at DESC
+        `).all()
+        
+        return result.results || []
+      } catch (fallback1Error) {
+        // Fallback 2: Query without jenis_rab and nomor_tor
+        console.log('⚠️ jenis_rab column also not found, using basic query')
+        const result = await db.prepare(`
+          SELECT 
+            r.id,
+            r.nomor_rab,
+            r.tanggal_rab,
+            r.total_harga,
+            r.status,
+            r.created_by,
+            r.created_at,
+            COUNT(ri.id) as item_count
+          FROM rab r
+          LEFT JOIN rab_items ri ON r.id = ri.rab_id
+          GROUP BY r.id
+          ORDER BY r.created_at DESC
+        `).all()
+        
+        return result.results || []
+      }
     }
   } catch (error) {
     console.error('Failed to get RAB list:', error)
