@@ -2729,21 +2729,23 @@ app.get('/api/kebutuhan-material', async (c) => {
       
       if (isTerkirim) {
         // Priority 1: Material sudah dikirim (ada di transaksi Keluar)
+        // Override even manual status because Terkirim is final state
         finalStatus = 'Terkirim'
-      } else if (!isManualStatus && snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
-        // Priority 2: Material punya S/N tapi belum dikirim = Tersedia di gudang
-        // BUT: Don't override if user manually set status to Pengadaan/Tunda/Reject
+      } else if (isManualStatus) {
+        // Priority 2: Keep manual status (Pengadaan, Tunda, Reject) - NEVER override
+        // User explicitly set this status, so preserve it
+        finalStatus = mat.status
+      } else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
+        // Priority 3: Material punya S/N tapi belum dikirim = Tersedia di gudang
         finalStatus = 'Tersedia'
-      } else if (!isManualStatus && stok > 0 && (finalStatus === 'N/A' || !finalStatus)) {
-        // Priority 3: Material ada stok (dari transaksi Masuk) = Tersedia
-        // BUT: Don't override manual status
+      } else if (stok > 0) {
+        // Priority 4: Material ada stok (dari transaksi Masuk) = Tersedia
         finalStatus = 'Tersedia'
-      } else if (!isManualStatus && stok === 0 && finalStatus === 'Tersedia') {
-        // Priority 4: Stok habis, kembali ke N/A
-        // BUT: Don't override manual status
+      } else if (stok === 0 && finalStatus === 'Tersedia') {
+        // Priority 5: Stok habis, kembali ke N/A
         finalStatus = 'N/A'
       }
-      // ELSE: Keep manual status (Pengadaan, Tunda, Reject) as-is
+      // ELSE: Keep current status as-is
       
       return {
         ...mat,
