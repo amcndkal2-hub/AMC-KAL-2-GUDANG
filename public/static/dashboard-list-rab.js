@@ -118,7 +118,7 @@ function renderRABList(rabList) {
   if (rabList.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
           <i class="fas fa-inbox text-4xl mb-2"></i>
           <p>Belum ada RAB yang dibuat</p>
           <p class="text-sm mt-2">Buat RAB baru di menu Create RAB</p>
@@ -132,6 +132,9 @@ function renderRABList(rabList) {
     <tr class="hover:bg-gray-50">
       <td class="px-4 py-3 border text-center">${index + 1}</td>
       <td class="px-4 py-3 border font-mono text-sm font-semibold text-blue-600">${rab.nomor_rab || '-'}</td>
+      <td class="px-4 py-3 border text-center">
+        <span class="text-gray-500 text-sm">${rab.nomor_tor || '-'}</span>
+      </td>
       <td class="px-4 py-3 border text-center">${formatDate(rab.tanggal_rab)}</td>
       <td class="px-4 py-3 border text-center">
         <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
