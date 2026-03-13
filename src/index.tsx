@@ -2724,25 +2724,28 @@ app.get('/api/kebutuhan-material', async (c) => {
       }
       
       // Define manual statuses that should NOT be overridden by auto-update
-      const manualStatuses = ['Pengadaan', 'Tunda', 'Reject']
+      // CRITICAL: These statuses are set explicitly by users and must be preserved
+      const manualStatuses = ['Pengadaan', 'Tunda', 'Reject', 'Tersedia']
       const isManualStatus = manualStatuses.includes(finalStatus)
       
+      // Priority check order (IMPORTANT: Check in this exact order!)
       if (isTerkirim) {
         // Priority 1: Material sudah dikirim (ada di transaksi Keluar)
         // Override even manual status because Terkirim is final state
         finalStatus = 'Terkirim'
       } else if (isManualStatus) {
-        // Priority 2: Keep manual status (Pengadaan, Tunda, Reject) - NEVER override
-        // User explicitly set this status, so preserve it
+        // Priority 2: Keep manual status (Pengadaan, Tunda, Reject, Tersedia)
+        // NEVER override status that was explicitly set by user
+        // This includes status changed from dropdown in Kebutuhan Material page
         finalStatus = mat.status
       } else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
-        // Priority 3: Material punya S/N tapi belum dikirim = Tersedia di gudang
+        // Priority 3: Material punya S/N tapi belum dikirim = Auto-set Tersedia
         finalStatus = 'Tersedia'
       } else if (stok > 0) {
-        // Priority 4: Material ada stok (dari transaksi Masuk) = Tersedia
+        // Priority 4: Material ada stok (dari transaksi Masuk) = Auto-set Tersedia
         finalStatus = 'Tersedia'
-      } else if (stok === 0 && finalStatus === 'Tersedia') {
-        // Priority 5: Stok habis, kembali ke N/A
+      } else if (stok === 0 && !isManualStatus) {
+        // Priority 5: Stok habis dan bukan manual status = Auto-set N/A
         finalStatus = 'N/A'
       }
       // ELSE: Keep current status as-is
