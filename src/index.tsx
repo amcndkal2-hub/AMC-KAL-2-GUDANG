@@ -3568,6 +3568,73 @@ app.post('/api/rab/:id/update-status', async (c) => {
   }
 })
 
+// API: Update Nomor TOR (Andalcekatan only)
+app.post('/api/rab/:id/update-tor', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    const { nomor_tor } = await c.req.json()
+    
+    console.log('📝 Updating Nomor TOR:', { rabId, nomor_tor })
+    
+    // Check if user is Andalcekatan
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    let username = ''
+    
+    if (sessionToken) {
+      // Check session in memory first
+      const session = sessions.get(sessionToken)
+      if (session) {
+        username = session.username
+      } else {
+        // Fallback: Check D1 database
+        try {
+          const dbSession = await env.DB.prepare(`
+            SELECT username FROM sessions WHERE token = ? AND expires_at > datetime('now')
+          `).bind(sessionToken).first()
+          
+          if (dbSession) {
+            username = dbSession.username
+          }
+        } catch (error) {
+          console.error('Failed to check session in DB:', error)
+        }
+      }
+    }
+    
+    // Validate user is Andalcekatan
+    if (username !== 'Andalcekatan') {
+      console.log('❌ Update TOR denied: User is not Andalcekatan')
+      return c.json({ 
+        success: false, 
+        error: 'Access denied. Only Andalcekatan can update No. TOR.' 
+      }, 403)
+    }
+    
+    // Update nomor_tor in rab table
+    await env.DB.prepare(`
+      UPDATE rab 
+      SET nomor_tor = ?, updated_at = datetime('now')
+      WHERE id = ?
+    `).bind(nomor_tor || null, rabId).run()
+    
+    console.log(`✅ Nomor TOR updated for RAB ${rabId}`)
+    
+    return c.json({
+      success: true,
+      message: 'Nomor TOR berhasil diupdate!',
+      rab_id: rabId,
+      nomor_tor
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to update Nomor TOR:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to update Nomor TOR' 
+    }, 500)
+  }
+})
+
 // API: Delete RAB (ADMIN or Andalcekatan only)
 app.delete('/api/rab/:id', async (c) => {
   try {

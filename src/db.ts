@@ -1785,6 +1785,7 @@ export async function getAllRAB(db: D1Database) {
         SELECT 
           r.id,
           r.nomor_rab,
+          r.nomor_tor,
           r.tanggal_rab,
           r.jenis_rab,
           r.total_harga,
@@ -1806,6 +1807,7 @@ export async function getAllRAB(db: D1Database) {
         SELECT 
           r.id,
           r.nomor_rab,
+          r.nomor_tor,
           r.tanggal_rab,
           r.total_harga,
           r.status,

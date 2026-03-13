@@ -114,6 +114,7 @@ function renderRABList(rabList) {
   const username = localStorage.getItem('username') || ''
   const userRole = localStorage.getItem('userRole') || ''
   const canDelete = userRole === 'admin' || username === 'Andalcekatan'
+  const isAndalcekatan = username === 'Andalcekatan'
   
   if (rabList.length === 0) {
     tbody.innerHTML = `
@@ -133,7 +134,16 @@ function renderRABList(rabList) {
       <td class="px-4 py-3 border text-center">${index + 1}</td>
       <td class="px-4 py-3 border font-mono text-sm font-semibold text-blue-600">${rab.nomor_rab || '-'}</td>
       <td class="px-4 py-3 border text-center">
-        <span class="text-gray-500 text-sm">${rab.nomor_tor || '-'}</span>
+        ${isAndalcekatan ? `
+          <input type="text" 
+                 value="${rab.nomor_tor || ''}" 
+                 placeholder="Isi No. TOR"
+                 onchange="updateNomorTOR(${rab.id}, this.value)"
+                 class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
+                 />
+        ` : `
+          <span class="text-gray-500 text-sm">${rab.nomor_tor || '-'}</span>
+        `}
       </td>
       <td class="px-4 py-3 border text-center">${formatDate(rab.tanggal_rab)}</td>
       <td class="px-4 py-3 border text-center">
@@ -271,6 +281,54 @@ async function updateRABStatus(rabId, newStatus) {
     alert('❌ Gagal update status: ' + error.message)
     
     // Reset dropdown to previous value
+    loadRABList()
+  }
+}
+
+// Update Nomor TOR (only for Andalcekatan)
+async function updateNomorTOR(rabId, nomorTOR) {
+  try {
+    console.log('Updating Nomor TOR:', { rabId, nomorTOR })
+    
+    // Validate username
+    const username = localStorage.getItem('username') || ''
+    if (username !== 'Andalcekatan') {
+      alert('❌ Hanya user Andalcekatan yang bisa mengubah No. TOR!')
+      loadRABList()
+      return
+    }
+    
+    // Get session token
+    const sessionToken = localStorage.getItem('sessionToken')
+    if (!sessionToken) {
+      alert('❌ Session tidak valid. Silakan login kembali.')
+      window.location.href = '/login'
+      return
+    }
+    
+    const response = await fetch(`/api/rab/${rabId}/update-tor`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionToken}`
+      },
+      body: JSON.stringify({ nomor_tor: nomorTOR })
+    })
+    
+    const result = await response.json()
+    
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Failed to update No. TOR')
+    }
+    
+    console.log('No. TOR updated:', result)
+    
+    // Success message (silent - no alert, just reload)
+    loadRABList()
+    
+  } catch (error) {
+    console.error('Failed to update No. TOR:', error)
+    alert('❌ Gagal update No. TOR: ' + error.message)
     loadRABList()
   }
 }
