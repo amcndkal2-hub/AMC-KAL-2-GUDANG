@@ -139,15 +139,17 @@ function renderRABList(rabList) {
         </span>
       </td>
       <td class="px-4 py-3 border text-center">
-        ${isAndalcekatan ? `
+        ${(rab.jenis_rab === 'SPK' && isAndalcekatan) ? `
           <input type="text" 
                  value="${rab.nomor_tor || ''}" 
                  placeholder="Isi No. TOR"
                  onchange="updateNomorTOR(${rab.id}, this.value)"
                  class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
                  />
-        ` : `
+        ` : (rab.jenis_rab === 'SPK') ? `
           <span class="text-gray-500 text-sm">${rab.nomor_tor || '-'}</span>
+        ` : `
+          <span class="text-gray-400 text-sm">-</span>
         `}
       </td>
       <td class="px-4 py-3 border text-center">${formatDate(rab.tanggal_rab)}</td>
