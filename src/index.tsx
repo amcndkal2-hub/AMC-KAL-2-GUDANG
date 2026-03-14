@@ -10288,6 +10288,7 @@ function getDashboardListRABHTML() {
                             <tr>
                                 <th class="px-4 py-3 border text-center bg-blue-50">No</th>
                                 <th class="px-4 py-3 border text-left bg-blue-50">Nomor RAB</th>
+                                <th class="px-4 py-3 border text-left bg-blue-50">Jenis RAB</th>
                                 <th class="px-4 py-3 border text-left bg-blue-50">No. TOR</th>
                                 <th class="px-4 py-3 border text-center bg-blue-50">Tanggal</th>
                                 <th class="px-4 py-3 border text-center bg-blue-50">Jumlah Item</th>
@@ -10298,7 +10299,7 @@ function getDashboardListRABHTML() {
                         </thead>
                         <tbody id="rabListTable">
                             <tr>
-                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>

@@ -119,7 +119,7 @@ function renderRABList(rabList) {
   if (rabList.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="9" class="px-4 py-8 text-center text-gray-500">
           <i class="fas fa-inbox text-4xl mb-2"></i>
           <p>Belum ada RAB yang dibuat</p>
           <p class="text-sm mt-2">Buat RAB baru di menu Create RAB</p>
@@ -133,6 +133,11 @@ function renderRABList(rabList) {
     <tr class="hover:bg-gray-50">
       <td class="px-4 py-3 border text-center">${index + 1}</td>
       <td class="px-4 py-3 border font-mono text-sm font-semibold text-blue-600">${rab.nomor_rab || '-'}</td>
+      <td class="px-4 py-3 border text-center">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${getJenisRABColor(rab.jenis_rab)}">
+          ${rab.jenis_rab || '-'}
+        </span>
+      </td>
       <td class="px-4 py-3 border text-center">
         ${isAndalcekatan ? `
           <input type="text" 
@@ -218,6 +223,16 @@ function getStatusColorSelect(status) {
     'Masuk Gudang': 'bg-purple-100 text-purple-700'
   }
   return colors[status] || 'bg-gray-100 text-gray-700'
+}
+
+// Get Jenis RAB color
+function getJenisRABColor(jenisRAB) {
+  const colors = {
+    'Pembelian Langsung': 'bg-blue-100 text-blue-700',
+    'SPK': 'bg-green-100 text-green-700',
+    'KHS': 'bg-purple-100 text-purple-700'
+  }
+  return colors[jenisRAB] || 'bg-gray-100 text-gray-700'
 }
 
 // Update RAB status
