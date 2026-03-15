@@ -3581,26 +3581,35 @@ app.post('/api/rab/:id/update-tor', async (c) => {
     const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
     let username = ''
     
+    console.log('🔍 Session token:', sessionToken ? 'Found' : 'Not found')
+    
     if (sessionToken) {
       try {
         const dbSession = await env.DB.prepare(`
           SELECT username FROM sessions WHERE token = ? AND expires_at > datetime('now')
         `).bind(sessionToken).first()
         
+        console.log('🔍 DB Session result:', dbSession)
+        
         if (dbSession) {
           username = dbSession.username
+          console.log('✅ Username from DB session:', username)
+        } else {
+          console.log('⚠️ No valid session found in DB')
         }
       } catch (error) {
-        console.error('Failed to check session in DB:', error)
+        console.error('❌ Failed to check session in DB:', error)
       }
     }
     
+    console.log('🔍 Final username:', username)
+    
     // Validate user: Andalcekatan or AMC@12345
     if (username !== 'Andalcekatan' && username !== 'AMC@12345') {
-      console.log('❌ Update TOR denied: User is not authorized')
+      console.log('❌ Update TOR denied: User is not authorized. Username:', username)
       return c.json({ 
         success: false, 
-        error: 'Access denied. Only Andalcekatan or AMC@12345 can update No. TOR.' 
+        error: `Access denied. Only Andalcekatan or AMC@12345 can update No. TOR. Current user: ${username || 'unknown'}` 
       }, 403)
     }
     
@@ -3614,7 +3623,7 @@ app.post('/api/rab/:id/update-tor', async (c) => {
         console.log('❌ Update TOR denied: AMC@12345 cannot edit existing TOR')
         return c.json({ 
           success: false, 
-          error: 'Access denied. AMC@12345 can only insert new TOR, not edit existing ones.' 
+          error: 'AMC@12345 hanya bisa mengisi No. TOR baru, tidak bisa edit yang sudah ada.' 
         }, 403)
       }
     }
@@ -3632,7 +3641,8 @@ app.post('/api/rab/:id/update-tor', async (c) => {
       success: true,
       message: 'Nomor TOR berhasil diupdate!',
       rab_id: rabId,
-      nomor_tor
+      nomor_tor,
+      username
     })
   } catch (error: any) {
     console.error('❌ Failed to update Nomor TOR:', error)
