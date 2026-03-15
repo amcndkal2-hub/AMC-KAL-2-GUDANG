@@ -10256,34 +10256,72 @@ function getDashboardListRABHTML() {
                 <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
             </div>
 
-            <!-- Filter Status -->
-            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-                <div class="flex items-center space-x-4">
-                    <label class="font-semibold text-gray-700">
-                        <i class="fas fa-filter mr-2 text-blue-600"></i>Filter Status:
-                    </label>
-                    <button onclick="filterByStatus('All')" id="btnAll" class="status-filter-btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-th-large mr-2"></i>Semua
-                    </button>
-                    <button onclick="filterByStatus('Draft')" id="btnDraft" class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
-                        <i class="fas fa-edit mr-2"></i>Draft
-                    </button>
-                    <button onclick="filterByStatus('Pengadaan')" id="btnPengadaan" class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
-                        <i class="fas fa-shopping-cart mr-2"></i>Pengadaan
-                    </button>
-                    <button onclick="filterByStatus('Tersedia')" id="btnTersedia" class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
-                        <i class="fas fa-check-circle mr-2"></i>Tersedia
-                    </button>
-                    <button onclick="filterByStatus('Masuk Gudang')" id="btnMasukGudang" class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
-                        <i class="fas fa-warehouse mr-2"></i>Masuk Gudang
-                    </button>
-                </div>
-            </div>
+            <!-- Main Content with Sidebar -->
+            <div class="flex gap-6">
+                <!-- Sidebar Filter -->
+                <div class="w-64 flex-shrink-0">
+                    <!-- Filter Status -->
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-filter mr-2 text-blue-600"></i>
+                            Filter Status
+                        </h3>
+                        <div class="space-y-2">
+                            <button onclick="filterByStatus('All')" id="btnAll" 
+                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
+                                <i class="fas fa-th-large mr-2"></i>Semua
+                            </button>
+                            <button onclick="filterByStatus('Draft')" id="btnDraft" 
+                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-edit mr-2"></i>Draft
+                            </button>
+                            <button onclick="filterByStatus('Pengadaan')" id="btnPengadaan" 
+                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-shopping-cart mr-2"></i>Pengadaan
+                            </button>
+                            <button onclick="filterByStatus('Tersedia')" id="btnTersedia" 
+                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-check-circle mr-2"></i>Tersedia
+                            </button>
+                            <button onclick="filterByStatus('Masuk Gudang')" id="btnMasukGudang" 
+                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-warehouse mr-2"></i>Masuk Gudang
+                            </button>
+                        </div>
+                    </div>
 
-            <!-- RAB List with Sticky Header -->
-            <div class="bg-white rounded-lg shadow-md">
-                <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
-                    <table class="min-w-full border">
+                    <!-- Filter Jenis RAB -->
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-list mr-2 text-green-600"></i>
+                            Filter Jenis RAB
+                        </h3>
+                        <div class="space-y-2">
+                            <button onclick="filterByJenis('All')" id="btnJenisAll" 
+                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
+                                <i class="fas fa-th-large mr-2"></i>Semua
+                            </button>
+                            <button onclick="filterByJenis('SPK')" id="btnJenisSPK" 
+                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-file-contract mr-2"></i>SPK
+                            </button>
+                            <button onclick="filterByJenis('Pembelian Langsung')" id="btnJenisPembelianLangsung" 
+                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-shopping-bag mr-2"></i>Pembelian Langsung
+                            </button>
+                            <button onclick="filterByJenis('KHS')" id="btnJenisKHS" 
+                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-handshake mr-2"></i>KHS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Table -->
+                <div class="flex-1">
+                    <div class="bg-white rounded-lg shadow-md">
+                        <div class="overflow-x-auto" style="max-height: calc(100vh - 220px); overflow-y: auto;">
+                            <table class="min-w-full border">
                         <thead class="bg-blue-50 sticky top-0 z-10 shadow-md">
                             <tr>
                                 <th class="px-4 py-3 border text-center bg-blue-50">No</th>
@@ -10306,6 +10344,8 @@ function getDashboardListRABHTML() {
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
                 </div>
             </div>
         </div>

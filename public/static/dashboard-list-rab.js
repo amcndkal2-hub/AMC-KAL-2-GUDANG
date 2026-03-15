@@ -5,6 +5,7 @@ let allRABList = []
 let filteredRABList = []
 let currentRABDetail = null
 let currentStatusFilter = 'All' // Changed from 'Semua' to 'All'
+let currentJenisFilter = 'All' // Filter for Jenis RAB
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -62,25 +63,35 @@ function sortRABByStatus() {
   })
 }
 
-// Filter RAB by status
-function filterRABByStatus() {
-  if (currentStatusFilter === 'All') {
-    filteredRABList = [...allRABList]
-  } else if (currentStatusFilter === 'Masuk Gudang') {
-    // Include both "Masuk Gudang" and "Masuk Gudang (Auto)"
-    filteredRABList = allRABList.filter(rab => 
-      rab.status === 'Masuk Gudang' || rab.status === 'Masuk Gudang (Auto)'
-    )
-  } else {
-    filteredRABList = allRABList.filter(rab => rab.status === currentStatusFilter)
+// Filter RAB by status and jenis
+function applyFilters() {
+  let filtered = [...allRABList]
+  
+  // Apply status filter
+  if (currentStatusFilter !== 'All') {
+    if (currentStatusFilter === 'Masuk Gudang') {
+      // Include both "Masuk Gudang" and "Masuk Gudang (Auto)"
+      filtered = filtered.filter(rab => 
+        rab.status === 'Masuk Gudang' || rab.status === 'Masuk Gudang (Auto)'
+      )
+    } else {
+      filtered = filtered.filter(rab => rab.status === currentStatusFilter)
+    }
   }
+  
+  // Apply jenis RAB filter
+  if (currentJenisFilter !== 'All') {
+    filtered = filtered.filter(rab => rab.jenis_rab === currentJenisFilter)
+  }
+  
+  filteredRABList = filtered
   
   // Sort after filtering
   sortRABByStatus()
   renderRABList(filteredRABList)
 }
 
-// Handle status filter button click (UPDATED FOR BUTTON INTERFACE)
+// Handle status filter button click
 function filterByStatus(status) {
   console.log('Filter by status:', status)
   currentStatusFilter = status
@@ -88,24 +99,56 @@ function filterByStatus(status) {
   // Update button styling
   document.querySelectorAll('.status-filter-btn').forEach(btn => {
     btn.classList.remove('bg-blue-600', 'text-white')
-    btn.classList.add('bg-gray-200', 'text-gray-700')
+    btn.classList.add('bg-gray-100', 'text-gray-700')
   })
   
   // Highlight active button
   const activeBtn = document.getElementById('btn' + status.replace(' ', ''))
   if (activeBtn) {
-    activeBtn.classList.remove('bg-gray-200', 'text-gray-700')
+    activeBtn.classList.remove('bg-gray-100', 'text-gray-700')
     activeBtn.classList.add('bg-blue-600', 'text-white')
   }
   
-  // Apply filter
-  filterRABByStatus()
+  // Apply filters
+  applyFilters()
+}
+
+// Handle jenis RAB filter button click
+function filterByJenis(jenis) {
+  console.log('Filter by jenis:', jenis)
+  currentJenisFilter = jenis
+  
+  // Update button styling
+  document.querySelectorAll('.jenis-filter-btn').forEach(btn => {
+    btn.classList.remove('bg-green-600', 'text-white')
+    btn.classList.add('bg-gray-100', 'text-gray-700')
+  })
+  
+  // Highlight active button
+  let btnId = 'btnJenisAll'
+  if (jenis === 'SPK') btnId = 'btnJenisSPK'
+  else if (jenis === 'Pembelian Langsung') btnId = 'btnJenisPembelianLangsung'
+  else if (jenis === 'KHS') btnId = 'btnJenisKHS'
+  
+  const activeBtn = document.getElementById(btnId)
+  if (activeBtn) {
+    activeBtn.classList.remove('bg-gray-100', 'text-gray-700')
+    activeBtn.classList.add('bg-green-600', 'text-white')
+  }
+  
+  // Apply filters
+  applyFilters()
+}
+
+// LEGACY: Filter RAB by status only (kept for compatibility)
+function filterRABByStatus() {
+  applyFilters()
 }
 
 // Handle status filter change (LEGACY - kept for compatibility)
 function handleStatusFilterChange(value) {
   currentStatusFilter = value
-  filterRABByStatus()
+  applyFilters()
 }
 
 // Render RAB list table
