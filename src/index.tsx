@@ -3586,7 +3586,7 @@ app.post('/api/rab/:id/update-tor', async (c) => {
     if (sessionToken) {
       try {
         const dbSession = await env.DB.prepare(`
-          SELECT username FROM sessions WHERE token = ? AND expires_at > datetime('now')
+          SELECT username FROM sessions WHERE session_token = ? AND expires_at > datetime('now')
         `).bind(sessionToken).first()
         
         console.log('🔍 DB Session result:', dbSession)
