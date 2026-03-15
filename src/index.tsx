@@ -3577,28 +3577,21 @@ app.post('/api/rab/:id/update-tor', async (c) => {
     
     console.log('📝 Updating Nomor TOR:', { rabId, nomor_tor })
     
-    // Check user session
+    // Check user session from D1 database
     const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
     let username = ''
     
     if (sessionToken) {
-      // Check session in memory first
-      const session = sessions.get(sessionToken)
-      if (session) {
-        username = session.username
-      } else {
-        // Fallback: Check D1 database
-        try {
-          const dbSession = await env.DB.prepare(`
-            SELECT username FROM sessions WHERE token = ? AND expires_at > datetime('now')
-          `).bind(sessionToken).first()
-          
-          if (dbSession) {
-            username = dbSession.username
-          }
-        } catch (error) {
-          console.error('Failed to check session in DB:', error)
+      try {
+        const dbSession = await env.DB.prepare(`
+          SELECT username FROM sessions WHERE token = ? AND expires_at > datetime('now')
+        `).bind(sessionToken).first()
+        
+        if (dbSession) {
+          username = dbSession.username
         }
+      } catch (error) {
+        console.error('Failed to check session in DB:', error)
       }
     }
     
