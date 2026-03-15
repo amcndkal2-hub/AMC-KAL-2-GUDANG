@@ -3568,7 +3568,7 @@ app.post('/api/rab/:id/update-status', async (c) => {
   }
 })
 
-// API: Update Nomor TOR (Andalcekatan only)
+// API: Update Nomor TOR (Andalcekatan: full access, AMC@12345: insert only)
 app.post('/api/rab/:id/update-tor', async (c) => {
   try {
     const { env } = c
@@ -3577,7 +3577,7 @@ app.post('/api/rab/:id/update-tor', async (c) => {
     
     console.log('📝 Updating Nomor TOR:', { rabId, nomor_tor })
     
-    // Check if user is Andalcekatan
+    // Check user session
     const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
     let username = ''
     
@@ -3602,13 +3602,28 @@ app.post('/api/rab/:id/update-tor', async (c) => {
       }
     }
     
-    // Validate user is Andalcekatan
-    if (username !== 'Andalcekatan') {
-      console.log('❌ Update TOR denied: User is not Andalcekatan')
+    // Validate user: Andalcekatan or AMC@12345
+    if (username !== 'Andalcekatan' && username !== 'AMC@12345') {
+      console.log('❌ Update TOR denied: User is not authorized')
       return c.json({ 
         success: false, 
-        error: 'Access denied. Only Andalcekatan can update No. TOR.' 
+        error: 'Access denied. Only Andalcekatan or AMC@12345 can update No. TOR.' 
       }, 403)
+    }
+    
+    // If user is AMC@12345, check if TOR already exists (insert-only)
+    if (username === 'AMC@12345') {
+      const existingRAB = await env.DB.prepare(`
+        SELECT nomor_tor FROM rab WHERE id = ?
+      `).bind(rabId).first()
+      
+      if (existingRAB && existingRAB.nomor_tor && existingRAB.nomor_tor !== '') {
+        console.log('❌ Update TOR denied: AMC@12345 cannot edit existing TOR')
+        return c.json({ 
+          success: false, 
+          error: 'Access denied. AMC@12345 can only insert new TOR, not edit existing ones.' 
+        }, 403)
+      }
     }
     
     // Update nomor_tor in rab table
@@ -3618,7 +3633,7 @@ app.post('/api/rab/:id/update-tor', async (c) => {
       WHERE id = ?
     `).bind(nomor_tor || null, rabId).run()
     
-    console.log(`✅ Nomor TOR updated for RAB ${rabId}`)
+    console.log(`✅ Nomor TOR updated for RAB ${rabId} by ${username}`)
     
     return c.json({
       success: true,

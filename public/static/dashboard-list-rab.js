@@ -158,6 +158,7 @@ function renderRABList(rabList) {
   const userRole = localStorage.getItem('userRole') || ''
   const canDelete = userRole === 'admin' || username === 'Andalcekatan'
   const isAndalcekatan = username === 'Andalcekatan'
+  const isAMC = username === 'AMC@12345'
   
   if (rabList.length === 0) {
     tbody.innerHTML = `
@@ -182,18 +183,35 @@ function renderRABList(rabList) {
         </span>
       </td>
       <td class="px-4 py-3 border text-center">
-        ${(rab.jenis_rab === 'SPK' && isAndalcekatan) ? `
-          <input type="text" 
-                 value="${rab.nomor_tor || ''}" 
-                 placeholder="Isi No. TOR"
-                 onchange="updateNomorTOR(${rab.id}, this.value)"
-                 class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
-                 />
-        ` : (rab.jenis_rab === 'SPK') ? `
-          <span class="text-gray-500 text-sm">${rab.nomor_tor || '-'}</span>
-        ` : `
-          <span class="text-gray-400 text-sm">-</span>
-        `}
+        ${(rab.jenis_rab === 'SPK') ? (() => {
+          // Andalcekatan: Always editable
+          if (isAndalcekatan) {
+            return `<input type="text" 
+                     value="${rab.nomor_tor || ''}" 
+                     placeholder="Isi No. TOR"
+                     onchange="updateNomorTOR(${rab.id}, this.value)"
+                     class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
+                     />`
+          }
+          // AMC@12345: Editable only if empty
+          else if (isAMC) {
+            if (!rab.nomor_tor || rab.nomor_tor === '') {
+              return `<input type="text" 
+                       value="" 
+                       placeholder="Isi No. TOR"
+                       onchange="updateNomorTOR(${rab.id}, this.value)"
+                       class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
+                       />`
+            } else {
+              return `<span class="text-gray-500 text-sm font-medium">${rab.nomor_tor}</span>
+                      <span class="text-xs text-gray-400 block mt-1">(locked)</span>`
+            }
+          }
+          // Other users: Read-only
+          else {
+            return `<span class="text-gray-500 text-sm">${rab.nomor_tor || '-'}</span>`
+          }
+        })() : `<span class="text-gray-400 text-sm">-</span>`}
       </td>
       <td class="px-4 py-3 border text-center">${formatDate(rab.tanggal_rab)}</td>
       <td class="px-4 py-3 border text-center">
@@ -345,15 +363,15 @@ async function updateRABStatus(rabId, newStatus) {
   }
 }
 
-// Update Nomor TOR (only for Andalcekatan)
+// Update Nomor TOR (Andalcekatan: full access, AMC@12345: insert only)
 async function updateNomorTOR(rabId, nomorTOR) {
   try {
     console.log('Updating Nomor TOR:', { rabId, nomorTOR })
     
     // Validate username
     const username = localStorage.getItem('username') || ''
-    if (username !== 'Andalcekatan') {
-      alert('❌ Hanya user Andalcekatan yang bisa mengubah No. TOR!')
+    if (username !== 'Andalcekatan' && username !== 'AMC@12345') {
+      alert('❌ Hanya user Andalcekatan atau AMC@12345 yang bisa mengisi No. TOR!')
       loadRABList()
       return
     }
