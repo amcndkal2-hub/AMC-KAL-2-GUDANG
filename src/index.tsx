@@ -7724,6 +7724,9 @@ function getDashboardPengadaanHTML() {
                     // Display table
                     displayTable();
                     
+                    // Auto-match RAB by TOR after data loaded
+                    await autoMatchRABByTOR();
+                    
                 } catch (error) {
                     console.error('Error loading data:', error);
                     document.getElementById('pengadaanTable').innerHTML = \`
@@ -7754,6 +7757,75 @@ function getDashboardPengadaanHTML() {
                 } catch (error) {
                     console.error('Error loading RAB links:', error);
                     rabLinks = {};
+                }
+            }
+
+            // Extract No. TOR from Keterangan (after last "-")
+            function extractTORFromKeterangan(keterangan) {
+                if (!keterangan || keterangan === '-') return null;
+                
+                // Split by "-" and get last part, then trim
+                const parts = keterangan.split('-');
+                if (parts.length < 2) return null;
+                
+                const lastPart = parts[parts.length - 1].trim();
+                
+                // Check if it looks like a TOR number (contains "TOR")
+                if (lastPart.includes('TOR')) {
+                    return lastPart;
+                }
+                
+                return null;
+            }
+
+            // Auto-match RAB based on TOR in Keterangan (partial match)
+            async function autoMatchRABByTOR() {
+                console.log('🔍 Auto-matching RAB by TOR in Keterangan...');
+                let matchCount = 0;
+                
+                for (const item of filteredData) {
+                    const nomorIjin = item.Kolom_2 || item['Kolom_2'] || '-';
+                    const keterangan = item.Kolom_11 || item['Kolom_11'] || '-';
+                    
+                    // Skip if already has RAB link
+                    if (rabLinks[nomorIjin]) {
+                        continue;
+                    }
+                    
+                    // Extract TOR from keterangan
+                    const extractedTOR = extractTORFromKeterangan(keterangan);
+                    
+                    if (extractedTOR) {
+                        console.log(\`  📝 Found TOR in Keterangan: \${extractedTOR}\`);
+                        
+                        // Find all RAB with matching TOR (partial match)
+                        const matchedRABs = availableRAB.filter(rab => {
+                            if (!rab.nomor_tor) return false;
+                            
+                            // Partial match: check if TOR contains extracted part or vice versa
+                            return rab.nomor_tor.includes(extractedTOR) || extractedTOR.includes(rab.nomor_tor);
+                        });
+                        
+                        if (matchedRABs.length > 0) {
+                            console.log(\`  ✅ Found \${matchedRABs.length} matching RAB(s):\`, matchedRABs.map(r => r.nomor_rab));
+                            
+                            // Auto-link the first matched RAB
+                            const firstMatch = matchedRABs[0];
+                            await linkRABSilent(nomorIjin, firstMatch.nomor_rab);
+                            matchCount++;
+                            
+                            console.log(\`  🔗 Auto-linked: \${nomorIjin} → \${firstMatch.nomor_rab}\`);
+                        }
+                    }
+                }
+                
+                if (matchCount > 0) {
+                    console.log(\`✅ Auto-matched \${matchCount} RAB(s)\`);
+                    // Reload to show updated links
+                    await loadRABLinks();
+                    displayTable();
+                } else {
+                    console.log('ℹ️ No auto-match found');
                 }
             }
 
@@ -7952,6 +8024,9 @@ function getDashboardPengadaanHTML() {
                         statusColor = 'bg-yellow-100 text-yellow-800';
                     }
                     
+                    // Extract TOR from keterangan for matching
+                    const extractedTOR = extractTORFromKeterangan(keterangan);
+                    
                     // Build dropdown options for RAB
                     const savedRAB = rabLinks[nomorIjin] || '';
                     
@@ -7959,24 +8034,67 @@ function getDashboardPengadaanHTML() {
                     const currentUsername = localStorage.getItem('username') || '';
                     const isAndalcekatan = currentUsername.toLowerCase() === 'andalcekatan';
                     
+                    // Find all RAB with matching TOR (if TOR found in keterangan)
+                    let matchingRABs = [];
+                    if (extractedTOR) {
+                        matchingRABs = availableRAB.filter(rab => {
+                            if (!rab.nomor_tor) return false;
+                            return rab.nomor_tor.includes(extractedTOR) || extractedTOR.includes(rab.nomor_tor);
+                        });
+                    }
+                    
                     // If this row has saved RAB, show it as selected (even if status changed)
                     let rabOptions = '';
                     if (savedRAB) {
                         if (isAndalcekatan) {
-                            // Andalcekatan: show saved RAB + available draft RABs
+                            // Andalcekatan: show saved RAB + matching RABs (with same TOR) + other available RABs
                             rabOptions = \`<option value="\${savedRAB}" selected>\${savedRAB} ✓</option>\`;
-                            rabOptions += availableRAB.map(rab => {
-                                return \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab}</option>\`;
-                            }).join('');
+                            
+                            // Add matching RABs with same TOR (highlighted)
+                            if (matchingRABs.length > 0) {
+                                rabOptions += \`<optgroup label="📌 RAB dengan TOR yang sama">\`;
+                                matchingRABs.forEach(rab => {
+                                    if (rab.nomor_rab !== savedRAB) {
+                                        rabOptions += \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab} (TOR: \${rab.nomor_tor})</option>\`;
+                                    }
+                                });
+                                rabOptions += \`</optgroup>\`;
+                            }
+                            
+                            // Add other available RABs
+                            const otherRABs = availableRAB.filter(rab => 
+                                rab.nomor_rab !== savedRAB && !matchingRABs.some(m => m.nomor_rab === rab.nomor_rab)
+                            );
+                            if (otherRABs.length > 0) {
+                                rabOptions += \`<optgroup label="RAB Lainnya">\`;
+                                otherRABs.forEach(rab => {
+                                    rabOptions += \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab}</option>\`;
+                                });
+                                rabOptions += \`</optgroup>\`;
+                            }
                         } else {
                             // Other users: only show saved RAB (locked)
                             rabOptions = \`<option value="\${savedRAB}" selected>\${savedRAB} ✓</option>\`;
                         }
                     } else {
-                        // Show available Draft RAB
-                        rabOptions = availableRAB.map(rab => {
-                            return \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab}</option>\`;
-                        }).join('');
+                        // Show matching RABs first (if any), then other available RABs
+                        if (matchingRABs.length > 0) {
+                            rabOptions += \`<optgroup label="📌 RAB dengan TOR yang sama (\${matchingRABs.length})">\`;
+                            matchingRABs.forEach(rab => {
+                                rabOptions += \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab} (TOR: \${rab.nomor_tor})</option>\`;
+                            });
+                            rabOptions += \`</optgroup>\`;
+                        }
+                        
+                        // Add other available RABs
+                        const otherRABs = availableRAB.filter(rab => !matchingRABs.some(m => m.nomor_rab === rab.nomor_rab));
+                        if (otherRABs.length > 0) {
+                            rabOptions += \`<optgroup label="RAB Lainnya">\`;
+                            otherRABs.forEach(rab => {
+                                rabOptions += \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab}</option>\`;
+                            });
+                            rabOptions += \`</optgroup>\`;
+                        }
                     }
                     
                     // Dropdown disabled ONLY if savedRAB exists AND user is NOT Andalcekatan
@@ -8103,6 +8221,37 @@ function getDashboardPengadaanHTML() {
                 } catch (error) {
                     console.error('Error saving link:', error);
                     alert('❌ Terjadi kesalahan saat menyimpan link');
+                }
+            }
+
+            // Silent version (no alerts) for auto-match
+            async function linkRABSilent(nomorIjin, nomorRAB) {
+                try {
+                    const response = await fetch('/api/pengadaan/link-rab', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            nomor_ijin_prinsip: nomorIjin,
+                            nomor_rab: nomorRAB,
+                            linked_by: 'auto-match'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Update local cache
+                        rabLinks[nomorIjin] = nomorRAB;
+                        return true;
+                    } else {
+                        console.error('Failed to auto-link:', data.error);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('Error auto-linking:', error);
+                    return false;
                 }
             }
 
