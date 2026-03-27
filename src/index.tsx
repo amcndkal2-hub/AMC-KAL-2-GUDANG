@@ -7770,7 +7770,7 @@ function getDashboardPengadaanHTML() {
                 // Pattern: [NUMBER]/TOR/[TEXT]/[DATE]
                 // Examples: 112/TOR/AMC/PLND-UPKAL2/II/2026, 0093/TOR/AMC/...
                 // Using string constructor to avoid template literal issues
-                const torPattern = new RegExp('(\\\\d+\\\\/TOR\\\\/[A-Z0-9\\\\/\\\\-]+)', 'gi');
+                const torPattern = new RegExp('(\\d+\\/TOR\\/[A-Z0-9\\/\\-]+)', 'gi');
                 const matches = keterangan.match(torPattern);
                 
                 if (matches && matches.length > 0) {
@@ -7881,18 +7881,17 @@ function getDashboardPengadaanHTML() {
 
             async function loadAvailableRAB() {
                 try {
-                    console.log('Loading available RAB (Draft + SPK)...');
+                    console.log('Loading available RAB (all with nomor_tor)...');
                     const response = await fetch('/api/rab');
                     const rabList = await response.json();
                     
-                    // Filter: Status = 'Draft' AND jenis_rab contains 'SPK'
+                    // Filter: All RAB with nomor_tor filled (regardless of status)
                     availableRAB = rabList.filter(rab => {
-                        const isDraft = rab.status === 'Draft';
-                        const isSPK = rab.jenis_rab && rab.jenis_rab.includes('SPK');
-                        return isDraft && isSPK;
+                        return rab.nomor_tor && rab.nomor_tor.trim() !== '';
                     });
                     
-                    console.log(\`✅ Found \${availableRAB.length} available RAB (Draft + SPK)\`);
+                    console.log(\`✅ Found \${availableRAB.length} available RAB (with TOR)\`);
+                    console.log('Available RAB list:', availableRAB.map(r => \`\${r.nomor_rab}: \${r.nomor_tor} (\${r.status})\`));
                 } catch (error) {
                     console.error('Error loading RAB:', error);
                     availableRAB = [];
