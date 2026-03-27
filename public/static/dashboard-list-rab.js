@@ -176,6 +176,9 @@ function renderRABList(rabList) {
   tbody.innerHTML = rabList.map((rab, index) => `
     <tr class="hover:bg-gray-50">
       <td class="px-4 py-3 border text-center">${index + 1}</td>
+      <td class="px-4 py-3 border text-left">
+        <span class="font-mono font-semibold text-gray-800">${rab.nomor_rab}</span>
+      </td>
       <td class="px-4 py-3 border text-center">
         ${(rab.jenis_rab === 'SPK') ? (() => {
           // Andalcekatan: Always editable
