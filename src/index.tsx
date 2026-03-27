@@ -7769,7 +7769,8 @@ function getDashboardPengadaanHTML() {
                 // Strategy 1: Find TOR pattern anywhere in text
                 // Pattern: [NUMBER]/TOR/[TEXT]/[DATE]
                 // Examples: 112/TOR/AMC/PLND-UPKAL2/II/2026, 0093/TOR/AMC/...
-                const torPattern = /(\d+\/TOR\/[A-Z0-9\/\-]+)/gi;
+                // Using string constructor to avoid template literal issues
+                const torPattern = new RegExp('(\\\\d+\\\\/TOR\\\\/[A-Z0-9\\\\/\\\\-]+)', 'gi');
                 const matches = keterangan.match(torPattern);
                 
                 if (matches && matches.length > 0) {
@@ -7798,7 +7799,8 @@ function getDashboardPengadaanHTML() {
                     const torContext = keterangan.substring(start, end).trim();
                     
                     // Check if it looks like a TOR number (has digits and slashes)
-                    if (torContext.includes('/') && /\d/.test(torContext)) {
+                    const digitPattern = new RegExp('\\\\d');
+                    if (torContext.includes('/') && digitPattern.test(torContext)) {
                         console.log('    ⚠️  Found TOR keyword, extracting context:', torContext);
                         return torContext;
                     }
