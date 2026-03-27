@@ -10492,17 +10492,6 @@ function getDashboardListRABHTML() {
         </nav>
 
         <div class="container mx-auto px-4 py-6">
-            <!-- Header -->
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h1 class="text-2xl font-bold text-gray-800 flex items-center justify-between">
-                    <span>
-                        <i class="fas fa-list-alt text-blue-600 mr-3"></i>
-                        Daftar RAB (Rencana Anggaran Biaya)
-                    </span>
-                </h1>
-                <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
-            </div>
-
             <!-- Main Content with Sidebar -->
             <div class="flex gap-6">
                 <!-- Sidebar Filter -->
@@ -10564,10 +10553,20 @@ function getDashboardListRABHTML() {
                     </div>
                 </div>
 
-                <!-- Main Table -->
+                <!-- Main Content Area -->
                 <div class="flex-1">
+                    <!-- Header -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-list-alt text-blue-600 mr-3"></i>
+                            Daftar RAB (Rencana Anggaran Biaya)
+                        </h1>
+                        <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
+                    </div>
+
+                    <!-- Main Table -->
                     <div class="bg-white rounded-lg shadow-md">
-                        <div class="overflow-x-auto" style="max-height: calc(100vh - 220px); overflow-y: auto;">
+                        <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
                             <table class="min-w-full border">
                         <thead class="bg-blue-50 sticky top-0 z-10 shadow-md">
                             <tr>
@@ -10593,7 +10592,7 @@ function getDashboardListRABHTML() {
                         </tbody>
                     </table>
                 </div>
-            </div>
+                    </div>
                 </div>
             </div>
         </div>
