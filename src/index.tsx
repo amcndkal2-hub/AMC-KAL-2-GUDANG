@@ -10580,11 +10580,12 @@ function getDashboardListRABHTML() {
                                 <th class="px-4 py-3 border text-right bg-blue-50">Total Harga</th>
                                 <th class="px-4 py-3 border text-center bg-blue-50">Status</th>
                                 <th class="px-4 py-3 border text-center bg-blue-50">Aksi</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50">Status SCM</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">
                             <tr>
-                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>
