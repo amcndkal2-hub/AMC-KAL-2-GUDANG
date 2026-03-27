@@ -7662,6 +7662,7 @@ function getDashboardPengadaanHTML() {
                             <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                 <tr>
                                     <th class="px-6 py-4 text-left text-base font-semibold w-48">No. RAB</th>
+                                    <th class="px-6 py-4 text-left text-base font-semibold w-44">No. TOR</th>
                                     <th class="px-6 py-4 text-left text-base font-semibold w-52">Nomor Ijin Prinsip</th>
                                     <th class="px-6 py-4 text-left text-base font-semibold w-32">Jenis Item</th>
                                     <th class="px-6 py-4 text-right text-base font-semibold w-44">Nilai + PPN</th>
@@ -7924,7 +7925,7 @@ function getDashboardPengadaanHTML() {
                 if (filteredData.length === 0) {
                     tbody.innerHTML = \`
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                                 <i class="fas fa-inbox text-3xl mb-3"></i>
                                 <p>Tidak ada data PEMBANGKIT</p>
                             </td>
@@ -7981,6 +7982,10 @@ function getDashboardPengadaanHTML() {
                     // Dropdown disabled ONLY if savedRAB exists AND user is NOT Andalcekatan
                     const isDisabled = savedRAB && !isAndalcekatan;
                     
+                    // Get No. TOR from selected RAB
+                    const selectedRABData = availableRAB.find(rab => rab.nomor_rab === savedRAB);
+                    const nomorTOR = selectedRABData?.nomor_tor || '-';
+                    
                     return \`
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-3 text-base">
@@ -7993,6 +7998,9 @@ function getDashboardPengadaanHTML() {
                                 <option value="">- Pilih RAB -</option>
                                 \${rabOptions}
                             </select>
+                        </td>
+                        <td class="px-6 py-4 text-base text-gray-700 text-center">
+                            <span class="font-mono text-sm">\${nomorTOR}</span>
                         </td>
                         <td class="px-6 py-4 text-base text-gray-800">
                             <span class="font-mono">\${nomorIjin}</span>
