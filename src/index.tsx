@@ -7760,21 +7760,51 @@ function getDashboardPengadaanHTML() {
                 }
             }
 
-            // Extract No. TOR from Keterangan (after last "-")
+            // Extract No. TOR from Keterangan (flexible matching)
             function extractTORFromKeterangan(keterangan) {
                 if (!keterangan || keterangan === '-') return null;
                 
-                // Split by "-" and get last part, then trim
-                const parts = keterangan.split('-');
-                if (parts.length < 2) return null;
+                console.log('    🔍 Analyzing Keterangan:', keterangan.substring(0, 100) + '...');
                 
-                const lastPart = parts[parts.length - 1].trim();
+                // Strategy 1: Find TOR pattern anywhere in text
+                // Pattern: [NUMBER]/TOR/[TEXT]/[DATE]
+                // Examples: 112/TOR/AMC/PLND-UPKAL2/II/2026, 0093/TOR/AMC/...
+                const torPattern = /(\d+\/TOR\/[A-Z0-9\/\-]+)/gi;
+                const matches = keterangan.match(torPattern);
                 
-                // Check if it looks like a TOR number (contains "TOR")
-                if (lastPart.includes('TOR')) {
-                    return lastPart;
+                if (matches && matches.length > 0) {
+                    const torNumber = matches[0].trim();
+                    console.log('    ✅ Found TOR pattern:', torNumber);
+                    return torNumber;
                 }
                 
+                // Strategy 2: Look for pattern after " - " (original approach)
+                const parts = keterangan.split('-');
+                if (parts.length >= 2) {
+                    const lastPart = parts[parts.length - 1].trim();
+                    
+                    if (lastPart.includes('TOR')) {
+                        console.log('    ✅ Found TOR after "-":', lastPart);
+                        return lastPart;
+                    }
+                }
+                
+                // Strategy 3: Look for TOR keyword with surrounding context
+                const torIndex = keterangan.toUpperCase().indexOf('TOR');
+                if (torIndex !== -1) {
+                    // Extract ~50 chars around TOR keyword
+                    const start = Math.max(0, torIndex - 10);
+                    const end = Math.min(keterangan.length, torIndex + 40);
+                    const torContext = keterangan.substring(start, end).trim();
+                    
+                    // Check if it looks like a TOR number (has digits and slashes)
+                    if (torContext.includes('/') && /\d/.test(torContext)) {
+                        console.log('    ⚠️  Found TOR keyword, extracting context:', torContext);
+                        return torContext;
+                    }
+                }
+                
+                console.log('    ❌ No TOR pattern found');
                 return null;
             }
 
