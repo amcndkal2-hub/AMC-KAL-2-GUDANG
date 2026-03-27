@@ -7690,10 +7690,10 @@ function getDashboardPengadaanHTML() {
             let rabLinks = {};  // Store RAB links (key: nomorIjin, value: nomorRAB)
 
             // Load data on page load
-            document.addEventListener('DOMContentLoaded', function() {
-                loadRABLinks();  // Load links first
-                loadAvailableRAB();  // Load RAB
-                loadPengadaanData();
+            document.addEventListener('DOMContentLoaded', async function() {
+                await loadRABLinks();  // Load links first
+                await loadAvailableRAB();  // Load RAB (wait for completion)
+                await loadPengadaanData();  // Then load pengadaan data
             });
 
             async function loadPengadaanData() {
@@ -7781,6 +7781,10 @@ function getDashboardPengadaanHTML() {
             // Auto-match RAB based on TOR in Keterangan (partial match)
             async function autoMatchRABByTOR() {
                 console.log('🔍 Auto-matching RAB by TOR in Keterangan...');
+                console.log('Available RAB count:', availableRAB.length);
+                console.log('Filtered data count:', filteredData.length);
+                console.log('Existing RAB links:', Object.keys(rabLinks).length);
+                
                 let matchCount = 0;
                 
                 for (const item of filteredData) {
@@ -7789,6 +7793,7 @@ function getDashboardPengadaanHTML() {
                     
                     // Skip if already has RAB link
                     if (rabLinks[nomorIjin]) {
+                        console.log(\`  ⏭️  Skip \${nomorIjin}: already linked to \${rabLinks[nomorIjin]}\`);
                         continue;
                     }
                     
@@ -7796,6 +7801,7 @@ function getDashboardPengadaanHTML() {
                     const extractedTOR = extractTORFromKeterangan(keterangan);
                     
                     if (extractedTOR) {
+                        console.log(\`  📝 Nomor Ijin: \${nomorIjin}\`);
                         console.log(\`  📝 Found TOR in Keterangan: \${extractedTOR}\`);
                         
                         // Find all RAB with matching TOR (partial match)
@@ -7803,7 +7809,11 @@ function getDashboardPengadaanHTML() {
                             if (!rab.nomor_tor) return false;
                             
                             // Partial match: check if TOR contains extracted part or vice versa
-                            return rab.nomor_tor.includes(extractedTOR) || extractedTOR.includes(rab.nomor_tor);
+                            const match = rab.nomor_tor.includes(extractedTOR) || extractedTOR.includes(rab.nomor_tor);
+                            if (match) {
+                                console.log(\`    🎯 Match found: RAB \${rab.nomor_rab} with TOR \${rab.nomor_tor}\`);
+                            }
+                            return match;
                         });
                         
                         if (matchedRABs.length > 0) {
@@ -7811,11 +7821,19 @@ function getDashboardPengadaanHTML() {
                             
                             // Auto-link the first matched RAB
                             const firstMatch = matchedRABs[0];
-                            await linkRABSilent(nomorIjin, firstMatch.nomor_rab);
-                            matchCount++;
+                            const linkSuccess = await linkRABSilent(nomorIjin, firstMatch.nomor_rab);
                             
-                            console.log(\`  🔗 Auto-linked: \${nomorIjin} → \${firstMatch.nomor_rab}\`);
+                            if (linkSuccess) {
+                                matchCount++;
+                                console.log(\`  🔗 Auto-linked: \${nomorIjin} → \${firstMatch.nomor_rab}\`);
+                            } else {
+                                console.log(\`  ❌ Failed to link: \${nomorIjin} → \${firstMatch.nomor_rab}\`);
+                            }
+                        } else {
+                            console.log(\`  ℹ️  No matching RAB found for TOR: \${extractedTOR}\`);
                         }
+                    } else {
+                        console.log(\`  ⚠️  No TOR found in keterangan for \${nomorIjin}\`);
                     }
                 }
                 
