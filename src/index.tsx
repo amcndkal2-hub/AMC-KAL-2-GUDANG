@@ -8077,98 +8077,43 @@ function getDashboardPengadaanHTML() {
                     // Extract TOR from keterangan for matching
                     const extractedTOR = extractTORFromKeterangan(keterangan);
                     
-                    // Build dropdown options for RAB
-                    const savedRAB = rabLinks[nomorIjin] || '';
+                    // Find matching RAB based on TOR (auto-match)
+                    let matchedRAB = null;
+                    let nomorRABDisplay = '-';
+                    let nomorTOR = '-';
                     
-                    // Check if user is Andalcekatan (can edit linked RAB)
-                    const currentUsername = localStorage.getItem('username') || '';
-                    const isAndalcekatan = currentUsername.toLowerCase() === 'andalcekatan';
-                    
-                    // Find all RAB with matching TOR (if TOR found in keterangan)
-                    let matchingRABs = [];
                     if (extractedTOR) {
-                        matchingRABs = availableRAB.filter(rab => {
+                        // Find first RAB with matching TOR
+                        matchedRAB = availableRAB.find(rab => {
                             if (!rab.nomor_tor) return false;
                             return rab.nomor_tor.includes(extractedTOR) || extractedTOR.includes(rab.nomor_tor);
                         });
-                    }
-                    
-                    // If this row has saved RAB, show it as selected (even if status changed)
-                    let rabOptions = '';
-                    if (savedRAB) {
-                        if (isAndalcekatan) {
-                            // Andalcekatan: show saved RAB + matching RABs (with same TOR) + other available RABs
-                            rabOptions = \`<option value="\${savedRAB}" selected>\${savedRAB} ✓</option>\`;
-                            
-                            // Add matching RABs with same TOR (highlighted)
-                            if (matchingRABs.length > 0) {
-                                rabOptions += \`<optgroup label="📌 RAB dengan TOR yang sama">\`;
-                                matchingRABs.forEach(rab => {
-                                    if (rab.nomor_rab !== savedRAB) {
-                                        rabOptions += \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab} (TOR: \${rab.nomor_tor})</option>\`;
-                                    }
-                                });
-                                rabOptions += \`</optgroup>\`;
-                            }
-                            
-                            // Add other available RABs
-                            const otherRABs = availableRAB.filter(rab => 
-                                rab.nomor_rab !== savedRAB && !matchingRABs.some(m => m.nomor_rab === rab.nomor_rab)
-                            );
-                            if (otherRABs.length > 0) {
-                                rabOptions += \`<optgroup label="RAB Lainnya">\`;
-                                otherRABs.forEach(rab => {
-                                    rabOptions += \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab}</option>\`;
-                                });
-                                rabOptions += \`</optgroup>\`;
-                            }
-                        } else {
-                            // Other users: only show saved RAB (locked)
-                            rabOptions = \`<option value="\${savedRAB}" selected>\${savedRAB} ✓</option>\`;
-                        }
-                    } else {
-                        // Show matching RABs first (if any), then other available RABs
-                        if (matchingRABs.length > 0) {
-                            rabOptions += \`<optgroup label="📌 RAB dengan TOR yang sama (\${matchingRABs.length})">\`;
-                            matchingRABs.forEach(rab => {
-                                rabOptions += \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab} (TOR: \${rab.nomor_tor})</option>\`;
-                            });
-                            rabOptions += \`</optgroup>\`;
-                        }
                         
-                        // Add other available RABs
-                        const otherRABs = availableRAB.filter(rab => !matchingRABs.some(m => m.nomor_rab === rab.nomor_rab));
-                        if (otherRABs.length > 0) {
-                            rabOptions += \`<optgroup label="RAB Lainnya">\`;
-                            otherRABs.forEach(rab => {
-                                rabOptions += \`<option value="\${rab.nomor_rab}">\${rab.nomor_rab}</option>\`;
-                            });
-                            rabOptions += \`</optgroup>\`;
+                        if (matchedRAB) {
+                            nomorRABDisplay = matchedRAB.nomor_rab;
+                            nomorTOR = matchedRAB.nomor_tor || '-';
                         }
                     }
-                    
-                    // Dropdown disabled ONLY if savedRAB exists AND user is NOT Andalcekatan
-                    const isDisabled = savedRAB && !isAndalcekatan;
-                    
-                    // Get No. TOR from selected RAB
-                    const selectedRABData = availableRAB.find(rab => rab.nomor_rab === savedRAB);
-                    const nomorTOR = selectedRABData?.nomor_tor || '-';
                     
                     return \`
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-3 text-base">
-                            <select 
-                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 \${savedRAB ? 'bg-green-50 border-green-500 text-green-700 font-semibold' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'}"
-                                data-ijin-prinsip="\${nomorIjin}"
-                                data-old-rab="\${savedRAB}"
-                                onchange="handleRABSelection(this)"
-                                \${isDisabled ? 'disabled' : ''}>
-                                <option value="">- Pilih RAB -</option>
-                                \${rabOptions}
-                            </select>
+                            \${matchedRAB ? \`
+                                <div class="px-4 py-2 rounded-lg bg-green-50 border border-green-200">
+                                    <div class="font-mono font-semibold text-green-800">\${nomorRABDisplay}</div>
+                                    <div class="text-xs text-green-600 mt-1">
+                                        <i class="fas fa-check-circle"></i> Auto-matched via TOR
+                                    </div>
+                                </div>
+                            \` : \`
+                                <div class="px-4 py-2 text-center text-gray-400">
+                                    <i class="fas fa-minus-circle"></i>
+                                    <div class="text-xs mt-1">No matching RAB</div>
+                                </div>
+                            \`}
                         </td>
                         <td class="px-6 py-4 text-base text-gray-700 text-center">
-                            <span class="font-mono text-sm">\${nomorTOR}</span>
+                            <span class="font-mono text-sm \${matchedRAB ? 'text-green-700 font-semibold' : 'text-gray-400'}">\${nomorTOR}</span>
                         </td>
                         <td class="px-6 py-4 text-base text-gray-800">
                             <span class="font-mono">\${nomorIjin}</span>
