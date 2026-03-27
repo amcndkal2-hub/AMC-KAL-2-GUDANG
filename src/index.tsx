@@ -3615,25 +3615,103 @@ app.post('/api/rab/:id/update-tor', async (c) => {
     
     // If user is AMC@12345, check if TOR already exists (insert-only)
     if (username === 'AMC@12345') {
-      const existingRAB = await env.DB.prepare(`
-        SELECT nomor_tor FROM rab WHERE id = ?
-      `).bind(rabId).first()
-      
-      if (existingRAB && existingRAB.nomor_tor && existingRAB.nomor_tor !== '') {
-        console.log('❌ Update TOR denied: AMC@12345 cannot edit existing TOR')
-        return c.json({ 
-          success: false, 
-          error: 'AMC@12345 hanya bisa mengisi No. TOR baru, tidak bisa edit yang sudah ada.' 
-        }, 403)
+      try {
+        const existingRAB = await env.DB.prepare(`
+          SELECT nomor_tor FROM rab WHERE id = ?
+        `).bind(rabId).first()
+        
+        if (existingRAB && existingRAB.nomor_tor && existingRAB.nomor_tor !== '') {
+          console.log('❌ Update TOR denied: AMC@12345 cannot edit existing TOR')
+          return c.json({ 
+            success: false, 
+            error: 'AMC@12345 hanya bisa mengisi No. TOR baru, tidak bisa edit yang sudah ada.' 
+          }, 403)
+        }
+      } catch (checkError) {
+        // If nomor_tor column doesn't exist, allow insert (will be handled below)
+        console.log('⚠️ nomor_tor column check failed, assuming column doesn\'t exist yet')
       }
     }
     
-    // Update nomor_tor in rab table
-    await env.DB.prepare(`
-      UPDATE rab 
-      SET nomor_tor = ?, updated_at = datetime('now')
-      WHERE id = ?
-    `).bind(nomor_tor || null, rabId).run()
+    // Try to update nomor_tor in rab table first
+    let updateSuccess = false
+    try {
+      await env.DB.prepare(`
+        UPDATE rab 
+        SET nomor_tor = ?, updated_at = datetime('now')
+        WHERE id = ?
+      `).bind(nomor_tor || null, rabId).run()
+      
+      updateSuccess = true
+      console.log(`✅ Nomor TOR updated in rab table for RAB ${rabId}`)
+    } catch (updateError: any) {
+      console.log('⚠️ nomor_tor column not found in rab table, using fallback table rab_tor')
+    }
+    
+    // Fallback: Use rab_tor table if main update failed
+    if (!updateSuccess) {
+      try {
+        // First, ensure rab_tor table exists (auto-create if needed)
+        try {
+          await env.DB.prepare(`
+            CREATE TABLE IF NOT EXISTS rab_tor (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              rab_id INTEGER NOT NULL UNIQUE,
+              nomor_tor TEXT,
+              created_by TEXT NOT NULL,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (rab_id) REFERENCES rab(id) ON DELETE CASCADE
+            )
+          `).run()
+          
+          await env.DB.prepare(`
+            CREATE INDEX IF NOT EXISTS idx_rab_tor_rab_id ON rab_tor(rab_id)
+          `).run()
+          
+          console.log('✅ rab_tor table ensured to exist')
+        } catch (tableError) {
+          console.log('⚠️ Table creation skipped, assuming it already exists')
+        }
+        
+        // Check if entry exists in rab_tor
+        const existingTOR = await env.DB.prepare(`
+          SELECT id, nomor_tor FROM rab_tor WHERE rab_id = ?
+        `).bind(rabId).first()
+        
+        // If user is AMC@12345 and TOR already exists in fallback table, deny edit
+        if (username === 'AMC@12345' && existingTOR && existingTOR.nomor_tor && existingTOR.nomor_tor !== '') {
+          console.log('❌ Update TOR denied: AMC@12345 cannot edit existing TOR in fallback table')
+          return c.json({ 
+            success: false, 
+            error: 'AMC@12345 hanya bisa mengisi No. TOR baru, tidak bisa edit yang sudah ada.' 
+          }, 403)
+        }
+        
+        if (existingTOR) {
+          // Update existing entry
+          await env.DB.prepare(`
+            UPDATE rab_tor 
+            SET nomor_tor = ?, updated_at = datetime('now')
+            WHERE rab_id = ?
+          `).bind(nomor_tor || null, rabId).run()
+          console.log(`✅ Nomor TOR updated in rab_tor table for RAB ${rabId}`)
+        } else {
+          // Insert new entry
+          await env.DB.prepare(`
+            INSERT INTO rab_tor (rab_id, nomor_tor, created_by)
+            VALUES (?, ?, ?)
+          `).bind(rabId, nomor_tor || null, username).run()
+          console.log(`✅ Nomor TOR inserted into rab_tor table for RAB ${rabId}`)
+        }
+      } catch (fallbackError: any) {
+        console.error('❌ Failed to save TOR in fallback table:', fallbackError)
+        return c.json({ 
+          success: false, 
+          error: 'Gagal menyimpan No. TOR. Silakan hubungi administrator.' 
+        }, 500)
+      }
+    }
     
     console.log(`✅ Nomor TOR updated for RAB ${rabId} by ${username}`)
     

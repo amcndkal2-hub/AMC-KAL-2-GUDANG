@@ -1779,7 +1779,7 @@ async function insertRABItems(db: D1Database, rabId: number, nomorRAB: string, t
 
 export async function getAllRAB(db: D1Database) {
   try {
-    // Try with nomor_tor and jenis_rab columns first
+    // Try with nomor_tor column first
     try {
       const result = await db.prepare(`
         SELECT 
@@ -1801,13 +1801,14 @@ export async function getAllRAB(db: D1Database) {
       
       return result.results || []
     } catch (columnError) {
-      // Fallback 1: Query without nomor_tor (column doesn't exist in production yet)
-      console.log('⚠️ nomor_tor column not found, trying without it')
+      // Fallback: Query with LEFT JOIN to rab_tor table (for production DB without nomor_tor column)
+      console.log('⚠️ nomor_tor column not found in rab table, using rab_tor fallback table')
       try {
         const result = await db.prepare(`
           SELECT 
             r.id,
             r.nomor_rab,
+            rt.nomor_tor,
             r.tanggal_rab,
             r.jenis_rab,
             r.total_harga,
@@ -1817,31 +1818,55 @@ export async function getAllRAB(db: D1Database) {
             COUNT(ri.id) as item_count
           FROM rab r
           LEFT JOIN rab_items ri ON r.id = ri.rab_id
+          LEFT JOIN rab_tor rt ON r.id = rt.rab_id
           GROUP BY r.id
           ORDER BY r.created_at DESC
         `).all()
         
         return result.results || []
       } catch (fallback1Error) {
-        // Fallback 2: Query without jenis_rab and nomor_tor
-        console.log('⚠️ jenis_rab column also not found, using basic query')
-        const result = await db.prepare(`
-          SELECT 
-            r.id,
-            r.nomor_rab,
-            r.tanggal_rab,
-            r.total_harga,
-            r.status,
-            r.created_by,
-            r.created_at,
-            COUNT(ri.id) as item_count
-          FROM rab r
-          LEFT JOIN rab_items ri ON r.id = ri.rab_id
-          GROUP BY r.id
-          ORDER BY r.created_at DESC
-        `).all()
-        
-        return result.results || []
+        // Fallback 2: rab_tor table doesn't exist either
+        console.log('⚠️ rab_tor table also not found, using basic query without nomor_tor')
+        try {
+          const result = await db.prepare(`
+            SELECT 
+              r.id,
+              r.nomor_rab,
+              r.tanggal_rab,
+              r.jenis_rab,
+              r.total_harga,
+              r.status,
+              r.created_by,
+              r.created_at,
+              COUNT(ri.id) as item_count
+            FROM rab r
+            LEFT JOIN rab_items ri ON r.id = ri.rab_id
+            GROUP BY r.id
+            ORDER BY r.created_at DESC
+          `).all()
+          
+          return result.results || []
+        } catch (fallback2Error) {
+          // Fallback 3: Query without jenis_rab and nomor_tor
+          console.log('⚠️ jenis_rab column also not found, using basic query')
+          const result = await db.prepare(`
+            SELECT 
+              r.id,
+              r.nomor_rab,
+              r.tanggal_rab,
+              r.total_harga,
+              r.status,
+              r.created_by,
+              r.created_at,
+              COUNT(ri.id) as item_count
+            FROM rab r
+            LEFT JOIN rab_items ri ON r.id = ri.rab_id
+            GROUP BY r.id
+            ORDER BY r.created_at DESC
+          `).all()
+          
+          return result.results || []
+        }
       }
     }
   } catch (error) {
