@@ -163,7 +163,7 @@ function renderRABList(rabList) {
   if (rabList.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
           <i class="fas fa-inbox text-4xl mb-2"></i>
           <p>Belum ada RAB yang dibuat</p>
           <p class="text-sm mt-2">Buat RAB baru di menu Create RAB</p>
@@ -176,12 +176,6 @@ function renderRABList(rabList) {
   tbody.innerHTML = rabList.map((rab, index) => `
     <tr class="hover:bg-gray-50">
       <td class="px-4 py-3 border text-center">${index + 1}</td>
-      <td class="px-4 py-3 border font-mono text-sm font-semibold text-blue-600">${rab.nomor_rab || '-'}</td>
-      <td class="px-4 py-3 border text-center">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${getJenisRABColor(rab.jenis_rab)}">
-          ${rab.jenis_rab || '-'}
-        </span>
-      </td>
       <td class="px-4 py-3 border text-center">
         ${(rab.jenis_rab === 'SPK') ? (() => {
           // Andalcekatan: Always editable
@@ -190,7 +184,7 @@ function renderRABList(rabList) {
                      value="${rab.nomor_tor || ''}" 
                      placeholder="Isi No. TOR"
                      onchange="updateNomorTOR(${rab.id}, this.value)"
-                     class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
+                     class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-mono font-semibold text-blue-600"
                      />`
           }
           // AMC@12345: Editable only if empty
@@ -200,18 +194,23 @@ function renderRABList(rabList) {
                        value="" 
                        placeholder="Isi No. TOR"
                        onchange="updateNomorTOR(${rab.id}, this.value)"
-                       class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
+                       class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-mono font-semibold text-blue-600"
                        />`
             } else {
-              return `<span class="text-gray-500 text-sm font-medium">${rab.nomor_tor}</span>
+              return `<span class="text-gray-700 text-sm font-medium font-mono">${rab.nomor_tor}</span>
                       <span class="text-xs text-gray-400 block mt-1">(locked)</span>`
             }
           }
           // Other users: Read-only
           else {
-            return `<span class="text-gray-500 text-sm">${rab.nomor_tor || '-'}</span>`
+            return `<span class="text-gray-600 text-sm font-mono">${rab.nomor_tor || '-'}</span>`
           }
         })() : `<span class="text-gray-400 text-sm">-</span>`}
+      </td>
+      <td class="px-4 py-3 border text-center">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${getJenisRABColor(rab.jenis_rab)}">
+          ${rab.jenis_rab || '-'}
+        </span>
       </td>
       <td class="px-4 py-3 border text-center">${formatDate(rab.tanggal_rab)}</td>
       <td class="px-4 py-3 border text-center">
