@@ -10571,16 +10571,16 @@ function getDashboardListRABHTML() {
                             <table class="min-w-full border">
                         <thead class="bg-blue-50 sticky top-0 z-10 shadow-md">
                             <tr>
-                                <th class="px-4 py-3 border text-center bg-blue-50">No</th>
-                                <th class="px-4 py-3 border text-left bg-blue-50">Nomor RAB</th>
-                                <th class="px-4 py-3 border text-left bg-blue-50">No. TOR</th>
-                                <th class="px-4 py-3 border text-left bg-blue-50">Jenis RAB</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50">Tanggal</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50">Jumlah Item</th>
-                                <th class="px-4 py-3 border text-right bg-blue-50">Total Harga</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50">Status</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50">Aksi</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50">Status SCM</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 60px;">No</th>
+                                <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 160px;">Nomor RAB</th>
+                                <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 280px;">No. TOR</th>
+                                <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 140px;">Jenis RAB</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 120px;">Tanggal</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 120px;">Jumlah Item</th>
+                                <th class="px-4 py-3 border text-right bg-blue-50" style="min-width: 150px;">Total Harga</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 130px;">Status</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 200px;">Aksi</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 220px;">Status SCM</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">

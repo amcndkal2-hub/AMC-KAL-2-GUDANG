@@ -329,7 +329,7 @@ function renderRABList(rabList) {
           ` : ''}
         </div>
       </td>
-      <td class="px-4 py-3 border text-center">
+      <td class="px-2 py-3 border text-center">
         ${(rab.jenis_rab === 'SPK') ? (() => {
           const statusSCM = getStatusSCM(rab.nomor_tor)
           const isNotFound = statusSCM === 'Belum ada di Pengadaan'
@@ -344,10 +344,12 @@ function renderRABList(rabList) {
             }
           }
           
-          return `<span class="inline-block px-3 py-2 ${statusColor} rounded-full text-xs font-semibold">
-            ${statusSCM}
-          </span>`
-        })() : `<span class="text-gray-400 text-sm">-</span>`}
+          return `<div class="flex items-center justify-center">
+            <span class="inline-block px-2 py-1 ${statusColor} rounded text-xs font-medium whitespace-normal break-words max-w-full">
+              ${statusSCM}
+            </span>
+          </div>`
+        })() : `<span class="text-gray-400 text-xs">-</span>`}
       </td>
     </tr>
   `).join('')
