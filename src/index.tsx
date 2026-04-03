@@ -2666,6 +2666,18 @@ app.get('/api/kebutuhan-material', async (c) => {
     // Get from D1 Database
     let materials = await DB.getAllMaterialKebutuhan(env.DB)
     
+    // DEBUG: Log count before deduplication
+    console.log(`📊 [API] Loaded ${materials.length} materials from DB (before deduplication)`)
+    const part2165920Items = materials.filter((m: any) => m.part_number === '2165920')
+    if (part2165920Items.length > 0) {
+      console.log(`🔍 [DEBUG Part 2165920] Found ${part2165920Items.length} items BEFORE deduplication:`)
+      part2165920Items.forEach((item: any, idx: number) => {
+        console.log(`  [${idx + 1}] ID=${item.id}, LH05=${item.nomor_lh05}, status=${item.status}, sn=${item.sn_mesin}`)
+      })
+    } else {
+      console.log(`❌ [DEBUG Part 2165920] NOT FOUND in raw DB results!`)
+    }
+    
     // DEDUPLICATE: Remove duplicate entries based on nomor_lh05 + part_number + sn_mesin combination
     // Keep the latest entry (highest id) for each unique combination
     // IMPORTANT: Include sn_mesin in the key so materials with different S/N are treated as separate items
