@@ -73,11 +73,25 @@ async function loadKebutuhanMaterial() {
       partNumber: item.part_number,
       lokasiTujuan: item.lokasi_tujuan || item.unit_uld,
       unitULD: item.unit_uld,
+      status: item.status || 'N/A', // CRITICAL: Explicitly map status
       stok: item.stok || 0, // Include stock info
       isTerkirim: item.isTerkirim || false, // Include shipment status
       jenisBarang: item.jenis_barang || 'Material Handal', // Include jenis barang
-      isRabCreated: item.is_rab_created || false // Include RAB flag
+      isRabCreated: item.is_rab_created || false, // Include RAB flag
+      sn_mesin: item.sn_mesin, // Include SN Mesin
+      snMesin: item.sn_mesin // Alias for compatibility
     }))
+    
+    // DEBUG: Log materials with Pengadaan status
+    const pengadaanItems = allMaterials.filter(m => m.status === 'Pengadaan')
+    console.log(`[Load Data] Found ${pengadaanItems.length} materials with status "Pengadaan"`)
+    if (pengadaanItems.length > 0) {
+      console.log('[Load Data] Sample Pengadaan items:', pengadaanItems.slice(0, 3).map(m => ({
+        part: m.partNumber,
+        lh05: m.nomorLH05,
+        status: m.status
+      })))
+    }
     filteredMaterials = [...allMaterials]
     
     // Sort by status priority: N/A, Pengadaan, Tersedia, Terkirim, Tunda, Reject
