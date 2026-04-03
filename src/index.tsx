@@ -2717,10 +2717,26 @@ app.get('/api/kebutuhan-material', async (c) => {
       let finalStatus = mat.status || 'N/A'
       let snMesin = mat.sn_mesin || null
       
+      // DEBUG: Log raw database status for Part 2165920
+      if (mat.part_number === '2165920') {
+        console.log(`🔍 [DEBUG Part 2165920] Raw from DB:`, {
+          id: mat.id,
+          part: mat.part_number,
+          lh05: mat.nomor_lh05,
+          status_from_db: mat.status,
+          sn_mesin: mat.sn_mesin,
+          stok: stok,
+          isTerkirim: isTerkirim
+        })
+      }
+      
       // Parse S/N Mesin from status field if in format "SN:serial_number" (old schema)
       if (!snMesin && mat.status && typeof mat.status === 'string' && mat.status.startsWith('SN:')) {
         snMesin = mat.status.substring(3) // Extract S/N after "SN:"
         finalStatus = 'N/A' // Reset status to default when S/N is found in status field
+        if (mat.part_number === '2165920') {
+          console.log(`⚠️ [DEBUG Part 2165920] Old schema detected: SN extracted from status, reset to N/A`)
+        }
       }
       
       // Define manual statuses that should NOT be overridden by auto-update
@@ -2729,28 +2745,58 @@ app.get('/api/kebutuhan-material', async (c) => {
       const manualStatuses = ['Pengadaan', 'Tunda', 'Reject']
       const isManualStatus = manualStatuses.includes(finalStatus)
       
+      // DEBUG: Log decision for Part 2165920
+      if (mat.part_number === '2165920') {
+        console.log(`🔍 [DEBUG Part 2165920] Decision point:`, {
+          finalStatus_before: finalStatus,
+          isManualStatus: isManualStatus,
+          isTerkirim: isTerkirim,
+          snMesin: snMesin,
+          stok: stok
+        })
+      }
+      
       // Priority check order (IMPORTANT: Check in this exact order!)
       // Priority 1: Manual status (Pengadaan/Tunda/Reject) - HIGHEST PRIORITY
       // NEVER override these statuses - they are explicit user decisions
       if (isManualStatus) {
         finalStatus = mat.status
-        console.log(`✅ [Manual Status Preserved] ${mat.part_number}: "${finalStatus}" (stok=${stok}, sn=${snMesin})`)
+        if (mat.part_number === '2165920') {
+          console.log(`✅ [DEBUG Part 2165920] Priority 1: Manual status preserved = "${finalStatus}"`)
+        }
       }
       // Priority 2: Material sudah dikirim (ada di transaksi Keluar)
       else if (isTerkirim) {
         finalStatus = 'Terkirim'
+        if (mat.part_number === '2165920') {
+          console.log(`📦 [DEBUG Part 2165920] Priority 2: Set to Terkirim`)
+        }
       }
       // Priority 3: Material punya S/N tapi belum dikirim = Auto-set Tersedia
       else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
         finalStatus = 'Tersedia'
+        if (mat.part_number === '2165920') {
+          console.log(`🔧 [DEBUG Part 2165920] Priority 3: Set to Tersedia (snMesin exists)`)
+        }
       }
       // Priority 4: Material ada stok (dari transaksi Masuk) = Auto-set Tersedia
       else if (stok > 0) {
         finalStatus = 'Tersedia'
+        if (mat.part_number === '2165920') {
+          console.log(`📦 [DEBUG Part 2165920] Priority 4: Set to Tersedia (stok > 0)`)
+        }
       }
       // Priority 5: Stok habis = Auto-set N/A
       else if (stok === 0) {
         finalStatus = 'N/A'
+        if (mat.part_number === '2165920') {
+          console.log(`⚠️ [DEBUG Part 2165920] Priority 5: Set to N/A (stok = 0)`)
+        }
+      }
+      
+      // DEBUG: Log final result for Part 2165920
+      if (mat.part_number === '2165920') {
+        console.log(`🎯 [DEBUG Part 2165920] FINAL STATUS = "${finalStatus}"`)
       }
       // ELSE: Keep current status as-is
       
