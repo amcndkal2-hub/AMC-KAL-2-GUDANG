@@ -2755,7 +2755,9 @@ app.get('/api/kebutuhan-material', async (c) => {
       // CRITICAL: These statuses are set explicitly by users and must be preserved
       // NOTE: "Tersedia" is NOT a manual status - it's auto-set based on stock/sn_mesin
       const manualStatuses = ['Pengadaan', 'Tunda', 'Reject']
-      const isManualStatus = manualStatuses.includes(finalStatus)
+      // IMPORTANT: Check mat.status directly from DB, not finalStatus!
+      // Because finalStatus might be 'N/A' if mat.status is null/empty
+      const isManualStatus = mat.status && manualStatuses.includes(mat.status)
       
       // DEBUG: Log decision for Part 2165920
       if (mat.part_number === '2165920') {
