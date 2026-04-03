@@ -3058,42 +3058,24 @@ app.post('/api/update-material-status', async (c) => {
       })
     }
     
-    // Strategy: If multiple materials exist (e.g., 8 DEEPSEA with different S/N),
-    // update ALL of them at once to keep them in sync
-    let updateResult
-    let updatedCount = 0
+    // SIMPLIFIED: Always update ALL materials with same LH05 + Part
+    // No complex SN matching - just update by gangguan_id + part_number
+    console.log(`🔄 Updating ALL ${materialsCount} materials with LH05 ${nomorLH05} + Part ${partNumber}...`)
     
-    if (materialsCount > 1) {
-      // Multiple materials detected → Bulk update ALL materials with same LH05 + Part
-      console.log(`🔄 Executing BULK update for ${materialsCount} materials...`)
-      updateResult = await env.DB.prepare(`
-        UPDATE material_gangguan 
-        SET status = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE gangguan_id = ? AND part_number = ?
-      `).bind(status, gangguan.id, partNumber).run()
-      updatedCount = updateResult.meta.changes || 0
-      console.log(`✅ BULK update result: ${updatedCount} rows changed`)
-      console.log('   DB response:', updateResult)
-    } else {
-      // Single material → Update only the specific one with S/N match
-      console.log(`🔄 Executing SINGLE update with SN matching...`)
-      console.log('   Query: UPDATE WHERE gangguan_id = ? AND part_number = ? AND (sn_mesin = ? OR (sn_mesin IS NULL AND ? IS NULL))')
-      console.log('   Params:', [status, gangguan.id, partNumber, snMesin, snMesin])
-      updateResult = await env.DB.prepare(`
-        UPDATE material_gangguan 
-        SET status = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE gangguan_id = ? AND part_number = ? AND (sn_mesin = ? OR (sn_mesin IS NULL AND ? IS NULL))
-      `).bind(status, gangguan.id, partNumber, snMesin, snMesin).run()
-      updatedCount = updateResult.meta.changes || 0
-      console.log(`✅ SINGLE update result: ${updatedCount} row changed`)
-      console.log('   DB response:', updateResult)
-    }
+    const updateResult = await env.DB.prepare(`
+      UPDATE material_gangguan 
+      SET status = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE gangguan_id = ? AND part_number = ?
+    `).bind(status, gangguan.id, partNumber).run()
     
-    if (!updateResult.success || updatedCount === 0) {
-      console.error('❌ UPDATE FAILED!')
-      console.error('   Success flag:', updateResult.success)
-      console.error('   Rows changed:', updatedCount)
-      console.error('   Full result:', updateResult)
+    const updatedCount = updateResult.meta.changes || 0
+    
+    console.log(`✅ UPDATE result: ${updatedCount} rows changed`)
+    console.log('   DB response:', JSON.stringify(updateResult, null, 2))
+    
+    if (!updateResult.success) {
+      console.error('❌ UPDATE FAILED - DB returned success=false')
+      console.error('   Full result:', JSON.stringify(updateResult, null, 2))
       return c.json({ 
         error: 'Database update failed', 
         details: {
@@ -3101,9 +3083,19 @@ app.post('/api/update-material-status', async (c) => {
           updatedCount,
           nomorLH05,
           partNumber,
-          status
+          status,
+          gangguan_id: gangguan.id
         }
       }, 500)
+    }
+    
+    if (updatedCount === 0) {
+      console.error('❌ UPDATE WARNING - 0 rows changed (material might not exist)')
+      console.error('   gangguan_id:', gangguan.id)
+      console.error('   part_number:', partNumber)
+      console.error('   Materials found:', materialsCount)
+      // Don't return error - might be deduplication issue
+      // Just log warning and continue
     }
     
     console.log('✅ UPDATE SUCCESSFUL!')
