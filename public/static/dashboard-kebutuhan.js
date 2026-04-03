@@ -251,6 +251,17 @@ function renderTable() {
     const isTerkirim = item.isTerkirim || status === 'Terkirim'
     const isRabCreated = item.is_rab_created || item.isRabCreated || false
     
+    // DEBUG: Log status for Part 0118 1003
+    if (item.partNumber === '0118 1003') {
+      console.log('[RENDER DEBUG] Part 0118 1003:', {
+        status: status,
+        stok: stok,
+        isRabCreated: isRabCreated,
+        isTerkirim: isTerkirim,
+        raw_status: item.status
+      })
+    }
+    
     // Jenis Barang badge with color
     const jenisBarang = item.jenisBarang || 'Material Handal'
     let jenisBadge = ''
@@ -331,6 +342,7 @@ function renderTable() {
     }
     // Case 5: Pengadaan (no RAB yet) → Dropdown: can change to N/A, Tunda, Reject
     else if (status === 'Pengadaan' && !isRabCreated) {
+      console.log('[CASE 5 MATCHED] Pengadaan without RAB:', item.partNumber)
       statusColor = 'bg-blue-100 text-blue-800 border-blue-300'
       statusDisplay = `
         <select 
@@ -363,12 +375,13 @@ function renderTable() {
     }
     // Case 7: N/A or default → Dropdown: can change to Pengadaan, Tunda, Reject
     else {
+      console.log('[CASE 7 FALLBACK] Default case for:', item.partNumber, 'Status:', status)
       statusColor = 'bg-gray-100 text-gray-800 border-gray-300'
       statusDisplay = `
         <select 
           onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
           class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
-          <option value="N/A" ${status === 'N/A' ? 'selected' : ''}>N/A</option>
+          <option value="N/A" ${(!status || status === 'N/A') ? 'selected' : ''}>N/A</option>
           <option value="Pengadaan" ${status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
           <option value="Tunda" ${status === 'Tunda' ? 'selected' : ''}>Tunda</option>
           <option value="Reject" ${status === 'Reject' ? 'selected' : ''}>Reject</option>
