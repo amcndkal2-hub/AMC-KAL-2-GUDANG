@@ -92,6 +92,21 @@ async function loadKebutuhanMaterial() {
         status: m.status
       })))
     }
+    
+    // DEBUG: Check specific problematic materials
+    const problematicParts = ['0117-4421', '0118 0597', '0118 0597']
+    problematicParts.forEach(part => {
+      const items = allMaterials.filter(m => m.partNumber === part)
+      if (items.length > 0) {
+        console.log(`[DEBUG] Part ${part}:`, items.map(m => ({
+          lh05: m.nomorLH05,
+          status: m.status,
+          raw_status: m.status,
+          stok: m.stok,
+          isRab: m.isRabCreated
+        })))
+      }
+    })
     filteredMaterials = [...allMaterials]
     
     // Sort by status priority: N/A, Pengadaan, Tersedia, Terkirim, Tunda, Reject
@@ -458,18 +473,25 @@ async function updateStatus(nomorLH05, partNumber, newStatus, snMesin) {
     const result = await response.json()
     
     if (result.success) {
-      // Update local data - find by LH05 + Part + S/N
-      const material = allMaterials.find(m => 
+      // CRITICAL FIX: Update ALL materials with same LH05 + Part
+      // Backend does bulk update, so frontend must match
+      const updatedMaterials = allMaterials.filter(m => 
         m.nomorLH05 === nomorLH05 && 
-        m.partNumber === partNumber && 
-        (m.sn_mesin === snMesin || m.snMesin === snMesin)
+        m.partNumber === partNumber
       )
-      if (material) {
+      
+      console.log(`[Update Status] Updating ${updatedMaterials.length} materials with Part ${partNumber} + LH05 ${nomorLH05}`)
+      
+      updatedMaterials.forEach(material => {
         material.status = newStatus
-      }
+        console.log(`  ✅ Updated: ${material.partNumber} (SN: ${material.sn_mesin || 'null'}) → ${newStatus}`)
+      })
+      
+      // Re-render table to reflect changes immediately
+      renderTable()
       
       // Show success notification
-      showNotification('Status berhasil diupdate!', 'success')
+      showNotification(`Status berhasil diupdate! (${updatedMaterials.length} material)`, 'success')
       
       // Refresh statistics
       updateStatistics()
