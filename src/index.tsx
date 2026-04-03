@@ -2770,42 +2770,30 @@ app.get('/api/kebutuhan-material', async (c) => {
         })
       }
       
-      // Priority check order (IMPORTANT: Check in this exact order!)
-      // Priority 1: Manual status (Pengadaan/Tunda/Reject) - HIGHEST PRIORITY
-      // NEVER override these statuses - they are explicit user decisions
+      // =====================================================================
+      // CRITICAL STATUS PRIORITY LOGIC
+      // =====================================================================
+      // Priority 1: Manual status (Pengadaan/Tunda/Reject) - ABSOLUTE HIGHEST PRIORITY
+      // These are explicit user decisions and must NEVER be overridden by ANY automation
       if (isManualStatus) {
         finalStatus = mat.status
-        if (mat.part_number === '2165920') {
-          console.log(`✅ [DEBUG Part 2165920] Priority 1: Manual status preserved = "${finalStatus}"`)
-        }
+        console.log(`✅ [Manual Status Preserved] ${mat.part_number}: "${finalStatus}" (stok: ${stok}, sn: ${snMesin})`)
       }
       // Priority 2: Material sudah dikirim (ada di transaksi Keluar)
       else if (isTerkirim) {
         finalStatus = 'Terkirim'
-        if (mat.part_number === '2165920') {
-          console.log(`📦 [DEBUG Part 2165920] Priority 2: Set to Terkirim`)
-        }
       }
       // Priority 3: Material punya S/N tapi belum dikirim = Auto-set Tersedia
       else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
         finalStatus = 'Tersedia'
-        if (mat.part_number === '2165920') {
-          console.log(`🔧 [DEBUG Part 2165920] Priority 3: Set to Tersedia (snMesin exists)`)
-        }
       }
       // Priority 4: Material ada stok (dari transaksi Masuk) = Auto-set Tersedia
       else if (stok > 0) {
         finalStatus = 'Tersedia'
-        if (mat.part_number === '2165920') {
-          console.log(`📦 [DEBUG Part 2165920] Priority 4: Set to Tersedia (stok > 0)`)
-        }
       }
-      // Priority 5: Stok habis = Auto-set N/A
-      else if (stok === 0) {
+      // Priority 5: Default fallback - stok habis dan tidak ada manual status = N/A
+      else {
         finalStatus = 'N/A'
-        if (mat.part_number === '2165920') {
-          console.log(`⚠️ [DEBUG Part 2165920] Priority 5: Set to N/A (stok = 0)`)
-        }
       }
       
       // DEBUG: Log final result for Part 2165920
