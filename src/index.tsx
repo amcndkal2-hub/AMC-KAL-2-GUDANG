@@ -2725,27 +2725,31 @@ app.get('/api/kebutuhan-material', async (c) => {
       
       // Define manual statuses that should NOT be overridden by auto-update
       // CRITICAL: These statuses are set explicitly by users and must be preserved
-      const manualStatuses = ['Pengadaan', 'Tunda', 'Reject', 'Tersedia']
+      // NOTE: "Tersedia" is NOT a manual status - it's auto-set based on stock/sn_mesin
+      const manualStatuses = ['Pengadaan', 'Tunda', 'Reject']
       const isManualStatus = manualStatuses.includes(finalStatus)
       
       // Priority check order (IMPORTANT: Check in this exact order!)
-      if (isTerkirim) {
-        // Priority 1: Material sudah dikirim (ada di transaksi Keluar)
-        // Override even manual status because Terkirim is final state
-        finalStatus = 'Terkirim'
-      } else if (isManualStatus) {
-        // Priority 2: Keep manual status (Pengadaan, Tunda, Reject, Tersedia)
-        // NEVER override status that was explicitly set by user
-        // This includes status changed from dropdown in Kebutuhan Material page
+      // Priority 1: Manual status (Pengadaan/Tunda/Reject) - HIGHEST PRIORITY
+      // NEVER override these statuses - they are explicit user decisions
+      if (isManualStatus) {
         finalStatus = mat.status
-      } else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
-        // Priority 3: Material punya S/N tapi belum dikirim = Auto-set Tersedia
+        console.log(`✅ [Manual Status Preserved] ${mat.part_number}: "${finalStatus}" (stok=${stok}, sn=${snMesin})`)
+      }
+      // Priority 2: Material sudah dikirim (ada di transaksi Keluar)
+      else if (isTerkirim) {
+        finalStatus = 'Terkirim'
+      }
+      // Priority 3: Material punya S/N tapi belum dikirim = Auto-set Tersedia
+      else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
         finalStatus = 'Tersedia'
-      } else if (stok > 0) {
-        // Priority 4: Material ada stok (dari transaksi Masuk) = Auto-set Tersedia
+      }
+      // Priority 4: Material ada stok (dari transaksi Masuk) = Auto-set Tersedia
+      else if (stok > 0) {
         finalStatus = 'Tersedia'
-      } else if (stok === 0 && !isManualStatus) {
-        // Priority 5: Stok habis dan bukan manual status = Auto-set N/A
+      }
+      // Priority 5: Stok habis = Auto-set N/A
+      else if (stok === 0) {
         finalStatus = 'N/A'
       }
       // ELSE: Keep current status as-is
