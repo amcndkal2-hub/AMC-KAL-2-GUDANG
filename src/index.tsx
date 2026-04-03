@@ -2759,6 +2759,13 @@ app.get('/api/kebutuhan-material', async (c) => {
       // Because finalStatus might be 'N/A' if mat.status is null/empty
       const isManualStatus = mat.status && manualStatuses.includes(mat.status)
       
+      // Log EVERY material to trace the issue
+      if (mat.part_number && mat.nomor_lh05) {
+        const shortPart = mat.part_number.substring(0, 15)
+        const shortLH05 = mat.nomor_lh05.substring(0, 25)
+        console.log(`[Material] ${shortPart} | LH05: ${shortLH05} | DB Status: "${mat.status}" | isManual: ${isManualStatus} | Stock: ${stok}`)
+      }
+      
       // DEBUG: Log decision for Part 2165920
       if (mat.part_number === '2165920') {
         console.log(`🔍 [DEBUG Part 2165920] Decision point:`, {
@@ -3014,7 +3021,13 @@ app.post('/api/update-material-status', async (c) => {
     const { env } = c
     const { nomorLH05, partNumber, status, snMesin } = await c.req.json()
     
-    console.log('📝 Updating material status:', { nomorLH05, partNumber, status, snMesin })
+    console.log('========================================')
+    console.log('📝 [UPDATE REQUEST] Material status update')
+    console.log('  Nomor LH05:', nomorLH05)
+    console.log('  Part Number:', partNumber)
+    console.log('  New Status:', status)
+    console.log('  SN Mesin:', snMesin)
+    console.log('========================================')
     
     // Find gangguan by nomor_lh05
     const gangguan = await env.DB.prepare(`
@@ -3022,9 +3035,11 @@ app.post('/api/update-material-status', async (c) => {
     `).bind(nomorLH05).first()
     
     if (!gangguan) {
-      console.error('❌ Gangguan not found:', nomorLH05)
+      console.error('❌ Gangguan not found for LH05:', nomorLH05)
       return c.json({ error: 'Gangguan not found' }, 404)
     }
+    
+    console.log('✅ Found gangguan ID:', gangguan.id)
     
     // Check if there are multiple materials with same LH05 + Part but different S/N
     const allMaterialsWithSamePart = await env.DB.prepare(`
@@ -3033,7 +3048,15 @@ app.post('/api/update-material-status', async (c) => {
     `).bind(gangguan.id, partNumber).all()
     
     const materialsCount = allMaterialsWithSamePart.results?.length || 0
-    console.log(`📦 Found ${materialsCount} materials with LH05 ${nomorLH05} + Part ${partNumber}`)
+    console.log(`📦 Found ${materialsCount} materials with this LH05 + Part combination`)
+    
+    // Log all found materials
+    if (allMaterialsWithSamePart.results) {
+      console.log('   Materials found:')
+      allMaterialsWithSamePart.results.forEach((mat: any, idx: number) => {
+        console.log(`   [${idx + 1}] ID: ${mat.id}, SN: ${mat.sn_mesin || 'null'}`)
+      })
+    }
     
     // Strategy: If multiple materials exist (e.g., 8 DEEPSEA with different S/N),
     // update ALL of them at once to keep them in sync
@@ -3042,30 +3065,50 @@ app.post('/api/update-material-status', async (c) => {
     
     if (materialsCount > 1) {
       // Multiple materials detected → Bulk update ALL materials with same LH05 + Part
-      console.log(`🔄 Bulk updating ${materialsCount} materials with same part number...`)
+      console.log(`🔄 Executing BULK update for ${materialsCount} materials...`)
       updateResult = await env.DB.prepare(`
         UPDATE material_gangguan 
         SET status = ?, updated_at = CURRENT_TIMESTAMP
         WHERE gangguan_id = ? AND part_number = ?
       `).bind(status, gangguan.id, partNumber).run()
       updatedCount = updateResult.meta.changes || 0
-      console.log(`✅ Bulk update completed: ${updatedCount} materials updated`)
+      console.log(`✅ BULK update result: ${updatedCount} rows changed`)
+      console.log('   DB response:', updateResult)
     } else {
       // Single material → Update only the specific one with S/N match
-      console.log(`🔄 Single material update with S/N: ${snMesin}`)
+      console.log(`🔄 Executing SINGLE update with SN matching...`)
+      console.log('   Query: UPDATE WHERE gangguan_id = ? AND part_number = ? AND (sn_mesin = ? OR (sn_mesin IS NULL AND ? IS NULL))')
+      console.log('   Params:', [status, gangguan.id, partNumber, snMesin, snMesin])
       updateResult = await env.DB.prepare(`
         UPDATE material_gangguan 
         SET status = ?, updated_at = CURRENT_TIMESTAMP
         WHERE gangguan_id = ? AND part_number = ? AND (sn_mesin = ? OR (sn_mesin IS NULL AND ? IS NULL))
       `).bind(status, gangguan.id, partNumber, snMesin, snMesin).run()
       updatedCount = updateResult.meta.changes || 0
-      console.log(`✅ Single update completed: ${updatedCount} material updated`)
+      console.log(`✅ SINGLE update result: ${updatedCount} row changed`)
+      console.log('   DB response:', updateResult)
     }
     
-    if (!updateResult.success) {
-      console.error('❌ Failed to update status in DB')
-      return c.json({ error: 'Database update failed' }, 500)
+    if (!updateResult.success || updatedCount === 0) {
+      console.error('❌ UPDATE FAILED!')
+      console.error('   Success flag:', updateResult.success)
+      console.error('   Rows changed:', updatedCount)
+      console.error('   Full result:', updateResult)
+      return c.json({ 
+        error: 'Database update failed', 
+        details: {
+          success: updateResult.success,
+          updatedCount,
+          nomorLH05,
+          partNumber,
+          status
+        }
+      }, 500)
     }
+    
+    console.log('✅ UPDATE SUCCESSFUL!')
+    console.log('   Total rows updated:', updatedCount)
+    console.log('========================================')
     
     // Also update in-memory cache for backward compatibility
     const gangguanCache = gangguanTransactions.find(g => g.nomorLH05 === nomorLH05)
