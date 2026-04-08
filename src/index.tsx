@@ -1501,7 +1501,9 @@ async function canDeleteRAB(c: any): Promise<{allowed: boolean, username: string
   // Check in-memory first
   if (activeSessions.has(sessionToken)) {
     const session = activeSessions.get(sessionToken)
-    const isAllowed = session.role === 'admin' || session.username === 'Andalcekatan'
+    // Case-insensitive check for Andalcekatan
+    const isAllowed = session.role === 'admin' || session.username.toLowerCase() === 'andalcekatan'
+    console.log(`[canDeleteRAB] In-memory check: username="${session.username}", role="${session.role}", isAllowed=${isAllowed}`)
     return {allowed: isAllowed, username: session.username}
   }
   
@@ -1518,7 +1520,9 @@ async function canDeleteRAB(c: any): Promise<{allowed: boolean, username: string
         expiresAt: dbSession.expires_at
       })
       
-      const isAllowed = dbSession.role === 'admin' || dbSession.username === 'Andalcekatan'
+      // Case-insensitive check for Andalcekatan
+      const isAllowed = dbSession.role === 'admin' || dbSession.username.toLowerCase() === 'andalcekatan'
+      console.log(`[canDeleteRAB] DB check: username="${dbSession.username}", role="${dbSession.role}", isAllowed=${isAllowed}`)
       return {allowed: isAllowed, username: dbSession.username}
     }
   } catch (error) {
