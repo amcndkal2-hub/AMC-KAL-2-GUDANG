@@ -84,7 +84,9 @@ function displaySearchResultsForGangguan(resultsDiv, results) {
     }
     
     resultsDiv.innerHTML = results.map(item => {
-        const jenisBarang = item.JENIS_BARANG || '-';
+        // CRITICAL FIX: Use correct field name from JSON
+        // JSON has "JENIS BARANG" (with space), not "JENIS_BARANG" (with underscore)
+        const jenisBarang = item['JENIS BARANG'] || item.JENIS_BARANG || '-';
         const material = item.MATERIAL || '-';
         const mesin = item.MESIN || '-';
         
@@ -114,12 +116,22 @@ function displaySearchResultsForGangguan(resultsDiv, results) {
 // Fill material data from selected part (Form Gangguan)
 async function fillMaterialDataForGangguan(data) {
     const partNumber = data.PART_NUMBER ? String(data.PART_NUMBER) : '';
-    let jenisBarang = data.JENIS_BARANG || '';
+    // CRITICAL FIX: Use correct field name from JSON
+    // JSON has "JENIS BARANG" (with space), not "JENIS_BARANG" (with underscore)
+    let jenisBarang = data['JENIS BARANG'] || data.JENIS_BARANG || '';
     const material = data.MATERIAL || '-';
     const mesin = data.MESIN || '-';
     
-    // TEMPORARY FIX: Fallback JENIS_BARANG if empty
+    // Log untuk debug
+    if (data['JENIS BARANG']) {
+        console.log(`✅ Using "JENIS BARANG" (with space): "${data['JENIS BARANG']}"`)
+    } else if (data.JENIS_BARANG) {
+        console.log(`⚠️ Using "JENIS_BARANG" (with underscore): "${data.JENIS_BARANG}"`)
+    }
+    
+    // FALLBACK: Only if BOTH fields are empty
     if (!jenisBarang || jenisBarang === '' || jenisBarang === '-') {
+        console.log('⚠️ Both JENIS BARANG fields empty, using fallback logic')
         const materialUpper = material.toUpperCase();
         
         if (materialUpper.includes('PUMP') || 
@@ -127,20 +139,17 @@ async function fillMaterialDataForGangguan(data) {
             materialUpper.includes('WATER') || 
             materialUpper.includes('FUEL')) {
             jenisBarang = 'MATERIAL HANDAL';
-        } else if (materialUpper.includes('GASKET') || 
-                   materialUpper.includes('SEAL') || 
-                   materialUpper.includes('BEARING')) {
-            jenisBarang = 'SPAREPART';
         } else if (materialUpper.includes('FILTER')) {
             jenisBarang = 'FILTER';
         } else if (materialUpper.includes('BELT') || 
                    materialUpper.includes('HOSE')) {
             jenisBarang = 'CONSUMABLE';
         } else {
+            // Default to MATERIAL HANDAL (most common)
             jenisBarang = 'MATERIAL HANDAL';
         }
         
-        console.log('⚠️ JENIS_BARANG empty (Gangguan), using fallback:', jenisBarang);
+        console.log(`   Fallback result: "${jenisBarang}"`)
     }
     
     document.querySelector('.material-search-gangguan').value = material;
