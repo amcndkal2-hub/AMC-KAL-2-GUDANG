@@ -684,14 +684,14 @@ function showLH05Modal(gangguan) {
 }
 
 function printLH05(nomorLH05) {
-  alert('Print LH05: ' + nomorLH05 + '\n\nFungsi print akan diimplementasikan dengan window.print()')
-  // TODO: Implement actual print functionality
-  // window.print()
+  // Open print-friendly page in new window
+  const printUrl = `/print-lh05.html?nomor=${encodeURIComponent(nomorLH05)}`
+  window.open(printUrl, '_blank', 'width=800,height=600')
 }
 
 function exportLH05PDF(nomorLH05) {
-  alert('Export PDF: ' + nomorLH05 + '\n\nFungsi export PDF akan memerlukan library seperti jsPDF atau html2pdf')
-  // TODO: Implement PDF export
+  // Trigger PDF generation on backend
+  window.open(`/api/lh05-pdf/${encodeURIComponent(nomorLH05)}`, '_blank')
 }
 
 function editLH05(nomorLH05) {

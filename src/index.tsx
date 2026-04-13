@@ -2631,6 +2631,60 @@ app.get('/api/gangguan/:nomor', async (c) => {
   }
 })
 
+// API: Get print data for LH05 (gangguan + materials)
+app.get('/api/print-lh05/:nomor', async (c) => {
+  try {
+    const { env } = c
+    const nomor = c.req.param('nomor')
+    
+    console.log(`🖨️ Fetching print data for LH05: ${nomor}`)
+    
+    // Fetch gangguan detail
+    let gangguan = await DB.getGangguanByLH05(env.DB, nomor)
+    
+    if (!gangguan) {
+      gangguan = await DB.getGangguanByLH05FromMaterials(env.DB, nomor)
+    }
+    
+    if (!gangguan) {
+      gangguan = gangguanTransactions.find((g: any) => 
+        (g.nomor_lh05 === nomor || g.nomorLH05 === nomor)
+      )
+    }
+    
+    if (!gangguan) {
+      return c.json({ error: 'LH05 not found' }, 404)
+    }
+    
+    // Fetch all materials for this LH05
+    const { results: materialResults } = await env.DB.prepare(`
+      SELECT 
+        mg.id, 
+        mg.part_number,
+        mg.material,
+        mg.mesin,
+        mg.jumlah,
+        mg.unit_uld as lokasi_tujuan,
+        mg.sn_mesin,
+        mg.status
+      FROM material_gangguan mg
+      INNER JOIN gangguan g ON mg.gangguan_id = g.id
+      WHERE g.nomor_lh05 = ?
+      ORDER BY mg.created_at ASC
+    `).bind(nomor).all()
+    
+    console.log(`📦 Found ${materialResults.length} materials for ${nomor}`)
+    
+    return c.json({ 
+      gangguan,
+      materials: materialResults || []
+    })
+  } catch (error: any) {
+    console.error('Failed to get print data:', error)
+    return c.json({ error: 'Failed to fetch print data' }, 500)
+  }
+})
+
 // API: Get gangguan dashboard with filters
 app.get('/api/dashboard/gangguan', async (c) => {
   try {
