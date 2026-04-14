@@ -10619,80 +10619,238 @@ function getPrintLH05HTML() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Print LH05 - AMC KAL 2</title>
+    <title>Berita Acara Gangguan - LH05</title>
     <style>
-        @page { size: A4 portrait; margin: 15mm; }
+        @page { size: A4 portrait; margin: 10mm; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4; color: #000; background: white; }
-        .container { max-width: 100%; margin: 0 auto; padding: 10px; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #000; padding-bottom: 10px; }
-        .header h1 { font-size: 18pt; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
-        .header h2 { font-size: 14pt; font-weight: normal; margin-bottom: 3px; }
-        .header p { font-size: 10pt; color: #333; }
-        .doc-info { margin-bottom: 15px; display: table; width: 100%; }
-        .doc-info-row { display: table-row; }
-        .doc-info-label { display: table-cell; width: 150px; font-weight: bold; padding: 3px 0; }
-        .doc-info-value { display: table-cell; padding: 3px 0; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th { background-color: #2c3e50; color: white; font-weight: bold; padding: 8px; text-align: left; border: 1px solid #000; font-size: 10pt; }
-        td { padding: 6px 8px; border: 1px solid #000; font-size: 10pt; }
+        body { font-family: Arial, sans-serif; font-size: 9pt; line-height: 1.3; color: #000; background: white; }
+        .container { max-width: 100%; margin: 0 auto; padding: 5px; }
+        
+        /* Header Orange */
+        .header { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 12px; border-radius: 8px 8px 0 0; position: relative; margin-bottom: 0; }
+        .header h1 { font-size: 16pt; font-weight: bold; margin-bottom: 3px; text-transform: uppercase; }
+        .header .subtitle { font-size: 8pt; font-weight: normal; }
+        .header .close-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.3); border: none; color: white; font-size: 18pt; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; line-height: 26px; }
+        
+        /* Nomor LH05 Box */
+        .nomor-box { background: white; border: 2px solid #ff6b35; border-top: none; border-radius: 0 0 8px 8px; padding: 12px; text-align: center; margin-bottom: 15px; }
+        .nomor-box .label { font-size: 8pt; color: #666; margin-bottom: 3px; }
+        .nomor-box .nomor { font-size: 16pt; font-weight: bold; color: #ff6b35; }
+        
+        /* Info Grid */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; font-size: 8.5pt; }
+        .info-item { background: #f5f5f5; padding: 8px; border-radius: 4px; }
+        .info-item .label { font-weight: normal; color: #666; margin-bottom: 2px; }
+        .info-item .value { font-weight: bold; color: #000; }
+        
+        /* Bullet Items */
+        .bullet-item { margin-bottom: 10px; padding-left: 20px; position: relative; font-size: 8.5pt; }
+        .bullet-item .bullet { position: absolute; left: 0; top: 2px; width: 12px; height: 12px; border-radius: 50%; }
+        .bullet-red { background: #dc3545; }
+        .bullet-yellow { background: #ffc107; }
+        .bullet-blue { background: #007bff; }
+        .bullet-green { background: #28a745; }
+        .bullet-gray { background: #6c757d; }
+        .bullet-item .title { font-weight: bold; margin-bottom: 2px; }
+        .bullet-item .content { color: #333; }
+        
+        /* Alert Box Pink */
+        .alert-box { background: #ffe5e5; border-left: 4px solid #dc3545; padding: 10px; margin-bottom: 15px; border-radius: 4px; }
+        .alert-box .title { font-weight: bold; font-size: 9pt; margin-bottom: 8px; display: flex; align-items: center; }
+        .alert-box .title::before { content: '⚡'; margin-right: 5px; color: #dc3545; }
+        .alert-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 8pt; }
+        .alert-col .label { color: #666; margin-bottom: 2px; }
+        .alert-col .value { font-weight: bold; }
+        .status-badge { background: #28a745; color: white; padding: 2px 8px; border-radius: 3px; font-size: 7pt; display: inline-block; }
+        
+        /* Two Column Box */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .col-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 4px; }
+        .col-box .title { font-weight: bold; font-size: 8.5pt; margin-bottom: 5px; }
+        .col-box .content { font-size: 8pt; color: #333; }
+        
+        /* Kebutuhan Material Section */
+        .section-title { background: #343a40; color: white; padding: 8px 12px; font-weight: bold; font-size: 9pt; margin-bottom: 10px; border-radius: 4px; display: flex; align-items: center; }
+        .section-title::before { content: '📦'; margin-right: 8px; }
+        
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 8pt; }
+        th { background-color: #343a40; color: white; font-weight: bold; padding: 8px 6px; text-align: center; border: 1px solid #000; }
+        td { padding: 6px; border: 1px solid #ccc; text-align: center; }
         tbody tr:nth-child(even) { background-color: #f9f9f9; }
-        .signature-section { margin-top: 40px; display: flex; justify-content: space-between; }
-        .signature-box { text-align: center; width: 30%; }
-        .signature-box p { margin-bottom: 60px; font-weight: bold; }
-        .signature-box .name { border-top: 1px solid #000; padding-top: 5px; font-weight: normal; }
+        .badge-material { background: #007bff; color: white; padding: 2px 6px; border-radius: 3px; font-size: 7pt; display: inline-block; }
+        
+        /* Signature Section */
+        .signature-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+        .signature-box { text-align: center; border: 1px solid #dee2e6; padding: 15px; border-radius: 4px; background: #f8f9fa; }
+        .signature-box .title { font-weight: bold; margin-bottom: 10px; font-size: 8.5pt; }
+        .signature-box .signature-img { border: 1px solid #ccc; background: white; height: 80px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; }
+        .signature-box .signature-img img { max-width: 100%; max-height: 100%; }
+        .signature-box .name { font-weight: normal; font-size: 8pt; border-top: 1px solid #000; padding-top: 5px; display: inline-block; min-width: 150px; }
+        
+        /* Print Button */
+        .print-btns { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; gap: 10px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 10pt; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-print { background: #007bff; color: white; }
+        .btn-pdf { background: #28a745; color: white; }
+        .btn-close { background: #dc3545; color: white; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        
         @media print {
             body { margin: 0; padding: 0; }
             .no-print { display: none !important; }
             .container { padding: 0; }
+            .header .close-btn { display: none; }
         }
+        
         .loading, .error { text-align: center; padding: 50px; font-size: 14pt; }
-        .error { color: #c0392b; }
-        .print-btn { position: fixed; top: 20px; right: 20px; background: #3498db; color: white; border: none; padding: 12px 24px; font-size: 12pt; cursor: pointer; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; }
-        .print-btn:hover { background: #2980b9; }
-        .print-btn:active { transform: translateY(1px); }
+        .error { color: #dc3545; }
     </style>
 </head>
 <body>
-    <button class="print-btn no-print" onclick="window.print()">🖨️ Print / Save PDF</button>
+    <div class="print-btns no-print">
+        <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
+        <button class="btn btn-pdf" onclick="window.print()">📄 Export PDF</button>
+        <button class="btn btn-close" onclick="window.close()">✖️ Tutup</button>
+    </div>
+
     <div class="container">
         <div id="loading" class="loading">Loading data...</div>
         <div id="error" class="error" style="display: none;">Error loading data</div>
+        
         <div id="content" style="display: none;">
+            <!-- Header Orange -->
             <div class="header">
-                <h1>PT. ANGKASA PURA I (PERSERO)</h1>
-                <h2>AREA MANAGEMENT CENTER KALIMANTAN 2</h2>
-                <p>Lembar Kebutuhan Material (LH05)</p>
+                <button class="close-btn no-print" onclick="window.close()">✖</button>
+                <h1>BERITA ACARA GANGGUAN</h1>
+                <div class="subtitle">PT PLN (Persero) Unit Induk Wilayah Kalimantan Selatan & Tengah</div>
             </div>
-            <div class="doc-info">
-                <div class="doc-info-row"><div class="doc-info-label">Nomor LH05:</div><div class="doc-info-value" id="nomorLH05">-</div></div>
-                <div class="doc-info-row"><div class="doc-info-label">Tanggal:</div><div class="doc-info-value" id="tanggal">-</div></div>
-                <div class="doc-info-row"><div class="doc-info-label">Nomor Mesin:</div><div class="doc-info-value" id="nomorMesin">-</div></div>
-                <div class="doc-info-row"><div class="doc-info-label">Lokasi Gangguan:</div><div class="doc-info-value" id="lokasiGangguan">-</div></div>
+            
+            <!-- Nomor LH05 -->
+            <div class="nomor-box">
+                <div class="label">NOMOR BA LH05</div>
+                <div class="nomor" id="nomorLH05">-</div>
             </div>
+            
+            <!-- Info Grid -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="label">Tanggal & Waktu Kejadian</div>
+                    <div class="value" id="tanggalWaktu">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Unit / ULD</div>
+                    <div class="value" id="unitULD">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Kelompok SPD</div>
+                    <div class="value" id="kelompokSPD">-</div>
+                </div>
+            </div>
+            
+            <!-- Komponen Rusak -->
+            <div class="bullet-item">
+                <div class="bullet bullet-red"></div>
+                <div class="title">Komponen yang Rusak</div>
+                <div class="content" id="komponenRusak">-</div>
+            </div>
+            
+            <!-- Gejala -->
+            <div class="bullet-item">
+                <div class="bullet bullet-yellow"></div>
+                <div class="title">Gejala yang Timbul</div>
+                <div class="content" id="gejala">-</div>
+            </div>
+            
+            <!-- Uraian Kejadian -->
+            <div class="bullet-item">
+                <div class="bullet bullet-blue"></div>
+                <div class="title">Uraian Kejadian</div>
+                <div class="content" id="uraianKejadian">-</div>
+            </div>
+            
+            <!-- Analisa Penyebab -->
+            <div class="bullet-item">
+                <div class="bullet bullet-green"></div>
+                <div class="title">Analisa Penyebab</div>
+                <div class="content" id="analisaPenyebab">-</div>
+            </div>
+            
+            <!-- Kesimpulan -->
+            <div class="bullet-item">
+                <div class="bullet bullet-gray"></div>
+                <div class="title">Kesimpulan</div>
+                <div class="content" id="kesimpulan">-</div>
+            </div>
+            
+            <!-- Alert Box -->
+            <div class="alert-box">
+                <div class="title">Akibat terhadap Sistem Pembangkit</div>
+                <div class="alert-grid">
+                    <div class="alert-col">
+                        <div class="label">Beban Puncak</div>
+                        <div class="value" id="bebanPuncak">-</div>
+                    </div>
+                    <div class="alert-col">
+                        <div class="label">Daya Mampu</div>
+                        <div class="value" id="dayaMampu">-</div>
+                    </div>
+                    <div class="alert-col">
+                        <div class="label">Status</div>
+                        <div class="value"><span class="status-badge" id="statusPemadaman">NORMAL</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Two Column -->
+            <div class="two-col">
+                <div class="col-box">
+                    <div class="title">Tindakan Penanggulangan</div>
+                    <div class="content" id="tindakanPenanggulangan">-</div>
+                </div>
+                <div class="col-box">
+                    <div class="title">Rencana Perbaikan</div>
+                    <div class="content" id="rencanaPerbaikan">-</div>
+                </div>
+            </div>
+            
+            <!-- Kebutuhan Material -->
+            <div class="section-title">Kebutuhan Material</div>
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 5%;">No</th>
-                        <th style="width: 15%;">Part Number</th>
-                        <th style="width: 30%;">Nama Material</th>
-                        <th style="width: 15%;">Lokasi Tujuan</th>
-                        <th style="width: 10%;">Jumlah</th>
-                        <th style="width: 25%;">SN Mesin</th>
+                        <th style="width: 4%;">No</th>
+                        <th style="width: 12%;">Part<br>Number</th>
+                        <th style="width: 25%;">Material</th>
+                        <th style="width: 15%;">Jenis Barang</th>
+                        <th style="width: 15%;">Mesin</th>
+                        <th style="width: 17%;">S/N<br>Mesin</th>
+                        <th style="width: 8%;">Jumlah</th>
                     </tr>
                 </thead>
                 <tbody id="materialsTable"></tbody>
             </table>
+            
+            <!-- Signature -->
             <div class="signature-section">
-                <div class="signature-box"><p>Diajukan Oleh,</p><div class="name">Teknisi</div></div>
-                <div class="signature-box"><p>Disetujui Oleh,</p><div class="name">Supervisor</div></div>
-                <div class="signature-box"><p>Diterima Oleh,</p><div class="name">Gudang</div></div>
+                <div class="signature-box">
+                    <div class="title">Tanda Tangan Pelapor</div>
+                    <div class="signature-img" id="ttdTeknisi"></div>
+                    <div class="name" id="namaPelapor">Pelapor</div>
+                </div>
+                <div class="signature-box">
+                    <div class="title">Suprvisyah</div>
+                    <div class="signature-img" id="ttdSupervisor"></div>
+                    <div class="name" id="namaSupervisor">Pelapor</div>
+                </div>
             </div>
         </div>
     </div>
+    
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const nomorLH05 = urlParams.get('nomor');
+        
         if (!nomorLH05) {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('error').style.display = 'block';
@@ -10700,55 +10858,104 @@ function getPrintLH05HTML() {
         } else {
             loadPrintData(nomorLH05);
         }
+        
         async function loadPrintData(nomor) {
             try {
                 const response = await fetch('/api/print-lh05/' + encodeURIComponent(nomor));
-                if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
+                
                 populateData(data);
+                
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
-                setTimeout(() => { console.log('Ready to print'); }, 1000);
             } catch (error) {
-                console.error('Failed to load print data:', error);
+                console.error('Failed to load:', error);
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('error').style.display = 'block';
                 document.getElementById('error').textContent = 'Error: ' + error.message;
             }
         }
+        
         function populateData(data) {
-            const gangguan = data.gangguan, materials = data.materials;
-            document.getElementById('nomorLH05').textContent = gangguan.nomor_lh05 || '-';
-            document.getElementById('tanggal').textContent = formatDate(gangguan.tanggal_laporan || gangguan.created_at);
-            document.getElementById('nomorMesin').textContent = gangguan.nomor_mesin || gangguan.lokasi_gangguan || '-';
-            document.getElementById('lokasiGangguan').textContent = gangguan.lokasi_gangguan || '-';
+            const g = data.gangguan;
+            const materials = data.materials;
+            
+            // Header Info
+            document.getElementById('nomorLH05').textContent = g.nomor_lh05 || '-';
+            document.getElementById('tanggalWaktu').textContent = formatDateTime(g.tanggal_laporan || g.created_at);
+            document.getElementById('unitULD').textContent = g.lokasi_gangguan || '-';
+            document.getElementById('kelompokSPD').textContent = g.kelompok_spd || g.jenis_gangguan || 'MEKANIK';
+            
+            // Detail Gangguan
+            document.getElementById('komponenRusak').textContent = g.komponen_rusak || 'Mesin tidak dapat hidup';
+            document.getElementById('gejala').textContent = g.gejala || 'Aki drop';
+            document.getElementById('uraianKejadian').textContent = g.uraian_kejadian || 'Waktu start mesin';
+            document.getElementById('analisaPenyebab').textContent = g.analisa_penyebab || 'Karena voltage battery tidak mencukupi';
+            document.getElementById('kesimpulan').textContent = g.kesimpulan || 'Aki drop';
+            
+            // Akibat Sistem
+            document.getElementById('bebanPuncak').textContent = (g.beban_puncak || 0) + ' MW';
+            document.getElementById('dayaMampu').textContent = (g.daya_mampu || 0) + ' MW';
+            const statusEl = document.getElementById('statusPemadaman');
+            statusEl.textContent = g.pemadaman || 'NORMAL';
+            statusEl.className = 'status-badge';
+            if (g.pemadaman === 'SIAGA') statusEl.style.background = '#ffc107';
+            else if (g.pemadaman === 'DARURAT') statusEl.style.background = '#dc3545';
+            
+            // Tindakan & Rencana
+            document.getElementById('tindakanPenanggulangan').textContent = g.catatan_tindakan || 'Minjam aki sebelah';
+            document.getElementById('rencanaPerbaikan').textContent = g.rencana_perbaikan || 'Nunggu material';
+            
+            // Materials Table
             const tbody = document.getElementById('materialsTable');
             tbody.innerHTML = '';
+            
             if (materials.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">Tidak ada data material</td></tr>';
-                return;
+                tbody.innerHTML = '<tr><td colspan="7" style="padding: 20px;">Tidak ada data material</td></tr>';
+            } else {
+                materials.forEach((mat, i) => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = 
+                        '<td>' + (i + 1) + '</td>' +
+                        '<td>' + (mat.part_number || '-') + '</td>' +
+                        '<td style="text-align: left;">' + (mat.material || '-') + '</td>' +
+                        '<td><span class="badge-material">MATERIAL HANDAL</span></td>' +
+                        '<td>' + (mat.mesin || '-') + '</td>' +
+                        '<td>' + (mat.sn_mesin || '-') + '</td>' +
+                        '<td><b>' + (mat.jumlah || 1) + '</b></td>';
+                });
             }
-            materials.forEach((mat, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = '<td style="text-align: center;">' + (index + 1) + '</td>' +
-                    '<td>' + (mat.part_number || '-') + '</td>' +
-                    '<td>' + (mat.material || '-') + '</td>' +
-                    '<td>' + (mat.lokasi_tujuan || '-') + '</td>' +
-                    '<td style="text-align: center;">' + (mat.jumlah || 1) + '</td>' +
-                    '<td>' + (mat.sn_mesin || '-') + '</td>';
-                tbody.appendChild(row);
-            });
+            
+            // Signatures
+            const ttdTeknisi = document.getElementById('ttdTeknisi');
+            if (g.ttd_teknisi && g.ttd_teknisi.startsWith('data:image')) {
+                ttdTeknisi.innerHTML = '<img src="' + g.ttd_teknisi + '" alt="TTD">';
+            }
+            
+            const ttdSupervisor = document.getElementById('ttdSupervisor');
+            if (g.ttd_supervisor && g.ttd_supervisor.startsWith('data:image')) {
+                ttdSupervisor.innerHTML = '<img src="' + g.ttd_supervisor + '" alt="TTD">';
+            }
+            
+            document.getElementById('namaPelapor').textContent = g.user_laporan || 'Pelapor';
+            document.getElementById('namaSupervisor').textContent = 'Pelapor';
         }
-        function formatDate(dateStr) {
+        
+        function formatDateTime(dateStr) {
             if (!dateStr) return '-';
-            if (dateStr.match(/^\\d{2}-\\d{2}-\\d{4}$/)) return dateStr;
             const date = new Date(dateStr);
             if (isNaN(date.getTime())) return dateStr;
+            
             const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+            const month = monthNames[date.getMonth()];
             const year = date.getFullYear();
-            return day + '-' + month + '-' + year;
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return day + ' ' + month + ' ' + year + ' pukul ' + hours + ':' + minutes;
         }
     </script>
 </body>
