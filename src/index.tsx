@@ -4451,6 +4451,16 @@ app.get('/dashboard/pengadaan-material', (c) => {
   return c.html(getDashboardPengadaanMaterialHTML())
 })
 
+// Print LH05 Page (PUBLIC - for printing)
+app.get('/print-lh05.html', (c) => {
+  return c.html(getPrintLH05HTML())
+})
+
+// Alternative route without .html extension
+app.get('/print-lh05', (c) => {
+  return c.html(getPrintLH05HTML())
+})
+
 // HTML Templates
 function getDashboardMainHTML() {
   return `
@@ -10602,6 +10612,148 @@ app.post('/api/fix-stock-after-cleanup', async (c) => {
     }, 500)
   }
 })
+
+function getPrintLH05HTML() {
+  return `<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print LH05 - AMC KAL 2</title>
+    <style>
+        @page { size: A4 portrait; margin: 15mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4; color: #000; background: white; }
+        .container { max-width: 100%; margin: 0 auto; padding: 10px; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #000; padding-bottom: 10px; }
+        .header h1 { font-size: 18pt; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+        .header h2 { font-size: 14pt; font-weight: normal; margin-bottom: 3px; }
+        .header p { font-size: 10pt; color: #333; }
+        .doc-info { margin-bottom: 15px; display: table; width: 100%; }
+        .doc-info-row { display: table-row; }
+        .doc-info-label { display: table-cell; width: 150px; font-weight: bold; padding: 3px 0; }
+        .doc-info-value { display: table-cell; padding: 3px 0; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th { background-color: #2c3e50; color: white; font-weight: bold; padding: 8px; text-align: left; border: 1px solid #000; font-size: 10pt; }
+        td { padding: 6px 8px; border: 1px solid #000; font-size: 10pt; }
+        tbody tr:nth-child(even) { background-color: #f9f9f9; }
+        .signature-section { margin-top: 40px; display: flex; justify-content: space-between; }
+        .signature-box { text-align: center; width: 30%; }
+        .signature-box p { margin-bottom: 60px; font-weight: bold; }
+        .signature-box .name { border-top: 1px solid #000; padding-top: 5px; font-weight: normal; }
+        @media print {
+            body { margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            .container { padding: 0; }
+        }
+        .loading, .error { text-align: center; padding: 50px; font-size: 14pt; }
+        .error { color: #c0392b; }
+        .print-btn { position: fixed; top: 20px; right: 20px; background: #3498db; color: white; border: none; padding: 12px 24px; font-size: 12pt; cursor: pointer; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; }
+        .print-btn:hover { background: #2980b9; }
+        .print-btn:active { transform: translateY(1px); }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">🖨️ Print / Save PDF</button>
+    <div class="container">
+        <div id="loading" class="loading">Loading data...</div>
+        <div id="error" class="error" style="display: none;">Error loading data</div>
+        <div id="content" style="display: none;">
+            <div class="header">
+                <h1>PT. ANGKASA PURA I (PERSERO)</h1>
+                <h2>AREA MANAGEMENT CENTER KALIMANTAN 2</h2>
+                <p>Lembar Kebutuhan Material (LH05)</p>
+            </div>
+            <div class="doc-info">
+                <div class="doc-info-row"><div class="doc-info-label">Nomor LH05:</div><div class="doc-info-value" id="nomorLH05">-</div></div>
+                <div class="doc-info-row"><div class="doc-info-label">Tanggal:</div><div class="doc-info-value" id="tanggal">-</div></div>
+                <div class="doc-info-row"><div class="doc-info-label">Nomor Mesin:</div><div class="doc-info-value" id="nomorMesin">-</div></div>
+                <div class="doc-info-row"><div class="doc-info-label">Lokasi Gangguan:</div><div class="doc-info-value" id="lokasiGangguan">-</div></div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">No</th>
+                        <th style="width: 15%;">Part Number</th>
+                        <th style="width: 30%;">Nama Material</th>
+                        <th style="width: 15%;">Lokasi Tujuan</th>
+                        <th style="width: 10%;">Jumlah</th>
+                        <th style="width: 25%;">SN Mesin</th>
+                    </tr>
+                </thead>
+                <tbody id="materialsTable"></tbody>
+            </table>
+            <div class="signature-section">
+                <div class="signature-box"><p>Diajukan Oleh,</p><div class="name">Teknisi</div></div>
+                <div class="signature-box"><p>Disetujui Oleh,</p><div class="name">Supervisor</div></div>
+                <div class="signature-box"><p>Diterima Oleh,</p><div class="name">Gudang</div></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const nomorLH05 = urlParams.get('nomor');
+        if (!nomorLH05) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = 'Nomor LH05 tidak ditemukan di URL';
+        } else {
+            loadPrintData(nomorLH05);
+        }
+        async function loadPrintData(nomor) {
+            try {
+                const response = await fetch('/api/print-lh05/' + encodeURIComponent(nomor));
+                if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                populateData(data);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                setTimeout(() => { console.log('Ready to print'); }, 1000);
+            } catch (error) {
+                console.error('Failed to load print data:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Error: ' + error.message;
+            }
+        }
+        function populateData(data) {
+            const gangguan = data.gangguan, materials = data.materials;
+            document.getElementById('nomorLH05').textContent = gangguan.nomor_lh05 || '-';
+            document.getElementById('tanggal').textContent = formatDate(gangguan.tanggal_laporan || gangguan.created_at);
+            document.getElementById('nomorMesin').textContent = gangguan.nomor_mesin || gangguan.lokasi_gangguan || '-';
+            document.getElementById('lokasiGangguan').textContent = gangguan.lokasi_gangguan || '-';
+            const tbody = document.getElementById('materialsTable');
+            tbody.innerHTML = '';
+            if (materials.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">Tidak ada data material</td></tr>';
+                return;
+            }
+            materials.forEach((mat, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td style="text-align: center;">' + (index + 1) + '</td>' +
+                    '<td>' + (mat.part_number || '-') + '</td>' +
+                    '<td>' + (mat.material || '-') + '</td>' +
+                    '<td>' + (mat.lokasi_tujuan || '-') + '</td>' +
+                    '<td style="text-align: center;">' + (mat.jumlah || 1) + '</td>' +
+                    '<td>' + (mat.sn_mesin || '-') + '</td>';
+                tbody.appendChild(row);
+            });
+        }
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            if (dateStr.match(/^\\d{2}-\\d{2}-\\d{4}$/)) return dateStr;
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return day + '-' + month + '-' + year;
+        }
+    </script>
+</body>
+</html>`
+}
 
 export default app
 
