@@ -3316,7 +3316,7 @@ app.get('/api/ref-harga', async (c) => {
     
     console.log('📋 Fetching material price reference from RAB history...')
     
-    // Simple query first to check if tables exist
+    // Query all RAB items (NO LIMIT - show all data)
     const result = await env.DB.prepare(`
       SELECT 
         ri.*,
@@ -3326,7 +3326,6 @@ app.get('/api/ref-harga', async (c) => {
       FROM rab_items ri
       JOIN rab r ON ri.rab_id = r.id
       ORDER BY r.tanggal_rab DESC
-      LIMIT 100
     `).all()
     
     console.log(`📦 RAB items query result: ${result.results?.length || 0} rows`)
@@ -3375,7 +3374,7 @@ app.get('/api/ref-harga', async (c) => {
       }
     })
     
-    console.log(`✅ Ref. Harga API: Returning ${materials.length} material price references`)
+    console.log(`✅ Ref. Harga API: Returning ${materials.length} material price references (ALL DATA - NO LIMIT)`)
     return c.json(materials)
   } catch (error) {
     console.error('❌ Failed to get ref-harga:', error)
