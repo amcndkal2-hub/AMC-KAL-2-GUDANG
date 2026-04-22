@@ -3875,6 +3875,232 @@ app.post('/api/rab/:id/update-tor', async (c) => {
   }
 })
 
+// API: Auto-check and update RAB status (Draft → Pengadaan → Tersedia)
+app.post('/api/rab/auto-check-status', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔄 Auto-checking RAB status...')
+    
+    // Get all RAB records
+    const allRAB = await DB.getAllRAB(env.DB)
+    const updates = []
+    
+    for (const rab of allRAB) {
+      let needsUpdate = false
+      let newStatus = rab.status
+      let reason = ''
+      
+      // Rule 1: Draft → Pengadaan (when nomor_tor is not empty)
+      if (rab.status === 'Draft' && rab.nomor_tor && rab.nomor_tor.trim() !== '') {
+        newStatus = 'Pengadaan'
+        needsUpdate = true
+        reason = `TOR ${rab.nomor_tor} added`
+      }
+      
+      // Rule 2: Pengadaan → Tersedia (when SCM status = "Acc Direktur Operasi & Pengembangan Usaha")
+      if (rab.status === 'Pengadaan' && rab.nomor_tor) {
+        // Fetch Pengadaan data from Google Sheets
+        try {
+          const pengadaanResponse = await fetch('https://script.google.com/macros/s/AKfycbynUyVrOfSXn-X6V4HFE6YbanXJZo2tBGWEvBbTMie1DyK2wL0RM9UOvVpfoWDmuxhm/exec')
+          const pengadaanData = await pengadaanResponse.json()
+          
+          if (pengadaanData && pengadaanData['data KR']) {
+            const rows = pengadaanData['data KR']
+            
+            // Filter PEMBANGKITAN rows
+            const pembangkitanRows = rows.filter((row: any) => {
+              return row.Kolom_3 && row.Kolom_3.includes('PEMBANGKITAN')
+            })
+            
+            // Find matching TOR in Keterangan (Kolom_11)
+            const matchedRow = pembangkitanRows.find((row: any) => {
+              const keterangan = row.Kolom_11 || ''
+              return keterangan.includes(rab.nomor_tor)
+            })
+            
+            if (matchedRow) {
+              const status = matchedRow.Kolom_12 || ''
+              
+              // Check if status is "Acc Direktur Operasi & Pengembangan Usaha"
+              if (status.includes('Acc Direktur Operasi') || status.includes('Acc Direktur Operasi & Pengembangan Usaha')) {
+                newStatus = 'Tersedia'
+                needsUpdate = true
+                reason = `SCM status: ${status}`
+              }
+            }
+          }
+        } catch (fetchError) {
+          console.log(`⚠️ Failed to fetch Pengadaan data for RAB ${rab.nomor_rab}:`, fetchError)
+        }
+      }
+      
+      // Update status if needed
+      if (needsUpdate && newStatus !== rab.status) {
+        try {
+          // Update RAB status
+          let updateQuery = 'UPDATE rab SET status = ?, updated_at = datetime(\'now\') WHERE id = ?'
+          let bindParams = [newStatus, rab.id]
+          
+          // Add timestamp for specific status
+          if (newStatus === 'Pengadaan') {
+            updateQuery = 'UPDATE rab SET status = ?, tanggal_pengadaan = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
+          } else if (newStatus === 'Tersedia') {
+            updateQuery = 'UPDATE rab SET status = ?, tanggal_tersedia = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
+          }
+          
+          try {
+            await env.DB.prepare(updateQuery).bind(...bindParams).run()
+          } catch (updateError) {
+            // Fallback without timestamp columns
+            await env.DB.prepare(`
+              UPDATE rab 
+              SET status = ?, updated_at = datetime('now')
+              WHERE id = ?
+            `).bind(newStatus, rab.id).run()
+          }
+          
+          // Sync status to material_gangguan
+          const rabDetails = await DB.getRABById(env.DB, rab.id)
+          if (rabDetails && rabDetails.items) {
+            for (const item of rabDetails.items) {
+              await env.DB.prepare(`
+                UPDATE material_gangguan 
+                SET status = ?
+                WHERE part_number = ? 
+                AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
+              `).bind(newStatus, item.part_number, item.nomor_lh05).run()
+            }
+          }
+          
+          updates.push({
+            nomor_rab: rab.nomor_rab,
+            old_status: rab.status,
+            new_status: newStatus,
+            reason: reason
+          })
+          
+          console.log(`✅ Auto-updated RAB ${rab.nomor_rab}: ${rab.status} → ${newStatus} (${reason})`)
+        } catch (updateError) {
+          console.error(`❌ Failed to update RAB ${rab.nomor_rab}:`, updateError)
+        }
+      }
+    }
+    
+    return c.json({
+      success: true,
+      message: `Auto-check completed. ${updates.length} RAB(s) updated.`,
+      updates: updates
+    })
+  } catch (error: any) {
+    console.error('❌ Auto-check failed:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Auto-check failed' 
+    }, 500)
+  }
+})
+
+// API: Update RAB item price (Andalcekatan only, Draft status only)
+app.post('/api/rab/:id/update-price', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    const { item_id, harga_satuan } = await c.req.json()
+    
+    console.log('💰 Updating RAB item price:', { rabId, item_id, harga_satuan })
+    
+    // Check user session
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    let username = ''
+    
+    if (sessionToken) {
+      try {
+        const dbSession = await env.DB.prepare(`
+          SELECT username FROM sessions WHERE session_token = ? AND expires_at > datetime('now')
+        `).bind(sessionToken).first()
+        
+        if (dbSession) {
+          username = dbSession.username
+        }
+      } catch (error) {
+        console.error('❌ Failed to check session:', error)
+      }
+    }
+    
+    // Validate user: Only Andalcekatan
+    if (username !== 'Andalcekatan') {
+      return c.json({ 
+        success: false, 
+        error: 'Access denied. Only Andalcekatan can edit prices.' 
+      }, 403)
+    }
+    
+    // Check RAB status
+    const rab = await env.DB.prepare(`
+      SELECT status FROM rab WHERE id = ?
+    `).bind(rabId).first()
+    
+    if (!rab) {
+      return c.json({ success: false, error: 'RAB not found' }, 404)
+    }
+    
+    if (rab.status !== 'Draft') {
+      return c.json({ 
+        success: false, 
+        error: `Cannot edit price. RAB status is '${rab.status}'. Only 'Draft' RAB can be edited.` 
+      }, 400)
+    }
+    
+    // Update item price
+    const item = await env.DB.prepare(`
+      SELECT jumlah FROM rab_items WHERE id = ? AND rab_id = ?
+    `).bind(item_id, rabId).first()
+    
+    if (!item) {
+      return c.json({ success: false, error: 'Item not found' }, 404)
+    }
+    
+    const newSubtotal = parseFloat(harga_satuan) * parseInt(item.jumlah)
+    
+    await env.DB.prepare(`
+      UPDATE rab_items 
+      SET harga_satuan = ?, subtotal = ?, updated_at = datetime('now')
+      WHERE id = ? AND rab_id = ?
+    `).bind(harga_satuan, newSubtotal, item_id, rabId).run()
+    
+    // Recalculate total_harga
+    const items = await env.DB.prepare(`
+      SELECT SUM(subtotal) as total FROM rab_items WHERE rab_id = ?
+    `).bind(rabId).first()
+    
+    const newTotal = items?.total || 0
+    
+    await env.DB.prepare(`
+      UPDATE rab 
+      SET total_harga = ?, updated_at = datetime('now')
+      WHERE id = ?
+    `).bind(newTotal, rabId).run()
+    
+    console.log(`✅ Price updated: Item ${item_id} = Rp ${harga_satuan}, Subtotal = Rp ${newSubtotal}, New Total = Rp ${newTotal}`)
+    
+    return c.json({
+      success: true,
+      message: 'Harga berhasil diupdate!',
+      item_id: item_id,
+      harga_satuan: harga_satuan,
+      subtotal: newSubtotal,
+      total_harga: newTotal
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to update price:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to update price' 
+    }, 500)
+  }
+})
+
 // API: Delete RAB (ADMIN or Andalcekatan only)
 app.delete('/api/rab/:id', async (c) => {
   try {

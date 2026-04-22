@@ -7,13 +7,135 @@ let currentRABDetail = null
 let currentStatusFilter = 'All' // Changed from 'Semua' to 'All'
 let currentJenisFilter = 'All' // Filter for Jenis RAB
 let pengadaanData = [] // Store Pengadaan data for Status SCM matching
+let autoCheckInterval = null // Auto-check timer
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded, loading data...')
   await loadPengadaanData() // Load Pengadaan data first
   await loadRABList()
+  
+  // Start auto-check every 2 minutes (120000 ms)
+  console.log('Starting auto-check timer (2 minutes)...')
+  autoCheckInterval = setInterval(async () => {
+    console.log('⏱️ Auto-check triggered...')
+    await autoCheckRABStatus()
+  }, 120000) // 2 minutes
+  
+  console.log('✅ Auto-check timer started')
 })
+
+// Auto-check RAB status (Draft → Pengadaan → Tersedia)
+async function autoCheckRABStatus() {
+  try {
+    console.log('🔄 Running auto-check...')
+    const response = await fetch('/api/rab/auto-check-status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    
+    const result = await response.json()
+    console.log('✅ Auto-check result:', result)
+    
+    // Show notification if there are updates
+    if (result.updates && result.updates.length > 0) {
+      showNotification(result.updates)
+      
+      // Reload RAB list and Pengadaan data
+      await loadPengadaanData()
+      await loadRABList()
+    }
+    
+    return result
+  } catch (error) {
+    console.error('❌ Auto-check failed:', error)
+    return null
+  }
+}
+
+// Show notification for status updates
+function showNotification(updates) {
+  if (!updates || updates.length === 0) return
+  
+  const container = document.getElementById('notificationContainer')
+  
+  // Create notification element
+  const notif = document.createElement('div')
+  notif.className = 'fixed top-20 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-2xl z-50 animate-bounce max-w-md'
+  notif.style.animation = 'slideIn 0.5s ease-out'
+  
+  const updateList = updates.map(u => `
+    <div class="mb-2">
+      <strong>${u.nomor_rab}</strong>: 
+      <span class="line-through">${u.old_status}</span> → 
+      <span class="font-bold">${u.new_status}</span>
+      <br><span class="text-xs text-green-200">${u.reason}</span>
+    </div>
+  `).join('')
+  
+  notif.innerHTML = `
+    <div class="flex items-start gap-3">
+      <i class="fas fa-bell text-2xl"></i>
+      <div class="flex-1">
+        <h3 class="font-bold text-lg mb-2">
+          <i class="fas fa-check-circle mr-1"></i>
+          Status RAB Diupdate!
+        </h3>
+        <div class="text-sm">
+          ${updateList}
+        </div>
+        <p class="text-xs text-green-200 mt-2">
+          ${updates.length} RAB telah diupdate otomatis
+        </p>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `
+  
+  document.body.appendChild(notif)
+  
+  // Auto-remove after 10 seconds
+  setTimeout(() => {
+    notif.style.animation = 'slideOut 0.5s ease-out'
+    setTimeout(() => notif.remove(), 500)
+  }, 10000)
+}
+
+// Add CSS animations for notification
+const style = document.createElement('style')
+style.textContent = `
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+  }
+`
+document.head.appendChild(style)
 
 // Load all RAB
 async function loadRABList() {
@@ -546,6 +668,10 @@ async function viewRABDetail(rabId) {
 // Render RAB detail in modal
 function renderRABDetail(rab) {
   const content = document.getElementById('rabDetailContent')
+  const username = localStorage.getItem('username') || ''
+  const isAndalcekatan = username === 'Andalcekatan'
+  const isDraft = rab.status === 'Draft'
+  const canEditPrice = isAndalcekatan && isDraft
   
   const items = rab.items || []
   const totalHarga = items.reduce((sum, item) => sum + (item.subtotal || 0), 0)
@@ -573,8 +699,16 @@ function renderRABDetail(rab) {
       </div>
       <div class="col-span-2">
         <label class="text-sm font-semibold text-gray-600">Total Harga (inc. PPN 11%):</label>
-        <p class="text-xl font-bold text-green-600">${formatRupiah(grandTotal)}</p>
+        <p class="text-xl font-bold text-green-600" id="grandTotalDisplay">${formatRupiah(grandTotal)}</p>
       </div>
+      ${canEditPrice ? `
+        <div class="col-span-2 bg-yellow-50 border border-yellow-300 rounded-lg p-3">
+          <p class="text-sm text-yellow-800">
+            <i class="fas fa-edit mr-2"></i>
+            <strong>Mode Edit:</strong> Anda dapat mengedit harga satuan dengan klik pada kolom harga.
+          </p>
+        </div>
+      ` : ''}
     </div>
     
     <!-- RAB Items Table -->
@@ -593,7 +727,7 @@ function renderRABDetail(rab) {
             <th class="px-4 py-3 border text-left">Mesin</th>
             <th class="px-4 py-3 border text-center">Jumlah</th>
             <th class="px-4 py-3 border text-left">Unit/ULD</th>
-            <th class="px-4 py-3 border text-right">Harga Satuan</th>
+            <th class="px-4 py-3 border text-right">Harga Satuan ${canEditPrice ? '<i class="fas fa-edit text-yellow-600 ml-1"></i>' : ''}</th>
             <th class="px-4 py-3 border text-right">Subtotal</th>
           </tr>
         </thead>
@@ -607,28 +741,120 @@ function renderRABDetail(rab) {
               <td class="px-4 py-3 border text-sm">${item.mesin || '-'}</td>
               <td class="px-4 py-3 border text-center">${item.jumlah || 0}</td>
               <td class="px-4 py-3 border">${item.unit_uld || '-'}</td>
-              <td class="px-4 py-3 border text-right">${formatRupiah(item.harga_satuan)}</td>
-              <td class="px-4 py-3 border text-right font-semibold">${formatRupiah(item.subtotal)}</td>
+              <td class="px-4 py-3 border text-right ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
+                  ${canEditPrice ? `onclick="editItemPrice(${rab.id}, ${item.id}, ${item.harga_satuan}, ${item.jumlah}, this)"` : ''}>
+                <span id="price-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-2' : ''}">
+                  ${formatRupiah(item.harga_satuan)}
+                  ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
+                </span>
+              </td>
+              <td class="px-4 py-3 border text-right font-semibold" id="subtotal-${item.id}">${formatRupiah(item.subtotal)}</td>
             </tr>
           `).join('')}
         </tbody>
         <tfoot class="bg-gray-100 font-bold">
           <tr>
             <td colspan="8" class="px-4 py-3 border text-right text-lg">Subtotal:</td>
-            <td class="px-4 py-3 border text-right text-lg">${formatRupiah(totalHarga)}</td>
+            <td class="px-4 py-3 border text-right text-lg" id="subtotalDisplay">${formatRupiah(totalHarga)}</td>
           </tr>
           <tr>
             <td colspan="8" class="px-4 py-3 border text-right text-lg">PPN 11%:</td>
-            <td class="px-4 py-3 border text-right text-lg">${formatRupiah(totalHarga * 0.11)}</td>
+            <td class="px-4 py-3 border text-right text-lg" id="ppnDisplay">${formatRupiah(totalHarga * 0.11)}</td>
           </tr>
           <tr class="bg-green-50">
             <td colspan="8" class="px-4 py-3 border text-right text-xl">TOTAL HARGA:</td>
-            <td class="px-4 py-3 border text-right text-xl text-green-600 font-bold">${formatRupiah(totalHarga * 1.11)}</td>
+            <td class="px-4 py-3 border text-right text-xl text-green-600 font-bold" id="totalDisplay">${formatRupiah(totalHarga * 1.11)}</td>
           </tr>
         </tfoot>
       </table>
     </div>
   `
+}
+
+// Edit item price inline (Andalcekatan only, Draft only)
+async function editItemPrice(rabId, itemId, currentPrice, quantity, element) {
+  const username = localStorage.getItem('username') || ''
+  if (username !== 'Andalcekatan') {
+    alert('Hanya Andalcekatan yang dapat mengedit harga')
+    return
+  }
+  
+  // Prompt for new price
+  const newPriceStr = prompt(`Edit Harga Satuan:\n\nHarga saat ini: Rp ${currentPrice.toLocaleString('id-ID')}\nJumlah: ${quantity}\n\nMasukkan harga baru (angka saja):`, currentPrice)
+  
+  if (newPriceStr === null) {
+    return // User cancelled
+  }
+  
+  const newPrice = parseFloat(newPriceStr.replace(/[^0-9]/g, ''))
+  
+  if (isNaN(newPrice) || newPrice < 0) {
+    alert('Harga tidak valid!')
+    return
+  }
+  
+  if (newPrice === currentPrice) {
+    alert('Harga tidak berubah')
+    return
+  }
+  
+  // Confirm
+  const confirmed = confirm(`Ubah harga dari Rp ${currentPrice.toLocaleString('id-ID')} menjadi Rp ${newPrice.toLocaleString('id-ID')}?\n\nSubtotal baru: Rp ${(newPrice * quantity).toLocaleString('id-ID')}`)
+  
+  if (!confirmed) {
+    return
+  }
+  
+  try {
+    console.log('Updating price:', { rabId, itemId, newPrice })
+    
+    const response = await fetch(`/api/rab/${rabId}/update-price`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      },
+      body: JSON.stringify({
+        item_id: itemId,
+        harga_satuan: newPrice
+      })
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `HTTP ${response.status}`)
+    }
+    
+    const result = await response.json()
+    console.log('✅ Price updated:', result)
+    
+    // Update display
+    document.getElementById(`price-${itemId}`).innerHTML = `
+      ${formatRupiah(result.harga_satuan)}
+      <i class="fas fa-pencil-alt text-xs text-gray-400"></i>
+    `
+    document.getElementById(`subtotal-${itemId}`).textContent = formatRupiah(result.subtotal)
+    
+    // Update totals
+    const subtotal = result.total_harga
+    const ppn = subtotal * 0.11
+    const total = subtotal * 1.11
+    
+    document.getElementById('subtotalDisplay').textContent = formatRupiah(subtotal)
+    document.getElementById('ppnDisplay').textContent = formatRupiah(ppn)
+    document.getElementById('totalDisplay').textContent = formatRupiah(total)
+    document.getElementById('grandTotalDisplay').textContent = formatRupiah(total)
+    
+    // Show success message
+    alert(`✅ Harga berhasil diupdate!\n\nHarga baru: Rp ${newPrice.toLocaleString('id-ID')}\nSubtotal baru: Rp ${result.subtotal.toLocaleString('id-ID')}\nTotal RAB: Rp ${total.toLocaleString('id-ID')}`)
+    
+    // Reload RAB list to reflect changes
+    await loadRABList()
+    
+  } catch (error) {
+    console.error('Failed to update price:', error)
+    alert(`❌ Gagal mengupdate harga:\n\n${error.message}`)
+  }
 }
 
 // Close modal
