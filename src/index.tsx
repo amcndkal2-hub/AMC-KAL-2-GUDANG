@@ -4045,10 +4045,12 @@ app.post('/api/rab/:id/update-price', async (c) => {
       return c.json({ success: false, error: 'RAB not found' }, 404)
     }
     
-    if (rab.status !== 'Draft') {
+    // Allow editing for Draft, Pengadaan, and Tersedia only (not Masuk Gudang)
+    const allowedStatuses = ['Draft', 'Pengadaan', 'Tersedia']
+    if (!allowedStatuses.includes(rab.status)) {
       return c.json({ 
         success: false, 
-        error: `Cannot edit price. RAB status is '${rab.status}'. Only 'Draft' RAB can be edited.` 
+        error: `Cannot edit price. RAB status is '${rab.status}'. Only Draft, Pengadaan, or Tersedia RAB can be edited.` 
       }, 400)
     }
     

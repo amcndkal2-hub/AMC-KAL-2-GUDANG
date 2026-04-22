@@ -670,8 +670,8 @@ function renderRABDetail(rab) {
   const content = document.getElementById('rabDetailContent')
   const username = localStorage.getItem('username') || ''
   const isAndalcekatan = username === 'Andalcekatan'
-  const isDraft = rab.status === 'Draft'
-  const canEditPrice = isAndalcekatan && isDraft
+  const allowedStatuses = ['Draft', 'Pengadaan', 'Tersedia']
+  const canEditPrice = isAndalcekatan && allowedStatuses.includes(rab.status)
   
   const items = rab.items || []
   const totalHarga = items.reduce((sum, item) => sum + (item.subtotal || 0), 0)
@@ -705,7 +705,7 @@ function renderRABDetail(rab) {
         <div class="col-span-2 bg-yellow-50 border border-yellow-300 rounded-lg p-3">
           <p class="text-sm text-yellow-800">
             <i class="fas fa-edit mr-2"></i>
-            <strong>Mode Edit:</strong> Anda dapat mengedit harga satuan dengan klik pada kolom harga.
+            <strong>Mode Edit:</strong> Anda dapat mengedit harga satuan dengan klik pada kolom harga. (Status: ${rab.status})
           </p>
         </div>
       ` : ''}
