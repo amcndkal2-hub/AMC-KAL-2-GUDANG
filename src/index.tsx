@@ -7631,6 +7631,28 @@ function getDashboardCreateRABHTML() {
                 </h2>
                 
                 <div class="space-y-6">
+                    <!-- Filter Nomor LH05 -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">
+                            <i class="fas fa-file-alt mr-2"></i>Nomor LH05
+                        </label>
+                        <input type="text" id="filterNomorLH05" 
+                               class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Cth: 0248/ND KAL 2/LH05/2026">
+                        <p class="text-xs text-gray-500 mt-1">Filter by Nomor LH05</p>
+                    </div>
+                    
+                    <!-- Filter Nama Material -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">
+                            <i class="fas fa-box mr-2"></i>Nama Material
+                        </label>
+                        <input type="text" id="filterNamaMaterial" 
+                               class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Cth: sealing ring">
+                        <p class="text-xs text-gray-500 mt-1">Filter by Nama Material</p>
+                    </div>
+                    
                     <!-- Filter Jenis Barang -->
                     <div>
                         <label class="block text-sm font-medium mb-2 text-gray-300">Jenis Barang</label>

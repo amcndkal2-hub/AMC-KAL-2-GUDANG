@@ -161,6 +161,8 @@ function handleUnitChange() {
 
 // Apply filters
 function applyFilters() {
+  const nomorLH05Filter = document.getElementById('filterNomorLH05').value.trim().toUpperCase()
+  const namaMaterialFilter = document.getElementById('filterNamaMaterial').value.trim().toUpperCase()
   const jenisBarangFilter = document.getElementById('filterJenisBarang').value
   const selectedUnits = Array.from(document.querySelectorAll('.unit-checkbox:checked'))
     .map(cb => cb.value)
@@ -170,6 +172,22 @@ function applyFilters() {
   
   filteredMaterialPengadaan = allMaterialPengadaan.filter(item => {
     let match = true
+    
+    // Filter by Nomor LH05
+    if (nomorLH05Filter) {
+      const itemLH05 = (item.nomor_lh05 || '').toUpperCase()
+      if (!itemLH05.includes(nomorLH05Filter)) {
+        match = false
+      }
+    }
+    
+    // Filter by Nama Material
+    if (namaMaterialFilter) {
+      const itemMaterial = (item.material || '').toUpperCase()
+      if (!itemMaterial.includes(namaMaterialFilter)) {
+        match = false
+      }
+    }
     
     // Filter by Jenis Barang
     if (jenisBarangFilter) {
@@ -205,6 +223,8 @@ function applyFilters() {
 
 // Reset filters
 function resetFilters() {
+  document.getElementById('filterNomorLH05').value = ''
+  document.getElementById('filterNamaMaterial').value = ''
   document.getElementById('filterJenisBarang').value = ''
   document.getElementById('checkAllUnits').checked = true
   document.querySelectorAll('.unit-checkbox').forEach(cb => cb.checked = true)
