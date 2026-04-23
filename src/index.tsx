@@ -5676,21 +5676,35 @@ function getDashboardStokHTML() {
                 
                 <div class="space-y-4">
                     <div>
+                        <label class="block text-sm font-medium mb-2">
+                            <i class="fas fa-box mr-2"></i>Nama Material
+                        </label>
+                        <input type="text" id="filterNamaMaterial" 
+                            placeholder="Cth: sealing ring" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <p class="text-xs text-gray-500 mt-1">Filter by Nama Material</p>
+                    </div>
+                    
+                    <div>
                         <label class="block text-sm font-medium mb-2">Jenis Barang</label>
                         <div class="space-y-2">
-                            <button onclick="filterJenis('MATERIAL HANDAL')" 
+                            <button onclick="setJenisFilter('MATERIAL HANDAL')" 
+                                id="btnMaterialHandal"
                                 class="w-full text-left px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-sm">
                                 MATERIAL HANDAL
                             </button>
-                            <button onclick="filterJenis('FILTER')" 
+                            <button onclick="setJenisFilter('FILTER')" 
+                                id="btnFilter"
                                 class="w-full text-left px-3 py-2 bg-green-100 hover:bg-green-200 rounded text-sm">
                                 FILTER
                             </button>
-                            <button onclick="filterJenis('MATERIAL BEKAS')" 
+                            <button onclick="setJenisFilter('MATERIAL BEKAS')" 
+                                id="btnMaterialBekas"
                                 class="w-full text-left px-3 py-2 bg-yellow-100 hover:bg-yellow-200 rounded text-sm">
                                 MATERIAL BEKAS
                             </button>
-                            <button onclick="filterJenis('')" 
+                            <button onclick="setJenisFilter('')" 
+                                id="btnSemua"
                                 class="w-full text-left px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm">
                                 SEMUA
                             </button>
@@ -5709,6 +5723,14 @@ function getDashboardStokHTML() {
                             <option value="">Semua</option>
                         </select>
                     </div>
+                    
+                    <button onclick="applyFilters()" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                        <i class="fas fa-search mr-2"></i>Terapkan Filter
+                    </button>
+                    
+                    <button onclick="resetFilters()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                        <i class="fas fa-undo mr-2"></i>Reset Filter
+                    </button>
                     
                     <div class="pt-4 border-t">
                         <button onclick="exportPDF()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-blue-700 mb-2 text-sm">

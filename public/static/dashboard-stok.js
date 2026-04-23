@@ -1,5 +1,6 @@
 let stockData = [];
-let currentFilter = { jenis: '', mesin: '' };
+let currentFilter = { namaMaterial: '', jenis: '', mesin: '' };
+let tempJenisFilter = ''; // Temporary storage for jenis filter until Apply is clicked
 
 document.addEventListener('DOMContentLoaded', async () => {
     await loadStockData();
@@ -35,10 +36,42 @@ function setupFilters() {
         renderStockTable(e.target.value);
     });
     
-    document.getElementById('filterMesin').addEventListener('change', async (e) => {
-        currentFilter.mesin = e.target.value;
-        await loadStockDataWithFilter();
-    });
+    // Remove auto-apply for mesin filter - will apply on button click
+    // document.getElementById('filterMesin').addEventListener('change', async (e) => {
+    //     currentFilter.mesin = e.target.value;
+    //     await loadStockDataWithFilter();
+    // });
+}
+
+// Store jenis filter selection (don't apply immediately)
+function setJenisFilter(jenis) {
+    tempJenisFilter = jenis;
+    console.log('Jenis filter set to:', jenis);
+}
+
+// Apply all filters when button is clicked
+function applyFilters() {
+    const namaMaterialInput = document.getElementById('filterNamaMaterial').value.trim();
+    const mesinSelect = document.getElementById('filterMesin').value;
+    
+    currentFilter.namaMaterial = namaMaterialInput;
+    currentFilter.jenis = tempJenisFilter;
+    currentFilter.mesin = mesinSelect;
+    
+    console.log('Applying filters:', currentFilter);
+    loadStockDataWithFilter();
+}
+
+// Reset all filters
+function resetFilters() {
+    document.getElementById('filterNamaMaterial').value = '';
+    document.getElementById('filterMesin').value = '';
+    document.getElementById('searchPart').value = '';
+    
+    currentFilter = { namaMaterial: '', jenis: '', mesin: '' };
+    tempJenisFilter = '';
+    
+    loadStockData();
 }
 
 async function loadStockDataWithFilter() {
@@ -50,12 +83,23 @@ async function loadStockDataWithFilter() {
         const response = await fetch(url);
         const data = await response.json();
         stockData = data.stock;
+        
+        // Apply client-side Nama Material filter
+        if (currentFilter.namaMaterial) {
+            const searchTerm = currentFilter.namaMaterial.toUpperCase();
+            stockData = stockData.filter(item => {
+                const material = (item.material || '').toUpperCase();
+                return material.includes(searchTerm);
+            });
+        }
+        
         renderStockTable();
     } catch (error) {
         console.error('Failed to load filtered stock data:', error);
     }
 }
 
+// Deprecated: replaced by setJenisFilter + applyFilters
 function filterJenis(jenis) {
     currentFilter.jenis = jenis;
     loadStockDataWithFilter();
