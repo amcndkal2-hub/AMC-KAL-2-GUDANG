@@ -4685,6 +4685,11 @@ app.get('/dashboard/ref-harga', (c) => {
   return c.html(getDashboardRefHargaHTML())
 })
 
+// Dashboard List TOR (PROTECTED - auth required)
+app.get('/dashboard/list-tor', (c) => {
+  return c.html(getDashboardListTORHTML())
+})
+
 // Dashboard Resume (PROTECTED - auth required)
 app.get('/dashboard/resume', (c) => {
   return c.html(getDashboardResumeHTML())
@@ -7681,6 +7686,7 @@ function getDashboardCreateRABHTML() {
                     <a href="/dashboard/umur" class="hover:text-blue-200"><i class="fas fa-calendar-alt mr-2"></i>Umur</a>
                     <a href="/dashboard/gangguan" class="hover:text-blue-200"><i class="fas fa-exclamation-triangle mr-2"></i>Gangguan</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
+                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>List TOR</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         <i class="fas fa-sign-out-alt mr-2"></i>Logout
@@ -11303,6 +11309,7 @@ function getDashboardListRABHTML() {
                     <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
+                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>List TOR</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         <i class="fas fa-sign-out-alt mr-2"></i>Logout
@@ -11380,6 +11387,180 @@ function getDashboardListRABHTML() {
                         <h1 class="text-2xl font-bold text-gray-800 flex items-center">
                             <i class="fas fa-list-alt text-blue-600 mr-3"></i>
                             Daftar RAB (Rencana Anggaran Biaya)
+                        </h1>
+                        <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
+                    </div>
+
+                    <!-- Main Table -->
+                    <div class="bg-white rounded-lg shadow-md">
+                        <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
+                            <table class="min-w-full border">
+                        <thead class="bg-blue-50 sticky top-0 z-10 shadow-md">
+                            <tr>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 60px;">No</th>
+                                <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 160px;">Nomor RAB</th>
+                                <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 280px;">No. TOR</th>
+                                <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 140px;">Jenis RAB</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 120px;">Tanggal</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 120px;">Jumlah Item</th>
+                                <th class="px-4 py-3 border text-right bg-blue-50" style="min-width: 150px;">Total Harga</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 130px;">Status</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 200px;">Aksi</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 220px;">Status SCM</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rabListTable">
+                            <tr>
+                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
+                                    <p>Memuat data RAB...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View RAB Modal -->
+        <div id="viewRABModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto m-4">
+                <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
+                        Detail RAB
+                    </h2>
+                    <button onclick="closeViewRABModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <div id="rabDetailContent" class="p-6">
+                    <!-- Content will be loaded here -->
+                </div>
+                <div class="p-6 border-t bg-gray-50 flex justify-end space-x-4 sticky bottom-0">
+                    <button onclick="exportRABToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-file-excel mr-2"></i>Export Excel
+                    </button>
+                    <button onclick="exportRABToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                    </button>
+                    <button onclick="closeViewRABModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/dashboard-list-rab.js"></script>
+    </body>
+    </html>
+  `
+}
+
+function getDashboardListTORHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Daftar TOR - Term of Reference</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="/url-redirect.js?v=1770101032"></script>
+    </head>
+    <body class="bg-gray-100">
+        <!-- Navbar -->
+        <nav class="bg-blue-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
+                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
+                    <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
+                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>List TOR</a>
+                    <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
+                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mx-auto px-4 py-6">
+            <!-- Main Content with Sidebar -->
+            <div class="flex gap-6">
+                <!-- Sidebar Filter -->
+                <div class="w-64 flex-shrink-0">
+                    <!-- Filter Status -->
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-filter mr-2 text-blue-600"></i>
+                            Filter Status
+                        </h3>
+                        <div class="space-y-2">
+                            <button onclick="filterByStatus('All')" id="btnAll" 
+                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
+                                <i class="fas fa-th-large mr-2"></i>Semua
+                            </button>
+                            <button onclick="filterByStatus('Draft')" id="btnDraft" 
+                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-edit mr-2"></i>Draft
+                            </button>
+                            <button onclick="filterByStatus('Pengadaan')" id="btnPengadaan" 
+                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-shopping-cart mr-2"></i>Pengadaan
+                            </button>
+                            <button onclick="filterByStatus('Tersedia')" id="btnTersedia" 
+                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-check-circle mr-2"></i>Tersedia
+                            </button>
+                            <button onclick="filterByStatus('Masuk Gudang')" id="btnMasukGudang" 
+                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-warehouse mr-2"></i>Masuk Gudang
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Jenis RAB -->
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-list mr-2 text-green-600"></i>
+                            Filter Jenis RAB
+                        </h3>
+                        <div class="space-y-2">
+                            <button onclick="filterByJenis('All')" id="btnJenisAll" 
+                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
+                                <i class="fas fa-th-large mr-2"></i>Semua
+                            </button>
+                            <button onclick="filterByJenis('SPK')" id="btnJenisSPK" 
+                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-file-contract mr-2"></i>SPK
+                            </button>
+                            <button onclick="filterByJenis('Pembelian Langsung')" id="btnJenisPembelianLangsung" 
+                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-shopping-bag mr-2"></i>Pembelian Langsung
+                            </button>
+                            <button onclick="filterByJenis('KHS')" id="btnJenisKHS" 
+                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                                <i class="fas fa-handshake mr-2"></i>KHS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="flex-1">
+                    <!-- Header -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-file-alt text-blue-600 mr-3"></i>
+                            Daftar TOR (Term of Reference)
                         </h1>
                         <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
                     </div>
