@@ -4065,11 +4065,22 @@ app.post('/api/rab/:id/update-price', async (c) => {
     
     const newSubtotal = parseFloat(harga_satuan) * parseInt(item.jumlah)
     
-    await env.DB.prepare(`
-      UPDATE rab_items 
-      SET harga_satuan = ?, subtotal = ?, updated_at = datetime('now')
-      WHERE id = ? AND rab_id = ?
-    `).bind(harga_satuan, newSubtotal, item_id, rabId).run()
+    // Update item price (with fallback if updated_at column doesn't exist)
+    try {
+      await env.DB.prepare(`
+        UPDATE rab_items 
+        SET harga_satuan = ?, subtotal = ?, updated_at = datetime('now')
+        WHERE id = ? AND rab_id = ?
+      `).bind(harga_satuan, newSubtotal, item_id, rabId).run()
+    } catch (updateError) {
+      // Fallback: update without updated_at column
+      console.log('⚠️ updated_at column not found in rab_items, using fallback')
+      await env.DB.prepare(`
+        UPDATE rab_items 
+        SET harga_satuan = ?, subtotal = ?
+        WHERE id = ? AND rab_id = ?
+      `).bind(harga_satuan, newSubtotal, item_id, rabId).run()
+    }
     
     // Recalculate total_harga
     const items = await env.DB.prepare(`
@@ -4078,11 +4089,22 @@ app.post('/api/rab/:id/update-price', async (c) => {
     
     const newTotal = items?.total || 0
     
-    await env.DB.prepare(`
-      UPDATE rab 
-      SET total_harga = ?, updated_at = datetime('now')
-      WHERE id = ?
-    `).bind(newTotal, rabId).run()
+    // Update RAB total (with fallback if updated_at column doesn't exist)
+    try {
+      await env.DB.prepare(`
+        UPDATE rab 
+        SET total_harga = ?, updated_at = datetime('now')
+        WHERE id = ?
+      `).bind(newTotal, rabId).run()
+    } catch (updateError) {
+      // Fallback: update without updated_at column
+      console.log('⚠️ updated_at column not found in rab, using fallback')
+      await env.DB.prepare(`
+        UPDATE rab 
+        SET total_harga = ?
+        WHERE id = ?
+      `).bind(newTotal, rabId).run()
+    }
     
     console.log(`✅ Price updated: Item ${item_id} = Rp ${harga_satuan}, Subtotal = Rp ${newSubtotal}, New Total = Rp ${newTotal}`)
     
