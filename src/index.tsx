@@ -4125,6 +4125,235 @@ app.post('/api/rab/:id/update-price', async (c) => {
   }
 })
 
+// API: Update ROK percentage for RAB
+app.post('/api/rab/:id/update-rok', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    const { rok_percentage } = await c.req.json()
+    
+    console.log('📊 Updating RAB ROK percentage:', { rabId, rok_percentage })
+    
+    // Check user session
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    let username = ''
+    
+    if (sessionToken) {
+      try {
+        const dbSession = await env.DB.prepare(`
+          SELECT username FROM sessions WHERE session_token = ? AND expires_at > datetime('now')
+        `).bind(sessionToken).first()
+        
+        if (dbSession) {
+          username = dbSession.username
+        }
+      } catch (error) {
+        console.error('❌ Failed to check session:', error)
+      }
+    }
+    
+    // Validate user: Only Andalcekatan
+    if (username !== 'Andalcekatan') {
+      return c.json({ 
+        success: false, 
+        error: 'Access denied. Only Andalcekatan can edit ROK percentage.' 
+      }, 403)
+    }
+    
+    // Validate ROK percentage (0-100)
+    const rok = parseFloat(rok_percentage)
+    if (isNaN(rok) || rok < 0 || rok > 100) {
+      return c.json({ 
+        success: false, 
+        error: 'Invalid ROK percentage. Must be between 0 and 100.' 
+      }, 400)
+    }
+    
+    // Update RAB ROK percentage
+    await env.DB.prepare(`
+      UPDATE rab 
+      SET rok_percentage = ?
+      WHERE id = ?
+    `).bind(rok, rabId).run()
+    
+    console.log(`✅ ROK updated: RAB ${rabId} = ${rok}%`)
+    
+    return c.json({
+      success: true,
+      message: 'ROK percentage berhasil diupdate!',
+      rok_percentage: rok
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to update ROK:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to update ROK percentage' 
+    }, 500)
+  }
+})
+
+// API: Update Harga Satuan SPK for RAB item
+app.post('/api/rab/:id/update-spk-price', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    const { item_id, harga_satuan_spk } = await c.req.json()
+    
+    console.log('💵 Updating RAB item SPK price:', { rabId, item_id, harga_satuan_spk })
+    
+    // Check user session
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    let username = ''
+    
+    if (sessionToken) {
+      try {
+        const dbSession = await env.DB.prepare(`
+          SELECT username FROM sessions WHERE session_token = ? AND expires_at > datetime('now')
+        `).bind(sessionToken).first()
+        
+        if (dbSession) {
+          username = dbSession.username
+        }
+      } catch (error) {
+        console.error('❌ Failed to check session:', error)
+      }
+    }
+    
+    // Validate user: Only Andalcekatan
+    if (username !== 'Andalcekatan') {
+      return c.json({ 
+        success: false, 
+        error: 'Access denied. Only Andalcekatan can edit SPK prices.' 
+      }, 403)
+    }
+    
+    // Get item and RAB data
+    const item = await env.DB.prepare(`
+      SELECT jumlah FROM rab_items WHERE id = ? AND rab_id = ?
+    `).bind(item_id, rabId).first()
+    
+    if (!item) {
+      return c.json({ success: false, error: 'Item not found' }, 404)
+    }
+    
+    const rab = await env.DB.prepare(`
+      SELECT rok_percentage FROM rab WHERE id = ?
+    `).bind(rabId).first()
+    
+    if (!rab) {
+      return c.json({ success: false, error: 'RAB not found' }, 404)
+    }
+    
+    const rokPercentage = rab.rok_percentage || 0
+    const hargaSPK = parseFloat(harga_satuan_spk)
+    const hargaTanpaROK = hargaSPK * (1 - rokPercentage / 100)
+    
+    const subtotalSPK = hargaSPK * parseInt(item.jumlah)
+    const subtotalTanpaROK = hargaTanpaROK * parseInt(item.jumlah)
+    
+    // Update item SPK price and Tanpa ROK (auto-calculated)
+    await env.DB.prepare(`
+      UPDATE rab_items 
+      SET harga_satuan_spk = ?, 
+          subtotal_spk = ?,
+          harga_satuan_tanpa_rok = ?,
+          subtotal_tanpa_rok = ?
+      WHERE id = ? AND rab_id = ?
+    `).bind(hargaSPK, subtotalSPK, hargaTanpaROK, subtotalTanpaROK, item_id, rabId).run()
+    
+    console.log(`✅ SPK price updated: Item ${item_id} SPK = Rp ${hargaSPK}, Tanpa ROK = Rp ${hargaTanpaROK}`)
+    
+    return c.json({
+      success: true,
+      message: 'Harga SPK berhasil diupdate!',
+      item_id: item_id,
+      harga_satuan_spk: hargaSPK,
+      harga_satuan_tanpa_rok: hargaTanpaROK,
+      subtotal_spk: subtotalSPK,
+      subtotal_tanpa_rok: subtotalTanpaROK
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to update SPK price:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to update SPK price' 
+    }, 500)
+  }
+})
+
+// API: Update Harga Satuan Realisasi for RAB item
+app.post('/api/rab/:id/update-realisasi-price', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    const { item_id, harga_satuan_realisasi } = await c.req.json()
+    
+    console.log('💰 Updating RAB item Realisasi price:', { rabId, item_id, harga_satuan_realisasi })
+    
+    // Check user session
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    let username = ''
+    
+    if (sessionToken) {
+      try {
+        const dbSession = await env.DB.prepare(`
+          SELECT username FROM sessions WHERE session_token = ? AND expires_at > datetime('now')
+        `).bind(sessionToken).first()
+        
+        if (dbSession) {
+          username = dbSession.username
+        }
+      } catch (error) {
+        console.error('❌ Failed to check session:', error)
+      }
+    }
+    
+    // Validate user: Only Andalcekatan
+    if (username !== 'Andalcekatan') {
+      return c.json({ 
+        success: false, 
+        error: 'Access denied. Only Andalcekatan can edit Realisasi prices.' 
+      }, 403)
+    }
+    
+    // Get item data
+    const item = await env.DB.prepare(`
+      SELECT jumlah FROM rab_items WHERE id = ? AND rab_id = ?
+    `).bind(item_id, rabId).first()
+    
+    if (!item) {
+      return c.json({ success: false, error: 'Item not found' }, 404)
+    }
+    
+    const hargaRealisasi = parseFloat(harga_satuan_realisasi)
+    const subtotalRealisasi = hargaRealisasi * parseInt(item.jumlah)
+    
+    // Update item Realisasi price
+    await env.DB.prepare(`
+      UPDATE rab_items 
+      SET harga_satuan_realisasi = ?,
+          subtotal_realisasi = ?
+      WHERE id = ? AND rab_id = ?
+    `).bind(hargaRealisasi, subtotalRealisasi, item_id, rabId).run()
+    
+    console.log(`✅ Realisasi price updated: Item ${item_id} = Rp ${hargaRealisasi}`)
+    
+    return c.json({
+      success: true,
+      message: 'Harga Realisasi berhasil diupdate!',
+      item_id: item_id,
+      harga_satuan_realisasi: hargaRealisasi,
+      subtotal_realisasi: subtotalRealisasi
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to update Realisasi price:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to update Realisasi price' 
+    }, 500)
+  }
+})
+
 // API: Delete RAB (ADMIN or Andalcekatan only)
 app.delete('/api/rab/:id', async (c) => {
   try {
