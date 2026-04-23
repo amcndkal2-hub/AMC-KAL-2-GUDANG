@@ -11467,7 +11467,7 @@ function getDashboardListTORHTML() {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Daftar TOR - Term of Reference</title>
+        <title>Daftar Realisasi Bayar</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11559,10 +11559,10 @@ function getDashboardListTORHTML() {
                     <!-- Header -->
                     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                         <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                            <i class="fas fa-file-alt text-blue-600 mr-3"></i>
-                            Daftar TOR (Term of Reference)
+                            <i class="fas fa-file-invoice-dollar text-blue-600 mr-3"></i>
+                            Daftar Realisasi Bayar
                         </h1>
-                        <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
+                        <p class="text-gray-600 mt-2">Daftar realisasi pembayaran untuk semua RAB</p>
                     </div>
 
                     <!-- Main Table -->
@@ -11572,10 +11572,8 @@ function getDashboardListTORHTML() {
                         <thead class="bg-blue-50 sticky top-0 z-10 shadow-md">
                             <tr>
                                 <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 60px;">No</th>
-                                <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 160px;">Nomor RAB</th>
                                 <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 280px;">No. TOR</th>
                                 <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 140px;">Jenis RAB</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 120px;">Tanggal</th>
                                 <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 120px;">Jumlah Item</th>
                                 <th class="px-4 py-3 border text-right bg-blue-50" style="min-width: 150px;">Total Harga</th>
                                 <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 130px;">Status</th>
@@ -11585,7 +11583,7 @@ function getDashboardListTORHTML() {
                         </thead>
                         <tbody id="rabListTable">
                             <tr>
-                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>

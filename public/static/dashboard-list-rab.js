@@ -1,6 +1,10 @@
 // Dashboard List RAB - AMC Material System
 console.log('Dashboard List RAB loaded')
 
+// Detect if we're on List TOR page
+const isListTORPage = window.location.pathname.includes('/list-tor')
+console.log('Page detected:', isListTORPage ? 'List TOR' : 'List RAB')
+
 let allRABList = []
 let filteredRABList = []
 let currentRABDetail = null
@@ -363,9 +367,11 @@ function renderRABList(rabList) {
   const isAMC = username === 'AMC@12345'
   
   if (rabList.length === 0) {
+    // Adjust colspan based on page (List TOR has fewer columns)
+    const colspanCount = isListTORPage ? 8 : 10
     tbody.innerHTML = `
       <tr>
-        <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="${colspanCount}" class="px-4 py-8 text-center text-gray-500">
           <i class="fas fa-inbox text-4xl mb-2"></i>
           <p>Belum ada RAB yang dibuat</p>
           <p class="text-sm mt-2">Buat RAB baru di menu Create RAB</p>
@@ -375,12 +381,27 @@ function renderRABList(rabList) {
     return
   }
   
-  tbody.innerHTML = rabList.map((rab, index) => `
-    <tr class="hover:bg-gray-50">
-      <td class="px-4 py-3 border text-center">${index + 1}</td>
+  tbody.innerHTML = rabList.map((rab, index) => {
+    // For List TOR page, skip Nomor RAB and Tanggal columns
+    const nomorRABColumn = !isListTORPage ? `
       <td class="px-4 py-3 border text-left">
         <span class="font-mono font-semibold text-gray-800">${rab.nomor_rab}</span>
-      </td>
+      </td>` : ''
+    
+    const tanggalColumn = !isListTORPage ? `
+      <td class="px-4 py-3 border text-center">${formatDate(rab.tanggal_rab)}</td>` : ''
+    
+    // For List TOR page, hide History button
+    const historyButton = !isListTORPage ? `
+      <button onclick="viewRABHistory(${rab.id})" 
+              class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs">
+        <i class="fas fa-history mr-1"></i>History
+      </button>` : ''
+    
+    return `
+    <tr class="hover:bg-gray-50">
+      <td class="px-4 py-3 border text-center">${index + 1}</td>
+      ${nomorRABColumn}
       <td class="px-4 py-3 border text-center">
         ${(rab.jenis_rab === 'SPK') ? (() => {
           // Andalcekatan: Always editable
@@ -417,7 +438,7 @@ function renderRABList(rabList) {
           ${rab.jenis_rab || '-'}
         </span>
       </td>
-      <td class="px-4 py-3 border text-center">${formatDate(rab.tanggal_rab)}</td>
+      ${tanggalColumn}
       <td class="px-4 py-3 border text-center">
         <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
           ${rab.item_count || 0} items
@@ -439,10 +460,7 @@ function renderRABList(rabList) {
                   class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs">
             <i class="fas fa-eye mr-1"></i>View
           </button>
-          <button onclick="viewRABHistory(${rab.id})" 
-                  class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs">
-            <i class="fas fa-history mr-1"></i>History
-          </button>
+          ${historyButton}
           ${canDelete ? `
             <button onclick="deleteRAB(${rab.id}, '${rab.nomor_rab}')" 
                     class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs">
@@ -474,7 +492,7 @@ function renderRABList(rabList) {
         })() : `<span class="text-gray-400 text-xs">-</span>`}
       </td>
     </tr>
-  `).join('')
+  `}).join('')
 }
 
 // Format date
