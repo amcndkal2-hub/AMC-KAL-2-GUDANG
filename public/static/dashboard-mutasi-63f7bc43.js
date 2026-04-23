@@ -95,16 +95,15 @@ function populateUnitTujuanDropdown() {
 }
 
 function setupFilters() {
-    document.getElementById('filterTanggal').addEventListener('change', filterData);
-    document.getElementById('filterNomorBA').addEventListener('input', filterData);
-    document.getElementById('filterPartNumber').addEventListener('input', filterData);
-    document.getElementById('filterUnitTujuan').addEventListener('input', filterData);
+    // Note: Filters now triggered by button, not auto
+    // Keep these for backward compatibility if needed
 }
 
-function filterData() {
+function applyFilters() {
     const tanggal = document.getElementById('filterTanggal').value;
     const nomorBA = document.getElementById('filterNomorBA').value.toLowerCase();
     const partNumber = document.getElementById('filterPartNumber').value.toLowerCase();
+    const namaMaterial = document.getElementById('filterNamaMaterial').value.toUpperCase().trim();
     const unitTujuan = document.getElementById('filterUnitTujuan').value.toLowerCase();
     
     let filtered = transactions;
@@ -127,6 +126,15 @@ function filterData() {
         );
     }
     
+    if (namaMaterial) {
+        filtered = filtered.filter(tx => 
+            tx.materials.some(mat => {
+                const material = (mat.material || mat.nama_material || '').toUpperCase();
+                return material.includes(namaMaterial);
+            })
+        );
+    }
+    
     if (unitTujuan) {
         filtered = filtered.filter(tx => 
             (tx.lokasi_tujuan || '').toLowerCase().includes(unitTujuan)
@@ -136,12 +144,23 @@ function filterData() {
     renderMutasiTable(filtered);
 }
 
-function resetFilter() {
+function resetFilters() {
     document.getElementById('filterTanggal').value = '';
     document.getElementById('filterNomorBA').value = '';
     document.getElementById('filterPartNumber').value = '';
+    document.getElementById('filterNamaMaterial').value = '';
     document.getElementById('filterUnitTujuan').value = '';
     renderMutasiTable(transactions);
+}
+
+// Deprecated: now using applyFilters() with button trigger
+function filterData() {
+    applyFilters();
+}
+
+// Deprecated: now using resetFilters()
+function resetFilter() {
+    resetFilters();
 }
 
 function renderMutasiTable(data = transactions) {

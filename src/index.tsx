@@ -6057,6 +6057,17 @@ function getDashboardMutasiHTML() {
                             class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                     
+                    <!-- Filter Nama Material -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-300 mb-3">
+                            <i class="fas fa-box mr-2 text-cyan-600"></i>
+                            Nama Material
+                        </label>
+                        <input type="text" id="filterNamaMaterial" placeholder="Cth: sealing ring" 
+                            class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
+                        <p class="text-xs text-gray-400 mt-1">Filter by Nama Material</p>
+                    </div>
+                    
                     <!-- Filter Unit Tujuan -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-300 mb-3">
@@ -6067,6 +6078,18 @@ function getDashboardMutasiHTML() {
                             class="w-full px-4 py-2 bg-gray-800 text-white border-2 border-gray-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
                             <option value="">Semua Unit</option>
                         </select>
+                    </div>
+
+                    <!-- Apply & Reset Filter Buttons -->
+                    <div class="flex gap-2">
+                        <button onclick="applyFilters()" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-semibold">
+                            <i class="fas fa-search mr-2"></i>
+                            Terapkan Filter
+                        </button>
+                        <button onclick="resetFilters()" class="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 font-semibold">
+                            <i class="fas fa-redo mr-2"></i>
+                            Reset
+                        </button>
                     </div>
 
                     <!-- Export Button -->
