@@ -909,15 +909,15 @@ function renderRABDetail(rab) {
             <td colspan="7" class="px-2 py-2 border text-right">PPN 11%:</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-blue-100" id="ppnRABDisplay">${formatRupiah(ppnRAB)}</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-green-100" id="ppnSPKDisplay">${formatRupiah(ppnSPK)}</td>
-            <td colspan="3" class="px-2 py-2 border text-right bg-yellow-100" id="ppnTanpaROKDisplay">${formatRupiah(ppnTanpaROK)}</td>
-            <td colspan="2" class="px-2 py-2 border text-right bg-purple-100" id="ppnRealisasiDisplay">${formatRupiah(ppnRealisasi)}</td>
+            <td colspan="3" class="px-2 py-2 border text-center bg-yellow-50 text-gray-400">-</td>
+            <td colspan="2" class="px-2 py-2 border text-center bg-purple-50 text-gray-400">-</td>
           </tr>
           <tr class="bg-gray-200 text-sm">
             <td colspan="7" class="px-2 py-2 border text-right font-bold">TOTAL HARGA:</td>
             <td colspan="2" class="px-2 py-2 border text-right font-bold bg-blue-200" id="totalRABDisplay">${formatRupiah(grandTotalRAB)}</td>
             <td colspan="2" class="px-2 py-2 border text-right font-bold bg-green-200" id="totalSPKDisplay">${formatRupiah(grandTotalSPK)}</td>
-            <td colspan="3" class="px-2 py-2 border text-right font-bold bg-yellow-200" id="totalTanpaROKDisplay">${formatRupiah(grandTotalTanpaROK)}</td>
-            <td colspan="2" class="px-2 py-2 border text-right font-bold bg-purple-200" id="totalRealisasiDisplay">${formatRupiah(grandTotalRealisasi)}</td>
+            <td colspan="3" class="px-2 py-2 border text-center bg-yellow-100 text-gray-400">-</td>
+            <td colspan="2" class="px-2 py-2 border text-center bg-purple-100 text-gray-400">-</td>
           </tr>
         </tfoot>
       </table>
