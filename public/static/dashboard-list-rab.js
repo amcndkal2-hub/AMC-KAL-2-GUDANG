@@ -700,10 +700,12 @@ function renderRABDetail(rab) {
   
   // ALWAYS calculate Tanpa ROK from SPK and ROK% (real-time calculation)
   // Formula: Harga Tanpa ROK = Harga SPK ÷ (1 + ROK%)
+  // IMPORTANT: Subtotal Tanpa ROK = Harga Tanpa ROK × Jumlah ROK (not regular jumlah)
   const totalHargaTanpaROK = items.reduce((sum, item) => {
     const hargaSPK = item.harga_satuan_spk || item.harga_satuan || 0
     const hargaTanpaROK = hargaSPK / (1 + rokPercentage / 100)
-    return sum + (hargaTanpaROK * item.jumlah)
+    const jumlahROK = item.jumlah_rok || item.jumlah
+    return sum + (hargaTanpaROK * jumlahROK)
   }, 0)
   
   const totalHargaRealisasi = items.reduce((sum, item) => sum + ((item.subtotal_realisasi || (item.harga_satuan_realisasi || item.harga_satuan) * item.jumlah)), 0)
@@ -798,7 +800,7 @@ function renderRABDetail(rab) {
             <th class="px-2 py-2 border text-left text-xs" rowspan="2">Unit</th>
             <th class="px-2 py-2 border text-center bg-blue-500" colspan="2">RAB</th>
             <th class="px-2 py-2 border text-center bg-green-500" colspan="2">SPK</th>
-            <th class="px-2 py-2 border text-center bg-yellow-500" colspan="2">Tanpa ROK</th>
+            <th class="px-2 py-2 border text-center bg-yellow-500" colspan="3">Tanpa ROK</th>
             <th class="px-2 py-2 border text-center bg-purple-500" colspan="2">Realisasi</th>
           </tr>
           <tr>
@@ -807,6 +809,7 @@ function renderRABDetail(rab) {
             <th class="px-2 py-1 border text-right bg-green-100 text-green-900 text-xs">Harga</th>
             <th class="px-2 py-1 border text-right bg-green-100 text-green-900 text-xs">Subtotal</th>
             <th class="px-2 py-1 border text-right bg-yellow-100 text-yellow-900 text-xs">Harga</th>
+            <th class="px-2 py-1 border text-center bg-yellow-100 text-yellow-900 text-xs">Qty ROK ${canEditPrice ? '<i class="fas fa-edit text-yellow-600 ml-1 text-xs"></i>' : ''}</th>
             <th class="px-2 py-1 border text-right bg-yellow-100 text-yellow-900 text-xs">Subtotal</th>
             <th class="px-2 py-1 border text-right bg-purple-100 text-purple-900 text-xs">Harga</th>
             <th class="px-2 py-1 border text-right bg-purple-100 text-purple-900 text-xs">Subtotal</th>
@@ -823,9 +826,13 @@ function renderRABDetail(rab) {
             
             const hargaSatuanRealisasi = item.harga_satuan_realisasi || hargaSatuanRAB
             
+            // Jumlah ROK: default = jumlah, tapi bisa diedit manual
+            const jumlahROK = item.jumlah_rok || item.jumlah
+            
             const subtotalRAB = hargaSatuanRAB * item.jumlah
             const subtotalSPK = hargaSatuanSPK * item.jumlah
-            const subtotalTanpaROK = hargaSatuanTanpaROK * item.jumlah
+            // IMPORTANT: Subtotal Tanpa ROK = Harga Tanpa ROK × Jumlah ROK (not regular jumlah)
+            const subtotalTanpaROK = hargaSatuanTanpaROK * jumlahROK
             const subtotalRealisasi = hargaSatuanRealisasi * item.jumlah
             
             return `
@@ -866,6 +873,16 @@ function renderRABDetail(rab) {
                   <i class="fas fa-calculator text-xs text-gray-400" title="Auto-calculated: SPK ÷ (1 + ROK%)"></i>
                 </span>
               </td>
+              
+              <!-- Jumlah ROK (Editable) -->
+              <td class="px-2 py-2 border text-center bg-yellow-50 font-semibold ${canEditPrice ? 'cursor-pointer hover:bg-orange-100' : ''}" 
+                  ${canEditPrice ? `onclick="editJumlahROK(${rab.id}, ${item.id}, ${jumlahROK}, ${rokPercentage}, ${hargaSatuanSPK}, this)"` : ''}>
+                <span id="jumlah-rok-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
+                  ${jumlahROK}
+                  ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
+                </span>
+              </td>
+              
               <td class="px-2 py-2 border text-right font-semibold bg-yellow-50" id="subtotal-tanpa-rok-${item.id}">${formatRupiah(subtotalTanpaROK)}</td>
               
               <!-- Harga Satuan Realisasi (Editable) -->
@@ -885,21 +902,21 @@ function renderRABDetail(rab) {
             <td colspan="7" class="px-2 py-2 border text-right">Subtotal:</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-blue-100" id="subtotalRABDisplay">${formatRupiah(totalHargaRAB)}</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-green-100" id="subtotalSPKDisplay">${formatRupiah(totalHargaSPK)}</td>
-            <td colspan="2" class="px-2 py-2 border text-right bg-yellow-100" id="subtotalTanpaROKDisplay">${formatRupiah(totalHargaTanpaROK)}</td>
+            <td colspan="3" class="px-2 py-2 border text-right bg-yellow-100" id="subtotalTanpaROKDisplay">${formatRupiah(totalHargaTanpaROK)}</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-purple-100" id="subtotalRealisasiDisplay">${formatRupiah(totalHargaRealisasi)}</td>
           </tr>
           <tr>
             <td colspan="7" class="px-2 py-2 border text-right">PPN 11%:</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-blue-100" id="ppnRABDisplay">${formatRupiah(ppnRAB)}</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-green-100" id="ppnSPKDisplay">${formatRupiah(ppnSPK)}</td>
-            <td colspan="2" class="px-2 py-2 border text-right bg-yellow-100" id="ppnTanpaROKDisplay">${formatRupiah(ppnTanpaROK)}</td>
+            <td colspan="3" class="px-2 py-2 border text-right bg-yellow-100" id="ppnTanpaROKDisplay">${formatRupiah(ppnTanpaROK)}</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-purple-100" id="ppnRealisasiDisplay">${formatRupiah(ppnRealisasi)}</td>
           </tr>
           <tr class="bg-gray-200 text-sm">
             <td colspan="7" class="px-2 py-2 border text-right font-bold">TOTAL HARGA:</td>
             <td colspan="2" class="px-2 py-2 border text-right font-bold bg-blue-200" id="totalRABDisplay">${formatRupiah(grandTotalRAB)}</td>
             <td colspan="2" class="px-2 py-2 border text-right font-bold bg-green-200" id="totalSPKDisplay">${formatRupiah(grandTotalSPK)}</td>
-            <td colspan="2" class="px-2 py-2 border text-right font-bold bg-yellow-200" id="totalTanpaROKDisplay">${formatRupiah(grandTotalTanpaROK)}</td>
+            <td colspan="3" class="px-2 py-2 border text-right font-bold bg-yellow-200" id="totalTanpaROKDisplay">${formatRupiah(grandTotalTanpaROK)}</td>
             <td colspan="2" class="px-2 py-2 border text-right font-bold bg-purple-200" id="totalRealisasiDisplay">${formatRupiah(grandTotalRealisasi)}</td>
           </tr>
         </tfoot>
@@ -1206,6 +1223,70 @@ async function editRealisasiPrice(rabId, itemId, currentPrice, quantity, element
   } catch (error) {
     console.error('Failed to update Realisasi price:', error)
     alert(`❌ Gagal mengupdate harga Realisasi:\n\n${error.message}`)
+  }
+}
+
+// Edit Jumlah ROK
+async function editJumlahROK(rabId, itemId, currentQty, rokPercentage, hargaSPK, element) {
+  const username = localStorage.getItem('username') || ''
+  if (username !== 'Andalcekatan') {
+    alert('Hanya Andalcekatan yang dapat mengedit Jumlah ROK')
+    return
+  }
+  
+  const newQtyStr = prompt(`Edit Jumlah ROK:\n\nJumlah ROK saat ini: ${currentQty}\nHarga SPK: Rp ${hargaSPK.toLocaleString('id-ID')}\nROK %: ${rokPercentage}%\n\nMasukkan jumlah ROK baru (angka bulat):`, currentQty)
+  
+  if (newQtyStr === null) return
+  
+  const newQty = parseInt(newQtyStr.replace(/[^0-9]/g, ''))
+  
+  if (isNaN(newQty) || newQty <= 0) {
+    alert('Jumlah tidak valid!')
+    return
+  }
+  
+  if (newQty === currentQty) {
+    alert('Jumlah tidak berubah')
+    return
+  }
+  
+  // Calculate Harga Tanpa ROK and Subtotal
+  const hargaTanpaROK = hargaSPK / (1 + rokPercentage / 100)
+  const subtotalTanpaROK = hargaTanpaROK * newQty
+  
+  const confirmed = confirm(`Ubah Jumlah ROK dari ${currentQty} menjadi ${newQty}?\n\nHarga Tanpa ROK: Rp ${hargaTanpaROK.toLocaleString('id-ID')}\nSubtotal Tanpa ROK: Rp ${subtotalTanpaROK.toLocaleString('id-ID')}`)
+  
+  if (!confirmed) return
+  
+  try {
+    const response = await fetch(`/api/rab/${rabId}/update-jumlah-rok`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      },
+      body: JSON.stringify({
+        item_id: itemId,
+        jumlah_rok: newQty
+      })
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `HTTP ${response.status}`)
+    }
+    
+    const result = await response.json()
+    console.log('✅ Jumlah ROK updated:', result)
+    
+    alert(`✅ Jumlah ROK berhasil diupdate!\n\nJumlah ROK: ${newQty}\nSubtotal Tanpa ROK: Rp ${result.subtotal_tanpa_rok.toLocaleString('id-ID')}`)
+    
+    // Reload RAB detail to reflect changes
+    await viewRABDetail(rabId)
+    
+  } catch (error) {
+    console.error('Failed to update Jumlah ROK:', error)
+    alert(`❌ Gagal mengupdate Jumlah ROK:\n\n${error.message}`)
   }
 }
 

@@ -4429,6 +4429,91 @@ app.post('/api/rab/:id/update-realisasi-price', async (c) => {
   }
 })
 
+// API: Update Jumlah ROK for RAB item
+app.post('/api/rab/:id/update-jumlah-rok', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    const { item_id, jumlah_rok } = await c.req.json()
+    
+    console.log('🔢 Updating RAB item Jumlah ROK:', { rabId, item_id, jumlah_rok })
+    
+    // Check user session
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    let username = ''
+    
+    if (sessionToken) {
+      try {
+        const dbSession = await env.DB.prepare(`
+          SELECT username FROM sessions WHERE session_token = ? AND expires_at > datetime('now')
+        `).bind(sessionToken).first()
+        
+        if (dbSession) {
+          username = dbSession.username
+        }
+      } catch (error) {
+        console.error('❌ Failed to check session:', error)
+      }
+    }
+    
+    // Validate user: Only Andalcekatan
+    if (username !== 'Andalcekatan') {
+      return c.json({ 
+        success: false, 
+        error: 'Access denied. Only Andalcekatan can edit Jumlah ROK.' 
+      }, 403)
+    }
+    
+    // Get item and RAB data
+    const item = await env.DB.prepare(`
+      SELECT harga_satuan_spk, harga_satuan FROM rab_items WHERE id = ? AND rab_id = ?
+    `).bind(item_id, rabId).first()
+    
+    if (!item) {
+      return c.json({ success: false, error: 'Item not found' }, 404)
+    }
+    
+    // Get ROK percentage
+    const rab = await env.DB.prepare(`
+      SELECT rok_percentage FROM rab WHERE id = ?
+    `).bind(rabId).first()
+    
+    const rokPercentage = rab?.rok_percentage || 0
+    const jumlahROK = parseInt(jumlah_rok)
+    
+    // Calculate Harga Tanpa ROK and Subtotal
+    const hargaSPK = item.harga_satuan_spk || item.harga_satuan || 0
+    const hargaTanpaROK = hargaSPK / (1 + rokPercentage / 100)
+    const subtotalTanpaROK = hargaTanpaROK * jumlahROK
+    
+    // Update item Jumlah ROK and recalculate Subtotal Tanpa ROK
+    await env.DB.prepare(`
+      UPDATE rab_items 
+      SET jumlah_rok = ?,
+          harga_satuan_tanpa_rok = ?,
+          subtotal_tanpa_rok = ?
+      WHERE id = ? AND rab_id = ?
+    `).bind(jumlahROK, hargaTanpaROK, subtotalTanpaROK, item_id, rabId).run()
+    
+    console.log(`✅ Jumlah ROK updated: Item ${item_id} = ${jumlahROK}, Subtotal Tanpa ROK = Rp ${subtotalTanpaROK}`)
+    
+    return c.json({
+      success: true,
+      message: 'Jumlah ROK berhasil diupdate!',
+      item_id: item_id,
+      jumlah_rok: jumlahROK,
+      harga_satuan_tanpa_rok: hargaTanpaROK,
+      subtotal_tanpa_rok: subtotalTanpaROK
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to update Jumlah ROK:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to update Jumlah ROK' 
+    }, 500)
+  }
+})
+
 // API: Delete RAB (ADMIN or Andalcekatan only)
 app.delete('/api/rab/:id', async (c) => {
   try {
