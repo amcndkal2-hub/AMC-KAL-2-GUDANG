@@ -4246,7 +4246,10 @@ app.post('/api/rab/:id/update-spk-price', async (c) => {
     
     const rokPercentage = rab.rok_percentage || 0
     const hargaSPK = parseFloat(harga_satuan_spk)
-    const hargaTanpaROK = hargaSPK * (1 - rokPercentage / 100)
+    // CORRECT FORMULA: ROK is markup (kenaikan), not discount
+    // Harga SPK = Harga Tanpa ROK × (1 + ROK%)
+    // Therefore: Harga Tanpa ROK = Harga SPK / (1 + ROK%)
+    const hargaTanpaROK = hargaSPK / (1 + rokPercentage / 100)
     
     const subtotalSPK = hargaSPK * parseInt(item.jumlah)
     const subtotalTanpaROK = hargaTanpaROK * parseInt(item.jumlah)

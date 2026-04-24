@@ -734,7 +734,7 @@ function renderRABDetail(rab) {
       <div class="col-span-2 bg-orange-50 border border-orange-200 rounded-lg p-4">
         <label class="text-sm font-semibold text-gray-700 mb-2 block">
           <i class="fas fa-percentage mr-2 text-orange-600"></i>
-          ROK (Rabat Omset Kasar) %
+          ROK (Rabat Omset Kasar) % - Markup dari Harga Tanpa ROK ke Harga SPK
         </label>
         <div class="flex items-center gap-3">
           <input type="number" 
@@ -744,11 +744,16 @@ function renderRABDetail(rab) {
                  max="100" 
                  step="0.1"
                  ${canEditPrice ? '' : 'disabled'}
-                 class="w-32 px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-lg font-bold text-center ${canEditPrice ? '' : 'bg-gray-100 cursor-not-allowed'}"
-                 onchange="updateROKPercentage(${rab.id}, this.value)" />
+                 class="w-32 px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-lg font-bold text-center ${canEditPrice ? '' : 'bg-gray-100 cursor-not-allowed'}" />
           <span class="text-lg font-semibold text-orange-600">%</span>
+          ${canEditPrice ? `
+            <button onclick="saveROKPercentage(${rab.id})" 
+                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition">
+              <i class="fas fa-save mr-2"></i>Save ROK
+            </button>
+          ` : ''}
           <span class="text-sm text-gray-600 ml-3">
-            Harga Tanpa ROK = Harga SPK × (1 - ROK%)
+            Harga SPK = Harga Tanpa ROK × (1 + ROK%)
           </span>
         </div>
       </div>
@@ -821,12 +826,13 @@ function renderRABDetail(rab) {
               <td class="px-4 py-3 border text-center">${item.jumlah || 0}</td>
               <td class="px-4 py-3 border">${item.unit_uld || '-'}</td>
               
-              <!-- Harga Satuan RAB -->
-              <td class="px-2 py-3 border text-right bg-blue-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
-                  ${canEditPrice ? `onclick="editItemPrice(${rab.id}, ${item.id}, ${hargaSatuanRAB}, ${item.jumlah}, this)"` : ''}>
-                <span id="price-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-2' : ''}">
+              <!-- Harga Satuan RAB (Read-only in List TOR, Editable in List RAB) -->
+              <td class="px-2 py-3 border text-right bg-blue-50 ${!isListTORPage && canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
+                  ${!isListTORPage && canEditPrice ? `onclick="editItemPrice(${rab.id}, ${item.id}, ${hargaSatuanRAB}, ${item.jumlah}, this)"` : ''}>
+                <span id="price-${item.id}" class="${!isListTORPage && canEditPrice ? 'inline-flex items-center gap-2' : ''}">
                   ${formatRupiah(hargaSatuanRAB)}
-                  ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
+                  ${!isListTORPage && canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
+                  ${isListTORPage ? '<i class="fas fa-lock text-xs text-gray-400 ml-2" title="Read-only di Realisasi Bayar"></i>' : ''}
                 </span>
               </td>
               <td class="px-2 py-3 border text-right font-semibold bg-blue-50" id="subtotal-${item.id}">${formatRupiah(subtotalRAB)}</td>
@@ -976,7 +982,58 @@ async function editItemPrice(rabId, itemId, currentPrice, quantity, element) {
   }
 }
 
-// Update ROK percentage for RAB
+// Save ROK percentage for RAB (with button click)
+async function saveROKPercentage(rabId) {
+  const username = localStorage.getItem('username') || ''
+  if (username !== 'Andalcekatan') {
+    alert('Hanya Andalcekatan yang dapat mengedit ROK percentage')
+    return
+  }
+  
+  const rokInput = document.getElementById('rokInput')
+  const rokPercentage = parseFloat(rokInput.value)
+  
+  if (isNaN(rokPercentage) || rokPercentage < 0 || rokPercentage > 100) {
+    alert('ROK percentage tidak valid! Harus antara 0-100')
+    return
+  }
+  
+  const confirmed = confirm(`Simpan ROK percentage ${rokPercentage}%?\n\nFormula: Harga SPK = Harga Tanpa ROK × (1 + ${rokPercentage}%)\n\nSemua Harga Tanpa ROK akan dihitung ulang.`)
+  
+  if (!confirmed) return
+  
+  try {
+    const response = await fetch(`/api/rab/${rabId}/update-rok`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      },
+      body: JSON.stringify({
+        rok_percentage: rokPercentage
+      })
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `HTTP ${response.status}`)
+    }
+    
+    const result = await response.json()
+    console.log('✅ ROK updated:', result)
+    
+    alert(`✅ ROK percentage berhasil disimpan: ${rokPercentage}%\n\nHalaman akan di-refresh untuk menampilkan perubahan.`)
+    
+    // Reload RAB detail to reflect changes
+    await viewRABDetail(rabId)
+    
+  } catch (error) {
+    console.error('Failed to update ROK:', error)
+    alert(`❌ Gagal menyimpan ROK:\n\n${error.message}`)
+  }
+}
+
+// Update ROK percentage for RAB (deprecated - now using Save button)
 async function updateROKPercentage(rabId, rokPercentage) {
   const username = localStorage.getItem('username') || ''
   if (username !== 'Andalcekatan') {
@@ -1039,9 +1096,12 @@ async function editSPKPrice(rabId, itemId, currentPrice, quantity, rokPercentage
     return
   }
   
-  const hargaTanpaROK = newPrice * (1 - rokPercentage / 100)
+  // CORRECT FORMULA: ROK is markup (kenaikan), not discount
+  // Harga SPK = Harga Tanpa ROK × (1 + ROK%)
+  // Therefore: Harga Tanpa ROK = Harga SPK / (1 + ROK%)
+  const hargaTanpaROK = newPrice / (1 + rokPercentage / 100)
   
-  const confirmed = confirm(`Ubah harga SPK dari Rp ${currentPrice.toLocaleString('id-ID')} menjadi Rp ${newPrice.toLocaleString('id-ID')}?\n\nSubtotal SPK: Rp ${(newPrice * quantity).toLocaleString('id-ID')}\nHarga Tanpa ROK: Rp ${hargaTanpaROK.toLocaleString('id-ID')}\nSubtotal Tanpa ROK: Rp ${(hargaTanpaROK * quantity).toLocaleString('id-ID')}`)
+  const confirmed = confirm(`Ubah harga SPK dari Rp ${currentPrice.toLocaleString('id-ID')} menjadi Rp ${newPrice.toLocaleString('id-ID')}?\n\nROK: ${rokPercentage}%\nSubtotal SPK: Rp ${(newPrice * quantity).toLocaleString('id-ID')}\n\nHarga Tanpa ROK: Rp ${hargaTanpaROK.toLocaleString('id-ID')}\nSubtotal Tanpa ROK: Rp ${(hargaTanpaROK * quantity).toLocaleString('id-ID')}`)
   
   if (!confirmed) return
   
