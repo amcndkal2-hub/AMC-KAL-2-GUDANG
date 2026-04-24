@@ -11729,9 +11729,9 @@ function getDashboardListRABHTML() {
         </div>
 
         <!-- View RAB Modal -->
-        <div id="viewRABModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto m-4">
-                <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+        <div id="viewRABModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl w-[98vw] max-w-[1800px] h-[95vh] flex flex-col">
+                <div class="p-4 border-b flex justify-between items-center bg-white z-10 flex-shrink-0">
                     <h2 class="text-xl font-bold text-gray-800">
                         <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
                         Detail RAB
@@ -11740,10 +11740,10 @@ function getDashboardListRABHTML() {
                         <i class="fas fa-times text-2xl"></i>
                     </button>
                 </div>
-                <div id="rabDetailContent" class="p-6">
+                <div id="rabDetailContent" class="p-4 overflow-auto flex-1">
                     <!-- Content will be loaded here -->
                 </div>
-                <div class="p-6 border-t bg-gray-50 flex justify-end space-x-4 sticky bottom-0">
+                <div class="p-4 border-t bg-gray-50 flex justify-end space-x-4 flex-shrink-0">
                     <button onclick="exportRABToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
                         <i class="fas fa-file-excel mr-2"></i>Export Excel
                     </button>
@@ -11901,9 +11901,9 @@ function getDashboardListTORHTML() {
         </div>
 
         <!-- View RAB Modal -->
-        <div id="viewRABModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto m-4">
-                <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+        <div id="viewRABModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl w-[98vw] max-w-[1800px] h-[95vh] flex flex-col">
+                <div class="p-4 border-b flex justify-between items-center bg-white z-10 flex-shrink-0">
                     <h2 class="text-xl font-bold text-gray-800">
                         <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
                         Detail RAB
@@ -11912,10 +11912,10 @@ function getDashboardListTORHTML() {
                         <i class="fas fa-times text-2xl"></i>
                     </button>
                 </div>
-                <div id="rabDetailContent" class="p-6">
+                <div id="rabDetailContent" class="p-4 overflow-auto flex-1">
                     <!-- Content will be loaded here -->
                 </div>
-                <div class="p-6 border-t bg-gray-50 flex justify-end space-x-4 sticky bottom-0">
+                <div class="p-4 border-t bg-gray-50 flex justify-end space-x-4 flex-shrink-0">
                     <button onclick="exportRABToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
                         <i class="fas fa-file-excel mr-2"></i>Export Excel
                     </button>

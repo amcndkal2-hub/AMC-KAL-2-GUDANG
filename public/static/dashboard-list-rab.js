@@ -778,30 +778,30 @@ function renderRABDetail(rab) {
     </h3>
     
     <div class="overflow-x-auto border rounded-lg">
-      <table class="min-w-full">
-        <thead class="bg-gray-50">
+      <table class="min-w-full text-xs border-collapse">
+        <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           <tr>
-            <th class="px-4 py-3 border text-center" rowspan="2">No</th>
-            <th class="px-4 py-3 border text-left" rowspan="2">Nomor LH05</th>
-            <th class="px-4 py-3 border text-left" rowspan="2">Part Number</th>
-            <th class="px-4 py-3 border text-left" rowspan="2">Material</th>
-            <th class="px-4 py-3 border text-left" rowspan="2">Mesin</th>
-            <th class="px-4 py-3 border text-center" rowspan="2">Jumlah</th>
-            <th class="px-4 py-3 border text-left" rowspan="2">Unit/ULD</th>
-            <th class="px-2 py-3 border text-center bg-blue-100" colspan="2">Harga Satuan RAB</th>
-            <th class="px-2 py-3 border text-center bg-green-100" colspan="2">Harga Satuan SPK</th>
-            <th class="px-2 py-3 border text-center bg-yellow-100" colspan="2">Harga Satuan Tanpa ROK</th>
-            <th class="px-2 py-3 border text-center bg-purple-100" colspan="2">Harga Satuan Realisasi</th>
+            <th class="px-2 py-2 border text-center" rowspan="2">No</th>
+            <th class="px-2 py-2 border text-left text-xs" rowspan="2">Nomor LH05</th>
+            <th class="px-2 py-2 border text-left text-xs" rowspan="2">Part Number</th>
+            <th class="px-3 py-2 border text-left text-xs" rowspan="2">Material</th>
+            <th class="px-2 py-2 border text-left text-xs" rowspan="2">Mesin</th>
+            <th class="px-2 py-2 border text-center" rowspan="2">Jml</th>
+            <th class="px-2 py-2 border text-left text-xs" rowspan="2">Unit</th>
+            <th class="px-2 py-2 border text-center bg-blue-500" colspan="2">RAB</th>
+            <th class="px-2 py-2 border text-center bg-green-500" colspan="2">SPK</th>
+            <th class="px-2 py-2 border text-center bg-yellow-500" colspan="2">Tanpa ROK</th>
+            <th class="px-2 py-2 border text-center bg-purple-500" colspan="2">Realisasi</th>
           </tr>
           <tr>
-            <th class="px-2 py-2 border text-right bg-blue-50">Harga Satuan ${canEditPrice ? '<i class="fas fa-edit text-yellow-600 ml-1"></i>' : ''}</th>
-            <th class="px-2 py-2 border text-right bg-blue-50">Subtotal RAB</th>
-            <th class="px-2 py-2 border text-right bg-green-50">Harga Satuan</th>
-            <th class="px-2 py-2 border text-right bg-green-50">Subtotal SPK</th>
-            <th class="px-2 py-2 border text-right bg-yellow-50">Harga Satuan</th>
-            <th class="px-2 py-2 border text-right bg-yellow-50">Subtotal Tanpa ROK</th>
-            <th class="px-2 py-2 border text-right bg-purple-50">Harga Satuan</th>
-            <th class="px-2 py-2 border text-right bg-purple-50">Subtotal Realisasi</th>
+            <th class="px-2 py-1 border text-right bg-blue-100 text-blue-900 text-xs">Harga ${canEditPrice ? '<i class="fas fa-edit text-yellow-600 ml-1 text-xs"></i>' : ''}</th>
+            <th class="px-2 py-1 border text-right bg-blue-100 text-blue-900 text-xs">Subtotal</th>
+            <th class="px-2 py-1 border text-right bg-green-100 text-green-900 text-xs">Harga</th>
+            <th class="px-2 py-1 border text-right bg-green-100 text-green-900 text-xs">Subtotal</th>
+            <th class="px-2 py-1 border text-right bg-yellow-100 text-yellow-900 text-xs">Harga</th>
+            <th class="px-2 py-1 border text-right bg-yellow-100 text-yellow-900 text-xs">Subtotal</th>
+            <th class="px-2 py-1 border text-right bg-purple-100 text-purple-900 text-xs">Harga</th>
+            <th class="px-2 py-1 border text-right bg-purple-100 text-purple-900 text-xs">Subtotal</th>
           </tr>
         </thead>
         <tbody>
@@ -817,78 +817,78 @@ function renderRABDetail(rab) {
             const subtotalRealisasi = hargaSatuanRealisasi * item.jumlah
             
             return `
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-3 border text-center">${index + 1}</td>
-              <td class="px-4 py-3 border font-mono text-sm">${item.nomor_lh05 || '-'}</td>
-              <td class="px-4 py-3 border font-mono text-sm">${item.part_number || '-'}</td>
-              <td class="px-4 py-3 border">${item.material || '-'}</td>
-              <td class="px-4 py-3 border text-sm">${item.mesin || '-'}</td>
-              <td class="px-4 py-3 border text-center">${item.jumlah || 0}</td>
-              <td class="px-4 py-3 border">${item.unit_uld || '-'}</td>
+            <tr class="hover:bg-gray-50 text-xs">
+              <td class="px-2 py-2 border text-center">${index + 1}</td>
+              <td class="px-2 py-2 border font-mono">${item.nomor_lh05 || '-'}</td>
+              <td class="px-2 py-2 border font-mono">${item.part_number || '-'}</td>
+              <td class="px-2 py-2 border">${item.material || '-'}</td>
+              <td class="px-2 py-2 border">${item.mesin || '-'}</td>
+              <td class="px-2 py-2 border text-center font-semibold">${item.jumlah || 0}</td>
+              <td class="px-2 py-2 border">${item.unit_uld || '-'}</td>
               
               <!-- Harga Satuan RAB (Read-only in List TOR, Editable in List RAB) -->
-              <td class="px-2 py-3 border text-right bg-blue-50 ${!isListTORPage && canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
+              <td class="px-2 py-2 border text-right bg-blue-50 ${!isListTORPage && canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
                   ${!isListTORPage && canEditPrice ? `onclick="editItemPrice(${rab.id}, ${item.id}, ${hargaSatuanRAB}, ${item.jumlah}, this)"` : ''}>
-                <span id="price-${item.id}" class="${!isListTORPage && canEditPrice ? 'inline-flex items-center gap-2' : ''}">
+                <span id="price-${item.id}" class="${!isListTORPage && canEditPrice ? 'inline-flex items-center gap-1' : ''}">
                   ${formatRupiah(hargaSatuanRAB)}
                   ${!isListTORPage && canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
-                  ${isListTORPage ? '<i class="fas fa-lock text-xs text-gray-400 ml-2" title="Read-only di Realisasi Bayar"></i>' : ''}
+                  ${isListTORPage ? '<i class="fas fa-lock text-xs text-gray-400 ml-1" title="Read-only"></i>' : ''}
                 </span>
               </td>
-              <td class="px-2 py-3 border text-right font-semibold bg-blue-50" id="subtotal-${item.id}">${formatRupiah(subtotalRAB)}</td>
+              <td class="px-2 py-2 border text-right font-semibold bg-blue-50" id="subtotal-${item.id}">${formatRupiah(subtotalRAB)}</td>
               
               <!-- Harga Satuan SPK (Editable) -->
-              <td class="px-2 py-3 border text-right bg-green-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
+              <td class="px-2 py-2 border text-right bg-green-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
                   ${canEditPrice ? `onclick="editSPKPrice(${rab.id}, ${item.id}, ${hargaSatuanSPK}, ${item.jumlah}, ${rokPercentage}, this)"` : ''}>
-                <span id="price-spk-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-2' : ''}">
+                <span id="price-spk-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
                   ${formatRupiah(hargaSatuanSPK)}
                   ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
                 </span>
               </td>
-              <td class="px-2 py-3 border text-right font-semibold bg-green-50" id="subtotal-spk-${item.id}">${formatRupiah(subtotalSPK)}</td>
+              <td class="px-2 py-2 border text-right font-semibold bg-green-50" id="subtotal-spk-${item.id}">${formatRupiah(subtotalSPK)}</td>
               
               <!-- Harga Satuan Tanpa ROK (Auto-calculated, Read-only) -->
-              <td class="px-2 py-3 border text-right bg-yellow-50">
-                <span class="inline-flex items-center gap-2">
+              <td class="px-2 py-2 border text-right bg-yellow-50">
+                <span class="inline-flex items-center gap-1">
                   ${formatRupiah(hargaSatuanTanpaROK)}
                   <i class="fas fa-calculator text-xs text-gray-400" title="Auto-calculated: SPK ÷ (1 + ROK%)"></i>
                 </span>
               </td>
-              <td class="px-2 py-3 border text-right font-semibold bg-yellow-50" id="subtotal-tanpa-rok-${item.id}">${formatRupiah(subtotalTanpaROK)}</td>
+              <td class="px-2 py-2 border text-right font-semibold bg-yellow-50" id="subtotal-tanpa-rok-${item.id}">${formatRupiah(subtotalTanpaROK)}</td>
               
               <!-- Harga Satuan Realisasi (Editable) -->
-              <td class="px-2 py-3 border text-right bg-purple-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
+              <td class="px-2 py-2 border text-right bg-purple-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
                   ${canEditPrice ? `onclick="editRealisasiPrice(${rab.id}, ${item.id}, ${hargaSatuanRealisasi}, ${item.jumlah}, this)"` : ''}>
-                <span id="price-realisasi-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-2' : ''}">
+                <span id="price-realisasi-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
                   ${formatRupiah(hargaSatuanRealisasi)}
                   ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
                 </span>
               </td>
-              <td class="px-2 py-3 border text-right font-semibold bg-purple-50" id="subtotal-realisasi-${item.id}">${formatRupiah(subtotalRealisasi)}</td>
+              <td class="px-2 py-2 border text-right font-semibold bg-purple-50" id="subtotal-realisasi-${item.id}">${formatRupiah(subtotalRealisasi)}</td>
             </tr>
           `}).join('')}
         </tbody>
-        <tfoot class="bg-gray-100 font-bold">
+        <tfoot class="bg-gray-100 font-bold text-xs">
           <tr>
-            <td colspan="7" class="px-4 py-3 border text-right text-lg">Subtotal:</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-lg bg-blue-100" id="subtotalRABDisplay">${formatRupiah(totalHargaRAB)}</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-lg bg-green-100" id="subtotalSPKDisplay">${formatRupiah(totalHargaSPK)}</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-lg bg-yellow-100" id="subtotalTanpaROKDisplay">${formatRupiah(totalHargaTanpaROK)}</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-lg bg-purple-100" id="subtotalRealisasiDisplay">${formatRupiah(totalHargaRealisasi)}</td>
+            <td colspan="7" class="px-2 py-2 border text-right">Subtotal:</td>
+            <td colspan="2" class="px-2 py-2 border text-right bg-blue-100" id="subtotalRABDisplay">${formatRupiah(totalHargaRAB)}</td>
+            <td colspan="2" class="px-2 py-2 border text-right bg-green-100" id="subtotalSPKDisplay">${formatRupiah(totalHargaSPK)}</td>
+            <td colspan="2" class="px-2 py-2 border text-right bg-yellow-100" id="subtotalTanpaROKDisplay">${formatRupiah(totalHargaTanpaROK)}</td>
+            <td colspan="2" class="px-2 py-2 border text-right bg-purple-100" id="subtotalRealisasiDisplay">${formatRupiah(totalHargaRealisasi)}</td>
           </tr>
           <tr>
-            <td colspan="7" class="px-4 py-3 border text-right text-lg">PPN 11%:</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-lg bg-blue-100" id="ppnRABDisplay">${formatRupiah(ppnRAB)}</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-lg bg-green-100" id="ppnSPKDisplay">${formatRupiah(ppnSPK)}</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-lg bg-yellow-100" id="ppnTanpaROKDisplay">${formatRupiah(ppnTanpaROK)}</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-lg bg-purple-100" id="ppnRealisasiDisplay">${formatRupiah(ppnRealisasi)}</td>
+            <td colspan="7" class="px-2 py-2 border text-right">PPN 11%:</td>
+            <td colspan="2" class="px-2 py-2 border text-right bg-blue-100" id="ppnRABDisplay">${formatRupiah(ppnRAB)}</td>
+            <td colspan="2" class="px-2 py-2 border text-right bg-green-100" id="ppnSPKDisplay">${formatRupiah(ppnSPK)}</td>
+            <td colspan="2" class="px-2 py-2 border text-right bg-yellow-100" id="ppnTanpaROKDisplay">${formatRupiah(ppnTanpaROK)}</td>
+            <td colspan="2" class="px-2 py-2 border text-right bg-purple-100" id="ppnRealisasiDisplay">${formatRupiah(ppnRealisasi)}</td>
           </tr>
-          <tr class="bg-gray-200">
-            <td colspan="7" class="px-4 py-3 border text-right text-xl">TOTAL HARGA:</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-xl font-bold bg-blue-200" id="totalRABDisplay">${formatRupiah(grandTotalRAB)}</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-xl font-bold bg-green-200" id="totalSPKDisplay">${formatRupiah(grandTotalSPK)}</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-xl font-bold bg-yellow-200" id="totalTanpaROKDisplay">${formatRupiah(grandTotalTanpaROK)}</td>
-            <td colspan="2" class="px-2 py-3 border text-right text-xl font-bold bg-purple-200" id="totalRealisasiDisplay">${formatRupiah(grandTotalRealisasi)}</td>
+          <tr class="bg-gray-200 text-sm">
+            <td colspan="7" class="px-2 py-2 border text-right font-bold">TOTAL HARGA:</td>
+            <td colspan="2" class="px-2 py-2 border text-right font-bold bg-blue-200" id="totalRABDisplay">${formatRupiah(grandTotalRAB)}</td>
+            <td colspan="2" class="px-2 py-2 border text-right font-bold bg-green-200" id="totalSPKDisplay">${formatRupiah(grandTotalSPK)}</td>
+            <td colspan="2" class="px-2 py-2 border text-right font-bold bg-yellow-200" id="totalTanpaROKDisplay">${formatRupiah(grandTotalTanpaROK)}</td>
+            <td colspan="2" class="px-2 py-2 border text-right font-bold bg-purple-200" id="totalRealisasiDisplay">${formatRupiah(grandTotalRealisasi)}</td>
           </tr>
         </tfoot>
       </table>
