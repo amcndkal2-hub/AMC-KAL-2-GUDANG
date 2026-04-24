@@ -697,7 +697,15 @@ function renderRABDetail(rab) {
   // Calculate totals for each price type
   const totalHargaRAB = items.reduce((sum, item) => sum + (item.subtotal || 0), 0)
   const totalHargaSPK = items.reduce((sum, item) => sum + ((item.subtotal_spk || (item.harga_satuan_spk || item.harga_satuan) * item.jumlah)), 0)
-  const totalHargaTanpaROK = items.reduce((sum, item) => sum + ((item.subtotal_tanpa_rok || (item.harga_satuan_tanpa_rok || item.harga_satuan) * item.jumlah)), 0)
+  
+  // ALWAYS calculate Tanpa ROK from SPK and ROK% (real-time calculation)
+  // Formula: Harga Tanpa ROK = Harga SPK ÷ (1 + ROK%)
+  const totalHargaTanpaROK = items.reduce((sum, item) => {
+    const hargaSPK = item.harga_satuan_spk || item.harga_satuan || 0
+    const hargaTanpaROK = hargaSPK / (1 + rokPercentage / 100)
+    return sum + (hargaTanpaROK * item.jumlah)
+  }, 0)
+  
   const totalHargaRealisasi = items.reduce((sum, item) => sum + ((item.subtotal_realisasi || (item.harga_satuan_realisasi || item.harga_satuan) * item.jumlah)), 0)
   
   const ppnRAB = totalHargaRAB * 0.11
@@ -808,7 +816,11 @@ function renderRABDetail(rab) {
           ${items.map((item, index) => {
             const hargaSatuanRAB = item.harga_satuan || 0
             const hargaSatuanSPK = item.harga_satuan_spk || hargaSatuanRAB
-            const hargaSatuanTanpaROK = item.harga_satuan_tanpa_rok || hargaSatuanRAB
+            
+            // ALWAYS calculate Harga Tanpa ROK from Harga SPK and ROK% (real-time calculation)
+            // Formula: Harga Tanpa ROK = Harga SPK ÷ (1 + ROK%)
+            const hargaSatuanTanpaROK = hargaSatuanSPK / (1 + rokPercentage / 100)
+            
             const hargaSatuanRealisasi = item.harga_satuan_realisasi || hargaSatuanRAB
             
             const subtotalRAB = hargaSatuanRAB * item.jumlah
