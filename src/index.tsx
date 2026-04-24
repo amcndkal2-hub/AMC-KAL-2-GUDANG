@@ -4170,11 +4170,22 @@ app.post('/api/rab/:id/update-rok', async (c) => {
     }
     
     // Update RAB ROK percentage
-    await env.DB.prepare(`
-      UPDATE rab 
-      SET rok_percentage = ?
-      WHERE id = ?
-    `).bind(rok, rabId).run()
+    try {
+      await env.DB.prepare(`
+        UPDATE rab 
+        SET rok_percentage = ?
+        WHERE id = ?
+      `).bind(rok, rabId).run()
+    } catch (dbError: any) {
+      // Check if error is due to missing column
+      if (dbError.message && dbError.message.includes('no such column: rok_percentage')) {
+        return c.json({ 
+          success: false, 
+          error: 'Database migration required! Column rok_percentage does not exist.\n\nPlease run migration:\n1. Go to Cloudflare Dashboard\n2. D1 → amc-material-db → Console\n3. Run: ALTER TABLE rab ADD COLUMN rok_percentage REAL DEFAULT 0;\n\nOr see migrations/MANUAL_APPLY_PRODUCTION.sql' 
+        }, 500)
+      }
+      throw dbError
+    }
     
     console.log(`✅ ROK updated: RAB ${rabId} = ${rok}%`)
     
@@ -4236,15 +4247,32 @@ app.post('/api/rab/:id/update-spk-price', async (c) => {
       return c.json({ success: false, error: 'Item not found' }, 404)
     }
     
-    const rab = await env.DB.prepare(`
-      SELECT rok_percentage FROM rab WHERE id = ?
-    `).bind(rabId).first()
+    // Get RAB data (with fallback for missing rok_percentage column)
+    let rab
+    let rokPercentage = 0
+    try {
+      rab = await env.DB.prepare(`
+        SELECT rok_percentage FROM rab WHERE id = ?
+      `).bind(rabId).first()
+      
+      if (rab) {
+        rokPercentage = rab.rok_percentage || 0
+      }
+    } catch (dbError: any) {
+      // If rok_percentage column doesn't exist, default to 0
+      if (dbError.message && dbError.message.includes('no such column: rok_percentage')) {
+        console.warn('⚠️ rok_percentage column not found, using default 0')
+        rab = { rok_percentage: 0 }
+        rokPercentage = 0
+      } else {
+        throw dbError
+      }
+    }
     
     if (!rab) {
       return c.json({ success: false, error: 'RAB not found' }, 404)
     }
     
-    const rokPercentage = rab.rok_percentage || 0
     const hargaSPK = parseFloat(harga_satuan_spk)
     // CORRECT FORMULA: ROK is markup (kenaikan), not discount
     // Harga SPK = Harga Tanpa ROK × (1 + ROK%)
@@ -4255,14 +4283,25 @@ app.post('/api/rab/:id/update-spk-price', async (c) => {
     const subtotalTanpaROK = hargaTanpaROK * parseInt(item.jumlah)
     
     // Update item SPK price and Tanpa ROK (auto-calculated)
-    await env.DB.prepare(`
-      UPDATE rab_items 
-      SET harga_satuan_spk = ?, 
-          subtotal_spk = ?,
-          harga_satuan_tanpa_rok = ?,
-          subtotal_tanpa_rok = ?
-      WHERE id = ? AND rab_id = ?
-    `).bind(hargaSPK, subtotalSPK, hargaTanpaROK, subtotalTanpaROK, item_id, rabId).run()
+    try {
+      await env.DB.prepare(`
+        UPDATE rab_items 
+        SET harga_satuan_spk = ?, 
+            subtotal_spk = ?,
+            harga_satuan_tanpa_rok = ?,
+            subtotal_tanpa_rok = ?
+        WHERE id = ? AND rab_id = ?
+      `).bind(hargaSPK, subtotalSPK, hargaTanpaROK, subtotalTanpaROK, item_id, rabId).run()
+    } catch (dbError: any) {
+      if (dbError.message && (dbError.message.includes('no such column: harga_satuan_spk') || 
+                               dbError.message.includes('no such column: subtotal_spk'))) {
+        return c.json({ 
+          success: false, 
+          error: 'Database migration required! Price columns do not exist.\n\nPlease run migrations/MANUAL_APPLY_PRODUCTION.sql in Cloudflare Dashboard' 
+        }, 500)
+      }
+      throw dbError
+    }
     
     console.log(`✅ SPK price updated: Item ${item_id} SPK = Rp ${hargaSPK}, Tanpa ROK = Rp ${hargaTanpaROK}`)
     
