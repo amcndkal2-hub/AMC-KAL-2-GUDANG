@@ -801,7 +801,7 @@ function renderRABDetail(rab) {
             <th class="px-2 py-2 border text-center bg-blue-500" colspan="2">RAB</th>
             <th class="px-2 py-2 border text-center bg-green-500" colspan="2">SPK</th>
             <th class="px-2 py-2 border text-center bg-yellow-500" colspan="3">Tanpa ROK</th>
-            <th class="px-2 py-2 border text-center bg-purple-500" colspan="2">Realisasi</th>
+            <th class="px-2 py-2 border text-center bg-purple-500" colspan="3">Realisasi</th>
           </tr>
           <tr>
             <th class="px-2 py-1 border text-right bg-blue-100 text-blue-900 text-xs">Harga ${canEditPrice ? '<i class="fas fa-edit text-yellow-600 ml-1 text-xs"></i>' : ''}</th>
@@ -812,6 +812,7 @@ function renderRABDetail(rab) {
             <th class="px-2 py-1 border text-center bg-yellow-100 text-yellow-900 text-xs">Qty ROK ${canEditPrice ? '<i class="fas fa-edit text-yellow-600 ml-1 text-xs"></i>' : ''}</th>
             <th class="px-2 py-1 border text-right bg-yellow-100 text-yellow-900 text-xs">Subtotal</th>
             <th class="px-2 py-1 border text-right bg-purple-100 text-purple-900 text-xs">Harga</th>
+            <th class="px-2 py-1 border text-center bg-purple-100 text-purple-900 text-xs">Qty Rea ${canEditPrice ? '<i class="fas fa-edit text-yellow-600 ml-1 text-xs"></i>' : ''}</th>
             <th class="px-2 py-1 border text-right bg-purple-100 text-purple-900 text-xs">Subtotal</th>
           </tr>
         </thead>
@@ -828,12 +829,15 @@ function renderRABDetail(rab) {
             
             // Jumlah ROK: default = jumlah, tapi bisa diedit manual
             const jumlahROK = item.jumlah_rok || item.jumlah
+            // Jumlah Realisasi: default = jumlah, tapi bisa diedit manual
+            const jumlahRealisasi = item.jumlah_realisasi || item.jumlah
             
             const subtotalRAB = hargaSatuanRAB * item.jumlah
             const subtotalSPK = hargaSatuanSPK * item.jumlah
             // IMPORTANT: Subtotal Tanpa ROK = Harga Tanpa ROK × Jumlah ROK (not regular jumlah)
             const subtotalTanpaROK = hargaSatuanTanpaROK * jumlahROK
-            const subtotalRealisasi = hargaSatuanRealisasi * item.jumlah
+            // IMPORTANT: Subtotal Realisasi = Harga Realisasi × Jumlah Realisasi (not regular jumlah)
+            const subtotalRealisasi = hargaSatuanRealisasi * jumlahRealisasi
             
             return `
             <tr class="hover:bg-gray-50 text-xs">
@@ -887,12 +891,22 @@ function renderRABDetail(rab) {
               
               <!-- Harga Satuan Realisasi (Editable) -->
               <td class="px-2 py-2 border text-right bg-purple-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
-                  ${canEditPrice ? `onclick="editRealisasiPrice(${rab.id}, ${item.id}, ${hargaSatuanRealisasi}, ${item.jumlah}, this)"` : ''}>
+                  ${canEditPrice ? `onclick="editRealisasiPrice(${rab.id}, ${item.id}, ${hargaSatuanRealisasi}, ${jumlahRealisasi}, this)"` : ''}>
                 <span id="price-realisasi-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
                   ${formatRupiah(hargaSatuanRealisasi)}
                   ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
                 </span>
               </td>
+              
+              <!-- Jumlah Realisasi (Editable) -->
+              <td class="px-2 py-2 border text-center bg-purple-50 font-semibold ${canEditPrice ? 'cursor-pointer hover:bg-orange-100' : ''}" 
+                  ${canEditPrice ? `onclick="editJumlahRealisasi(${rab.id}, ${item.id}, ${jumlahRealisasi}, ${hargaSatuanRealisasi}, this)"` : ''}>
+                <span id="jumlah-realisasi-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
+                  ${jumlahRealisasi}
+                  ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
+                </span>
+              </td>
+              
               <td class="px-2 py-2 border text-right font-semibold bg-purple-50" id="subtotal-realisasi-${item.id}">${formatRupiah(subtotalRealisasi)}</td>
             </tr>
           `}).join('')}
@@ -1287,6 +1301,69 @@ async function editJumlahROK(rabId, itemId, currentQty, rokPercentage, hargaSPK,
   } catch (error) {
     console.error('Failed to update Jumlah ROK:', error)
     alert(`❌ Gagal mengupdate Jumlah ROK:\n\n${error.message}`)
+  }
+}
+
+// Edit Jumlah Realisasi
+async function editJumlahRealisasi(rabId, itemId, currentQty, hargaRealisasi, element) {
+  const username = localStorage.getItem('username') || ''
+  if (username !== 'Andalcekatan') {
+    alert('Hanya Andalcekatan yang dapat mengedit Jumlah Realisasi')
+    return
+  }
+  
+  const newQtyStr = prompt(`Edit Jumlah Realisasi:\n\nJumlah Realisasi saat ini: ${currentQty}\nHarga Realisasi: Rp ${hargaRealisasi.toLocaleString('id-ID')}\n\nMasukkan jumlah realisasi baru (angka bulat):`, currentQty)
+  
+  if (newQtyStr === null) return
+  
+  const newQty = parseInt(newQtyStr.replace(/[^0-9]/g, ''))
+  
+  if (isNaN(newQty) || newQty < 0) {
+    alert('Jumlah tidak valid!')
+    return
+  }
+  
+  if (newQty === currentQty) {
+    alert('Jumlah tidak berubah')
+    return
+  }
+  
+  // Calculate Subtotal Realisasi
+  const subtotalRealisasi = hargaRealisasi * newQty
+  
+  const confirmed = confirm(`Ubah Jumlah Realisasi dari ${currentQty} menjadi ${newQty}?\n\nHarga Realisasi: Rp ${hargaRealisasi.toLocaleString('id-ID')}\nSubtotal Realisasi: Rp ${subtotalRealisasi.toLocaleString('id-ID')}`)
+  
+  if (!confirmed) return
+  
+  try {
+    const response = await fetch(`/api/rab/${rabId}/update-jumlah-realisasi`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      },
+      body: JSON.stringify({
+        item_id: itemId,
+        jumlah_realisasi: newQty
+      })
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `HTTP ${response.status}`)
+    }
+    
+    const result = await response.json()
+    console.log('✅ Jumlah Realisasi updated:', result)
+    
+    alert(`✅ Jumlah Realisasi berhasil diupdate!\n\nJumlah Realisasi: ${newQty}\nSubtotal Realisasi: Rp ${result.subtotal_realisasi.toLocaleString('id-ID')}`)
+    
+    // Reload RAB detail to reflect changes
+    await viewRABDetail(rabId)
+    
+  } catch (error) {
+    console.error('Failed to update Jumlah Realisasi:', error)
+    alert(`❌ Gagal mengupdate Jumlah Realisasi:\n\n${error.message}`)
   }
 }
 

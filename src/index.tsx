@@ -4514,6 +4514,83 @@ app.post('/api/rab/:id/update-jumlah-rok', async (c) => {
   }
 })
 
+// API: Update RAB item Jumlah Realisasi (Andalcekatan only)
+app.post('/api/rab/:id/update-jumlah-realisasi', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+    const { item_id, jumlah_realisasi } = await c.req.json()
+    
+    console.log('🔢 Updating RAB item Jumlah Realisasi:', { rabId, item_id, jumlah_realisasi })
+    
+    // Check user session
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    let username = ''
+    
+    if (sessionToken) {
+      try {
+        const dbSession = await env.DB.prepare(`
+          SELECT username FROM sessions WHERE session_token = ? AND expires_at > datetime('now')
+        `).bind(sessionToken).first()
+        
+        if (dbSession) {
+          username = dbSession.username
+        }
+      } catch (error) {
+        console.error('❌ Failed to check session:', error)
+      }
+    }
+    
+    // Validate user: Only Andalcekatan
+    if (username !== 'Andalcekatan') {
+      return c.json({ 
+        success: false, 
+        error: 'Access denied. Only Andalcekatan can edit Jumlah Realisasi.' 
+      }, 403)
+    }
+    
+    // Get item data (need harga_satuan_realisasi)
+    const item = await env.DB.prepare(`
+      SELECT harga_satuan_realisasi, harga_satuan FROM rab_items WHERE id = ? AND rab_id = ?
+    `).bind(item_id, rabId).first()
+    
+    if (!item) {
+      return c.json({ success: false, error: 'Item not found' }, 404)
+    }
+    
+    const jumlahRealisasi = parseInt(jumlah_realisasi)
+    
+    // Calculate Subtotal Realisasi
+    const hargaRealisasi = item.harga_satuan_realisasi || item.harga_satuan || 0
+    const subtotalRealisasi = hargaRealisasi * jumlahRealisasi
+    
+    // Update item Jumlah Realisasi and recalculate Subtotal Realisasi
+    await env.DB.prepare(`
+      UPDATE rab_items 
+      SET jumlah_realisasi = ?,
+          subtotal_realisasi = ?
+      WHERE id = ? AND rab_id = ?
+    `).bind(jumlahRealisasi, subtotalRealisasi, item_id, rabId).run()
+    
+    console.log(`✅ Jumlah Realisasi updated: Item ${item_id} = ${jumlahRealisasi}, Subtotal Realisasi = Rp ${subtotalRealisasi}`)
+    
+    return c.json({
+      success: true,
+      message: 'Jumlah Realisasi berhasil diupdate!',
+      item_id: item_id,
+      jumlah_realisasi: jumlahRealisasi,
+      harga_satuan_realisasi: hargaRealisasi,
+      subtotal_realisasi: subtotalRealisasi
+    })
+  } catch (error: any) {
+    console.error('❌ Failed to update Jumlah Realisasi:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to update Jumlah Realisasi' 
+    }, 500)
+  }
+})
+
 // API: Delete RAB (ADMIN or Andalcekatan only)
 app.delete('/api/rab/:id', async (c) => {
   try {
