@@ -851,7 +851,7 @@ function renderRABDetail(rab) {
               <td class="px-2 py-3 border text-right bg-yellow-50">
                 <span class="inline-flex items-center gap-2">
                   ${formatRupiah(hargaSatuanTanpaROK)}
-                  <i class="fas fa-calculator text-xs text-gray-400" title="Auto-calculated: SPK × (1 - ROK%)"></i>
+                  <i class="fas fa-calculator text-xs text-gray-400" title="Auto-calculated: SPK ÷ (1 + ROK%)"></i>
                 </span>
               </td>
               <td class="px-2 py-3 border text-right font-semibold bg-yellow-50" id="subtotal-tanpa-rok-${item.id}">${formatRupiah(subtotalTanpaROK)}</td>

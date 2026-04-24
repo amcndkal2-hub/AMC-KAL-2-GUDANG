@@ -4187,6 +4187,39 @@ app.post('/api/rab/:id/update-rok', async (c) => {
       throw dbError
     }
     
+    // Auto-calculate Harga Tanpa ROK for all items with SPK price
+    try {
+      // Get all items for this RAB that have SPK prices
+      const items = await env.DB.prepare(`
+        SELECT id, harga_satuan_spk, jumlah 
+        FROM rab_items 
+        WHERE rab_id = ? AND harga_satuan_spk IS NOT NULL
+      `).bind(rabId).all()
+      
+      if (items.results && items.results.length > 0) {
+        console.log(`🔄 Recalculating Harga Tanpa ROK for ${items.results.length} items...`)
+        
+        for (const item of items.results) {
+          const hargaSPK = parseFloat(item.harga_satuan_spk)
+          // CORRECT FORMULA: Harga Tanpa ROK = Harga SPK / (1 + ROK%)
+          const hargaTanpaROK = hargaSPK / (1 + rok / 100)
+          const subtotalTanpaROK = hargaTanpaROK * parseInt(item.jumlah)
+          
+          await env.DB.prepare(`
+            UPDATE rab_items 
+            SET harga_satuan_tanpa_rok = ?,
+                subtotal_tanpa_rok = ?
+            WHERE id = ?
+          `).bind(hargaTanpaROK, subtotalTanpaROK, item.id).run()
+          
+          console.log(`  ✓ Item ${item.id}: SPK ${hargaSPK} → Tanpa ROK ${hargaTanpaROK.toFixed(2)}`)
+        }
+      }
+    } catch (recalcError: any) {
+      console.warn('⚠️ Failed to recalculate Tanpa ROK prices:', recalcError.message)
+      // Don't fail the request if recalculation fails
+    }
+    
     console.log(`✅ ROK updated: RAB ${rabId} = ${rok}%`)
     
     return c.json({
