@@ -3082,54 +3082,23 @@ app.get('/api/kebutuhan-detail', async (c) => {
 app.post('/api/update-material-status', async (c) => {
   try {
     const { env } = c
-    const { nomorLH05, partNumber, status, snMesin } = await c.req.json()
+    const { materialId, nomorLH05, partNumber, status, snMesin } = await c.req.json()
     
     console.log('========================================')
     console.log('📝 [UPDATE REQUEST] Material status update')
+    console.log('  Material ID:', materialId)
     console.log('  Nomor LH05:', nomorLH05)
     console.log('  Part Number:', partNumber)
     console.log('  New Status:', status)
     console.log('  SN Mesin:', snMesin)
     console.log('========================================')
     
-    // Find gangguan by nomor_lh05
-    const gangguan = await env.DB.prepare(`
-      SELECT id FROM gangguan WHERE nomor_lh05 = ?
-    `).bind(nomorLH05).first()
-    
-    if (!gangguan) {
-      console.error('❌ Gangguan not found for LH05:', nomorLH05)
-      return c.json({ error: 'Gangguan not found' }, 404)
-    }
-    
-    console.log('✅ Found gangguan ID:', gangguan.id)
-    
-    // Check if there are multiple materials with same LH05 + Part but different S/N
-    const allMaterialsWithSamePart = await env.DB.prepare(`
-      SELECT id, sn_mesin FROM material_gangguan 
-      WHERE gangguan_id = ? AND part_number = ?
-    `).bind(gangguan.id, partNumber).all()
-    
-    const materialsCount = allMaterialsWithSamePart.results?.length || 0
-    console.log(`📦 Found ${materialsCount} materials with this LH05 + Part combination`)
-    
-    // Log all found materials
-    if (allMaterialsWithSamePart.results) {
-      console.log('   Materials found:')
-      allMaterialsWithSamePart.results.forEach((mat: any, idx: number) => {
-        console.log(`   [${idx + 1}] ID: ${mat.id}, SN: ${mat.sn_mesin || 'null'}`)
-      })
-    }
-    
-    // SIMPLIFIED: Always update ALL materials with same LH05 + Part
-    // No complex SN matching - just update by gangguan_id + part_number
-    console.log(`🔄 Updating ALL ${materialsCount} materials with LH05 ${nomorLH05} + Part ${partNumber}...`)
-    
+    // Update ONLY the specific material by ID
     const updateResult = await env.DB.prepare(`
       UPDATE material_gangguan 
       SET status = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE gangguan_id = ? AND part_number = ?
-    `).bind(status, gangguan.id, partNumber).run()
+      WHERE id = ?
+    `).bind(status, materialId).run()
     
     const updatedCount = updateResult.meta.changes || 0
     
@@ -3144,50 +3113,42 @@ app.post('/api/update-material-status', async (c) => {
         details: {
           success: updateResult.success,
           updatedCount,
-          nomorLH05,
-          partNumber,
-          status,
-          gangguan_id: gangguan.id
+          materialId,
+          status
         }
       }, 500)
     }
     
     if (updatedCount === 0) {
       console.error('❌ UPDATE WARNING - 0 rows changed (material might not exist)')
-      console.error('   gangguan_id:', gangguan.id)
-      console.error('   part_number:', partNumber)
-      console.error('   Materials found:', materialsCount)
-      // Don't return error - might be deduplication issue
-      // Just log warning and continue
+      console.error('   materialId:', materialId)
+      return c.json({ 
+        error: 'Material not found', 
+        materialId 
+      }, 404)
     }
     
     console.log('✅ UPDATE SUCCESSFUL!')
-    console.log('   Total rows updated:', updatedCount)
+    console.log('   Material ID updated:', materialId)
+    console.log('   New status:', status)
     console.log('========================================')
     
     // Also update in-memory cache for backward compatibility
     const gangguanCache = gangguanTransactions.find(g => g.nomorLH05 === nomorLH05)
     if (gangguanCache && gangguanCache.materials) {
-      const materialCache = gangguanCache.materials.find((m: any) => m.partNumber === partNumber)
+      const materialCache = gangguanCache.materials.find((m: any) => m.partNumber === partNumber && (m.snMesin === snMesin || m.sn_mesin === snMesin))
       if (materialCache) {
         materialCache.status = status
         materialCache.updatedAt = new Date().toISOString()
       }
     }
     
-    const message = materialsCount > 1 
-      ? `Status berhasil diupdate untuk ${updatedCount} material dengan part number yang sama!`
-      : 'Status berhasil diupdate!'
-    
     return c.json({ 
       success: true, 
-      message,
-      nomorLH05,
-      partNumber,
-      snMesin,
+      message: 'Status berhasil diupdate!',
+      materialId,
       status,
-      updatedCount,
-      bulkUpdate: materialsCount > 1
+      updatedCount: 1
     })
   } catch (error) {
     console.error('❌ Update status error:', error)

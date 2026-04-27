@@ -391,7 +391,7 @@ function renderTable() {
       statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-300'
       statusDisplay = `
         <select 
-          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
+          onchange="updateStatus(${item.id}, '${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
           class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
           <option value="Tunda" selected>Tunda</option>
           <option value="N/A">N/A</option>
@@ -408,7 +408,7 @@ function renderTable() {
       statusColor = 'bg-gray-100 text-gray-800 border-gray-300'
       statusDisplay = `
         <select 
-          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
+          onchange="updateStatus(${item.id}, '${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
           class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
           <option value="N/A" ${(!status || status === 'N/A') ? 'selected' : ''}>N/A</option>
           <option value="Pengadaan" ${status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
@@ -455,7 +455,7 @@ function getStatusColor(status) {
   return colors[status] || 'bg-gray-100 text-gray-800'
 }
 
-async function updateStatus(nomorLH05, partNumber, newStatus, snMesin) {
+async function updateStatus(materialId, nomorLH05, partNumber, newStatus, snMesin) {
   try {
     const response = await fetch('/api/update-material-status', {
       method: 'POST',
@@ -463,6 +463,7 @@ async function updateStatus(nomorLH05, partNumber, newStatus, snMesin) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        materialId,
         nomorLH05,
         partNumber,
         snMesin,
@@ -473,19 +474,13 @@ async function updateStatus(nomorLH05, partNumber, newStatus, snMesin) {
     const result = await response.json()
     
     if (result.success) {
-      // CRITICAL FIX: Update ALL materials with same LH05 + Part
-      // Backend does bulk update, so frontend must match
-      const updatedMaterials = allMaterials.filter(m => 
-        m.nomorLH05 === nomorLH05 && 
-        m.partNumber === partNumber
-      )
+      // Update ONLY the specific material by ID
+      const material = allMaterials.find(m => m.id === materialId)
       
-      console.log(`[Update Status] Updating ${updatedMaterials.length} materials with Part ${partNumber} + LH05 ${nomorLH05}`)
-      
-      updatedMaterials.forEach(material => {
+      if (material) {
         material.status = newStatus
-        console.log(`  ✅ Updated: ${material.partNumber} (SN: ${material.sn_mesin || 'null'}) → ${newStatus}`)
-      })
+        console.log(`[Update Status] Updated material ID ${materialId}: ${material.partNumber} (SN: ${material.sn_mesin || 'null'}) → ${newStatus}`)
+      }
       
       // Re-render table to reflect changes immediately
       renderTable()
