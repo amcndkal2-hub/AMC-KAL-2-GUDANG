@@ -754,7 +754,8 @@ function renderRABDetail(rab) {
         <p class="text-lg"><span class="px-3 py-1 rounded-full ${getStatusColor(rab.status)}">${rab.status}</span></p>
       </div>
       
-      <!-- ROK Percentage Input -->
+      <!-- ROK Percentage Input (ONLY for List TOR) -->
+      ${isListTORPage ? `
       <div class="col-span-2 bg-orange-50 border border-orange-200 rounded-lg p-4">
         <label class="text-sm font-semibold text-gray-700 mb-2 block">
           <i class="fas fa-percentage mr-2 text-orange-600"></i>
@@ -781,12 +782,21 @@ function renderRABDetail(rab) {
           </span>
         </div>
       </div>
+      ` : ''}
       
       <div class="col-span-2">
         <label class="text-sm font-semibold text-gray-600">Total Harga RAB (inc. PPN 11%):</label>
         <p class="text-xl font-bold text-green-600" id="grandTotalDisplay">${formatRupiah(grandTotalRAB)}</p>
       </div>
-      ${canEditPrice ? `
+      ${canEditPrice && !isListTORPage ? `
+        <div class="col-span-2 bg-yellow-50 border border-yellow-300 rounded-lg p-3">
+          <p class="text-sm text-yellow-800">
+            <i class="fas fa-edit mr-2"></i>
+            <strong>Mode Edit:</strong> Anda dapat mengedit harga satuan dengan klik pada kolom harga. (Status: ${rab.status})
+          </p>
+        </div>
+      ` : ''}
+      ${canEditPrice && isListTORPage ? `
         <div class="col-span-2 bg-yellow-50 border border-yellow-300 rounded-lg p-3">
           <p class="text-sm text-yellow-800">
             <i class="fas fa-edit mr-2"></i>
@@ -804,6 +814,8 @@ function renderRABDetail(rab) {
     <div class="overflow-x-auto border rounded-lg">
       <table class="min-w-full text-xs border-collapse">
         <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+          ${isListTORPage ? `
+          <!-- List TOR: Full columns -->
           <tr>
             <th class="px-2 py-2 border text-center" rowspan="2">No</th>
             <th class="px-2 py-2 border text-left text-xs" rowspan="2">Nomor LH05</th>
@@ -829,123 +841,172 @@ function renderRABDetail(rab) {
             <th class="px-2 py-1 border text-center bg-purple-100 text-purple-900 text-xs">Qty Rea <i class="fas fa-link text-xs text-gray-500 ml-1" title="Mengikuti Qty ROK"></i></th>
             <th class="px-2 py-1 border text-right bg-purple-100 text-purple-900 text-xs">Subtotal</th>
           </tr>
+          ` : `
+          <!-- List RAB: Simple columns with S/N Mesin -->
+          <tr>
+            <th class="px-2 py-2 border text-center">No</th>
+            <th class="px-2 py-2 border text-left text-xs">Nomor LH05</th>
+            <th class="px-2 py-2 border text-left text-xs">Part Number</th>
+            <th class="px-3 py-2 border text-left text-xs">Material</th>
+            <th class="px-2 py-2 border text-left text-xs">Mesin</th>
+            <th class="px-2 py-2 border text-left text-xs">S/N Mesin</th>
+            <th class="px-2 py-2 border text-center">Jml</th>
+            <th class="px-2 py-2 border text-left text-xs">Unit</th>
+            <th class="px-2 py-2 border text-right bg-blue-100 text-blue-900">Harga ${canEditPrice && !isListTORPage ? '<i class="fas fa-edit text-yellow-600 ml-1 text-xs"></i>' : ''}</th>
+            <th class="px-2 py-2 border text-right bg-blue-100 text-blue-900">Subtotal</th>
+          </tr>
+          `}
         </thead>
         <tbody>
           ${items.map((item, index) => {
             const hargaSatuanRAB = item.harga_satuan || 0
-            const hargaSatuanSPK = item.harga_satuan_spk || hargaSatuanRAB
-            
-            // ALWAYS calculate Harga Tanpa ROK from Harga SPK and ROK% (real-time calculation)
-            // Formula: Harga Tanpa ROK = Harga SPK ÷ (1 + ROK%)
-            const hargaSatuanTanpaROK = hargaSatuanSPK / (1 + rokPercentage / 100)
-            
-            const hargaSatuanRealisasi = item.harga_satuan_realisasi || hargaSatuanRAB
-            
-            // Jumlah ROK: default = jumlah, tapi bisa diedit manual
-            const jumlahROK = item.jumlah_rok || item.jumlah
-            // IMPORTANT: Jumlah Realisasi ALWAYS = Jumlah ROK (tidak bisa diedit terpisah)
-            const jumlahRealisasi = jumlahROK
-            
             const subtotalRAB = hargaSatuanRAB * item.jumlah
-            const subtotalSPK = hargaSatuanSPK * item.jumlah
-            // IMPORTANT: Subtotal Tanpa ROK = Harga Tanpa ROK × Jumlah ROK
-            const subtotalTanpaROK = hargaSatuanTanpaROK * jumlahROK
-            // IMPORTANT: Subtotal Realisasi = Harga Realisasi × Jumlah ROK (bukan jumlah biasa)
-            const subtotalRealisasi = hargaSatuanRealisasi * jumlahROK
             
-            return `
-            <tr class="hover:bg-gray-50 text-xs">
-              <td class="px-2 py-2 border text-center">${index + 1}</td>
-              <td class="px-2 py-2 border font-mono">${item.nomor_lh05 || '-'}</td>
-              <td class="px-2 py-2 border font-mono">${item.part_number || '-'}</td>
-              <td class="px-2 py-2 border">${item.material || '-'}</td>
-              <td class="px-2 py-2 border">${item.mesin || '-'}</td>
-              <td class="px-2 py-2 border text-center font-semibold">${item.jumlah || 0}</td>
-              <td class="px-2 py-2 border">${item.unit_uld || '-'}</td>
+            // Only for List TOR
+            if (isListTORPage) {
+              const hargaSatuanSPK = item.harga_satuan_spk || hargaSatuanRAB
+              const hargaSatuanTanpaROK = hargaSatuanSPK / (1 + rokPercentage / 100)
+              const hargaSatuanRealisasi = item.harga_satuan_realisasi || hargaSatuanRAB
+              const jumlahROK = item.jumlah_rok || item.jumlah
+              const jumlahRealisasi = jumlahROK
+              const subtotalSPK = hargaSatuanSPK * item.jumlah
+              const subtotalTanpaROK = hargaSatuanTanpaROK * jumlahROK
+              const subtotalRealisasi = hargaSatuanRealisasi * jumlahROK
               
-              <!-- Harga Satuan RAB (Read-only in List TOR, Editable in List RAB) -->
-              <td class="px-2 py-2 border text-right bg-blue-50 ${!isListTORPage && canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
-                  ${!isListTORPage && canEditPrice ? `onclick="editItemPrice(${rab.id}, ${item.id}, ${hargaSatuanRAB}, ${item.jumlah}, this)"` : ''}>
-                <span id="price-${item.id}" class="${!isListTORPage && canEditPrice ? 'inline-flex items-center gap-1' : ''}">
-                  ${formatRupiah(hargaSatuanRAB)}
-                  ${!isListTORPage && canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
-                  ${isListTORPage ? '<i class="fas fa-lock text-xs text-gray-400 ml-1" title="Read-only"></i>' : ''}
-                </span>
-              </td>
-              <td class="px-2 py-2 border text-right font-semibold bg-blue-50" id="subtotal-${item.id}">${formatRupiah(subtotalRAB)}</td>
-              
-              <!-- Harga Satuan SPK (Editable) -->
-              <td class="px-2 py-2 border text-right bg-green-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
-                  ${canEditPrice ? `onclick="editSPKPrice(${rab.id}, ${item.id}, ${hargaSatuanSPK}, ${item.jumlah}, ${rokPercentage}, this)"` : ''}>
-                <span id="price-spk-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
-                  ${formatRupiah(hargaSatuanSPK)}
-                  ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
-                </span>
-              </td>
-              <td class="px-2 py-2 border text-right font-semibold bg-green-50" id="subtotal-spk-${item.id}">${formatRupiah(subtotalSPK)}</td>
-              
-              <!-- Harga Satuan Tanpa ROK (Auto-calculated, Read-only) -->
-              <td class="px-2 py-2 border text-right bg-yellow-50">
-                <span class="inline-flex items-center gap-1">
-                  ${formatRupiah(hargaSatuanTanpaROK)}
-                  <i class="fas fa-calculator text-xs text-gray-400" title="Auto-calculated: SPK ÷ (1 + ROK%)"></i>
-                </span>
-              </td>
-              
-              <!-- Jumlah ROK (Editable) -->
-              <td class="px-2 py-2 border text-center bg-yellow-50 font-semibold ${canEditPrice ? 'cursor-pointer hover:bg-orange-100' : ''}" 
-                  ${canEditPrice ? `onclick="editJumlahROK(${rab.id}, ${item.id}, ${jumlahROK}, ${rokPercentage}, ${hargaSatuanSPK}, this)"` : ''}>
-                <span id="jumlah-rok-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
-                  ${jumlahROK}
-                  ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
-                </span>
-              </td>
-              
-              <td class="px-2 py-2 border text-right font-semibold bg-yellow-50" id="subtotal-tanpa-rok-${item.id}">${formatRupiah(subtotalTanpaROK)}</td>
-              
-              <!-- Harga Satuan Realisasi (Editable) -->
-              <td class="px-2 py-2 border text-right bg-purple-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
-                  ${canEditPrice ? `onclick="editRealisasiPrice(${rab.id}, ${item.id}, ${hargaSatuanRealisasi}, ${jumlahRealisasi}, this)"` : ''}>
-                <span id="price-realisasi-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
-                  ${formatRupiah(hargaSatuanRealisasi)}
-                  ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
-                </span>
-              </td>
-              
-              <!-- Jumlah Realisasi (Read-only, mengikuti Jumlah ROK) -->
-              <td class="px-2 py-2 border text-center bg-purple-50 font-semibold">
-                <span id="jumlah-realisasi-${item.id}" class="inline-flex items-center gap-1">
-                  ${jumlahRealisasi}
-                  <i class="fas fa-link text-xs text-gray-400" title="Mengikuti Qty ROK"></i>
-                </span>
-              </td>
-              
-              <td class="px-2 py-2 border text-right font-semibold bg-purple-50" id="subtotal-realisasi-${item.id}">${formatRupiah(subtotalRealisasi)}</td>
-            </tr>
-          `}).join('')}
+              return `
+              <tr class="hover:bg-gray-50 text-xs">
+                <td class="px-2 py-2 border text-center">${index + 1}</td>
+                <td class="px-2 py-2 border font-mono">${item.nomor_lh05 || '-'}</td>
+                <td class="px-2 py-2 border font-mono">${item.part_number || '-'}</td>
+                <td class="px-2 py-2 border">${item.material || '-'}</td>
+                <td class="px-2 py-2 border">${item.mesin || '-'}</td>
+                <td class="px-2 py-2 border text-center font-semibold">${item.jumlah || 0}</td>
+                <td class="px-2 py-2 border">${item.unit_uld || '-'}</td>
+                
+                <!-- Harga Satuan RAB (Read-only in List TOR) -->
+                <td class="px-2 py-2 border text-right bg-blue-50">
+                  <span id="price-${item.id}">
+                    ${formatRupiah(hargaSatuanRAB)}
+                    <i class="fas fa-lock text-xs text-gray-400 ml-1" title="Read-only"></i>
+                  </span>
+                </td>
+                <td class="px-2 py-2 border text-right font-semibold bg-blue-50" id="subtotal-${item.id}">${formatRupiah(subtotalRAB)}</td>
+                
+                <!-- Harga Satuan SPK (Editable) -->
+                <td class="px-2 py-2 border text-right bg-green-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
+                    ${canEditPrice ? `onclick="editSPKPrice(${rab.id}, ${item.id}, ${hargaSatuanSPK}, ${item.jumlah}, ${rokPercentage}, this)"` : ''}>
+                  <span id="price-spk-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
+                    ${formatRupiah(hargaSatuanSPK)}
+                    ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
+                  </span>
+                </td>
+                <td class="px-2 py-2 border text-right font-semibold bg-green-50" id="subtotal-spk-${item.id}">${formatRupiah(subtotalSPK)}</td>
+                
+                <!-- Harga Satuan Tanpa ROK (Auto-calculated, Read-only) -->
+                <td class="px-2 py-2 border text-right bg-yellow-50">
+                  <span class="inline-flex items-center gap-1">
+                    ${formatRupiah(hargaSatuanTanpaROK)}
+                    <i class="fas fa-calculator text-xs text-gray-400" title="Auto-calculated: SPK ÷ (1 + ROK%)"></i>
+                  </span>
+                </td>
+                
+                <!-- Jumlah ROK (Editable) -->
+                <td class="px-2 py-2 border text-center bg-yellow-50 font-semibold ${canEditPrice ? 'cursor-pointer hover:bg-orange-100' : ''}" 
+                    ${canEditPrice ? `onclick="editJumlahROK(${rab.id}, ${item.id}, ${jumlahROK}, ${rokPercentage}, ${hargaSatuanSPK}, this)"` : ''}>
+                  <span id="jumlah-rok-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
+                    ${jumlahROK}
+                    ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
+                  </span>
+                </td>
+                
+                <td class="px-2 py-2 border text-right font-semibold bg-yellow-50" id="subtotal-tanpa-rok-${item.id}">${formatRupiah(subtotalTanpaROK)}</td>
+                
+                <!-- Harga Satuan Realisasi (Editable) -->
+                <td class="px-2 py-2 border text-right bg-purple-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
+                    ${canEditPrice ? `onclick="editRealisasiPrice(${rab.id}, ${item.id}, ${hargaSatuanRealisasi}, ${jumlahRealisasi}, this)"` : ''}>
+                  <span id="price-realisasi-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
+                    ${formatRupiah(hargaSatuanRealisasi)}
+                    ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
+                  </span>
+                </td>
+                
+                <!-- Jumlah Realisasi (Read-only, mengikuti Jumlah ROK) -->
+                <td class="px-2 py-2 border text-center bg-purple-50 font-semibold">
+                  <span id="jumlah-realisasi-${item.id}" class="inline-flex items-center gap-1">
+                    ${jumlahRealisasi}
+                    <i class="fas fa-link text-xs text-gray-400" title="Mengikuti Qty ROK"></i>
+                  </span>
+                </td>
+                
+                <td class="px-2 py-2 border text-right font-semibold bg-purple-50" id="subtotal-realisasi-${item.id}">${formatRupiah(subtotalRealisasi)}</td>
+              </tr>
+              `
+            } else {
+              // List RAB: Simple view with S/N Mesin
+              return `
+              <tr class="hover:bg-gray-50 text-xs">
+                <td class="px-2 py-2 border text-center">${index + 1}</td>
+                <td class="px-2 py-2 border font-mono">${item.nomor_lh05 || '-'}</td>
+                <td class="px-2 py-2 border font-mono">${item.part_number || '-'}</td>
+                <td class="px-2 py-2 border">${item.material || '-'}</td>
+                <td class="px-2 py-2 border">${item.mesin || '-'}</td>
+                <td class="px-2 py-2 border">${item.sn_mesin || '-'}</td>
+                <td class="px-2 py-2 border text-center font-semibold">${item.jumlah || 0}</td>
+                <td class="px-2 py-2 border">${item.unit_uld || '-'}</td>
+                
+                <!-- Harga Satuan RAB (Editable in List RAB) -->
+                <td class="px-2 py-2 border text-right bg-blue-50 ${canEditPrice ? 'cursor-pointer hover:bg-yellow-50' : ''}" 
+                    ${canEditPrice ? `onclick="editItemPrice(${rab.id}, ${item.id}, ${hargaSatuanRAB}, ${item.jumlah}, this)"` : ''}>
+                  <span id="price-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
+                    ${formatRupiah(hargaSatuanRAB)}
+                    ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
+                  </span>
+                </td>
+                <td class="px-2 py-2 border text-right font-semibold bg-blue-50" id="subtotal-${item.id}">${formatRupiah(subtotalRAB)}</td>
+              </tr>
+              `
+            }
+          }).join('')}
         </tbody>
         <tfoot class="bg-gray-100 font-bold text-xs">
+          ${isListTORPage ? `
+          <!-- List TOR: Full footer -->
           <tr>
             <td colspan="7" class="px-2 py-2 border text-right">Subtotal:</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-blue-100" id="subtotalRABDisplay">${formatRupiah(totalHargaRAB)}</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-green-100" id="subtotalSPKDisplay">${formatRupiah(totalHargaSPK)}</td>
             <td colspan="3" class="px-2 py-2 border text-right bg-yellow-100" id="subtotalTanpaROKDisplay">${formatRupiah(totalHargaTanpaROK)}</td>
-            <td colspan="2" class="px-2 py-2 border text-right bg-purple-100" id="subtotalRealisasiDisplay">${formatRupiah(totalHargaRealisasi)}</td>
+            <td colspan="3" class="px-2 py-2 border text-right bg-purple-100" id="subtotalRealisasiDisplay">${formatRupiah(totalHargaRealisasi)}</td>
           </tr>
           <tr>
             <td colspan="7" class="px-2 py-2 border text-right">PPN 11%:</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-blue-100" id="ppnRABDisplay">${formatRupiah(ppnRAB)}</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-green-100" id="ppnSPKDisplay">${formatRupiah(ppnSPK)}</td>
             <td colspan="3" class="px-2 py-2 border text-center bg-yellow-50 text-gray-400">-</td>
-            <td colspan="2" class="px-2 py-2 border text-center bg-purple-50 text-gray-400">-</td>
+            <td colspan="3" class="px-2 py-2 border text-center bg-purple-50 text-gray-400">-</td>
           </tr>
           <tr class="bg-gray-200 text-sm">
             <td colspan="7" class="px-2 py-2 border text-right font-bold">TOTAL HARGA:</td>
             <td colspan="2" class="px-2 py-2 border text-right font-bold bg-blue-200" id="totalRABDisplay">${formatRupiah(grandTotalRAB)}</td>
             <td colspan="2" class="px-2 py-2 border text-right font-bold bg-green-200" id="totalSPKDisplay">${formatRupiah(grandTotalSPK)}</td>
             <td colspan="3" class="px-2 py-2 border text-center bg-yellow-100 text-gray-400">-</td>
-            <td colspan="2" class="px-2 py-2 border text-center bg-purple-100 text-gray-400">-</td>
+            <td colspan="3" class="px-2 py-2 border text-center bg-purple-100 text-gray-400">-</td>
           </tr>
+          ` : `
+          <!-- List RAB: Simple footer -->
+          <tr>
+            <td colspan="8" class="px-2 py-2 border text-right">Subtotal:</td>
+            <td colspan="2" class="px-2 py-2 border text-right bg-blue-100" id="subtotalRABDisplay">${formatRupiah(totalHargaRAB)}</td>
+          </tr>
+          <tr>
+            <td colspan="8" class="px-2 py-2 border text-right">PPN 11%:</td>
+            <td colspan="2" class="px-2 py-2 border text-right bg-blue-100" id="ppnRABDisplay">${formatRupiah(ppnRAB)}</td>
+          </tr>
+          <tr class="bg-gray-200 text-sm">
+            <td colspan="8" class="px-2 py-2 border text-right font-bold">TOTAL HARGA:</td>
+            <td colspan="2" class="px-2 py-2 border text-right font-bold bg-blue-200" id="totalRABDisplay">${formatRupiah(grandTotalRAB)}</td>
+          </tr>
+          `}
         </tfoot>
       </table>
     </div>
