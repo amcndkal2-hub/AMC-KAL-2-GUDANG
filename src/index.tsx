@@ -3753,12 +3753,12 @@ app.post('/api/rab/:id/update-tor', async (c) => {
     
     console.log('🔍 Final username:', username)
     
-    // Validate user: Andalcekatan or AMC@12345
-    if (username !== 'Andalcekatan' && username !== 'AMC@12345') {
+    // Validate user: Andalcekatan, AMC@12345, or realisasi
+    if (username !== 'Andalcekatan' && username !== 'AMC@12345' && username !== 'realisasi') {
       console.log('❌ Update TOR denied: User is not authorized. Username:', username)
       return c.json({ 
         success: false, 
-        error: `Access denied. Only Andalcekatan or AMC@12345 can update No. TOR. Current user: ${username || 'unknown'}` 
+        error: `Access denied. Only Andalcekatan, AMC@12345, or realisasi can update No. TOR. Current user: ${username || 'unknown'}` 
       }, 403)
     }
     

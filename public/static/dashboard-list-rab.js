@@ -405,8 +405,8 @@ function renderRABList(rabList) {
       ${nomorRABColumn}
       <td class="px-2 py-2 border text-left align-middle" style="max-width: 200px;">
         ${(rab.jenis_rab === 'SPK') ? (() => {
-          // Andalcekatan: Always editable
-          if (isAndalcekatan) {
+          // Andalcekatan or realisasi: Always editable
+          if (isAndalcekatan || (isRealisasi && isListTORPage)) {
             return `<input type="text" 
                      value="${rab.nomor_tor || ''}" 
                      placeholder="Isi No. TOR"
