@@ -1886,23 +1886,36 @@ export async function getRABById(db: D1Database, rabId: number) {
       return null
     }
     
-    // Get RAB items with S/N Mesin from material_gangguan
-    // Use subquery to get sn_mesin safely
+    // Get RAB items
     const items = await db.prepare(`
-      SELECT 
-        ri.*,
-        (SELECT mg.sn_mesin 
-         FROM material_gangguan mg 
-         WHERE mg.nomor_lh05 = ri.nomor_lh05 
-         LIMIT 1) as sn_mesin
-      FROM rab_items ri
-      WHERE ri.rab_id = ? 
-      ORDER BY ri.id
+      SELECT * FROM rab_items WHERE rab_id = ? ORDER BY id
     `).bind(rabId).all()
+    
+    // Enrich items with sn_mesin from material_gangguan
+    const enrichedItems = await Promise.all(
+      (items.results || []).map(async (item: any) => {
+        try {
+          const mg = await db.prepare(`
+            SELECT sn_mesin FROM material_gangguan WHERE nomor_lh05 = ? LIMIT 1
+          `).bind(item.nomor_lh05).first()
+          
+          return {
+            ...item,
+            sn_mesin: mg?.sn_mesin || null
+          }
+        } catch (error) {
+          console.error('Error fetching sn_mesin for', item.nomor_lh05, error)
+          return {
+            ...item,
+            sn_mesin: null
+          }
+        }
+      })
+    )
     
     return {
       ...rab,
-      items: items.results || []
+      items: enrichedItems
     }
   } catch (error) {
     console.error('Failed to get RAB by ID:', error)
