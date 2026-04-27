@@ -1887,12 +1887,15 @@ export async function getRABById(db: D1Database, rabId: number) {
     }
     
     // Get RAB items with S/N Mesin from material_gangguan
+    // Use subquery to get sn_mesin safely
     const items = await db.prepare(`
       SELECT 
         ri.*,
-        mg.sn_mesin
+        (SELECT mg.sn_mesin 
+         FROM material_gangguan mg 
+         WHERE mg.nomor_lh05 = ri.nomor_lh05 
+         LIMIT 1) as sn_mesin
       FROM rab_items ri
-      LEFT JOIN material_gangguan mg ON ri.nomor_lh05 = mg.nomor_lh05
       WHERE ri.rab_id = ? 
       ORDER BY ri.id
     `).bind(rabId).all()
