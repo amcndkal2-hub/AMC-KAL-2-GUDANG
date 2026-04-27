@@ -4469,7 +4469,7 @@ app.post('/api/rab/:id/update-jumlah-rok', async (c) => {
     
     // Get item and RAB data
     const item = await env.DB.prepare(`
-      SELECT harga_satuan_spk, harga_satuan FROM rab_items WHERE id = ? AND rab_id = ?
+      SELECT harga_satuan_spk, harga_satuan, harga_satuan_realisasi FROM rab_items WHERE id = ? AND rab_id = ?
     `).bind(item_id, rabId).first()
     
     if (!item) {
