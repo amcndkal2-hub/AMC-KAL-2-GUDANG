@@ -1,9 +1,9 @@
 // Dashboard List RAB - AMC Material System
 console.log('Dashboard List RAB loaded')
 
-// Detect if we're on List TOR page
+// Detect if we're on Realisasi page
 const isListTORPage = window.location.pathname.includes('/list-tor')
-console.log('Page detected:', isListTORPage ? 'List TOR' : 'List RAB')
+console.log('Page detected:', isListTORPage ? 'Realisasi' : 'List RAB')
 
 let allRABList = []
 let filteredRABList = []
@@ -367,7 +367,7 @@ function renderRABList(rabList) {
   const isAMC = username === 'AMC@12345'
   
   if (rabList.length === 0) {
-    // Adjust colspan based on page (List TOR has fewer columns)
+    // Adjust colspan based on page (Realisasi has fewer columns)
     const colspanCount = isListTORPage ? 8 : 10
     tbody.innerHTML = `
       <tr>
@@ -382,7 +382,7 @@ function renderRABList(rabList) {
   }
   
   tbody.innerHTML = rabList.map((rab, index) => {
-    // For List TOR page, skip Nomor RAB and Tanggal columns
+    // For Realisasi page, skip Nomor RAB and Tanggal columns
     const nomorRABColumn = !isListTORPage ? `
       <td class="px-4 py-3 border text-left">
         <span class="font-mono font-semibold text-gray-800">${rab.nomor_rab}</span>
@@ -391,7 +391,7 @@ function renderRABList(rabList) {
     const tanggalColumn = !isListTORPage ? `
       <td class="px-4 py-3 border text-center">${formatIndonesianDate(rab.tanggal_rab)}</td>` : ''
     
-    // For List TOR page, hide History button
+    // For Realisasi page, hide History button
     const historyButton = !isListTORPage ? `
       <button onclick="viewRABHistory(${rab.id})" 
               class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs">
@@ -754,7 +754,7 @@ function renderRABDetail(rab) {
         <p class="text-lg"><span class="px-3 py-1 rounded-full ${getStatusColor(rab.status)}">${rab.status}</span></p>
       </div>
       
-      <!-- ROK Percentage Input (ONLY for List TOR) -->
+      <!-- ROK Percentage Input (ONLY for Realisasi) -->
       ${isListTORPage ? `
       <div class="col-span-2 bg-orange-50 border border-orange-200 rounded-lg p-4">
         <label class="text-sm font-semibold text-gray-700 mb-2 block">
@@ -815,7 +815,7 @@ function renderRABDetail(rab) {
       <table class="min-w-full text-xs border-collapse">
         <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
           ${isListTORPage ? `
-          <!-- List TOR: Full columns -->
+          <!-- Realisasi: Full columns -->
           <tr>
             <th class="px-2 py-2 border text-center" rowspan="2">No</th>
             <th class="px-2 py-2 border text-left text-xs" rowspan="2">Nomor LH05</th>

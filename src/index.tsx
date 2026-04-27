@@ -5163,7 +5163,7 @@ app.get('/dashboard/ref-harga', (c) => {
   return c.html(getDashboardRefHargaHTML())
 })
 
-// Dashboard List TOR (PROTECTED - auth required)
+// Dashboard Realisasi (PROTECTED - auth required)
 app.get('/dashboard/list-tor', (c) => {
   return c.html(getDashboardListTORHTML())
 })
@@ -8164,7 +8164,7 @@ function getDashboardCreateRABHTML() {
                     <a href="/dashboard/umur" class="hover:text-blue-200"><i class="fas fa-calendar-alt mr-2"></i>Umur</a>
                     <a href="/dashboard/gangguan" class="hover:text-blue-200"><i class="fas fa-exclamation-triangle mr-2"></i>Gangguan</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
-                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>List TOR</a>
+                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         <i class="fas fa-sign-out-alt mr-2"></i>Logout
@@ -11787,7 +11787,7 @@ function getDashboardListRABHTML() {
                     <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
-                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>List TOR</a>
+                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         <i class="fas fa-sign-out-alt mr-2"></i>Logout
@@ -11945,7 +11945,7 @@ function getDashboardListTORHTML() {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Daftar Realisasi Bayar</title>
+        <title>Realisasi</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11961,7 +11961,7 @@ function getDashboardListTORHTML() {
                     <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
-                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>List TOR</a>
+                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         <i class="fas fa-sign-out-alt mr-2"></i>Logout
@@ -12038,7 +12038,7 @@ function getDashboardListTORHTML() {
                     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                         <h1 class="text-2xl font-bold text-gray-800 flex items-center">
                             <i class="fas fa-file-invoice-dollar text-blue-600 mr-3"></i>
-                            Daftar Realisasi Bayar
+                            Realisasi
                         </h1>
                         <p class="text-gray-600 mt-2">Daftar realisasi pembayaran untuk semua RAB</p>
                     </div>
