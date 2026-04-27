@@ -232,6 +232,11 @@ const VALID_CREDENTIALS = [
     username: 'Andalcekatan',
     password: 'Password@123',
     role: 'admin'  // Admin: bisa input DAN hapus data
+  },
+  {
+    username: 'realisasi',
+    password: 'Amanah@1',
+    role: 'user'  // User biasa: bisa input, tidak bisa hapus
   }
 ]
 let activeSessions: Map<string, any> = new Map()
