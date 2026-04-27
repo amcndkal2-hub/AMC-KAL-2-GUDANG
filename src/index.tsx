@@ -4157,11 +4157,11 @@ app.post('/api/rab/:id/update-rok', async (c) => {
       }
     }
     
-    // Validate user: Only Andalcekatan
-    if (username !== 'Andalcekatan') {
+    // Validate user: Only Andalcekatan or realisasi
+    if (username !== 'Andalcekatan' && username !== 'realisasi') {
       return c.json({ 
         success: false, 
-        error: 'Access denied. Only Andalcekatan can edit ROK percentage.' 
+        error: 'Access denied. Only Andalcekatan or realisasi can edit ROK percentage.' 
       }, 403)
     }
     
@@ -4268,11 +4268,11 @@ app.post('/api/rab/:id/update-spk-price', async (c) => {
       }
     }
     
-    // Validate user: Only Andalcekatan
-    if (username !== 'Andalcekatan') {
+    // Validate user: Only Andalcekatan or realisasi
+    if (username !== 'Andalcekatan' && username !== 'realisasi') {
       return c.json({ 
         success: false, 
-        error: 'Access denied. Only Andalcekatan can edit SPK prices.' 
+        error: 'Access denied. Only Andalcekatan or realisasi can edit SPK prices.' 
       }, 403)
     }
     
@@ -4388,11 +4388,11 @@ app.post('/api/rab/:id/update-realisasi-price', async (c) => {
       }
     }
     
-    // Validate user: Only Andalcekatan
-    if (username !== 'Andalcekatan') {
+    // Validate user: Only Andalcekatan or realisasi
+    if (username !== 'Andalcekatan' && username !== 'realisasi') {
       return c.json({ 
         success: false, 
-        error: 'Access denied. Only Andalcekatan can edit Realisasi prices.' 
+        error: 'Access denied. Only Andalcekatan or realisasi can edit Realisasi prices.' 
       }, 403)
     }
     
@@ -4464,11 +4464,11 @@ app.post('/api/rab/:id/update-jumlah-rok', async (c) => {
       }
     }
     
-    // Validate user: Only Andalcekatan
-    if (username !== 'Andalcekatan') {
+    // Validate user: Only Andalcekatan or realisasi
+    if (username !== 'Andalcekatan' && username !== 'realisasi') {
       return c.json({ 
         success: false, 
-        error: 'Access denied. Only Andalcekatan can edit Jumlah ROK.' 
+        error: 'Access denied. Only Andalcekatan or realisasi can edit Jumlah ROK.' 
       }, 403)
     }
     

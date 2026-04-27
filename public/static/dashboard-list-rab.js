@@ -364,6 +364,7 @@ function renderRABList(rabList) {
   const userRole = localStorage.getItem('userRole') || ''
   const canDelete = userRole === 'admin' || username === 'Andalcekatan'
   const isAndalcekatan = username === 'Andalcekatan'
+  const isRealisasi = username === 'realisasi'
   const isAMC = username === 'AMC@12345'
   
   if (rabList.length === 0) {
@@ -702,8 +703,14 @@ function renderRABDetail(rab) {
   const content = document.getElementById('rabDetailContent')
   const username = localStorage.getItem('username') || ''
   const isAndalcekatan = username === 'Andalcekatan'
+  const isRealisasi = username === 'realisasi'
   const allowedStatuses = ['Draft', 'Pengadaan', 'Tersedia']
-  const canEditPrice = isAndalcekatan && allowedStatuses.includes(rab.status)
+  
+  // For List RAB: Only Andalcekatan can edit
+  // For Realisasi: Both Andalcekatan and realisasi can edit
+  const canEditPrice = isListTORPage 
+    ? (isAndalcekatan || isRealisasi) && allowedStatuses.includes(rab.status)
+    : isAndalcekatan && allowedStatuses.includes(rab.status)
   
   const items = rab.items || []
   const rokPercentage = rab.rok_percentage || 0
@@ -1102,8 +1109,8 @@ async function editItemPrice(rabId, itemId, currentPrice, quantity, element) {
 // Save ROK percentage for RAB (with button click)
 async function saveROKPercentage(rabId) {
   const username = localStorage.getItem('username') || ''
-  if (username !== 'Andalcekatan') {
-    alert('Hanya Andalcekatan yang dapat mengedit ROK percentage')
+  if (username !== 'Andalcekatan' && username !== 'realisasi') {
+    alert('Hanya Andalcekatan atau realisasi yang dapat mengedit ROK percentage')
     return
   }
   
@@ -1192,8 +1199,8 @@ async function updateROKPercentage(rabId, rokPercentage) {
 // Edit SPK price
 async function editSPKPrice(rabId, itemId, currentPrice, quantity, rokPercentage, element) {
   const username = localStorage.getItem('username') || ''
-  if (username !== 'Andalcekatan') {
-    alert('Hanya Andalcekatan yang dapat mengedit harga SPK')
+  if (username !== 'Andalcekatan' && username !== 'realisasi') {
+    alert('Hanya Andalcekatan atau realisasi yang dapat mengedit harga SPK')
     return
   }
   
@@ -1257,8 +1264,8 @@ async function editSPKPrice(rabId, itemId, currentPrice, quantity, rokPercentage
 // Edit Realisasi price
 async function editRealisasiPrice(rabId, itemId, currentPrice, quantity, element) {
   const username = localStorage.getItem('username') || ''
-  if (username !== 'Andalcekatan') {
-    alert('Hanya Andalcekatan yang dapat mengedit harga Realisasi')
+  if (username !== 'Andalcekatan' && username !== 'realisasi') {
+    alert('Hanya Andalcekatan atau realisasi yang dapat mengedit harga Realisasi')
     return
   }
   
@@ -1317,8 +1324,8 @@ async function editRealisasiPrice(rabId, itemId, currentPrice, quantity, element
 // Edit Jumlah ROK
 async function editJumlahROK(rabId, itemId, currentQty, rokPercentage, hargaSPK, element) {
   const username = localStorage.getItem('username') || ''
-  if (username !== 'Andalcekatan') {
-    alert('Hanya Andalcekatan yang dapat mengedit Jumlah ROK')
+  if (username !== 'Andalcekatan' && username !== 'realisasi') {
+    alert('Hanya Andalcekatan atau realisasi yang dapat mengedit Jumlah ROK')
     return
   }
   
