@@ -389,7 +389,7 @@ function renderRABList(rabList) {
       </td>` : ''
     
     const tanggalColumn = !isListTORPage ? `
-      <td class="px-4 py-3 border text-center">${formatDate(rab.tanggal_rab)}</td>` : ''
+      <td class="px-4 py-3 border text-center">${formatIndonesianDate(rab.tanggal_rab)}</td>` : ''
     
     // For List TOR page, hide History button
     const historyButton = !isListTORPage ? `
@@ -504,6 +504,20 @@ function formatDate(dateString) {
     month: '2-digit',
     year: 'numeric'
   })
+}
+
+// Format Indonesian date (e.g., "20 April 2026") - for List RAB only
+function formatIndonesianDate(dateString) {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  const months = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ]
+  const day = date.getDate()
+  const month = months[date.getMonth()]
+  const year = date.getFullYear()
+  return `${day} ${month} ${year}`
 }
 
 // Format rupiah
@@ -729,7 +743,7 @@ function renderRABDetail(rab) {
       </div>
       <div>
         <label class="text-sm font-semibold text-gray-600">Tanggal RAB:</label>
-        <p class="text-lg font-bold">${formatDate(rab.tanggal_rab)}</p>
+        <p class="text-lg font-bold">${isListTORPage ? formatDate(rab.tanggal_rab) : formatIndonesianDate(rab.tanggal_rab)}</p>
       </div>
       <div>
         <label class="text-sm font-semibold text-gray-600">Jenis RAB:</label>
@@ -1387,7 +1401,7 @@ function exportRABToExcel() {
     ['RENCANA ANGGARAN BIAYA (RAB)'],
     [],
     ['Nomor RAB:', rab.nomor_rab],
-    ['Tanggal:', formatDate(rab.tanggal_rab)],
+    ['Tanggal:', isListTORPage ? formatDate(rab.tanggal_rab) : formatIndonesianDate(rab.tanggal_rab)],
     ['Jenis RAB:', formatJenisRAB(rab.jenis_rab)],
     ['Status:', rab.status],
     [],
@@ -1456,7 +1470,7 @@ function exportRABToPDF() {
   doc.setFontSize(11)
   doc.setFont(undefined, 'normal')
   doc.text(`Nomor RAB: ${rab.nomor_rab}`, 14, 35)
-  doc.text(`Tanggal: ${formatDate(rab.tanggal_rab)}`, 14, 42)
+  doc.text(`Tanggal: ${isListTORPage ? formatDate(rab.tanggal_rab) : formatIndonesianDate(rab.tanggal_rab)}`, 14, 42)
   doc.text(`Jenis RAB: ${formatJenisRAB(rab.jenis_rab)}`, 14, 49)
   doc.text(`Status: ${rab.status}`, 14, 56)
   
