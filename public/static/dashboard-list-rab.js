@@ -384,25 +384,25 @@ function renderRABList(rabList) {
   tbody.innerHTML = rabList.map((rab, index) => {
     // For Realisasi page, skip Nomor RAB and Tanggal columns
     const nomorRABColumn = !isListTORPage ? `
-      <td class="px-4 py-3 border text-left align-middle">
-        <span class="font-mono font-semibold text-gray-800">${rab.nomor_rab}</span>
+      <td class="px-3 py-2.5 border text-left align-middle">
+        <span class="font-mono text-xs font-semibold text-gray-800">${rab.nomor_rab}</span>
       </td>` : ''
     
     const tanggalColumn = !isListTORPage ? `
-      <td class="px-4 py-3 border text-center align-middle">${formatIndonesianDate(rab.tanggal_rab)}</td>` : ''
+      <td class="px-3 py-2.5 border text-center align-middle text-xs">${formatIndonesianDate(rab.tanggal_rab)}</td>` : ''
     
     // For Realisasi page, hide History button
     const historyButton = !isListTORPage ? `
       <button onclick="viewRABHistory(${rab.id})" 
-              class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors duration-200">
-        <i class="fas fa-history text-xs"></i>
+              class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs inline-flex items-center whitespace-nowrap" title="History">
+        <i class="fas fa-history"></i>
       </button>` : ''
     
     return `
-    <tr class="hover:bg-blue-50 transition-colors duration-150">
-      <td class="px-4 py-3 border text-center align-middle text-gray-700 font-medium">${index + 1}</td>
+    <tr class="hover:bg-gray-50 transition-colors">
+      <td class="px-3 py-2.5 border text-center align-middle text-sm">${index + 1}</td>
       ${nomorRABColumn}
-      <td class="px-3 py-3 border text-center align-middle">
+      <td class="px-2 py-2 border text-left align-middle" style="max-width: 200px;">
         ${(rab.jenis_rab === 'SPK') ? (() => {
           // Andalcekatan: Always editable
           if (isAndalcekatan) {
@@ -410,7 +410,7 @@ function renderRABList(rabList) {
                      value="${rab.nomor_tor || ''}" 
                      placeholder="Isi No. TOR"
                      onchange="updateNomorTOR(${rab.id}, this.value)"
-                     class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-mono font-medium text-blue-700"
+                     class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-mono"
                      />`
           }
           // AMC@12345: Editable only if empty
@@ -420,11 +420,11 @@ function renderRABList(rabList) {
                        value="" 
                        placeholder="Isi No. TOR"
                        onchange="updateNomorTOR(${rab.id}, this.value)"
-                       class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-mono font-medium text-blue-700"
+                       class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-mono"
                        />`
             } else {
-              return `<span class="text-gray-800 text-xs font-medium font-mono">${rab.nomor_tor}</span>
-                      <span class="text-xs text-gray-400 block mt-0.5">(locked)</span>`
+              return `<span class="text-gray-800 text-xs font-mono block">${rab.nomor_tor}</span>
+                      <span class="text-xs text-gray-400">(locked)</span>`
             }
           }
           // Other users: Read-only
@@ -433,38 +433,38 @@ function renderRABList(rabList) {
           }
         })() : `<span class="text-gray-400 text-xs">-</span>`}
       </td>
-      <td class="px-4 py-3 border text-center align-middle">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${getJenisRABColor(rab.jenis_rab)}">
+      <td class="px-3 py-2.5 border text-center align-middle">
+        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getJenisRABColor(rab.jenis_rab)}">
           ${rab.jenis_rab || '-'}
         </span>
       </td>
       ${tanggalColumn}
-      <td class="px-4 py-3 border text-center align-middle">
-        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-          ${rab.item_count || 0} items
+      <td class="px-3 py-2.5 border text-center align-middle">
+        <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-semibold">
+          ${rab.item_count || 0}
         </span>
       </td>
-      <td class="px-4 py-3 border text-right align-middle font-semibold text-gray-800">${formatRupiah((rab.total_harga || 0) * 1.11)}</td>
-      <td class="px-4 py-3 border text-center align-middle">
+      <td class="px-3 py-2.5 border text-right align-middle font-semibold text-sm">${formatRupiah((rab.total_harga || 0) * 1.11)}</td>
+      <td class="px-2 py-2 border text-center align-middle">
         <select onchange="updateRABStatus(${rab.id}, this.value)" 
-                class="px-3 py-1.5 rounded text-xs font-semibold border-0 cursor-pointer ${getStatusColorSelect(rab.status)} transition-colors duration-200">
+                class="w-full px-2 py-1 rounded text-xs font-semibold border cursor-pointer ${getStatusColorSelect(rab.status)}">
           <option value="Draft" ${rab.status === 'Draft' ? 'selected' : ''}>Draft</option>
           <option value="Pengadaan" ${rab.status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
           <option value="Tersedia" ${rab.status === 'Tersedia' ? 'selected' : ''}>Tersedia</option>
-          <option value="Masuk Gudang" ${rab.status === 'Masuk Gudang' ? 'selected' : ''} disabled>Masuk Gudang (Auto)</option>
+          <option value="Masuk Gudang" ${rab.status === 'Masuk Gudang' ? 'selected' : ''} disabled>Masuk Gudang</option>
         </select>
       </td>
-      <td class="px-3 py-3 border text-center align-middle">
-        <div class="flex gap-1.5 justify-center items-center">
+      <td class="px-2 py-2 border text-center align-middle">
+        <div class="flex gap-1 justify-center items-center flex-nowrap">
           <button onclick="viewRABDetail(${rab.id})" 
-                  class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors duration-200 inline-flex items-center">
-            <i class="fas fa-eye text-xs"></i>
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs inline-flex items-center whitespace-nowrap" title="View">
+            <i class="fas fa-eye"></i>
           </button>
           ${historyButton}
           ${canDelete ? `
             <button onclick="deleteRAB(${rab.id}, '${rab.nomor_rab}')" 
-                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors duration-200 inline-flex items-center">
-              <i class="fas fa-trash text-xs"></i>
+                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs inline-flex items-center whitespace-nowrap" title="Delete">
+              <i class="fas fa-trash"></i>
             </button>
           ` : ''}
         </div>

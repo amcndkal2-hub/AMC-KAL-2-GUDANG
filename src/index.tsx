@@ -11873,18 +11873,18 @@ function getDashboardListRABHTML() {
                     <div class="bg-white rounded-lg shadow-md">
                         <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
                             <table class="min-w-full border">
-                        <thead class="bg-blue-50 sticky top-0 z-10 shadow-md">
+                        <thead class="bg-blue-50 sticky top-0 z-10 shadow-sm">
                             <tr>
-                                <th class="px-4 py-3 border text-center bg-blue-50 font-bold text-gray-700" style="width: 50px;">No</th>
-                                <th class="px-4 py-3 border text-left bg-blue-50 font-bold text-gray-700" style="width: 150px;">Nomor RAB</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50 font-bold text-gray-700" style="width: 220px;">No. TOR</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50 font-bold text-gray-700" style="width: 140px;">Jenis RAB</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50 font-bold text-gray-700" style="width: 130px;">Tanggal</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50 font-bold text-gray-700" style="width: 100px;">Jumlah Item</th>
-                                <th class="px-4 py-3 border text-right bg-blue-50 font-bold text-gray-700" style="width: 150px;">Total Harga</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50 font-bold text-gray-700" style="width: 120px;">Status</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50 font-bold text-gray-700" style="width: 120px;">Aksi</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50 font-bold text-gray-700" style="width: 180px;">Status SCM</th>
+                                <th class="px-3 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 50px;">No</th>
+                                <th class="px-3 py-2.5 border text-left bg-blue-50 text-xs font-semibold text-gray-700" style="width: 140px;">Nomor RAB</th>
+                                <th class="px-2 py-2.5 border text-left bg-blue-50 text-xs font-semibold text-gray-700" style="width: 200px;">No. TOR</th>
+                                <th class="px-3 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 120px;">Jenis RAB</th>
+                                <th class="px-3 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 110px;">Tanggal</th>
+                                <th class="px-3 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 90px;">Jumlah Item</th>
+                                <th class="px-3 py-2.5 border text-right bg-blue-50 text-xs font-semibold text-gray-700" style="width: 140px;">Total Harga</th>
+                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 110px;">Status</th>
+                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 120px;">Aksi</th>
+                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 180px;">Status SCM</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">
