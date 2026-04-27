@@ -1886,9 +1886,15 @@ export async function getRABById(db: D1Database, rabId: number) {
       return null
     }
     
-    // Get RAB items
+    // Get RAB items with S/N Mesin from material_gangguan
     const items = await db.prepare(`
-      SELECT * FROM rab_items WHERE rab_id = ? ORDER BY id
+      SELECT 
+        ri.*,
+        mg.sn_mesin
+      FROM rab_items ri
+      LEFT JOIN material_gangguan mg ON ri.nomor_lh05 = mg.nomor_lh05
+      WHERE ri.rab_id = ? 
+      ORDER BY ri.id
     `).bind(rabId).all()
     
     return {
