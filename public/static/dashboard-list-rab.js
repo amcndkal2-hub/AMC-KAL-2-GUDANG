@@ -862,7 +862,7 @@ function renderRABDetail(rab) {
             const hargaSatuanRAB = item.harga_satuan || 0
             const subtotalRAB = hargaSatuanRAB * item.jumlah
             
-            // Only for List TOR
+            // Only for Realisasi
             if (isListTORPage) {
               const hargaSatuanSPK = item.harga_satuan_spk || hargaSatuanRAB
               const hargaSatuanTanpaROK = hargaSatuanSPK / (1 + rokPercentage / 100)
@@ -883,7 +883,7 @@ function renderRABDetail(rab) {
                 <td class="px-2 py-2 border text-center font-semibold">${item.jumlah || 0}</td>
                 <td class="px-2 py-2 border">${item.unit_uld || '-'}</td>
                 
-                <!-- Harga Satuan RAB (Read-only in List TOR) -->
+                <!-- Harga Satuan RAB (Read-only in Realisasi) -->
                 <td class="px-2 py-2 border text-right bg-blue-50">
                   <span id="price-${item.id}">
                     ${formatRupiah(hargaSatuanRAB)}
@@ -970,7 +970,7 @@ function renderRABDetail(rab) {
         </tbody>
         <tfoot class="bg-gray-100 font-bold text-xs">
           ${isListTORPage ? `
-          <!-- List TOR: Full footer -->
+          <!-- Realisasi: Full footer -->
           <tr>
             <td colspan="7" class="px-2 py-2 border text-right">Subtotal:</td>
             <td colspan="2" class="px-2 py-2 border text-right bg-blue-100" id="subtotalRABDisplay">${formatRupiah(totalHargaRAB)}</td>
