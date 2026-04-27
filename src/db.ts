@@ -1891,13 +1891,19 @@ export async function getRABById(db: D1Database, rabId: number) {
       SELECT * FROM rab_items WHERE rab_id = ? ORDER BY id
     `).bind(rabId).all()
     
-    // Enrich items with sn_mesin from material_gangguan
+    // Enrich items with sn_mesin from material_gangguan via gangguan table
     const enrichedItems = await Promise.all(
       (items.results || []).map(async (item: any) => {
         try {
+          // JOIN material_gangguan with gangguan to match nomor_lh05
           const mg = await db.prepare(`
-            SELECT sn_mesin FROM material_gangguan WHERE nomor_lh05 = ? LIMIT 1
-          `).bind(item.nomor_lh05).first()
+            SELECT mg.sn_mesin 
+            FROM material_gangguan mg
+            JOIN gangguan g ON mg.gangguan_id = g.id
+            WHERE g.nomor_lh05 = ? 
+            AND mg.part_number = ?
+            LIMIT 1
+          `).bind(item.nomor_lh05, item.part_number).first()
           
           return {
             ...item,
