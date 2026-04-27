@@ -4391,9 +4391,9 @@ app.post('/api/rab/:id/update-realisasi-price', async (c) => {
       }, 403)
     }
     
-    // Get item data
+    // Get item data (need jumlah_rok for Subtotal Realisasi calculation)
     const item = await env.DB.prepare(`
-      SELECT jumlah FROM rab_items WHERE id = ? AND rab_id = ?
+      SELECT jumlah, jumlah_rok FROM rab_items WHERE id = ? AND rab_id = ?
     `).bind(item_id, rabId).first()
     
     if (!item) {
@@ -4401,7 +4401,9 @@ app.post('/api/rab/:id/update-realisasi-price', async (c) => {
     }
     
     const hargaRealisasi = parseFloat(harga_satuan_realisasi)
-    const subtotalRealisasi = hargaRealisasi * parseInt(item.jumlah)
+    // IMPORTANT: Subtotal Realisasi = Harga Realisasi × Jumlah ROK (bukan jumlah biasa)
+    const jumlahROK = item.jumlah_rok || item.jumlah
+    const subtotalRealisasi = hargaRealisasi * jumlahROK
     
     // Update item Realisasi price
     await env.DB.prepare(`
@@ -4411,14 +4413,15 @@ app.post('/api/rab/:id/update-realisasi-price', async (c) => {
       WHERE id = ? AND rab_id = ?
     `).bind(hargaRealisasi, subtotalRealisasi, item_id, rabId).run()
     
-    console.log(`✅ Realisasi price updated: Item ${item_id} = Rp ${hargaRealisasi}`)
+    console.log(`✅ Realisasi price updated: Item ${item_id} = Rp ${hargaRealisasi}, Subtotal = Rp ${subtotalRealisasi} (using Qty ROK = ${jumlahROK})`)
     
     return c.json({
       success: true,
       message: 'Harga Realisasi berhasil diupdate!',
       item_id: item_id,
       harga_satuan_realisasi: hargaRealisasi,
-      subtotal_realisasi: subtotalRealisasi
+      subtotal_realisasi: subtotalRealisasi,
+      jumlah_rok: jumlahROK
     })
   } catch (error: any) {
     console.error('❌ Failed to update Realisasi price:', error)
@@ -4486,24 +4489,33 @@ app.post('/api/rab/:id/update-jumlah-rok', async (c) => {
     const hargaTanpaROK = hargaSPK / (1 + rokPercentage / 100)
     const subtotalTanpaROK = hargaTanpaROK * jumlahROK
     
-    // Update item Jumlah ROK and recalculate Subtotal Tanpa ROK
+    // Get Harga Realisasi for calculating Subtotal Realisasi
+    const hargaRealisasi = item.harga_satuan_realisasi || item.harga_satuan || 0
+    const subtotalRealisasi = hargaRealisasi * jumlahROK
+    
+    // IMPORTANT: Update Jumlah ROK AND Jumlah Realisasi (keduanya sama)
+    // Subtotal Realisasi juga ikut update karena menggunakan Qty ROK
     await env.DB.prepare(`
       UPDATE rab_items 
       SET jumlah_rok = ?,
+          jumlah_realisasi = ?,
           harga_satuan_tanpa_rok = ?,
-          subtotal_tanpa_rok = ?
+          subtotal_tanpa_rok = ?,
+          subtotal_realisasi = ?
       WHERE id = ? AND rab_id = ?
-    `).bind(jumlahROK, hargaTanpaROK, subtotalTanpaROK, item_id, rabId).run()
+    `).bind(jumlahROK, jumlahROK, hargaTanpaROK, subtotalTanpaROK, subtotalRealisasi, item_id, rabId).run()
     
-    console.log(`✅ Jumlah ROK updated: Item ${item_id} = ${jumlahROK}, Subtotal Tanpa ROK = Rp ${subtotalTanpaROK}`)
+    console.log(`✅ Jumlah ROK & Realisasi updated: Item ${item_id} = ${jumlahROK}, Subtotal Tanpa ROK = Rp ${subtotalTanpaROK}, Subtotal Realisasi = Rp ${subtotalRealisasi}`)
     
     return c.json({
       success: true,
       message: 'Jumlah ROK berhasil diupdate!',
       item_id: item_id,
       jumlah_rok: jumlahROK,
+      jumlah_realisasi: jumlahROK,
       harga_satuan_tanpa_rok: hargaTanpaROK,
-      subtotal_tanpa_rok: subtotalTanpaROK
+      subtotal_tanpa_rok: subtotalTanpaROK,
+      subtotal_realisasi: subtotalRealisasi
     })
   } catch (error: any) {
     console.error('❌ Failed to update Jumlah ROK:', error)

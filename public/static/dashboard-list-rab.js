@@ -812,7 +812,7 @@ function renderRABDetail(rab) {
             <th class="px-2 py-1 border text-center bg-yellow-100 text-yellow-900 text-xs">Qty ROK ${canEditPrice ? '<i class="fas fa-edit text-yellow-600 ml-1 text-xs"></i>' : ''}</th>
             <th class="px-2 py-1 border text-right bg-yellow-100 text-yellow-900 text-xs">Subtotal</th>
             <th class="px-2 py-1 border text-right bg-purple-100 text-purple-900 text-xs">Harga</th>
-            <th class="px-2 py-1 border text-center bg-purple-100 text-purple-900 text-xs">Qty Rea ${canEditPrice ? '<i class="fas fa-edit text-yellow-600 ml-1 text-xs"></i>' : ''}</th>
+            <th class="px-2 py-1 border text-center bg-purple-100 text-purple-900 text-xs">Qty Rea <i class="fas fa-link text-xs text-gray-500 ml-1" title="Mengikuti Qty ROK"></i></th>
             <th class="px-2 py-1 border text-right bg-purple-100 text-purple-900 text-xs">Subtotal</th>
           </tr>
         </thead>
@@ -829,15 +829,15 @@ function renderRABDetail(rab) {
             
             // Jumlah ROK: default = jumlah, tapi bisa diedit manual
             const jumlahROK = item.jumlah_rok || item.jumlah
-            // Jumlah Realisasi: default = jumlah, tapi bisa diedit manual
-            const jumlahRealisasi = item.jumlah_realisasi || item.jumlah
+            // IMPORTANT: Jumlah Realisasi ALWAYS = Jumlah ROK (tidak bisa diedit terpisah)
+            const jumlahRealisasi = jumlahROK
             
             const subtotalRAB = hargaSatuanRAB * item.jumlah
             const subtotalSPK = hargaSatuanSPK * item.jumlah
-            // IMPORTANT: Subtotal Tanpa ROK = Harga Tanpa ROK × Jumlah ROK (not regular jumlah)
+            // IMPORTANT: Subtotal Tanpa ROK = Harga Tanpa ROK × Jumlah ROK
             const subtotalTanpaROK = hargaSatuanTanpaROK * jumlahROK
-            // IMPORTANT: Subtotal Realisasi = Harga Realisasi × Jumlah Realisasi (not regular jumlah)
-            const subtotalRealisasi = hargaSatuanRealisasi * jumlahRealisasi
+            // IMPORTANT: Subtotal Realisasi = Harga Realisasi × Jumlah ROK (bukan jumlah biasa)
+            const subtotalRealisasi = hargaSatuanRealisasi * jumlahROK
             
             return `
             <tr class="hover:bg-gray-50 text-xs">
@@ -898,12 +898,11 @@ function renderRABDetail(rab) {
                 </span>
               </td>
               
-              <!-- Jumlah Realisasi (Editable) -->
-              <td class="px-2 py-2 border text-center bg-purple-50 font-semibold ${canEditPrice ? 'cursor-pointer hover:bg-orange-100' : ''}" 
-                  ${canEditPrice ? `onclick="editJumlahRealisasi(${rab.id}, ${item.id}, ${jumlahRealisasi}, ${hargaSatuanRealisasi}, this)"` : ''}>
-                <span id="jumlah-realisasi-${item.id}" class="${canEditPrice ? 'inline-flex items-center gap-1' : ''}">
+              <!-- Jumlah Realisasi (Read-only, mengikuti Jumlah ROK) -->
+              <td class="px-2 py-2 border text-center bg-purple-50 font-semibold">
+                <span id="jumlah-realisasi-${item.id}" class="inline-flex items-center gap-1">
                   ${jumlahRealisasi}
-                  ${canEditPrice ? '<i class="fas fa-pencil-alt text-xs text-gray-400"></i>' : ''}
+                  <i class="fas fa-link text-xs text-gray-400" title="Mengikuti Qty ROK"></i>
                 </span>
               </td>
               
