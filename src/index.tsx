@@ -3393,8 +3393,8 @@ app.get('/api/rab/materials-tersedia', async (c) => {
     
     console.log('📦 Fetching RAB materials with status Tersedia...')
     
-    // Get all RAB items where RAB status is Tersedia
-    const query = `
+    // Try with all columns first (for local DB with new schema)
+    let query = `
       SELECT 
         ri.id,
         ri.rab_id,
@@ -3406,17 +3406,41 @@ app.get('/api/rab/materials-tersedia', async (c) => {
         ri.unit_uld,
         ri.material_gangguan_id,
         ri.is_transacted,
-        ri.jenis_barang,
         r.nomor_rab,
-        r.status as rab_status,
-        r.tanggal_rab
+        r.status as rab_status
       FROM rab_items ri
       JOIN rab r ON ri.rab_id = r.id
       WHERE r.status = 'Tersedia'
-      ORDER BY r.tanggal_rab DESC, ri.id ASC
+      ORDER BY r.created_at DESC, ri.id ASC
     `
     
-    const result = await env.DB.prepare(query).all()
+    let result
+    try {
+      result = await env.DB.prepare(query).all()
+    } catch (columnError) {
+      // Fallback: if new columns don't exist yet, use basic query
+      console.log('⚠️ New columns not found, using fallback query...')
+      query = `
+        SELECT 
+          ri.id,
+          ri.rab_id,
+          ri.nomor_lh05,
+          ri.part_number,
+          ri.material,
+          ri.mesin,
+          ri.jumlah,
+          ri.unit_uld,
+          ri.material_gangguan_id,
+          0 as is_transacted,
+          r.nomor_rab,
+          r.status as rab_status
+        FROM rab_items ri
+        JOIN rab r ON ri.rab_id = r.id
+        WHERE r.status = 'Tersedia'
+        ORDER BY r.created_at DESC, ri.id ASC
+      `
+      result = await env.DB.prepare(query).all()
+    }
     
     console.log(`✅ Found ${result.results?.length || 0} materials from RAB Tersedia`)
     
