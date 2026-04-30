@@ -317,7 +317,7 @@ function renderTable() {
     if (isTerkirim || status === 'Terkirim') {
       statusColor = 'bg-green-100 text-green-800 border-green-300'
       statusDisplay = `
-        <span class="inline-block px-3 py-2 rounded ${statusColor} font-semibold text-sm w-full">
+        <span class="inline-block px-2 py-1 rounded ${statusColor} text-xs font-semibold w-full text-center">
           ✅ Terkirim
         </span>
       `
@@ -327,9 +327,9 @@ function renderTable() {
     else if (status === 'Pengadaan' && isRabCreated) {
       statusColor = 'bg-blue-100 text-blue-800 border-blue-300'
       statusDisplay = `
-        <span class="inline-block px-3 py-2 rounded ${statusColor} font-semibold text-sm w-full">
-          🔒 Pengadaan (RAB)
-          <span class="text-xs block mt-1">📋 Dalam proses RAB</span>
+        <span class="inline-block px-2 py-1 rounded ${statusColor} text-xs font-semibold w-full text-center">
+          🔒 Pengadaan
+          <span class="text-xs block">📋 RAB</span>
         </span>
       `
       isDisabled = true
@@ -338,7 +338,7 @@ function renderTable() {
     else if (status === 'Reject') {
       statusColor = 'bg-red-100 text-red-800 border-red-300'
       statusDisplay = `
-        <span class="inline-block px-3 py-2 rounded ${statusColor} font-semibold text-sm w-full">
+        <span class="inline-block px-2 py-1 rounded ${statusColor} text-xs font-semibold w-full text-center">
           ❌ Reject
         </span>
       `
@@ -348,9 +348,9 @@ function renderTable() {
     else if ((stok > 0 || status === 'Tersedia') && isRabCreated) {
       statusColor = 'bg-purple-100 text-purple-800 border-purple-300'
       statusDisplay = `
-        <span class="inline-block px-3 py-2 rounded ${statusColor} font-semibold text-sm w-full">
-          🔒 Tersedia (RAB)
-          <span class="text-xs block mt-1">📦 Stok: ${stok} | 📋 Dalam proses RAB</span>
+        <span class="inline-block px-2 py-1 rounded ${statusColor} text-xs font-semibold w-full text-center">
+          🔒 Tersedia
+          <span class="text-xs block">📦 ${stok} | 📋 RAB</span>
         </span>
       `
       isDisabled = true
@@ -360,12 +360,12 @@ function renderTable() {
       statusColor = 'bg-purple-100 text-purple-800 border-purple-300'
       statusDisplay = `
         <select 
-          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
-          class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
+          onchange="updateStatus(${item.id}, '${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
+          class="px-2 py-1 border rounded ${statusColor} text-xs font-semibold cursor-pointer w-full">
           <option value="Tersedia" ${status === 'Tersedia' || !status ? 'selected' : ''}>Tersedia</option>
-          <option value="Pengadaan">Pengadaan (Re-order)</option>
+          <option value="Pengadaan">Pengadaan</option>
         </select>
-        <p class="text-xs text-gray-500 mt-1">📦 Stok: ${stok}</p>
+        <p class="text-xs text-gray-500 text-center mt-0.5">📦 ${stok}</p>
       `
       isDisabled = false
     }
@@ -375,14 +375,14 @@ function renderTable() {
       statusColor = 'bg-blue-100 text-blue-800 border-blue-300'
       statusDisplay = `
         <select 
-          onchange="updateStatus('${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
-          class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
+          onchange="updateStatus(${item.id}, '${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
+          class="px-2 py-1 border rounded ${statusColor} text-xs font-semibold cursor-pointer w-full">
           <option value="Pengadaan" selected>Pengadaan</option>
           <option value="N/A">N/A</option>
           <option value="Tunda">Tunda</option>
           <option value="Reject">Reject</option>
         </select>
-        <p class="text-xs text-gray-500 mt-1">📦 Stok: ${stok}</p>
+        <p class="text-xs text-gray-500 text-center mt-0.5">📦 ${stok}</p>
       `
       isDisabled = false
     }
@@ -392,13 +392,13 @@ function renderTable() {
       statusDisplay = `
         <select 
           onchange="updateStatus(${item.id}, '${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
-          class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
+          class="px-2 py-1 border rounded ${statusColor} text-xs font-semibold cursor-pointer w-full">
           <option value="Tunda" selected>Tunda</option>
           <option value="N/A">N/A</option>
           <option value="Pengadaan">Pengadaan</option>
           <option value="Reject">Reject</option>
         </select>
-        <p class="text-xs text-gray-500 mt-1">📦 Stok: ${stok}</p>
+        <p class="text-xs text-gray-500 text-center mt-0.5">📦 ${stok}</p>
       `
       isDisabled = false
     }
@@ -409,33 +409,33 @@ function renderTable() {
       statusDisplay = `
         <select 
           onchange="updateStatus(${item.id}, '${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
-          class="px-3 py-1 border rounded ${statusColor} font-semibold text-sm cursor-pointer w-full">
+          class="px-2 py-1 border rounded ${statusColor} text-xs font-semibold cursor-pointer w-full">
           <option value="N/A" ${(!status || status === 'N/A') ? 'selected' : ''}>N/A</option>
           <option value="Pengadaan" ${status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
           <option value="Tunda" ${status === 'Tunda' ? 'selected' : ''}>Tunda</option>
           <option value="Reject" ${status === 'Reject' ? 'selected' : ''}>Reject</option>
         </select>
-        <p class="text-xs text-gray-500 mt-1">📦 Stok: ${stok}</p>
+        <p class="text-xs text-gray-500 text-center mt-0.5">📦 ${stok}</p>
       `
       isDisabled = false
     }
     
     return `
-      <tr class="border-b hover:bg-gray-50">
-        <td class="px-4 py-3 text-center">${index + 1}</td>
-        <td class="px-4 py-3">
-          <a href="/dashboard/gangguan" class="text-blue-600 hover:underline font-semibold">
+      <tr class="border-b hover:bg-gray-50 align-middle transition-colors">
+        <td class="px-3 py-2.5 text-center align-middle text-sm">${index + 1}</td>
+        <td class="px-3 py-2.5 align-middle">
+          <a href="/dashboard/gangguan" class="text-blue-600 hover:underline text-xs font-semibold">
             ${item.nomorLH05}
           </a>
         </td>
-        <td class="px-4 py-3 font-semibold">${item.partNumber}</td>
-        <td class="px-4 py-3">${item.material}</td>
-        <td class="px-4 py-3">${jenisBadge}</td>
-        <td class="px-4 py-3">${item.mesin}</td>
-        <td class="px-4 py-3">${item.sn_mesin || item.snMesin || '-'}</td>
-        <td class="px-4 py-3 text-center font-semibold">${item.jumlah}</td>
-        <td class="px-4 py-3">${lokasiTujuan}</td>
-        <td class="px-4 py-3 text-center">
+        <td class="px-3 py-2.5 align-middle text-xs font-semibold">${item.partNumber}</td>
+        <td class="px-3 py-2.5 align-middle text-xs">${item.material}</td>
+        <td class="px-3 py-2.5 align-middle text-center">${jenisBadge}</td>
+        <td class="px-3 py-2.5 align-middle text-xs">${item.mesin}</td>
+        <td class="px-3 py-2.5 align-middle text-xs text-center">${item.sn_mesin || item.snMesin || '-'}</td>
+        <td class="px-3 py-2.5 text-center align-middle text-sm font-semibold">${item.jumlah}</td>
+        <td class="px-3 py-2.5 align-middle text-xs">${lokasiTujuan}</td>
+        <td class="px-2 py-2 text-center align-middle">
           ${statusDisplay}
         </td>
       </tr>

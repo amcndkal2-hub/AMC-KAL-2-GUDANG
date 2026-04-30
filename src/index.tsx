@@ -7353,16 +7353,16 @@ function getDashboardKebutuhanMaterialHTML() {
                     <table class="w-full">
                         <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
-                                <th class="px-4 py-3 text-center">No</th>
-                                <th class="px-4 py-3 text-left">Nomor LH05</th>
-                                <th class="px-4 py-3 text-left">Part Number</th>
-                                <th class="px-4 py-3 text-left">Material</th>
-                                <th class="px-4 py-3 text-left">Jenis Barang</th>
-                                <th class="px-4 py-3 text-left">Mesin</th>
-                                <th class="px-4 py-3 text-left">S/N Mesin</th>
-                                <th class="px-4 py-3 text-center">Jumlah</th>
-                                <th class="px-4 py-3 text-left">Unit/Lokasi Tujuan</th>
-                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-semibold" style="width: 50px;">No</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-semibold" style="width: 140px;">Nomor LH05</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-semibold" style="width: 130px;">Part Number</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-semibold" style="width: 200px;">Material</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-semibold" style="width: 100px;">Jenis Barang</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-semibold" style="width: 130px;">Mesin</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-semibold" style="width: 110px;">S/N Mesin</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-semibold" style="width: 70px;">Jumlah</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-semibold" style="width: 120px;">Unit/Lokasi Tujuan</th>
+                                <th class="px-2 py-2.5 text-center text-xs font-semibold" style="width: 140px;">Status</th>
                             </tr>
                         </thead>
                         <tbody id="kebutuhanTable">
