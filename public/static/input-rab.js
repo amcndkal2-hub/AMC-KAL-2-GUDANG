@@ -178,23 +178,37 @@ function renderRABMaterialsTable() {
         return;
     }
     
-    tbody.innerHTML = rabMaterials.map((item, index) => `
-        <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 border text-center">
-                <input type="checkbox" 
-                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                       data-material-id="${item.id}"
-                       data-index="${index}"
-                       onchange="toggleRABMaterialSelection(this)">
-            </td>
-            <td class="px-4 py-3 border text-sm text-gray-900">${item.nomor_lh05 || '-'}</td>
-            <td class="px-4 py-3 border text-sm font-medium text-gray-900">${item.part_number || '-'}</td>
-            <td class="px-4 py-3 border text-sm text-gray-900">${item.material || '-'}</td>
-            <td class="px-4 py-3 border text-sm text-gray-900">${item.mesin || '-'}</td>
-            <td class="px-4 py-3 border text-center text-sm text-gray-900">${item.jumlah || 0}</td>
-            <td class="px-4 py-3 border text-sm text-gray-900">${item.unit_uld || '-'}</td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = rabMaterials.map((item, index) => {
+        const isTransacted = item.is_transacted === 1;
+        const rowClass = isTransacted ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50';
+        const textClass = isTransacted ? 'text-gray-400' : 'text-gray-900';
+        const checkboxDisabled = isTransacted ? 'disabled checked' : '';
+        const checkboxClass = isTransacted 
+            ? 'w-4 h-4 text-gray-400 border-gray-300 rounded cursor-not-allowed' 
+            : 'w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer';
+        
+        return `
+            <tr class="${rowClass}">
+                <td class="px-4 py-3 border text-center">
+                    <input type="checkbox" 
+                           class="${checkboxClass}"
+                           data-material-id="${item.id}"
+                           data-index="${index}"
+                           ${checkboxDisabled}
+                           onchange="toggleRABMaterialSelection(this)">
+                </td>
+                <td class="px-4 py-3 border text-sm ${textClass}">${item.nomor_lh05 || '-'}</td>
+                <td class="px-4 py-3 border text-sm font-medium ${textClass}">${item.part_number || '-'}</td>
+                <td class="px-4 py-3 border text-sm ${textClass}">${item.material || '-'}</td>
+                <td class="px-4 py-3 border text-sm ${textClass}">${item.mesin || '-'}</td>
+                <td class="px-4 py-3 border text-center text-sm ${textClass}">${item.jumlah || 0}</td>
+                <td class="px-4 py-3 border text-sm ${textClass}">
+                    ${item.unit_uld || '-'}
+                    ${isTransacted ? '<span class="ml-2 text-xs text-green-600 font-semibold">✓ Sudah ditransaksikan</span>' : ''}
+                </td>
+            </tr>
+        `;
+    }).join('');
     
     console.log('✅ Table rendered successfully');
 }
@@ -202,7 +216,7 @@ function renderRABMaterialsTable() {
 // Toggle select all
 function toggleSelectAllRAB() {
     const selectAll = document.getElementById('selectAllRAB');
-    const checkboxes = document.querySelectorAll('input[type="checkbox"][data-material-id]');
+    const checkboxes = document.querySelectorAll('input[type="checkbox"][data-material-id]:not([disabled])');
     
     checkboxes.forEach(cb => {
         cb.checked = selectAll.checked;
@@ -212,15 +226,39 @@ function toggleSelectAllRAB() {
 
 // Toggle material selection
 function toggleRABMaterialSelection(checkbox) {
+    // Skip if checkbox is disabled (already transacted)
+    if (checkbox.disabled) {
+        return;
+    }
+    
     const materialId = parseInt(checkbox.dataset.materialId);
     const index = parseInt(checkbox.dataset.index);
     const material = rabMaterials[index];
     
+    // Skip if material is already transacted
+    if (material && material.is_transacted === 1) {
+        checkbox.checked = true; // Keep it checked
+        checkbox.disabled = true; // Ensure it stays disabled
+        return;
+    }
+    
     if (checkbox.checked) {
         if (material && !selectedMaterials.find(m => m.material_gangguan_id === materialId)) {
             selectedMaterials.push(material);
+            // Disable the checkbox immediately after selection
+            checkbox.disabled = true;
+            const row = checkbox.closest('tr');
+            if (row) {
+                row.classList.remove('hover:bg-gray-50');
+                row.classList.add('bg-gray-100', 'opacity-60');
+                row.querySelectorAll('td').forEach(td => {
+                    td.classList.remove('text-gray-900');
+                    td.classList.add('text-gray-400');
+                });
+            }
         }
     } else {
+        // Should not happen since we disable after check, but keep for safety
         selectedMaterials = selectedMaterials.filter(m => m.material_gangguan_id !== materialId);
         // Uncheck select all if any checkbox is unchecked
         const selectAll = document.getElementById('selectAllRAB');

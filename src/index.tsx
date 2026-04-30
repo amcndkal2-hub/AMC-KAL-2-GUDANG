@@ -3404,8 +3404,12 @@ app.get('/api/rab/materials-tersedia', async (c) => {
         ri.mesin,
         ri.jumlah,
         ri.unit_uld,
+        ri.material_gangguan_id,
+        ri.is_transacted,
+        ri.jenis_barang,
         r.nomor_rab,
-        r.status as rab_status
+        r.status as rab_status,
+        r.tanggal_rab
       FROM rab_items ri
       JOIN rab r ON ri.rab_id = r.id
       WHERE r.status = 'Tersedia'
@@ -3553,6 +3557,26 @@ app.post('/api/save-transaction-from-rab', async (c) => {
             console.log(`✅ Updated material_gangguan ${material.material_gangguan_id} to Tersedia`)
           } catch (updateMatError) {
             console.error(`⚠️ Failed to update material_gangguan ${material.material_gangguan_id}:`, updateMatError)
+          }
+        }
+      }
+    }
+    
+    // Mark selected RAB items as transacted
+    if (data.rab_id && data.materials && data.materials.length > 0) {
+      for (const material of data.materials) {
+        if (material.material_gangguan_id) {
+          try {
+            // Update is_transacted flag for this specific RAB item
+            await env.DB.prepare(`
+              UPDATE rab_items 
+              SET is_transacted = 1
+              WHERE rab_id = ? AND material_gangguan_id = ?
+            `).bind(data.rab_id, material.material_gangguan_id).run()
+            
+            console.log(`✅ Marked rab_item (rab_id=${data.rab_id}, material_gangguan_id=${material.material_gangguan_id}) as transacted`)
+          } catch (markError) {
+            console.error(`⚠️ Failed to mark rab_item as transacted:`, markError)
           }
         }
       }
