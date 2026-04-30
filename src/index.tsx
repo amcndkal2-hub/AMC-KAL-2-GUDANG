@@ -3393,7 +3393,7 @@ app.get('/api/rab/materials-tersedia', async (c) => {
     
     console.log('📦 Fetching RAB materials with status Tersedia...')
     
-    // Basic query that works with old and new schema
+    // Ultra-safe query with only guaranteed columns
     const query = `
       SELECT 
         ri.id,
@@ -3404,27 +3404,25 @@ app.get('/api/rab/materials-tersedia', async (c) => {
         ri.mesin,
         ri.jumlah,
         ri.unit_uld,
-        ri.material_gangguan_id,
         r.nomor_rab,
         r.status as rab_status
       FROM rab_items ri
       JOIN rab r ON ri.rab_id = r.id
       WHERE r.status = 'Tersedia'
-      ORDER BY r.created_at DESC, ri.id ASC
+      ORDER BY ri.id ASC
     `
     
     const result = await env.DB.prepare(query).all()
     
-    // Try to get is_transacted value if column exists
-    const materials = (result.results || []).map(item => {
-      // Default to 0 (not transacted) if column doesn't exist
-      return {
-        ...item,
-        is_transacted: item.is_transacted !== undefined ? item.is_transacted : 0
-      }
-    })
+    console.log(`✅ Found ${result.results?.length || 0} materials from RAB Tersedia`)
     
-    console.log(`✅ Found ${materials.length} materials from RAB Tersedia`)
+    // Add default values for new fields
+    const materials = (result.results || []).map(item => ({
+      ...item,
+      material_gangguan_id: item.material_gangguan_id || null,
+      jenis_barang: item.jenis_barang || '-',
+      is_transacted: 0  // Always 0 for now (all items selectable)
+    }))
     
     return c.json({
       success: true,
