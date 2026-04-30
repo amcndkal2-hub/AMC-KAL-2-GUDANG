@@ -3393,8 +3393,8 @@ app.get('/api/rab/materials-tersedia', async (c) => {
     
     console.log('📦 Fetching RAB materials with status Tersedia...')
     
-    // Try with all columns first (for local DB with new schema)
-    let query = `
+    // Basic query that works with old and new schema
+    const query = `
       SELECT 
         ri.id,
         ri.rab_id,
@@ -3405,7 +3405,6 @@ app.get('/api/rab/materials-tersedia', async (c) => {
         ri.jumlah,
         ri.unit_uld,
         ri.material_gangguan_id,
-        ri.is_transacted,
         r.nomor_rab,
         r.status as rab_status
       FROM rab_items ri
@@ -3414,40 +3413,23 @@ app.get('/api/rab/materials-tersedia', async (c) => {
       ORDER BY r.created_at DESC, ri.id ASC
     `
     
-    let result
-    try {
-      result = await env.DB.prepare(query).all()
-    } catch (columnError) {
-      // Fallback: if new columns don't exist yet, use basic query
-      console.log('⚠️ New columns not found, using fallback query...')
-      query = `
-        SELECT 
-          ri.id,
-          ri.rab_id,
-          ri.nomor_lh05,
-          ri.part_number,
-          ri.material,
-          ri.mesin,
-          ri.jumlah,
-          ri.unit_uld,
-          ri.material_gangguan_id,
-          0 as is_transacted,
-          r.nomor_rab,
-          r.status as rab_status
-        FROM rab_items ri
-        JOIN rab r ON ri.rab_id = r.id
-        WHERE r.status = 'Tersedia'
-        ORDER BY r.created_at DESC, ri.id ASC
-      `
-      result = await env.DB.prepare(query).all()
-    }
+    const result = await env.DB.prepare(query).all()
     
-    console.log(`✅ Found ${result.results?.length || 0} materials from RAB Tersedia`)
+    // Try to get is_transacted value if column exists
+    const materials = (result.results || []).map(item => {
+      // Default to 0 (not transacted) if column doesn't exist
+      return {
+        ...item,
+        is_transacted: item.is_transacted !== undefined ? item.is_transacted : 0
+      }
+    })
+    
+    console.log(`✅ Found ${materials.length} materials from RAB Tersedia`)
     
     return c.json({
       success: true,
-      materials: result.results || [],
-      count: result.results?.length || 0
+      materials: materials,
+      count: materials.length
     })
   } catch (error) {
     console.error('❌ Failed to get RAB materials tersedia:', error)
