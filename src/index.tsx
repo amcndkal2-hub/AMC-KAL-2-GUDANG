@@ -11979,83 +11979,53 @@ function getDashboardListRABHTML() {
         </nav>
 
         <div class="container mx-auto px-4 py-6">
-            <!-- Main Content with Sidebar -->
-            <div class="flex gap-6">
-                <!-- Sidebar Filter -->
-                <div class="w-64 flex-shrink-0">
-                    <!-- Filter Status -->
-                    <div class="bg-white rounded-lg shadow-md p-4 mb-4">
-                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
-                            <i class="fas fa-filter mr-2 text-blue-600"></i>
-                            Filter Status
-                        </h3>
-                        <div class="space-y-2">
-                            <button onclick="filterByStatus('All')" id="btnAll" 
-                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-                                <i class="fas fa-th-large mr-2"></i>Semua
-                            </button>
-                            <button onclick="filterByStatus('Draft')" id="btnDraft" 
-                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-edit mr-2"></i>Draft
-                            </button>
-                            <button onclick="filterByStatus('Pengadaan')" id="btnPengadaan" 
-                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-shopping-cart mr-2"></i>Pengadaan
-                            </button>
-                            <button onclick="filterByStatus('Tersedia')" id="btnTersedia" 
-                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-check-circle mr-2"></i>Tersedia
-                            </button>
-                            <button onclick="filterByStatus('Masuk Gudang')" id="btnMasukGudang" 
-                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-warehouse mr-2"></i>Masuk Gudang
-                            </button>
+            <!-- Main Content (Full Width) -->
+            <div>
+                <!-- Header -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                                <i class="fas fa-list-alt text-blue-600 mr-3"></i>
+                                Daftar RAB (Rencana Anggaran Biaya)
+                            </h1>
+                            <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
                         </div>
                     </div>
-
-                    <!-- Filter Jenis RAB -->
-                    <div class="bg-white rounded-lg shadow-md p-4">
-                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
-                            <i class="fas fa-list mr-2 text-green-600"></i>
-                            Filter Jenis RAB
-                        </h3>
-                        <div class="space-y-2">
-                            <button onclick="filterByJenis('All')" id="btnJenisAll" 
-                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
-                                <i class="fas fa-th-large mr-2"></i>Semua
-                            </button>
-                            <button onclick="filterByJenis('SPK')" id="btnJenisSPK" 
-                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-file-contract mr-2"></i>SPK
-                            </button>
-                            <button onclick="filterByJenis('Pembelian Langsung')" id="btnJenisPembelianLangsung" 
-                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-shopping-bag mr-2"></i>Pembelian Langsung
-                            </button>
-                            <button onclick="filterByJenis('KHS')" id="btnJenisKHS" 
-                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-handshake mr-2"></i>KHS
-                            </button>
+                    
+                    <!-- Horizontal Filters -->
+                    <div class="mt-6 flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-filter text-blue-600"></i>
+                            <label class="text-sm font-semibold text-gray-700">Filter Status:</label>
+                            <select id="filterStatusDropdown" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="All">Semua</option>
+                                <option value="Draft">Draft</option>
+                                <option value="Pengadaan">Pengadaan</option>
+                                <option value="Tersedia">Tersedia</option>
+                                <option value="Masuk Gudang">Masuk Gudang</option>
+                            </select>
                         </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-list text-green-600"></i>
+                            <label class="text-sm font-semibold text-gray-700">Filter Jenis:</label>
+                            <select id="filterJenisDropdown" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="All">Semua</option>
+                                <option value="SPK">SPK</option>
+                                <option value="Pembelian Langsung">Pembelian Langsung</option>
+                                <option value="KHS">KHS</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="applyFilters()" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">
+                            <i class="fas fa-search"></i>
+                            Terapkan
+                        </button>
                     </div>
                 </div>
 
-                <!-- Main Content Area -->
-                <div class="flex-1">
-                    <!-- Header -->
-                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                                    <i class="fas fa-list-alt text-blue-600 mr-3"></i>
-                                    Daftar RAB (Rencana Anggaran Biaya)
-                                </h1>
-                                <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Main Table -->
+                <!-- Main Table -->
                     <div class="bg-white rounded-lg shadow-md">
                         <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
                             <table class="min-w-full border">

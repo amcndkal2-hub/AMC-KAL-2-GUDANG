@@ -515,8 +515,21 @@ function filterByJenis(jenis) {
   }
 }
 
-// Apply all filters
+// Apply all filters (called by "Terapkan" button)
 function applyFilters() {
+  // Get values from dropdowns
+  const statusDropdown = document.getElementById('filterStatusDropdown')
+  const jenisDropdown = document.getElementById('filterJenisDropdown')
+  
+  if (statusDropdown) {
+    currentStatusFilter = statusDropdown.value
+  }
+  
+  if (jenisDropdown) {
+    currentJenisFilter = jenisDropdown.value
+  }
+  
+  // Filter the list
   filteredRABList = allRABList.filter(rab => {
     // Status filter
     const statusMatch = currentStatusFilter === 'All' || rab.status === currentStatusFilter
@@ -529,6 +542,8 @@ function applyFilters() {
   
   sortRABByStatus()
   renderRABList(filteredRABList)
+  
+  console.log(`✅ Filters applied: Status="${currentStatusFilter}", Jenis="${currentJenisFilter}", Results=${filteredRABList.length}`)
 }
 
 // Update RAB status
