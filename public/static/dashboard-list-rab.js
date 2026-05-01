@@ -17,17 +17,25 @@ let spkData = [] // Store SPK data for matching
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded, loading data...')
   
-  // Load SPK data for Status SCM matching
-  await loadSPKData()
+  // IMPORTANT: Load SPK data FIRST and wait for it to complete
+  console.log('⏳ Step 1: Loading SPK data (MUST complete first)...')
+  const spkLoaded = await loadSPKData()
+  
+  if (spkLoaded) {
+    console.log('✅ Step 2: SPK data loaded successfully, now loading RAB list...')
+  } else {
+    console.warn('⚠️ SPK data failed to load, continuing with RAB list...')
+  }
   
   await loadRABList()
+  console.log('✅ Step 3: RAB list loaded and rendered with SPK data')
   
   // Start auto-check every 2 minutes (120000 ms)
   console.log('Starting auto-check timer (2 minutes)...')
   autoCheckInterval = setInterval(async () => {
     console.log('⏱️ Auto-check triggered...')
     await loadSPKData() // Refresh SPK data
-    await autoCheckRABStatus()
+    await loadRABList() // Re-render RAB list with new SPK data
   }, 120000) // 2 minutes
   
   console.log('✅ Auto-check timer started')
@@ -82,10 +90,12 @@ async function loadSPKData() {
     }
     
     console.log(`✅ Parsed ${spkData.length} valid SPK records for matching`)
+    console.log('📋 Sample SPK data (first 3):', spkData.slice(0, 3))
     
     return true
   } catch (error) {
     console.error('❌ Failed to load SPK data:', error)
+    console.error('Error details:', error.message)
     return false
   }
 }
@@ -96,6 +106,16 @@ function getSPKDataByTOR(nomorTOR) {
     return {
       statusSCM: 'Belum ada di Pengadaan',
       namaPekerjaan: '-',
+      nomorIP: '-'
+    }
+  }
+  
+  // Check if SPK data is loaded
+  if (!spkData || spkData.length === 0) {
+    console.warn('⚠️ SPK data is empty! Cannot match TOR:', nomorTOR)
+    return {
+      statusSCM: 'Loading...',
+      namaPekerjaan: 'Loading...',
       nomorIP: '-'
     }
   }
@@ -111,7 +131,7 @@ function getSPKDataByTOR(nomorTOR) {
   }
   
   if (match) {
-    console.log(`✅ TOR matched: ${nomorTOR} → Status: ${match.statusSCM}, IP: ${match.nomorIP}`)
+    console.log(`✅ TOR matched: ${nomorTOR} → Status: ${match.statusSCM}, IP: ${match.nomorIP}, Nama: ${match.namaPekerjaan.substring(0, 50)}...`)
     return {
       statusSCM: match.statusSCM,
       namaPekerjaan: match.namaPekerjaan,
@@ -119,6 +139,7 @@ function getSPKDataByTOR(nomorTOR) {
     }
   }
   
+  console.warn(`⚠️ No match found for TOR: ${nomorTOR}`)
   return {
     statusSCM: 'Belum ada di Pengadaan',
     namaPekerjaan: '-',
