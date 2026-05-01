@@ -231,6 +231,20 @@ function getSCMStatusColor(status) {
   return 'bg-blue-500 text-white'
 }
 
+// Truncate status to first 3 words
+function truncateStatus(status) {
+  if (!status || status === '-') return status
+  
+  const words = status.split(' ')
+  
+  // Take first 3 words only
+  if (words.length > 3) {
+    return words.slice(0, 3).join(' ')
+  }
+  
+  return status
+}
+
 // Add styles for animation
 const style = document.createElement('style')
 style.textContent = `
@@ -461,11 +475,11 @@ function renderRABList(rabList) {
       </td>
       <td class="px-2 py-2 border text-center align-middle">
         <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getSCMStatusColor(spkData.status)}">
-          ${spkData.status}
+          ${truncateStatus(spkData.status)}
         </span>
       </td>
       <td class="px-2 py-2 border text-left align-middle">
-        <span class="text-gray-700 text-xs">${spkData.nama_pekerjaan}</span>
+        <span class="text-gray-700 text-[10px]">${spkData.nama_pekerjaan}</span>
       </td>
       <td class="px-2 py-2 border text-center align-middle">
         <span class="text-gray-700 font-mono text-xs">${spkData.nomor_spk}</span>
