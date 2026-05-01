@@ -129,14 +129,31 @@ async function loadSPKData() {
   }
 }
 
-// Extract TOR number from Keterangan field
-function extractTORFromKeterangan(keterangan) {
-  if (!keterangan) return null
+// Extract TOR components (3 last digits + year) for matching
+function extractTORComponents(torString) {
+  if (!torString) return null
   
-  // Pattern: 0120/TOR/AMC/PLND-UPKAL2/IV/2025
-  const regex = /(\d{4}\/TOR\/[A-Z0-9\/\-]+\/[IVX]+\/\d{4})/i
-  const match = keterangan.match(regex)
-  return match ? match[1] : null
+  // Pattern: 123/TOR/AMC/PLND-UPKAL2/IV/2026 or 0123/TOR/AMC/PLND-UPKAL2/IV/2026
+  const regex = /(\d{3,4})\/TOR\/[A-Z0-9\/\-]+\/[IVX]+\/(\d{4})/i
+  const match = torString.match(regex)
+  
+  if (!match) return null
+  
+  // Get last 3 digits of the first number and the year
+  const number = match[1].slice(-3) // "123" or "0123" → "123"
+  const year = match[2]              // "2026"
+  
+  return { number, year }
+}
+
+// Match two TOR strings based on last 3 digits + year
+function matchTOR(tor1, tor2) {
+  const comp1 = extractTORComponents(tor1)
+  const comp2 = extractTORComponents(tor2)
+  
+  if (!comp1 || !comp2) return false
+  
+  return comp1.number === comp2.number && comp1.year === comp2.year
 }
 
 // Get SPK Status by TOR number
@@ -144,8 +161,7 @@ function getSPKStatusByTOR(nomorTOR) {
   if (!nomorTOR || allSPKData.length === 0) return '-'
   
   const spkItem = allSPKData.find(item => {
-    const extractedTOR = extractTORFromKeterangan(item.keterangan)
-    return extractedTOR === nomorTOR
+    return matchTOR(nomorTOR, item.keterangan)
   })
   
   return spkItem ? spkItem.status : '-'
