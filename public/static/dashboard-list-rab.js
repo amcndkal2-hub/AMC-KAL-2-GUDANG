@@ -121,7 +121,15 @@ async function loadSPKData() {
     }
     
     console.log(`✅ Parsed ${spkData.length} valid SPK records for matching`)
-    console.log('📋 Sample SPK data (first 3):', spkData.slice(0, 3))
+    console.log('📋 Sample SPK data (first 5):')
+    spkData.slice(0, 5).forEach((item, index) => {
+      console.log(`   ${index + 1}. TOR: "${item.nomorTOR}" → Status: "${item.statusSCM}"`)
+      console.log(`      IP: "${item.nomorIP}" | Nama: "${item.namaPekerjaan.substring(0, 60)}..."`)
+    })
+    
+    // Log all unique TOR numbers for debugging
+    const allTORs = spkData.map(item => item.nomorTOR)
+    console.log(`📋 All TOR numbers in SPK data (${allTORs.length} total):`, allTORs)
     
     return true
   } catch (error) {
@@ -437,6 +445,9 @@ function renderRABList(rabList) {
   const isRealisasi = username === 'realisasi'
   const isAMC = username === 'AMC@12345'
   
+  console.log('🎨 Rendering RAB list with', rabList.length, 'items')
+  console.log('📊 SPK data available:', spkData.length, 'records')
+  
   if (rabList.length === 0) {
     // Adjust colspan based on page (Realisasi has fewer columns)
     // List RAB: 12 columns (No, Nomor RAB, No. TOR, Jenis RAB, Tanggal, Jumlah Item, Total Harga, Status, Aksi, Status SCM, Nama Pekerjaan, Ijin Prinsip)
@@ -545,9 +556,12 @@ function renderRABList(rabList) {
       <td class="px-3 py-3 border text-center align-middle">
         ${(rab.jenis_rab === 'SPK') ? (() => {
           // Get SPK data by matching TOR
+          console.log(`🔍 Matching TOR for RAB ${rab.nomor_rab}: "${rab.nomor_tor}"`)
           const spkData = getSPKDataByTOR(rab.nomor_tor)
           const statusSCM = spkData.statusSCM
           const isNotFound = statusSCM === 'Belum ada di Pengadaan'
+          
+          console.log(`   → Result: Status="${statusSCM}", Nama="${spkData.namaPekerjaan.substring(0, 40)}...", IP="${spkData.nomorIP}"`)
           
           // Get status badge color
           let statusColor = 'bg-gray-100 text-gray-800'
