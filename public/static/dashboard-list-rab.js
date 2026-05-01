@@ -153,8 +153,11 @@ function sortRABByStatus() {
 
 // Render RAB list
 function renderRABList(rabList) {
-  const tableBody = document.getElementById('rabTableBody')
-  if (!tableBody) return
+  const tableBody = document.getElementById('rabListTable')
+  if (!tableBody) {
+    console.error('❌ Table body element not found! ID: rabListTable')
+    return
+  }
   
   console.log(`📊 Rendering ${rabList.length} RAB items`)
   
