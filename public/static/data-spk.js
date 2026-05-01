@@ -1,17 +1,19 @@
-// Data SPK JavaScript
+// Data SPK - AMC Material System
+console.log('Data SPK script loaded')
+
 let allData = []
 let filteredData = []
 
 // Load data on page load
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Data SPK page loaded')
+  console.log('DOM loaded, loading SPK data...')
   await loadData()
 })
 
 // Load data from GitHub JSON
 async function loadData() {
   try {
-    console.log('🔄 Loading data from GitHub...')
+    console.log('🔄 Loading SPK data from GitHub...')
     
     const jsonUrl = 'https://raw.githubusercontent.com/ipanrifan-create/DATA-SPK/refs/heads/main/data_scm.json'
     const response = await fetch(jsonUrl)
@@ -25,22 +27,22 @@ async function loadData() {
     
     console.log(`📦 Loaded ${records.length} records from JSON`)
     
-    // Parse data (skip header rows)
+    // Parse data (skip first 2 rows: header and column names)
     allData = []
     for (let i = 2; i < records.length; i++) {
       const row = records[i]
       if (!row || row.length < 17) continue
       
       allData.push({
-        no: row[0],
+        no: row[0] || '-',
         nomor_ip: row[1] || '-',
         bidang: row[2] || '-',
         unit_pelaksana: row[3] || '-',
         metode_pengadaan: row[4] || '-',
         jenis_item: row[5] || '-',
-        nilai: row[6] || '0',
-        ppn: row[7] || '0',
-        total: row[8] || '0',
+        nilai: parseFloat(row[6]) || 0,
+        ppn: parseFloat(row[7]) || 0,
+        total: parseFloat(row[8]) || 0,
         project: row[9] || '-',
         keterangan: row[10] || '-',
         status: row[11] || '-',
@@ -54,43 +56,23 @@ async function loadData() {
     
     console.log(`✅ Parsed ${allData.length} valid records`)
     
-    // Populate filters
+    // Populate filter options
     populateFilters()
     
     // Display data
     filteredData = [...allData]
     renderTable()
-    
-    // Update info
-    document.getElementById('dataInfo').innerHTML = `
-      <i class="fas fa-info-circle mr-1"></i>
-      Total <strong>${allData.length}</strong> records loaded from GitHub
-      <span class="ml-4">
-        <i class="fas fa-clock mr-1"></i>
-        Last updated: ${new Date().toLocaleString('id-ID')}
-      </span>
-    `
+    updateDataInfo()
     
   } catch (error) {
     console.error('❌ Failed to load data:', error)
-    document.getElementById('dataTableBody').innerHTML = `
-      <tr>
-        <td colspan="17" class="px-4 py-8 text-center text-red-600">
-          <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-          <p class="font-semibold">Gagal memuat data</p>
-          <p class="text-sm">${error.message}</p>
-          <button onclick="loadData()" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-            <i class="fas fa-sync-alt mr-2"></i>Coba Lagi
-          </button>
-        </td>
-      </tr>
-    `
+    showError('Gagal memuat data SPK: ' + error.message)
   }
 }
 
 // Populate filter dropdowns
 function populateFilters() {
-  // Get unique values
+  // Get unique Bidang values
   const bidangSet = new Set()
   const statusSet = new Set()
   
@@ -101,48 +83,50 @@ function populateFilters() {
   
   // Populate Bidang filter
   const filterBidang = document.getElementById('filterBidang')
-  const bidangOptions = Array.from(bidangSet).sort()
-  bidangOptions.forEach(bidang => {
-    const option = document.createElement('option')
-    option.value = bidang
-    option.textContent = bidang
-    filterBidang.appendChild(option)
+  filterBidang.innerHTML = '<option value="">Semua Bidang</option>'
+  Array.from(bidangSet).sort().forEach(bidang => {
+    filterBidang.innerHTML += `<option value="${bidang}">${bidang}</option>`
   })
   
   // Populate Status filter
   const filterStatus = document.getElementById('filterStatus')
-  const statusOptions = Array.from(statusSet).sort()
-  statusOptions.forEach(status => {
-    const option = document.createElement('option')
-    option.value = status
-    option.textContent = status
-    filterStatus.appendChild(option)
+  filterStatus.innerHTML = '<option value="">Semua Status</option>'
+  Array.from(statusSet).sort().forEach(status => {
+    filterStatus.innerHTML += `<option value="${status}">${status}</option>`
   })
 }
 
 // Filter data
 function filterData() {
-  const bidangFilter = document.getElementById('filterBidang').value
-  const statusFilter = document.getElementById('filterStatus').value
-  const searchText = document.getElementById('searchBox').value.toLowerCase()
+  const bidang = document.getElementById('filterBidang').value
+  const status = document.getElementById('filterStatus').value
+  const search = document.getElementById('searchBox').value.toLowerCase()
   
   filteredData = allData.filter(item => {
     // Filter by Bidang
-    if (bidangFilter && item.bidang !== bidangFilter) return false
+    if (bidang && item.bidang !== bidang) return false
     
     // Filter by Status
-    if (statusFilter && item.status !== statusFilter) return false
+    if (status && item.status !== status) return false
     
-    // Filter by search text
-    if (searchText) {
-      const searchableText = `${item.nomor_ip} ${item.keterangan} ${item.project} ${item.nomor_spk}`.toLowerCase()
-      if (!searchableText.includes(searchText)) return false
+    // Filter by search
+    if (search) {
+      const searchableText = [
+        item.nomor_ip,
+        item.keterangan,
+        item.project,
+        item.nomor_spk,
+        item.dibuat_oleh
+      ].join(' ').toLowerCase()
+      
+      if (!searchableText.includes(search)) return false
     }
     
     return true
   })
   
   renderTable()
+  updateDataInfo()
 }
 
 // Render table
@@ -153,7 +137,7 @@ function renderTable() {
     tbody.innerHTML = `
       <tr>
         <td colspan="17" class="px-4 py-8 text-center text-gray-500">
-          <i class="fas fa-inbox text-3xl mb-2"></i>
+          <i class="fas fa-inbox text-4xl mb-2"></i>
           <p>Tidak ada data yang ditampilkan</p>
         </td>
       </tr>
@@ -162,137 +146,182 @@ function renderTable() {
   }
   
   tbody.innerHTML = filteredData.map((item, index) => {
-    // Format currency
-    const formatCurrency = (value) => {
-      if (!value || value === '-' || value === '0') return '-'
-      const num = parseFloat(value.toString().replace(/\./g, '').replace(/,/g, ''))
-      if (isNaN(num)) return value
-      return new Intl.NumberFormat('id-ID').format(num)
+    // Get status badge color
+    let statusColor = 'bg-gray-100 text-gray-800'
+    if (item.status.includes('Acc') || item.status.includes('Disetujui')) {
+      statusColor = 'bg-green-100 text-green-800'
+    } else if (item.status.includes('Menunggu')) {
+      statusColor = 'bg-yellow-100 text-yellow-800'
+    } else if (item.status.includes('Reject')) {
+      statusColor = 'bg-red-100 text-red-800'
     }
-    
-    // Status badge color
-    let statusColor = 'gray'
-    if (item.status.includes('Acc')) statusColor = 'green'
-    else if (item.status.includes('Menunggu')) statusColor = 'yellow'
-    else if (item.status.includes('Reject')) statusColor = 'red'
     
     return `
       <tr class="hover:bg-blue-50 transition-colors">
-        <td class="px-3 py-2 text-xs text-gray-900 border-r">${index + 1}</td>
-        <td class="px-3 py-2 text-xs text-gray-900 font-semibold border-r whitespace-nowrap">${item.nomor_ip}</td>
-        <td class="px-3 py-2 text-xs border-r">
-          <span class="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
-            ${item.bidang}
-          </span>
+        <td class="px-3 py-2 text-center text-xs border-r border-gray-200">${index + 1}</td>
+        <td class="px-3 py-2 text-xs font-mono border-r border-gray-200">${item.nomor_ip}</td>
+        <td class="px-3 py-2 text-xs border-r border-gray-200">
+          <span class="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">${item.bidang}</span>
         </td>
-        <td class="px-3 py-2 text-xs text-gray-700 border-r whitespace-nowrap">${item.unit_pelaksana}</td>
-        <td class="px-3 py-2 text-xs text-gray-700 border-r whitespace-nowrap">${item.metode_pengadaan}</td>
-        <td class="px-3 py-2 text-xs border-r">
-          <span class="px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
-            ${item.jenis_item}
-          </span>
+        <td class="px-3 py-2 text-xs border-r border-gray-200">${item.unit_pelaksana}</td>
+        <td class="px-3 py-2 text-xs border-r border-gray-200">${item.metode_pengadaan}</td>
+        <td class="px-3 py-2 text-xs border-r border-gray-200">
+          <span class="inline-block px-2 py-0.5 bg-purple-100 text-purple-800 rounded text-xs font-medium">${item.jenis_item}</span>
         </td>
-        <td class="px-3 py-2 text-xs text-right text-gray-900 font-mono border-r whitespace-nowrap">
-          ${formatCurrency(item.nilai)}
+        <td class="px-3 py-2 text-right text-xs font-semibold border-r border-gray-200">${formatRupiah(item.nilai)}</td>
+        <td class="px-3 py-2 text-right text-xs font-semibold border-r border-gray-200">${formatRupiah(item.ppn)}</td>
+        <td class="px-3 py-2 text-right text-xs font-bold bg-yellow-50 border-r border-gray-200">${formatRupiah(item.total)}</td>
+        <td class="px-3 py-2 text-xs border-r border-gray-200" style="max-width: 250px;">
+          <div class="truncate" title="${item.project}">${item.project}</div>
         </td>
-        <td class="px-3 py-2 text-xs text-right text-gray-900 font-mono border-r whitespace-nowrap">
-          ${formatCurrency(item.ppn)}
+        <td class="px-3 py-2 text-xs border-r border-gray-200" style="max-width: 300px;">
+          <div class="truncate" title="${item.keterangan}">${item.keterangan}</div>
         </td>
-        <td class="px-3 py-2 text-xs text-right text-gray-900 font-semibold font-mono border-r whitespace-nowrap bg-yellow-50">
-          ${formatCurrency(item.total)}
+        <td class="px-3 py-2 text-xs border-r border-gray-200">
+          <span class="inline-block px-2 py-1 ${statusColor} rounded text-xs font-medium whitespace-normal">${item.status}</span>
         </td>
-        <td class="px-3 py-2 text-xs text-gray-700 border-r" style="max-width: 250px;">
-          <div class="truncate" title="${item.project}">
-            ${item.project}
-          </div>
-        </td>
-        <td class="px-3 py-2 text-xs text-gray-700 border-r" style="max-width: 300px;">
-          <div class="truncate" title="${item.keterangan}">
-            ${item.keterangan}
-          </div>
-        </td>
-        <td class="px-3 py-2 text-xs border-r">
-          <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
-            statusColor === 'green' ? 'bg-green-100 text-green-800' :
-            statusColor === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
-            statusColor === 'red' ? 'bg-red-100 text-red-800' :
-            'bg-gray-100 text-gray-800'
-          }">
-            ${item.status}
-          </span>
-        </td>
-        <td class="px-3 py-2 text-xs text-gray-700 border-r whitespace-nowrap">${item.tgl_disetujui}</td>
-        <td class="px-3 py-2 text-xs text-gray-900 font-medium border-r whitespace-nowrap">${item.nomor_spk}</td>
-        <td class="px-3 py-2 text-xs text-gray-700 border-r whitespace-nowrap">${item.dibuat_oleh}</td>
-        <td class="px-3 py-2 text-xs text-gray-700 font-mono border-r whitespace-nowrap">${item.nip}</td>
-        <td class="px-3 py-2 text-xs text-gray-700 whitespace-nowrap">${item.tgl_dibuat}</td>
+        <td class="px-3 py-2 text-xs text-center border-r border-gray-200">${item.tgl_disetujui}</td>
+        <td class="px-3 py-2 text-xs font-mono border-r border-gray-200">${item.nomor_spk}</td>
+        <td class="px-3 py-2 text-xs border-r border-gray-200">${item.dibuat_oleh}</td>
+        <td class="px-3 py-2 text-xs font-mono border-r border-gray-200">${item.nip}</td>
+        <td class="px-3 py-2 text-xs text-center">${item.tgl_dibuat}</td>
       </tr>
     `
   }).join('')
 }
 
+// Update data info
+function updateDataInfo() {
+  const info = document.getElementById('dataInfo')
+  const now = new Date().toLocaleString('id-ID')
+  info.innerHTML = `
+    <i class="fas fa-info-circle mr-2"></i>
+    Menampilkan <strong>${filteredData.length}</strong> dari <strong>${allData.length}</strong> data | 
+    Terakhir diupdate: ${now}
+  `
+}
+
+// Format Rupiah
+function formatRupiah(number) {
+  if (!number || number === 0) return 'Rp 0'
+  return 'Rp ' + number.toLocaleString('id-ID')
+}
+
 // Refresh data
 async function refreshData() {
-  document.getElementById('dataTableBody').innerHTML = `
-    <tr>
-      <td colspan="17" class="px-4 py-8 text-center text-gray-500">
-        <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
-        <p>Memuat ulang data...</p>
-      </td>
-    </tr>
-  `
+  console.log('🔄 Refreshing data...')
   await loadData()
+  alert('✅ Data berhasil di-refresh!')
 }
 
 // Export to Excel
 function exportToExcel() {
-  try {
-    // Prepare data for export
-    const exportData = filteredData.map((item, index) => ({
-      'No': index + 1,
-      'Nomor Izin Prinsip': item.nomor_ip,
-      'Bidang': item.bidang,
-      'Unit Pelaksana': item.unit_pelaksana,
-      'Metode Pengadaan': item.metode_pengadaan,
-      'Jenis Item': item.jenis_item,
-      'Nilai (Rp)': item.nilai,
-      'PPN (Rp)': item.ppn,
-      'Total Nilai + PPN (Rp)': item.total,
-      'Project': item.project,
-      'Keterangan': item.keterangan,
-      'Status': item.status,
-      'Tgl Disetujui': item.tgl_disetujui,
-      'Nomor SPK': item.nomor_spk,
-      'Dibuat Oleh': item.dibuat_oleh,
-      'NIP': item.nip,
-      'Tgl Dibuat': item.tgl_dibuat
-    }))
-    
-    // Create worksheet
-    const ws = XLSX.utils.json_to_sheet(exportData)
-    
-    // Create workbook
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Data SPK')
-    
-    // Generate filename with date
-    const filename = `Data_SPK_${new Date().toISOString().split('T')[0]}.xlsx`
-    
-    // Save file
-    XLSX.writeFile(wb, filename)
-    
-    console.log('✅ Excel file exported:', filename)
-  } catch (error) {
-    console.error('❌ Failed to export Excel:', error)
-    alert('Gagal export Excel: ' + error.message)
+  if (filteredData.length === 0) {
+    alert('Tidak ada data untuk di-export')
+    return
   }
+  
+  // Prepare data for Excel
+  const excelData = [
+    [
+      'No',
+      'Nomor Izin Prinsip',
+      'Bidang',
+      'Unit Pelaksana',
+      'Metode Pengadaan',
+      'Jenis Item',
+      'Nilai (Rp)',
+      'PPN (Rp)',
+      'Total Nilai + PPN (Rp)',
+      'Project',
+      'Keterangan',
+      'Status',
+      'Tgl Disetujui',
+      'Nomor SPK',
+      'Dibuat Oleh',
+      'NIP',
+      'Tgl Dibuat'
+    ]
+  ]
+  
+  filteredData.forEach((item, index) => {
+    excelData.push([
+      index + 1,
+      item.nomor_ip,
+      item.bidang,
+      item.unit_pelaksana,
+      item.metode_pengadaan,
+      item.jenis_item,
+      item.nilai,
+      item.ppn,
+      item.total,
+      item.project,
+      item.keterangan,
+      item.status,
+      item.tgl_disetujui,
+      item.nomor_spk,
+      item.dibuat_oleh,
+      item.nip,
+      item.tgl_dibuat
+    ])
+  })
+  
+  // Create workbook
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.aoa_to_sheet(excelData)
+  
+  // Set column widths
+  ws['!cols'] = [
+    {wch: 5},   // No
+    {wch: 25},  // Nomor IP
+    {wch: 20},  // Bidang
+    {wch: 20},  // Unit Pelaksana
+    {wch: 20},  // Metode Pengadaan
+    {wch: 15},  // Jenis Item
+    {wch: 15},  // Nilai
+    {wch: 15},  // PPN
+    {wch: 18},  // Total
+    {wch: 35},  // Project
+    {wch: 50},  // Keterangan
+    {wch: 30},  // Status
+    {wch: 15},  // Tgl Disetujui
+    {wch: 20},  // Nomor SPK
+    {wch: 25},  // Dibuat Oleh
+    {wch: 15},  // NIP
+    {wch: 15}   // Tgl Dibuat
+  ]
+  
+  XLSX.utils.book_append_sheet(wb, ws, 'Data SPK')
+  
+  // Download
+  const timestamp = new Date().toISOString().slice(0, 10)
+  XLSX.writeFile(wb, `Data_SPK_${timestamp}.xlsx`)
+  
+  console.log('✅ Data exported to Excel')
 }
 
-// Logout function
+// Show error
+function showError(message) {
+  const tbody = document.getElementById('dataTableBody')
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="17" class="px-4 py-8 text-center text-red-500">
+        <i class="fas fa-exclamation-triangle text-4xl mb-2"></i>
+        <p>${message}</p>
+        <button onclick="loadData()" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+          <i class="fas fa-sync-alt mr-2"></i>Coba Lagi
+        </button>
+      </td>
+    </tr>
+  `
+}
+
+// Logout
 function logout() {
-  if (confirm('Apakah Anda yakin ingin logout?')) {
-    localStorage.removeItem('sessionToken')
-    localStorage.removeItem('username')
-    window.location.href = '/login'
+  if (confirm('Yakin ingin logout?')) {
+    fetch('/api/logout', { method: 'POST' })
+      .then(() => {
+        window.location.href = '/'
+      })
   }
 }
