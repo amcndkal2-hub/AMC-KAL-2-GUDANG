@@ -544,16 +544,37 @@ function showRABDetailModal(rab) {
   // Render items table
   const itemsTable = document.getElementById('detailItemsTable')
   if (rab.items && rab.items.length > 0) {
-    itemsTable.innerHTML = rab.items.map((item, index) => `
+    console.log('📦 RAB Items data:', rab.items)
+    console.log('📦 First item structure:', rab.items[0])
+    console.log('📦 Item keys:', Object.keys(rab.items[0]))
+    
+    itemsTable.innerHTML = rab.items.map((item, index) => {
+      // Try multiple field name variations
+      const namaMaterial = item.nama_material || item.material_name || item.name || item.material || 'undefined'
+      const qty = item.qty || item.quantity || item.jumlah || 0
+      const satuan = item.satuan || item.unit || item.uom || '-'
+      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      const total = qty * hargaSatuan
+      
+      console.log(`Item ${index + 1}:`, {
+        nama: namaMaterial,
+        qty: qty,
+        satuan: satuan,
+        harga: hargaSatuan,
+        total: total
+      })
+      
+      return `
       <tr class="border-b hover:bg-gray-50">
         <td class="px-4 py-3 text-center">${index + 1}</td>
-        <td class="px-4 py-3">${item.nama_material || item.material_name}</td>
-        <td class="px-4 py-3 text-center">${item.qty || item.quantity || 0}</td>
-        <td class="px-4 py-3 text-center">${item.satuan || item.unit || '-'}</td>
-        <td class="px-4 py-3 text-right">${formatRupiah(item.harga_satuan || item.unit_price || 0)}</td>
-        <td class="px-4 py-3 text-right font-semibold">${formatRupiah((item.qty || item.quantity || 0) * (item.harga_satuan || item.unit_price || 0))}</td>
+        <td class="px-4 py-3">${namaMaterial}</td>
+        <td class="px-4 py-3 text-center">${qty}</td>
+        <td class="px-4 py-3 text-center">${satuan}</td>
+        <td class="px-4 py-3 text-right">${formatRupiah(hargaSatuan)}</td>
+        <td class="px-4 py-3 text-right font-semibold">${formatRupiah(total)}</td>
       </tr>
-    `).join('')
+      `
+    }).join('')
   } else {
     itemsTable.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">Tidak ada item</td></tr>'
   }
