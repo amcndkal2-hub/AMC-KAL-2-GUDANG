@@ -549,11 +549,17 @@ function showRABDetailModal(rab) {
     console.log('📦 Item keys:', Object.keys(rab.items[0]))
     
     itemsTable.innerHTML = rab.items.map((item, index) => {
-      // Try multiple field name variations
+      // Try ALL possible field name variations
       const namaMaterial = item.nama_material || item.material_name || item.name || item.material || 'undefined'
       const qty = item.qty || item.quantity || item.jumlah || 0
       const satuan = item.satuan || item.unit || item.uom || '-'
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      
+      // NEW: Try to get missing fields
+      const noLH05 = item.no_lh05 || item.nomor_lh05 || item.lh05_number || item.lh05 || '-'
+      const partNumber = item.part_number || item.partNumber || item.part_no || '-'
+      const snMesin = item.sn_mesin || item.snMesin || item.serial_number || item.mesin || '-'
+      
       const total = qty * hargaSatuan
       
       console.log(`Item ${index + 1}:`, {
@@ -561,6 +567,9 @@ function showRABDetailModal(rab) {
         qty: qty,
         satuan: satuan,
         harga: hargaSatuan,
+        no_lh05: noLH05,
+        part_number: partNumber,
+        sn_mesin: snMesin,
         total: total
       })
       
@@ -568,6 +577,9 @@ function showRABDetailModal(rab) {
       <tr class="border-b hover:bg-gray-50">
         <td class="px-4 py-3 text-center">${index + 1}</td>
         <td class="px-4 py-3">${namaMaterial}</td>
+        <td class="px-4 py-3 text-center">${noLH05}</td>
+        <td class="px-4 py-3 text-center">${partNumber}</td>
+        <td class="px-4 py-3 text-center">${snMesin}</td>
         <td class="px-4 py-3 text-center">${qty}</td>
         <td class="px-4 py-3 text-center">${satuan}</td>
         <td class="px-4 py-3 text-right">${formatRupiah(hargaSatuan)}</td>
@@ -576,7 +588,7 @@ function showRABDetailModal(rab) {
       `
     }).join('')
   } else {
-    itemsTable.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">Tidak ada item</td></tr>'
+    itemsTable.innerHTML = '<tr><td colspan="9" class="px-4 py-8 text-center text-gray-500">Tidak ada item</td></tr>'
   }
   
   // Calculate totals
