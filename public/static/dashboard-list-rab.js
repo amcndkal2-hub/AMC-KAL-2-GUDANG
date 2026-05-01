@@ -10,7 +10,6 @@ let filteredRABList = []
 let currentRABDetail = null
 let currentStatusFilter = 'All' // Changed from 'Semua' to 'All'
 let currentJenisFilter = 'All' // Filter for Jenis RAB
-let pengadaanData = [] // Store Pengadaan data for Status SCM matching
 let autoCheckInterval = null // Auto-check timer
 
 // Initialize on page load
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Sync SCM data from GitHub JSON first
   await syncSCMData()
   
-  await loadPengadaanData() // Load Pengadaan data first
   await loadRABList()
   
   // Start auto-check every 2 minutes (120000 ms)
@@ -112,8 +110,7 @@ async function autoCheckRABStatus() {
     if (result.updates && result.updates.length > 0) {
       showNotification(result.updates)
       
-      // Reload RAB list and Pengadaan data
-      await loadPengadaanData()
+      // Reload RAB list only
       await loadRABList()
     }
     
@@ -226,84 +223,6 @@ async function loadRABList() {
     console.error('Failed to load RAB list:', error)
     showError('Gagal memuat daftar RAB')
   }
-}
-
-// Load Pengadaan data from Google Sheets
-async function loadPengadaanData() {
-  try {
-    console.log('Loading Pengadaan data for Status SCM...')
-    const PENGADAAN_URL = 'https://script.google.com/macros/s/AKfycbynUyVrOfSXn-X6V4HFE6YbanXJZo2tBGWEvBbTMie1DyK2wL0RM9UOvVpfoWDmuxhm/exec'
-    const response = await fetch(PENGADAAN_URL)
-    const jsonData = await response.json()
-    
-    // Extract data from "data KR" key
-    const allData = jsonData['data KR'] || []
-    console.log('Total Pengadaan rows fetched:', allData.length)
-    
-    // Filter only PEMBANGKITAN (skip header row at index 0)
-    pengadaanData = allData.slice(1).filter(item => {
-      const bidang = item.Kolom_3 || item['Kolom_3'] || ''
-      return bidang.toUpperCase().includes('PEMBANGKITAN')
-    })
-    
-    console.log('Filtered PEMBANGKITAN rows:', pengadaanData.length)
-  } catch (error) {
-    console.error('Error loading Pengadaan data:', error)
-    pengadaanData = []
-  }
-}
-
-// Extract TOR from Keterangan (same logic as Pengadaan page)
-function extractTORFromKeterangan(keterangan) {
-  if (!keterangan || keterangan === '-') return null
-  
-  // Strategy 1: Find TOR pattern anywhere in text
-  const torPattern = new RegExp('(\\d+\\/TOR\\/[A-Z0-9\\/\\-]+)', 'gi')
-  const matches = keterangan.match(torPattern)
-  
-  if (matches && matches.length > 0) {
-    return matches[0].trim()
-  }
-  
-  // Strategy 2: Look for pattern after " - "
-  const parts = keterangan.split('-')
-  if (parts.length >= 2) {
-    const lastPart = parts[parts.length - 1].trim()
-    if (lastPart.includes('TOR')) {
-      return lastPart
-    }
-  }
-  
-  return null
-}
-
-// Get Status SCM from Pengadaan data by matching TOR
-function getStatusSCM(nomorTOR) {
-  if (!nomorTOR || nomorTOR.trim() === '') {
-    return 'Belum ada di Pengadaan'
-  }
-  
-  // Find all Pengadaan rows with matching TOR
-  const matchedRows = pengadaanData.filter(item => {
-    const keterangan = item.Kolom_11 || item['Kolom_11'] || ''
-    const extractedTOR = extractTORFromKeterangan(keterangan)
-    
-    if (!extractedTOR) return false
-    
-    // Partial match
-    return extractedTOR.includes(nomorTOR) || nomorTOR.includes(extractedTOR)
-  })
-  
-  if (matchedRows.length === 0) {
-    return 'Belum ada di Pengadaan'
-  }
-  
-  // Get all unique statuses
-  const statuses = matchedRows.map(item => item.Kolom_12 || item['Kolom_12'] || '-')
-  const uniqueStatuses = [...new Set(statuses)].filter(s => s !== '-')
-  
-  // Join multiple statuses with comma
-  return uniqueStatuses.length > 0 ? uniqueStatuses.join(', ') : 'Belum ada di Pengadaan'
 }
 
 // Sort RAB by status priority
@@ -532,11 +451,11 @@ function renderRABList(rabList) {
       </td>
       <td class="px-3 py-3 border text-center align-middle">
         ${(rab.jenis_rab === 'SPK') ? (() => {
-          // Use status_scm from database if available, otherwise fallback to getStatusSCM
-          const statusSCM = rab.status_scm || getStatusSCM(rab.nomor_tor)
-          const isNotFound = statusSCM === 'Belum ada di Pengadaan' || !statusSCM
+          // Use status_scm from database only (no fallback to Pengadaan)
+          const statusSCM = rab.status_scm || null
+          const isNotFound = !statusSCM
           
-          // Get status badge color (same logic as Pengadaan page)
+          // Get status badge color
           let statusColor = 'bg-gray-100 text-gray-800'
           if (!isNotFound) {
             if (statusSCM.includes('Acc Direktur') || statusSCM.includes('Disetujui')) {
@@ -674,8 +593,7 @@ async function updateRABStatus(rabId, newStatus) {
     
     alert(successMessage)
     
-    // Reload list (with fresh Pengadaan data for Status SCM)
-    await loadPengadaanData()
+    // Reload list only
     await loadRABList()
     
   } catch (error) {
@@ -726,8 +644,7 @@ async function updateNomorTOR(rabId, nomorTOR) {
     console.log('No. TOR updated:', result)
     
     // Success message (silent - no alert, just reload)
-    // Reload Pengadaan data first, then RAB list (for real-time Status SCM update)
-    await loadPengadaanData()
+    // Reload RAB list only
     await loadRABList()
     
   } catch (error) {
