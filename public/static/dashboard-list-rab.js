@@ -78,9 +78,25 @@ async function manualSyncSCM() {
       if (result.matchedTORs === 0 && result.databaseTORsSample) {
         message += `🔍 Debug Info:\n`
         message += `Sample TOR dari JSON:\n`
-        message += result.parsedSample?.slice(0, 3).map(d => `  - ${d.nomorTOR}`).join('\n') || 'N/A'
+        
+        // Safely handle parsedSample
+        if (result.parsedSample && result.parsedSample.length > 0) {
+          const jsonSamples = result.parsedSample.slice(0, 3).map(d => `  - ${d.nomorTOR}`).join('\n')
+          message += jsonSamples
+        } else {
+          message += '  N/A'
+        }
+        
         message += `\n\nSample TOR dari Database:\n`
-        message += result.databaseTORsSample?.slice(0, 3).map(tor => `  - ${tor}`).join('\n') || 'Database kosong'
+        
+        // Safely handle databaseTORsSample
+        if (result.databaseTORsSample && result.databaseTORsSample.length > 0) {
+          const dbSamples = result.databaseTORsSample.slice(0, 3).map(tor => `  - ${tor}`).join('\n')
+          message += dbSamples
+        } else {
+          message += '  Database kosong'
+        }
+        
         message += `\n\n⚠️ Format TOR tidak match!\n`
         message += `Periksa console untuk detail lengkap.\n\n`
       }
