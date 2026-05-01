@@ -116,11 +116,12 @@ async function loadSPKData() {
     
     // Parse data (skip first 2 header rows)
     allSPKData = rawData.slice(2).map(row => ({
-      keterangan: row[11] || '', // Kolom L (index 11)
-      status: row[12] || ''       // Kolom M (index 12)
+      keterangan: row[10] || '', // Kolom K (index 10) - Keterangan
+      status: row[11] || ''       // Kolom L (index 11) - Status
     })).filter(item => item.keterangan && item.status)
     
     console.log(`✅ Loaded ${allSPKData.length} SPK records`)
+    console.log('Sample SPK data:', allSPKData.slice(0, 3)) // Log first 3 records
     isSPKDataLoaded = true
   } catch (error) {
     console.error('❌ Failed to load SPK data:', error)
