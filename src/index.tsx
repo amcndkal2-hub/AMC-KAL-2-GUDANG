@@ -3487,11 +3487,17 @@ app.post('/api/sync-scm-data', async (c) => {
     console.log('📋 Sample parsed TORs:', parsedData.slice(0, 5).map(d => d.nomorTOR))
     
     // Get all TOR numbers from database for debugging
-    const allRABTORs = await env.DB.prepare(`
-      SELECT DISTINCT nomor_tor FROM rab WHERE nomor_tor IS NOT NULL AND nomor_tor != ''
-    `).all()
-    console.log(`📊 Database has ${allRABTORs.results?.length || 0} RAB records with TOR numbers`)
-    console.log('📋 Sample database TORs:', allRABTORs.results?.slice(0, 10).map(r => r.nomor_tor) || [])
+    let allRABTORs = { results: [] }
+    try {
+      allRABTORs = await env.DB.prepare(`
+        SELECT DISTINCT nomor_tor FROM rab WHERE nomor_tor IS NOT NULL AND nomor_tor != ''
+      `).all()
+      console.log(`📊 Database has ${allRABTORs.results?.length || 0} RAB records with TOR numbers`)
+      console.log('📋 Sample database TORs:', allRABTORs.results?.slice(0, 10).map(r => r.nomor_tor) || [])
+    } catch (dbError) {
+      console.error('❌ Failed to fetch database TORs:', dbError)
+      allRABTORs = { results: [] }
+    }
     
     // Update RAB records with fuzzy matching
     let updatedCount = 0
