@@ -116,8 +116,10 @@ async function loadSPKData() {
     
     // Parse data (skip first 2 header rows)
     allSPKData = rawData.slice(2).map(row => ({
-      keterangan: row[10] || '', // Kolom K (index 10) - Keterangan
-      status: row[11] || ''       // Kolom L (index 11) - Status
+      nomor_ip: row[1] || '',     // Kolom B (index 1) - Nomor Ijin Prinsip
+      keterangan: row[10] || '',  // Kolom K (index 10) - Keterangan
+      status: row[11] || '',      // Kolom L (index 11) - Status
+      nomor_spk: row[13] || '-'   // Kolom N (index 13) - Nomor SPK
     })).filter(item => item.keterangan && item.status)
     
     console.log(`✅ Loaded ${allSPKData.length} SPK records`)
@@ -165,6 +167,47 @@ function getSPKStatusByTOR(nomorTOR) {
   })
   
   return spkItem ? spkItem.status : '-'
+}
+
+// Clean Keterangan - Remove TOR number prefix
+function cleanKeterangan(keterangan) {
+  if (!keterangan) return '-'
+  
+  // Remove TOR pattern: "0133/TOR/AMC/PLND-UPKAL2/IV/2026 - "
+  const regex = /^\d{3,4}\/TOR\/[A-Z0-9\/\-]+\/[IVX]+\/\d{4}\s*-\s*/i
+  const cleaned = keterangan.replace(regex, '').trim()
+  
+  return cleaned || '-'
+}
+
+// Get all SPK data by TOR number (for populating columns)
+function getSPKDataByTOR(nomorTOR) {
+  if (!nomorTOR || allSPKData.length === 0) {
+    return {
+      nomor_ip: '-',
+      nama_pekerjaan: '-',
+      nomor_spk: '-',
+      status: '-'
+    }
+  }
+  
+  const spkItem = allSPKData.find(item => matchTOR(nomorTOR, item.keterangan))
+  
+  if (!spkItem) {
+    return {
+      nomor_ip: '-',
+      nama_pekerjaan: '-',
+      nomor_spk: '-',
+      status: '-'
+    }
+  }
+  
+  return {
+    nomor_ip: spkItem.nomor_ip,
+    nama_pekerjaan: cleanKeterangan(spkItem.keterangan),
+    nomor_spk: spkItem.nomor_spk,
+    status: spkItem.status
+  }
 }
 
 // Get badge color for SCM Status
@@ -347,11 +390,14 @@ function renderRABList(rabList) {
       </button>
     ` : ''
     
+    // Get SPK data for this RAB (matching by TOR)
+    const spkData = getSPKDataByTOR(rab.nomor_tor)
+    
     return `
     <tr class="hover:bg-gray-50 transition-colors border-b" style="animation: slideIn 0.3s ease-out ${index * 0.05}s both;">
       <td class="px-3 py-2.5 border text-center align-middle font-medium text-sm">${index + 1}</td>
       <td class="px-3 py-2.5 border text-center align-middle">
-        <span class="text-gray-600 text-xs">-</span>
+        <span class="text-gray-700 font-mono text-xs">${spkData.nomor_ip}</span>
       </td>
       <td class="px-3 py-2.5 border text-center align-middle">
         <span class="text-blue-600 font-mono text-xs font-semibold">${rab.nomor_rab}</span>
@@ -414,18 +460,15 @@ function renderRABList(rabList) {
         </select>
       </td>
       <td class="px-2 py-2 border text-center align-middle">
-        ${(() => {
-          const statusSCM = getSPKStatusByTOR(rab.nomor_tor)
-          return `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getSCMStatusColor(statusSCM)}">
-            ${statusSCM}
-          </span>`
-        })()}
+        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getSCMStatusColor(spkData.status)}">
+          ${spkData.status}
+        </span>
       </td>
       <td class="px-2 py-2 border text-left align-middle">
-        <span class="text-gray-600 text-xs">-</span>
+        <span class="text-gray-700 text-xs">${spkData.nama_pekerjaan}</span>
       </td>
       <td class="px-2 py-2 border text-center align-middle">
-        <span class="text-gray-600 text-xs">-</span>
+        <span class="text-gray-700 font-mono text-xs">${spkData.nomor_spk}</span>
       </td>
       <td class="px-2 py-2 border text-center align-middle">
         <div class="flex gap-1 justify-center items-center flex-nowrap">
