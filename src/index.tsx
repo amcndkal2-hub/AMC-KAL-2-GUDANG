@@ -12088,33 +12088,98 @@ function getDashboardListRABHTML() {
         </div>
 
         <!-- View RAB Modal -->
-        <div id="viewRABModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <!-- RAB Detail Modal -->
+        <div id="rabDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div class="bg-white rounded-lg shadow-xl w-[98vw] max-w-[1800px] h-[95vh] flex flex-col">
                 <div class="p-4 border-b flex justify-between items-center bg-white z-10 flex-shrink-0">
                     <h2 class="text-xl font-bold text-gray-800">
                         <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
-                        Detail RAB
+                        Detail RAB: <span id="detailNomorRAB" class="text-blue-600"></span>
                     </h2>
-                    <button onclick="closeViewRABModal()" class="text-gray-500 hover:text-gray-700">
+                    <button onclick="closeRABDetailModal()" class="text-gray-500 hover:text-gray-700">
                         <i class="fas fa-times text-2xl"></i>
                     </button>
                 </div>
-                <div id="rabDetailContent" class="p-4 overflow-auto flex-1">
-                    <!-- Content will be loaded here -->
+                <div class="p-6 overflow-auto flex-1">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p class="text-sm text-gray-600">Status</p>
+                            <p id="detailStatus" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Jenis RAB</p>
+                            <p id="detailJenisRAB" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Nomor TOR</p>
+                            <p id="detailNomorTOR" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">ROK</p>
+                            <p id="detailROK" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Tanggal Dibuat</p>
+                            <p id="detailCreated" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Dibuat Oleh</p>
+                            <p id="detailUsername" class="font-semibold"></p>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-bold mb-4">Daftar Item</h3>
+                    <table class="w-full border">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 border">No</th>
+                                <th class="px-4 py-2 border">Nama Material</th>
+                                <th class="px-4 py-2 border">Qty</th>
+                                <th class="px-4 py-2 border">Satuan</th>
+                                <th class="px-4 py-2 border">Harga Satuan</th>
+                                <th class="px-4 py-2 border">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailItemsTable"></tbody>
+                    </table>
+                    <div class="mt-4 text-right">
+                        <p class="text-lg"><strong>Subtotal:</strong> <span id="detailSubtotal"></span></p>
+                        <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
+                        <p class="text-xl font-bold text-blue-600"><strong>Total + PPN:</strong> <span id="detailTotal"></span></p>
+                    </div>
                 </div>
                 <div class="p-4 border-t bg-gray-50 flex justify-end space-x-4 flex-shrink-0">
-                    <button onclick="exportRABToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
-                        <i class="fas fa-file-excel mr-2"></i>Export Excel
-                    </button>
-                    <button onclick="exportRABToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
-                        <i class="fas fa-file-pdf mr-2"></i>Export PDF
-                    </button>
-                    <button onclick="closeViewRABModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                    <button onclick="closeRABDetailModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
                         <i class="fas fa-times mr-2"></i>Tutup
                     </button>
                 </div>
             </div>
         </div>
+
+        <!-- RAB History Modal -->
+        <div id="rabHistoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-history text-purple-600 mr-2"></i>
+                        History RAB: <span id="historyNomorRAB" class="text-blue-600"></span>
+                    </h2>
+                    <button onclick="closeRABHistoryModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-auto" style="max-height: 70vh;">
+                    <div id="historyTimeline"></div>
+                </div>
+                <div class="p-4 border-t bg-gray-50 flex justify-end">
+                    <button onclick="closeRABHistoryModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Container -->
+        <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-list-rab.js"></script>
@@ -12395,33 +12460,98 @@ function getDashboardListTORHTML() {
         </div>
 
         <!-- View RAB Modal -->
-        <div id="viewRABModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <!-- RAB Detail Modal -->
+        <div id="rabDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div class="bg-white rounded-lg shadow-xl w-[98vw] max-w-[1800px] h-[95vh] flex flex-col">
                 <div class="p-4 border-b flex justify-between items-center bg-white z-10 flex-shrink-0">
                     <h2 class="text-xl font-bold text-gray-800">
                         <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
-                        Detail RAB
+                        Detail RAB: <span id="detailNomorRAB" class="text-blue-600"></span>
                     </h2>
-                    <button onclick="closeViewRABModal()" class="text-gray-500 hover:text-gray-700">
+                    <button onclick="closeRABDetailModal()" class="text-gray-500 hover:text-gray-700">
                         <i class="fas fa-times text-2xl"></i>
                     </button>
                 </div>
-                <div id="rabDetailContent" class="p-4 overflow-auto flex-1">
-                    <!-- Content will be loaded here -->
+                <div class="p-6 overflow-auto flex-1">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p class="text-sm text-gray-600">Status</p>
+                            <p id="detailStatus" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Jenis RAB</p>
+                            <p id="detailJenisRAB" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Nomor TOR</p>
+                            <p id="detailNomorTOR" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">ROK</p>
+                            <p id="detailROK" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Tanggal Dibuat</p>
+                            <p id="detailCreated" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Dibuat Oleh</p>
+                            <p id="detailUsername" class="font-semibold"></p>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-bold mb-4">Daftar Item</h3>
+                    <table class="w-full border">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 border">No</th>
+                                <th class="px-4 py-2 border">Nama Material</th>
+                                <th class="px-4 py-2 border">Qty</th>
+                                <th class="px-4 py-2 border">Satuan</th>
+                                <th class="px-4 py-2 border">Harga Satuan</th>
+                                <th class="px-4 py-2 border">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailItemsTable"></tbody>
+                    </table>
+                    <div class="mt-4 text-right">
+                        <p class="text-lg"><strong>Subtotal:</strong> <span id="detailSubtotal"></span></p>
+                        <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
+                        <p class="text-xl font-bold text-blue-600"><strong>Total + PPN:</strong> <span id="detailTotal"></span></p>
+                    </div>
                 </div>
                 <div class="p-4 border-t bg-gray-50 flex justify-end space-x-4 flex-shrink-0">
-                    <button onclick="exportRABToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
-                        <i class="fas fa-file-excel mr-2"></i>Export Excel
-                    </button>
-                    <button onclick="exportRABToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
-                        <i class="fas fa-file-pdf mr-2"></i>Export PDF
-                    </button>
-                    <button onclick="closeViewRABModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                    <button onclick="closeRABDetailModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
                         <i class="fas fa-times mr-2"></i>Tutup
                     </button>
                 </div>
             </div>
         </div>
+
+        <!-- RAB History Modal -->
+        <div id="rabHistoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-history text-purple-600 mr-2"></i>
+                        History RAB: <span id="historyNomorRAB" class="text-blue-600"></span>
+                    </h2>
+                    <button onclick="closeRABHistoryModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-auto" style="max-height: 70vh;">
+                    <div id="historyTimeline"></div>
+                </div>
+                <div class="p-4 border-t bg-gray-50 flex justify-end">
+                    <button onclick="closeRABHistoryModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Container -->
+        <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-list-rab.js"></script>
