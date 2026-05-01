@@ -552,7 +552,6 @@ function showRABDetailModal(rab) {
       // Try ALL possible field name variations
       const namaMaterial = item.nama_material || item.material_name || item.name || item.material || 'undefined'
       const qty = item.qty || item.quantity || item.jumlah || 0
-      const satuan = item.satuan || item.unit || item.uom || '-'
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
       
       // Existing fields
@@ -560,7 +559,7 @@ function showRABDetailModal(rab) {
       const partNumber = item.part_number || item.partNumber || item.part_no || '-'
       const snMesin = item.sn_mesin || item.snMesin || item.serial_number || '-'
       
-      // NEW: Type Mesin and Unit/ULD
+      // Type Mesin and Unit/ULD
       const typeMesin = item.mesin || item.type_mesin || item.tipe_mesin || item.mesin_type || '-'
       const unitULD = item.unit_uld || item.unitULD || item.lokasi_gangguan || item.lokasi_tujuan || '-'
       
@@ -569,7 +568,6 @@ function showRABDetailModal(rab) {
       console.log(`Item ${index + 1}:`, {
         nama: namaMaterial,
         qty: qty,
-        satuan: satuan,
         harga: hargaSatuan,
         no_lh05: noLH05,
         part_number: partNumber,
@@ -581,22 +579,21 @@ function showRABDetailModal(rab) {
       
       return `
       <tr class="border-b hover:bg-gray-50">
-        <td class="px-4 py-3 text-center">${index + 1}</td>
-        <td class="px-4 py-3">${namaMaterial}</td>
-        <td class="px-4 py-3 text-center">${noLH05}</td>
-        <td class="px-4 py-3 text-center">${partNumber}</td>
-        <td class="px-4 py-3 text-center">${typeMesin}</td>
-        <td class="px-4 py-3 text-center">${snMesin}</td>
-        <td class="px-4 py-3 text-center">${unitULD}</td>
-        <td class="px-4 py-3 text-center">${qty}</td>
-        <td class="px-4 py-3 text-center">${satuan}</td>
-        <td class="px-4 py-3 text-right">${formatRupiah(hargaSatuan)}</td>
-        <td class="px-4 py-3 text-right font-semibold">${formatRupiah(total)}</td>
+        <td class="px-2 py-2 text-center text-xs">${index + 1}</td>
+        <td class="px-2 py-2 text-xs">${namaMaterial}</td>
+        <td class="px-2 py-2 text-center text-xs">${noLH05}</td>
+        <td class="px-2 py-2 text-center text-xs">${partNumber}</td>
+        <td class="px-2 py-2 text-center text-xs">${typeMesin}</td>
+        <td class="px-2 py-2 text-center text-xs">${snMesin}</td>
+        <td class="px-2 py-2 text-center text-xs">${unitULD}</td>
+        <td class="px-2 py-2 text-center text-xs">${qty}</td>
+        <td class="px-2 py-2 text-right text-xs">${formatRupiah(hargaSatuan)}</td>
+        <td class="px-2 py-2 text-right text-xs font-semibold">${formatRupiah(total)}</td>
       </tr>
       `
     }).join('')
   } else {
-    itemsTable.innerHTML = '<tr><td colspan="11" class="px-4 py-8 text-center text-gray-500">Tidak ada item</td></tr>'
+    itemsTable.innerHTML = '<tr><td colspan="10" class="px-4 py-8 text-center text-gray-500 text-xs">Tidak ada item</td></tr>'
   }
   
   // Calculate totals
@@ -756,6 +753,192 @@ function closeRABHistoryModal() {
   }
 }
 
+// Export RAB Detail to Excel
+function exportRABDetailToExcel() {
+  if (!currentRABDetail) {
+    showNotification('Tidak ada data RAB untuk di-export', 'error')
+    return
+  }
+  
+  try {
+    const rab = currentRABDetail
+    const items = rab.items || []
+    
+    // Prepare data for Excel
+    const excelData = items.map((item, index) => {
+      const qty = item.qty || item.quantity || item.jumlah || 0
+      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      const total = qty * hargaSatuan
+      
+      return {
+        'No': index + 1,
+        'Nama Material': item.nama_material || item.material_name || item.name || '-',
+        'No. LH05': item.no_lh05 || item.nomor_lh05 || '-',
+        'Part Number': item.part_number || item.partNumber || '-',
+        'Type Mesin': item.mesin || item.type_mesin || '-',
+        'S/N Mesin': item.sn_mesin || item.snMesin || '-',
+        'Unit/ULD': item.unit_uld || item.unitULD || item.lokasi_gangguan || '-',
+        'Qty': qty,
+        'Harga Satuan': hargaSatuan,
+        'Total': total
+      }
+    })
+    
+    // Calculate totals
+    const subtotal = items.reduce((sum, item) => {
+      const qty = item.qty || item.quantity || item.jumlah || 0
+      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      return sum + (qty * hargaSatuan)
+    }, 0)
+    const ppn = subtotal * 0.11
+    const totalWithPPN = subtotal + ppn
+    
+    // Add summary rows
+    excelData.push({})
+    excelData.push({
+      'No': '',
+      'Nama Material': 'Subtotal',
+      'No. LH05': '',
+      'Part Number': '',
+      'Type Mesin': '',
+      'S/N Mesin': '',
+      'Unit/ULD': '',
+      'Qty': '',
+      'Harga Satuan': '',
+      'Total': subtotal
+    })
+    excelData.push({
+      'No': '',
+      'Nama Material': 'PPN 11%',
+      'No. LH05': '',
+      'Part Number': '',
+      'Type Mesin': '',
+      'S/N Mesin': '',
+      'Unit/ULD': '',
+      'Qty': '',
+      'Harga Satuan': '',
+      'Total': ppn
+    })
+    excelData.push({
+      'No': '',
+      'Nama Material': 'Total + PPN',
+      'No. LH05': '',
+      'Part Number': '',
+      'Type Mesin': '',
+      'S/N Mesin': '',
+      'Unit/ULD': '',
+      'Qty': '',
+      'Harga Satuan': '',
+      'Total': totalWithPPN
+    })
+    
+    const ws = XLSX.utils.json_to_sheet(excelData)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, `Detail ${rab.nomor_rab}`)
+    
+    const date = new Date().toISOString().split('T')[0]
+    XLSX.writeFile(wb, `Detail_RAB_${rab.nomor_rab}_${date}.xlsx`)
+    
+    showNotification('Excel berhasil diunduh', 'success')
+  } catch (error) {
+    console.error('Error exporting to Excel:', error)
+    showNotification('Gagal export ke Excel', 'error')
+  }
+}
+
+// Export RAB Detail to PDF
+function exportRABDetailToPDF() {
+  if (!currentRABDetail) {
+    showNotification('Tidak ada data RAB untuk di-export', 'error')
+    return
+  }
+  
+  try {
+    const rab = currentRABDetail
+    const items = rab.items || []
+    
+    const doc = new jsPDF()
+    
+    // Title
+    doc.setFontSize(16)
+    doc.text(`Detail RAB: ${rab.nomor_rab}`, 14, 15)
+    
+    // RAB Info
+    doc.setFontSize(10)
+    doc.text(`Status: ${rab.status}`, 14, 25)
+    doc.text(`Jenis RAB: ${rab.jenis_rab}`, 14, 30)
+    doc.text(`Nomor TOR: ${rab.nomor_tor || '-'}`, 14, 35)
+    doc.text(`ROK: ${rab.rok_percentage || 0}%`, 14, 40)
+    
+    const createdDate = rab.created_at ? new Date(rab.created_at).toLocaleDateString('id-ID') : '-'
+    doc.text(`Tanggal Dibuat: ${createdDate}`, 14, 45)
+    doc.text(`Dibuat Oleh: ${rab.username || '-'}`, 14, 50)
+    
+    // Table data
+    const tableData = items.map((item, index) => {
+      const qty = item.qty || item.quantity || item.jumlah || 0
+      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      const total = qty * hargaSatuan
+      
+      return [
+        index + 1,
+        item.nama_material || item.material_name || '-',
+        item.no_lh05 || '-',
+        item.part_number || '-',
+        item.mesin || '-',
+        item.sn_mesin || '-',
+        item.unit_uld || '-',
+        qty,
+        hargaSatuan.toLocaleString('id-ID'),
+        total.toLocaleString('id-ID')
+      ]
+    })
+    
+    // Calculate totals
+    const subtotal = items.reduce((sum, item) => {
+      const qty = item.qty || item.quantity || item.jumlah || 0
+      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      return sum + (qty * hargaSatuan)
+    }, 0)
+    const ppn = subtotal * 0.11
+    const totalWithPPN = subtotal + ppn
+    
+    // Add totals to table
+    tableData.push(['', '', '', '', '', '', '', '', 'Subtotal:', subtotal.toLocaleString('id-ID')])
+    tableData.push(['', '', '', '', '', '', '', '', 'PPN 11%:', ppn.toLocaleString('id-ID')])
+    tableData.push(['', '', '', '', '', '', '', '', 'Total + PPN:', totalWithPPN.toLocaleString('id-ID')])
+    
+    doc.autoTable({
+      startY: 60,
+      head: [['No', 'Nama Material', 'No. LH05', 'Part Number', 'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty', 'Harga Satuan', 'Total']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [34, 197, 94], textColor: 255, fontSize: 8 },
+      bodyStyles: { fontSize: 7 },
+      columnStyles: {
+        0: { cellWidth: 10, halign: 'center' },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 20, halign: 'center' },
+        3: { cellWidth: 20, halign: 'center' },
+        4: { cellWidth: 20, halign: 'center' },
+        5: { cellWidth: 20, halign: 'center' },
+        6: { cellWidth: 20, halign: 'center' },
+        7: { cellWidth: 12, halign: 'center' },
+        8: { cellWidth: 25, halign: 'right' },
+        9: { cellWidth: 25, halign: 'right' }
+      }
+    })
+    
+    const date = new Date().toISOString().split('T')[0]
+    doc.save(`Detail_RAB_${rab.nomor_rab}_${date}.pdf`)
+    
+    showNotification('PDF berhasil diunduh', 'success')
+  } catch (error) {
+    console.error('Error exporting to PDF:', error)
+    showNotification('Gagal export ke PDF', 'error')
+  }
+}
+
 // Delete RAB
 async function deleteRAB(rabId, nomorRAB) {
   if (!confirm(`Hapus RAB ${nomorRAB}?`)) return
@@ -800,6 +983,142 @@ function exportToExcel() {
     
     const fileName = `List_RAB_${new Date().toISOString().split('T')[0]}.xlsx`
     XLSX.writeFile(wb, fileName)
+    
+    showNotification('Excel berhasil di-export', 'success')
+  } catch (error) {
+    console.error('Error exporting Excel:', error)
+    showNotification('Gagal export Excel', 'error')
+  }
+}
+
+// Export RAB Detail to Excel
+function exportRABDetailToExcel() {
+  try {
+    if (!currentRABDetail) {
+      showNotification('Tidak ada data RAB untuk di-export', 'error')
+      return
+    }
+    
+    const rab = currentRABDetail
+    const data = rab.items.map((item, index) => {
+      const namaMaterial = item.nama_material || item.material_name || item.name || item.material || '-'
+      const qty = item.qty || item.quantity || item.jumlah || 0
+      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      const noLH05 = item.no_lh05 || item.nomor_lh05 || item.lh05_number || item.lh05 || '-'
+      const partNumber = item.part_number || item.partNumber || item.part_no || '-'
+      const snMesin = item.sn_mesin || item.snMesin || item.serial_number || '-'
+      const typeMesin = item.mesin || item.type_mesin || item.tipe_mesin || item.mesin_type || '-'
+      const unitULD = item.unit_uld || item.unitULD || item.lokasi_gangguan || item.lokasi_tujuan || '-'
+      
+      return {
+        'No': index + 1,
+        'Nama Material': namaMaterial,
+        'No. LH05': noLH05,
+        'Part Number': partNumber,
+        'Type Mesin': typeMesin,
+        'S/N Mesin': snMesin,
+        'Unit/ULD': unitULD,
+        'Qty': qty,
+        'Harga Satuan': hargaSatuan,
+        'Total': qty * hargaSatuan
+      }
+    })
+    
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Detail RAB')
+    
+    const fileName = `Detail_${rab.nomor_rab}_${new Date().toISOString().split('T')[0]}.xlsx`
+    XLSX.writeFile(wb, fileName)
+    
+    showNotification('Excel berhasil di-export', 'success')
+  } catch (error) {
+    console.error('Error exporting Excel:', error)
+    showNotification('Gagal export Excel', 'error')
+  }
+}
+
+// Export RAB Detail to PDF
+function exportRABDetailToPDF() {
+  try {
+    if (!currentRABDetail) {
+      showNotification('Tidak ada data RAB untuk di-export', 'error')
+      return
+    }
+    
+    const { jsPDF } = window.jspdf
+    const doc = new jsPDF('l', 'mm', 'a4')
+    
+    const rab = currentRABDetail
+    
+    // Title
+    doc.setFontSize(16)
+    doc.text(`Detail RAB: ${rab.nomor_rab}`, 14, 15)
+    
+    // Info
+    doc.setFontSize(10)
+    doc.text(`Status: ${rab.status}`, 14, 25)
+    doc.text(`Jenis RAB: ${rab.jenis_rab}`, 14, 30)
+    doc.text(`No. TOR: ${rab.nomor_tor || '-'}`, 14, 35)
+    doc.text(`Tanggal: ${rab.created_at ? new Date(rab.created_at).toLocaleDateString('id-ID') : '-'}`, 150, 25)
+    doc.text(`User: ${rab.username || '-'}`, 150, 30)
+    
+    // Table data
+    const tableData = rab.items.map((item, index) => {
+      const namaMaterial = item.nama_material || item.material_name || item.name || item.material || '-'
+      const qty = item.qty || item.quantity || item.jumlah || 0
+      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      const noLH05 = item.no_lh05 || item.nomor_lh05 || item.lh05_number || item.lh05 || '-'
+      const partNumber = item.part_number || item.partNumber || item.part_no || '-'
+      const snMesin = item.sn_mesin || item.snMesin || item.serial_number || '-'
+      const typeMesin = item.mesin || item.type_mesin || item.tipe_mesin || item.mesin_type || '-'
+      const unitULD = item.unit_uld || item.unitULD || item.lokasi_gangguan || item.lokasi_tujuan || '-'
+      
+      return [
+        index + 1,
+        namaMaterial,
+        noLH05,
+        partNumber,
+        typeMesin,
+        snMesin,
+        unitULD,
+        qty,
+        formatRupiah(hargaSatuan),
+        formatRupiah(qty * hargaSatuan)
+      ]
+    })
+    
+    doc.autoTable({
+      startY: 42,
+      head: [['No', 'Nama Material', 'No. LH05', 'Part Number', 'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty', 'Harga Satuan', 'Total']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [34, 197, 94] }, // Green color
+      styles: { fontSize: 7, cellPadding: 2 }
+    })
+    
+    // Totals
+    const finalY = doc.lastAutoTable.finalY + 10
+    const subtotal = rab.total_harga || 0
+    const ppn = subtotal * 0.11
+    const total = subtotal + ppn
+    
+    doc.setFontSize(10)
+    doc.text(`Subtotal: ${formatRupiah(subtotal)}`, 200, finalY)
+    doc.text(`PPN 11%: ${formatRupiah(ppn)}`, 200, finalY + 5)
+    doc.setFontSize(12)
+    doc.setFont(undefined, 'bold')
+    doc.text(`Total + PPN: ${formatRupiah(total)}`, 200, finalY + 12)
+    
+    const fileName = `Detail_${rab.nomor_rab}_${new Date().toISOString().split('T')[0]}.pdf`
+    doc.save(fileName)
+    
+    showNotification('PDF berhasil di-export', 'success')
+  } catch (error) {
+    console.error('Error exporting PDF:', error)
+    showNotification('Gagal export PDF', 'error')
+  }
+}
     
     showNotification('Excel berhasil di-export', 'success')
   } catch (error) {

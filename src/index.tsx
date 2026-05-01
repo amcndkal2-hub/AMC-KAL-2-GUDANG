@@ -12127,25 +12127,36 @@ function getDashboardListRABHTML() {
                             <p id="detailUsername" class="font-semibold"></p>
                         </div>
                     </div>
-                    <h3 class="text-lg font-bold mb-4">Daftar Item</h3>
-                    <table class="w-full border">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="px-4 py-2 border">No</th>
-                                <th class="px-4 py-2 border">Nama Material</th>
-                                <th class="px-4 py-2 border">No. LH05</th>
-                                <th class="px-4 py-2 border">Part Number</th>
-                                <th class="px-4 py-2 border">Type Mesin</th>
-                                <th class="px-4 py-2 border">S/N Mesin</th>
-                                <th class="px-4 py-2 border">Unit/ULD</th>
-                                <th class="px-4 py-2 border">Qty</th>
-                                <th class="px-4 py-2 border">Satuan</th>
-                                <th class="px-4 py-2 border">Harga Satuan</th>
-                                <th class="px-4 py-2 border">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detailItemsTable"></tbody>
-                    </table>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Daftar Item</h3>
+                        <div class="space-x-2">
+                            <button onclick="exportRABDetailToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                                <i class="fas fa-file-excel mr-2"></i>Download Excel
+                            </button>
+                            <button onclick="exportRABDetailToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                                <i class="fas fa-file-pdf mr-2"></i>Download PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border text-xs">
+                            <thead class="bg-green-600 text-white">
+                                <tr>
+                                    <th class="px-2 py-2 border border-white">No</th>
+                                    <th class="px-2 py-2 border border-white">Nama Material</th>
+                                    <th class="px-2 py-2 border border-white">No. LH05</th>
+                                    <th class="px-2 py-2 border border-white">Part Number</th>
+                                    <th class="px-2 py-2 border border-white">Type Mesin</th>
+                                    <th class="px-2 py-2 border border-white">S/N Mesin</th>
+                                    <th class="px-2 py-2 border border-white">Unit/ULD</th>
+                                    <th class="px-2 py-2 border border-white">Qty</th>
+                                    <th class="px-2 py-2 border border-white">Harga Satuan</th>
+                                    <th class="px-2 py-2 border border-white">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailItemsTable"></tbody>
+                        </table>
+                    </div>
                     <div class="mt-4 text-right">
                         <p class="text-lg"><strong>Subtotal:</strong> <span id="detailSubtotal"></span></p>
                         <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
@@ -12504,25 +12515,36 @@ function getDashboardListTORHTML() {
                             <p id="detailUsername" class="font-semibold"></p>
                         </div>
                     </div>
-                    <h3 class="text-lg font-bold mb-4">Daftar Item</h3>
-                    <table class="w-full border">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="px-4 py-2 border">No</th>
-                                <th class="px-4 py-2 border">Nama Material</th>
-                                <th class="px-4 py-2 border">No. LH05</th>
-                                <th class="px-4 py-2 border">Part Number</th>
-                                <th class="px-4 py-2 border">Type Mesin</th>
-                                <th class="px-4 py-2 border">S/N Mesin</th>
-                                <th class="px-4 py-2 border">Unit/ULD</th>
-                                <th class="px-4 py-2 border">Qty</th>
-                                <th class="px-4 py-2 border">Satuan</th>
-                                <th class="px-4 py-2 border">Harga Satuan</th>
-                                <th class="px-4 py-2 border">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detailItemsTable"></tbody>
-                    </table>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Daftar Item</h3>
+                        <div class="space-x-2">
+                            <button onclick="exportRABDetailToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                                <i class="fas fa-file-excel mr-2"></i>Download Excel
+                            </button>
+                            <button onclick="exportRABDetailToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                                <i class="fas fa-file-pdf mr-2"></i>Download PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border text-xs">
+                            <thead class="bg-green-600 text-white">
+                                <tr>
+                                    <th class="px-2 py-2 border border-white">No</th>
+                                    <th class="px-2 py-2 border border-white">Nama Material</th>
+                                    <th class="px-2 py-2 border border-white">No. LH05</th>
+                                    <th class="px-2 py-2 border border-white">Part Number</th>
+                                    <th class="px-2 py-2 border border-white">Type Mesin</th>
+                                    <th class="px-2 py-2 border border-white">S/N Mesin</th>
+                                    <th class="px-2 py-2 border border-white">Unit/ULD</th>
+                                    <th class="px-2 py-2 border border-white">Qty</th>
+                                    <th class="px-2 py-2 border border-white">Harga Satuan</th>
+                                    <th class="px-2 py-2 border border-white">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailItemsTable"></tbody>
+                        </table>
+                    </div>
                     <div class="mt-4 text-right">
                         <p class="text-lg"><strong>Subtotal:</strong> <span id="detailSubtotal"></span></p>
                         <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
