@@ -5352,9 +5352,7 @@ function getDashboardMainHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
-                    </a>
+
                     <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
@@ -5544,9 +5542,7 @@ function getInputFormHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
-                    </a>
+
                     <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
@@ -6248,9 +6244,7 @@ function getDashboardStokHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
-                    </a>
+
                     <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
@@ -6441,9 +6435,7 @@ function getDashboardUmurHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
-                    </a>
+
                     <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
@@ -6599,9 +6591,7 @@ function getDashboardMutasiHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
-                    </a>
+
                     <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
@@ -7367,9 +7357,7 @@ function getDashboardKebutuhanMaterialHTML() {
                             </a>
                         </div>
                     </div>
-                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
-                    </a>
+
                     <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
@@ -7587,9 +7575,7 @@ function getDashboardGangguanHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/pengadaan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
-                    </a>
+
                     <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
@@ -8572,9 +8558,7 @@ function getDashboardPengadaanHTML() {
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/pengadaan" class="px-4 py-2 bg-blue-800 rounded text-lg font-bold">
-                        <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
-                    </a>
+
                     <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-tags mr-1"></i>Ref. Harga
                     </a>
