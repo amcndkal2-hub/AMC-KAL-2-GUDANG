@@ -11967,7 +11967,9 @@ function getDashboardListRABHTML() {
                     <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
+                    <a href="/dashboard/list-rab" class="bg-blue-800 px-3 py-2 rounded"><i class="fas fa-list mr-2"></i>List RAB</a>
                     <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
+                    <a href="/dashboard/data-spk" class="hover:text-blue-200"><i class="fas fa-file-contract mr-2"></i>Data SPK</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         <i class="fas fa-sign-out-alt mr-2"></i>Logout
