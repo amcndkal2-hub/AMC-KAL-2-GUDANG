@@ -218,6 +218,9 @@ function renderTable() {
       </tr>
     `
   }).join('')
+  
+  // Apply hidden columns after rendering
+  applyHiddenColumns()
 }
 
 // Update data info
@@ -357,13 +360,9 @@ function toggleHiddenColumns() {
   console.log(`✅ Hidden columns ${columnsVisible ? 'shown' : 'hidden'}`)
 }
 
-// Initialize: Hide columns by default
+// Initialize: Hide columns by default on page load
 document.addEventListener('DOMContentLoaded', () => {
-  const hiddenCols = document.querySelectorAll('.hidden-col')
-  hiddenCols.forEach(col => {
-    col.style.display = 'none'
-  })
-  console.log('✅ Hidden columns initialized (hidden by default)')
+  console.log('✅ Page loaded, hidden columns will be applied after data renders')
 })
 
 // Show error
