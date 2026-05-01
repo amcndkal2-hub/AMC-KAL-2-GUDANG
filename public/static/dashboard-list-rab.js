@@ -189,7 +189,7 @@ function renderRABList(rabList) {
     const currentUser = localStorage.getItem('username') || ''
     const isAdmin = currentUser === 'admin'
     const isAMC = currentUser === 'AMC@12345'
-    const isCreator = currentUser === rab.username
+    const isCreator = currentUser === (rab.username || rab.created_by)
     
     // Delete permission: admin OR creator
     const canDelete = isAdmin || isCreator
@@ -974,7 +974,7 @@ function exportToExcel() {
       'Item': rab.item_count || 0,
       'Total (+ PPN 11%)': (rab.total_harga || 0) * 1.11,
       'Dibuat': rab.created_at ? new Date(rab.created_at).toLocaleDateString('id-ID') : '-',
-      'User': rab.username || '-'
+      'User': rab.username || rab.created_by || '-'
     }))
     
     const ws = XLSX.utils.json_to_sheet(data)
