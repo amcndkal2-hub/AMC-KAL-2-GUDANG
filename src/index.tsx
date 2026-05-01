@@ -7421,48 +7421,26 @@ function getDashboardKebutuhanMaterialHTML() {
     <script src="/url-redirect.js?v=1770101032"></script>
     </head>
     <body class="bg-gray-50">
-        <nav class="bg-blue-600 text-white p-4 shadow-lg">
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                    <a href="/dashboard/create-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-file-invoice-dollar mr-1"></i>Create RAB
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
-                    </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
-                    </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
-                    </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
-                    </a>
-                    <!-- Dropdown Kebutuhan -->
-                    <div class="relative inline-block text-left">
-                        <button onclick="toggleKebutuhanDropdown()" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-800 flex items-center">
-                            <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
-                            <i class="fas fa-caret-down ml-1"></i>
-                        </button>
-                        <div id="kebutuhanDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                            <a href="/dashboard/kebutuhan-material" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
-                                <i class="fas fa-list mr-2"></i>Kebutuhan Material
-                            </a>
-                            <a href="/dashboard/create-rab" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
-                                <i class="fas fa-plus-circle mr-2"></i>Create RAB
-                            </a>
-                            <a href="/dashboard/list-rab" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
-                                <i class="fas fa-list-alt mr-2"></i>List RAB
-                            </a>
-                        </div>
-                    </div>
-
                     <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-list mr-1"></i>List RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-clipboard-check mr-1"></i>Realisasi
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-file-contract mr-1"></i>Data SPK
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
                         <i class="fas fa-chart-line mr-1"></i>Resume
