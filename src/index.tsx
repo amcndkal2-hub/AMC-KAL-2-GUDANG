@@ -12072,11 +12072,6 @@ function getDashboardListRABHTML() {
                                 </h1>
                                 <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
                             </div>
-                            <button onclick="manualSyncSCM()" 
-                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-                                <i class="fas fa-sync-alt"></i>
-                                Sync SCM Data
-                            </button>
                         </div>
                     </div>
 

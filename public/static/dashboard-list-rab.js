@@ -8,16 +8,17 @@ console.log('Page detected:', isListTORPage ? 'Realisasi' : 'List RAB')
 let allRABList = []
 let filteredRABList = []
 let currentRABDetail = null
-let currentStatusFilter = 'All' // Changed from 'Semua' to 'All'
-let currentJenisFilter = 'All' // Filter for Jenis RAB
-let autoCheckInterval = null // Auto-check timer
+let currentStatusFilter = 'All'
+let currentJenisFilter = 'All'
+let autoCheckInterval = null
+let spkData = [] // Store SPK data for matching
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded, loading data...')
   
-  // Sync SCM data from GitHub JSON first
-  await syncSCMData()
+  // Load SPK data for Status SCM matching
+  await loadSPKData()
   
   await loadRABList()
   
@@ -25,112 +26,85 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log('Starting auto-check timer (2 minutes)...')
   autoCheckInterval = setInterval(async () => {
     console.log('⏱️ Auto-check triggered...')
-    await syncSCMData() // Sync SCM data
+    await loadSPKData() // Refresh SPK data
     await autoCheckRABStatus()
   }, 120000) // 2 minutes
   
   console.log('✅ Auto-check timer started')
 })
 
-// Sync SCM data from GitHub JSON
-async function syncSCMData() {
+// Load SPK data from GitHub JSON for Status SCM matching
+async function loadSPKData() {
   try {
-    console.log('🔄 Syncing SCM data from GitHub...')
-    const response = await fetch('/api/sync-scm-data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
-      }
-    })
+    console.log('🔄 Loading SPK data from GitHub...')
+    const jsonUrl = 'https://raw.githubusercontent.com/ipanrifan-create/DATA-SPK/refs/heads/main/data_scm.json'
+    const response = await fetch(jsonUrl)
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)
     }
     
-    const result = await response.json()
-    console.log('✅ SCM sync result:', result)
+    const jsonData = await response.json()
+    const records = jsonData['Data Izin Prinsip'] || []
     
-    return result
-  } catch (error) {
-    console.error('❌ SCM sync failed:', error)
-    return null
-  }
-}
-
-// Manual sync SCM (triggered by button)
-async function manualSyncSCM() {
-  try {
-    alert('🔄 Memulai sinkronisasi data SCM dari GitHub...')
+    console.log(`📦 Loaded ${records.length} SPK records from JSON`)
     
-    const result = await syncSCMData()
-    
-    if (result && result.success) {
-      console.log('📋 Full sync result:', result)
+    // Parse SPK data (skip header rows)
+    spkData = []
+    for (let i = 2; i < records.length; i++) {
+      const row = records[i]
+      if (!row || row.length < 12) continue
       
-      let message = `✅ Sinkronisasi Selesai!\n\n`
-      message += `📊 Ringkasan:\n`
-      message += `- Total records di JSON: ${result.totalRecords}\n`
-      message += `- TOR yang cocok: ${result.matchedTORs}\n`
-      message += `- RAB yang diupdate: ${result.updatedRABs}\n\n`
+      const keterangan = row[10] || ''
+      if (!keterangan || keterangan === '-') continue
       
-      // Show debug info if no matches
-      if (result.matchedTORs === 0 && result.databaseTORsSample) {
-        message += `🔍 Debug Info:\n`
-        message += `Sample TOR dari JSON:\n`
-        
-        // Safely handle parsedSample
-        if (result.parsedSample && result.parsedSample.length > 0) {
-          const jsonSamples = result.parsedSample.slice(0, 3).map(d => `  - ${d.nomorTOR}`).join('\n')
-          message += jsonSamples
-        } else {
-          message += '  N/A'
-        }
-        
-        message += `\n\nSample TOR dari Database:\n`
-        
-        // Safely handle databaseTORsSample
-        if (result.databaseTORsSample && result.databaseTORsSample.length > 0) {
-          const dbSamples = result.databaseTORsSample.slice(0, 3).map(tor => `  - ${tor}`).join('\n')
-          message += dbSamples
-        } else {
-          message += '  Database kosong'
-        }
-        
-        message += `\n\n⚠️ Format TOR tidak match!\n`
-        message += `Periksa console untuk detail lengkap.\n\n`
-      }
+      // Extract TOR number (before " - ")
+      const parts = keterangan.split(' - ')
+      if (parts.length < 2) continue
       
-      // Show warning if database columns are missing
-      if (result.warning) {
-        message += `${result.warning}\n\n`
-        if (result.sqlCommand) {
-          message += `📝 SQL Command yang perlu dijalankan:\n`
-          message += `${result.sqlCommand}\n\n`
-          message += `Lokasi: Cloudflare Dashboard → D1 → amc-material-db → Console`
-        }
-      } else if (result.updatedRABs > 0) {
-        message += `✅ Data berhasil disinkronkan!\n`
-        message += `Refresh halaman untuk melihat perubahan.`
-      }
+      const nomorTOR = parts[0].trim()
+      const namaPekerjaan = parts.slice(1).join(' - ').trim()
+      const statusSCM = row[11] || 'Belum ada status'
       
-      alert(message)
-      
-      // Reload data jika ada update
-      if (result.updatedRABs > 0) {
-        await loadRABList()
-      }
-    } else {
-      alert('❌ Sinkronisasi gagal. Cek console untuk detail error.')
+      spkData.push({
+        nomorTOR,
+        namaPekerjaan,
+        statusSCM
+      })
     }
+    
+    console.log(`✅ Parsed ${spkData.length} valid SPK records for matching`)
+    
+    return true
   } catch (error) {
-    console.error('❌ Manual sync error:', error)
-    alert('❌ Terjadi error saat sinkronisasi: ' + error.message)
+    console.error('❌ Failed to load SPK data:', error)
+    return false
   }
 }
 
-// Make function globally accessible
-window.manualSyncSCM = manualSyncSCM
+// Get Status SCM from SPK data by matching TOR
+function getStatusSCMFromSPK(nomorTOR) {
+  if (!nomorTOR || nomorTOR === '-' || nomorTOR === '') {
+    return 'Belum ada di Pengadaan'
+  }
+  
+  // Try exact match first
+  let match = spkData.find(spk => spk.nomorTOR === nomorTOR)
+  
+  // If no exact match, try partial match
+  if (!match) {
+    match = spkData.find(spk => 
+      spk.nomorTOR.includes(nomorTOR) || nomorTOR.includes(spk.nomorTOR)
+    )
+  }
+  
+  if (match) {
+    console.log(`✅ TOR matched: ${nomorTOR} → ${match.statusSCM}`)
+    return match.statusSCM
+  }
+  
+  return 'Belum ada di Pengadaan'
+}
 
 // Auto-check RAB status (Draft → Pengadaan → Tersedia)
 async function autoCheckRABStatus() {
@@ -496,23 +470,25 @@ function renderRABList(rabList) {
       </td>
       <td class="px-3 py-3 border text-center align-middle">
         ${(rab.jenis_rab === 'SPK') ? (() => {
-          // Use status_scm from database only (no fallback to Pengadaan)
-          const statusSCM = rab.status_scm || null
-          const isNotFound = !statusSCM
+          // Get Status SCM from SPK data by matching TOR
+          const statusSCM = getStatusSCMFromSPK(rab.nomor_tor)
+          const isNotFound = statusSCM === 'Belum ada di Pengadaan'
           
           // Get status badge color
           let statusColor = 'bg-gray-100 text-gray-800'
           if (!isNotFound) {
-            if (statusSCM.includes('Acc Direktur') || statusSCM.includes('Disetujui')) {
+            if (statusSCM.includes('Acc Direktur') || statusSCM.includes('Disetujui') || statusSCM.includes('Acc ')) {
               statusColor = 'bg-green-100 text-green-800'
             } else if (statusSCM.includes('Menunggu')) {
               statusColor = 'bg-yellow-100 text-yellow-800'
+            } else if (statusSCM.includes('Reject')) {
+              statusColor = 'bg-red-100 text-red-800'
             }
           }
           
           return `<div class="flex items-center justify-center">
             <span class="inline-block px-2.5 py-1 ${statusColor} rounded text-xs font-medium whitespace-normal break-words max-w-full">
-              ${statusSCM || 'Belum ada di Pengadaan'}
+              ${statusSCM}
             </span>
           </div>`
         })() : `<span class="text-gray-400 text-xs font-medium">-</span>`}
