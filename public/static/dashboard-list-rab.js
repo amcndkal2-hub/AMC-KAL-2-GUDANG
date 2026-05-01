@@ -555,10 +555,14 @@ function showRABDetailModal(rab) {
       const satuan = item.satuan || item.unit || item.uom || '-'
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
       
-      // NEW: Try to get missing fields
+      // Existing fields
       const noLH05 = item.no_lh05 || item.nomor_lh05 || item.lh05_number || item.lh05 || '-'
       const partNumber = item.part_number || item.partNumber || item.part_no || '-'
-      const snMesin = item.sn_mesin || item.snMesin || item.serial_number || item.mesin || '-'
+      const snMesin = item.sn_mesin || item.snMesin || item.serial_number || '-'
+      
+      // NEW: Type Mesin and Unit/ULD
+      const typeMesin = item.mesin || item.type_mesin || item.tipe_mesin || item.mesin_type || '-'
+      const unitULD = item.unit_uld || item.unitULD || item.lokasi_gangguan || item.lokasi_tujuan || '-'
       
       const total = qty * hargaSatuan
       
@@ -570,6 +574,8 @@ function showRABDetailModal(rab) {
         no_lh05: noLH05,
         part_number: partNumber,
         sn_mesin: snMesin,
+        type_mesin: typeMesin,
+        unit_uld: unitULD,
         total: total
       })
       
@@ -579,7 +585,9 @@ function showRABDetailModal(rab) {
         <td class="px-4 py-3">${namaMaterial}</td>
         <td class="px-4 py-3 text-center">${noLH05}</td>
         <td class="px-4 py-3 text-center">${partNumber}</td>
+        <td class="px-4 py-3 text-center">${typeMesin}</td>
         <td class="px-4 py-3 text-center">${snMesin}</td>
+        <td class="px-4 py-3 text-center">${unitULD}</td>
         <td class="px-4 py-3 text-center">${qty}</td>
         <td class="px-4 py-3 text-center">${satuan}</td>
         <td class="px-4 py-3 text-right">${formatRupiah(hargaSatuan)}</td>
@@ -588,7 +596,7 @@ function showRABDetailModal(rab) {
       `
     }).join('')
   } else {
-    itemsTable.innerHTML = '<tr><td colspan="9" class="px-4 py-8 text-center text-gray-500">Tidak ada item</td></tr>'
+    itemsTable.innerHTML = '<tr><td colspan="11" class="px-4 py-8 text-center text-gray-500">Tidak ada item</td></tr>'
   }
   
   // Calculate totals

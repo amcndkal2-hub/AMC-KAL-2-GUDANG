@@ -12135,7 +12135,9 @@ function getDashboardListRABHTML() {
                                 <th class="px-4 py-2 border">Nama Material</th>
                                 <th class="px-4 py-2 border">No. LH05</th>
                                 <th class="px-4 py-2 border">Part Number</th>
+                                <th class="px-4 py-2 border">Type Mesin</th>
                                 <th class="px-4 py-2 border">S/N Mesin</th>
+                                <th class="px-4 py-2 border">Unit/ULD</th>
                                 <th class="px-4 py-2 border">Qty</th>
                                 <th class="px-4 py-2 border">Satuan</th>
                                 <th class="px-4 py-2 border">Harga Satuan</th>
@@ -12510,7 +12512,9 @@ function getDashboardListTORHTML() {
                                 <th class="px-4 py-2 border">Nama Material</th>
                                 <th class="px-4 py-2 border">No. LH05</th>
                                 <th class="px-4 py-2 border">Part Number</th>
+                                <th class="px-4 py-2 border">Type Mesin</th>
                                 <th class="px-4 py-2 border">S/N Mesin</th>
+                                <th class="px-4 py-2 border">Unit/ULD</th>
                                 <th class="px-4 py-2 border">Qty</th>
                                 <th class="px-4 py-2 border">Satuan</th>
                                 <th class="px-4 py-2 border">Harga Satuan</th>
