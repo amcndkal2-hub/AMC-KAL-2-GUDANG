@@ -212,9 +212,9 @@ function renderTable() {
         </td>
         <td class="px-3 py-2 text-xs text-center border-r border-gray-200">${item.tgl_disetujui}</td>
         <td class="px-3 py-2 text-xs font-mono border-r border-gray-200">${item.nomor_spk}</td>
-        <td class="px-3 py-2 text-xs border-r border-gray-200">${item.dibuat_oleh}</td>
-        <td class="px-3 py-2 text-xs font-mono border-r border-gray-200">${item.nip}</td>
-        <td class="px-3 py-2 text-xs text-center">${item.tgl_dibuat}</td>
+        <td class="hidden-col px-3 py-2 text-xs border-r border-gray-200">${item.dibuat_oleh}</td>
+        <td class="hidden-col px-3 py-2 text-xs font-mono border-r border-gray-200">${item.nip}</td>
+        <td class="hidden-col px-3 py-2 text-xs text-center">${item.tgl_dibuat}</td>
       </tr>
     `
   }).join('')

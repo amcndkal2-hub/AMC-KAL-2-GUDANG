@@ -12320,9 +12320,9 @@ function getDashboardDataSPKHTML() {
                                 <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 200px;">Status</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 120px;">Tgl Disetujui</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Nomor SPK</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 180px;">Dibuat Oleh</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 120px;">NIP</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 120px;">Tgl Dibuat</th>
+                                <th class="hidden-col px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 180px;">Dibuat Oleh</th>
+                                <th class="hidden-col px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 120px;">NIP</th>
+                                <th class="hidden-col px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 120px;">Tgl Dibuat</th>
                             </tr>
                         </thead>
                         <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200">
