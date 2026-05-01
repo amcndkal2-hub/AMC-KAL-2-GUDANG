@@ -313,6 +313,11 @@ function renderRABList(rabList) {
         </select>
       </td>
       <td class="px-2 py-2 border text-center align-middle">
+        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
+          -
+        </span>
+      </td>
+      <td class="px-2 py-2 border text-center align-middle">
         <div class="flex gap-1 justify-center items-center flex-nowrap">
           <button onclick="viewRABDetail(${rab.id})" 
                   class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs inline-flex items-center whitespace-nowrap" title="View">

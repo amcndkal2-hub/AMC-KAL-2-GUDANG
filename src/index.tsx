@@ -12069,12 +12069,13 @@ function getDashboardListRABHTML() {
                                 <th class="px-3 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 90px;">Jumlah Item</th>
                                 <th class="px-3 py-2.5 border text-right bg-blue-50 text-xs font-semibold text-gray-700" style="width: 140px;">Total Harga</th>
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 110px;">Status</th>
+                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 150px;">Status SCM</th>
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 120px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">
                             <tr>
-                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>
