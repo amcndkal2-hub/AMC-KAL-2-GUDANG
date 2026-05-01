@@ -79,8 +79,10 @@ async function loadData() {
     // Populate filter options
     populateFilters()
     
+    // Apply default PEMBANGKITAN filter
+    filterData()
+    
     // Display data
-    filteredData = [...allData]
     renderTable()
     updateDataInfo()
     
@@ -111,6 +113,10 @@ function populateFilters() {
   Array.from(bidangSet).sort().forEach(bidang => {
     filterBidang.innerHTML += `<option value="${bidang}">${bidang}</option>`
   })
+  
+  // Set default filter to PEMBANGKITAN
+  filterBidang.value = 'PEMBANGKITAN'
+  console.log('✅ Filter Bidang set to: PEMBANGKITAN (permanent default)')
   
   // Populate Status filter
   const filterStatus = document.getElementById('filterStatus')
