@@ -177,42 +177,42 @@ function renderTable() {
     else if (item.status.includes('Reject')) statusColor = 'red'
     
     return `
-      <tr class="hover:bg-gray-50">
-        <td class="px-4 py-3 text-sm text-gray-900">${index + 1}</td>
-        <td class="px-4 py-3 text-sm text-gray-900 font-medium">${item.nomor_ip}</td>
-        <td class="px-4 py-3 text-sm text-gray-700">
-          <span class="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+      <tr class="hover:bg-blue-50 transition-colors">
+        <td class="px-3 py-2 text-xs text-gray-900 border-r">${index + 1}</td>
+        <td class="px-3 py-2 text-xs text-gray-900 font-semibold border-r whitespace-nowrap">${item.nomor_ip}</td>
+        <td class="px-3 py-2 text-xs border-r">
+          <span class="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
             ${item.bidang}
           </span>
         </td>
-        <td class="px-4 py-3 text-sm text-gray-700">${item.unit_pelaksana}</td>
-        <td class="px-4 py-3 text-sm text-gray-700">${item.metode_pengadaan}</td>
-        <td class="px-4 py-3 text-sm text-gray-700">
-          <span class="px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800">
+        <td class="px-3 py-2 text-xs text-gray-700 border-r whitespace-nowrap">${item.unit_pelaksana}</td>
+        <td class="px-3 py-2 text-xs text-gray-700 border-r whitespace-nowrap">${item.metode_pengadaan}</td>
+        <td class="px-3 py-2 text-xs border-r">
+          <span class="px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
             ${item.jenis_item}
           </span>
         </td>
-        <td class="px-4 py-3 text-sm text-right text-gray-900 font-mono">
+        <td class="px-3 py-2 text-xs text-right text-gray-900 font-mono border-r whitespace-nowrap">
           ${formatCurrency(item.nilai)}
         </td>
-        <td class="px-4 py-3 text-sm text-right text-gray-900 font-mono">
+        <td class="px-3 py-2 text-xs text-right text-gray-900 font-mono border-r whitespace-nowrap">
           ${formatCurrency(item.ppn)}
         </td>
-        <td class="px-4 py-3 text-sm text-right text-gray-900 font-semibold font-mono">
+        <td class="px-3 py-2 text-xs text-right text-gray-900 font-semibold font-mono border-r whitespace-nowrap bg-yellow-50">
           ${formatCurrency(item.total)}
         </td>
-        <td class="px-4 py-3 text-sm text-gray-700 max-w-xs">
+        <td class="px-3 py-2 text-xs text-gray-700 border-r" style="max-width: 250px;">
           <div class="truncate" title="${item.project}">
             ${item.project}
           </div>
         </td>
-        <td class="px-4 py-3 text-sm text-gray-700 max-w-md">
+        <td class="px-3 py-2 text-xs text-gray-700 border-r" style="max-width: 300px;">
           <div class="truncate" title="${item.keterangan}">
             ${item.keterangan}
           </div>
         </td>
-        <td class="px-4 py-3 text-sm">
-          <span class="px-2 py-1 rounded text-xs font-medium ${
+        <td class="px-3 py-2 text-xs border-r">
+          <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
             statusColor === 'green' ? 'bg-green-100 text-green-800' :
             statusColor === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
             statusColor === 'red' ? 'bg-red-100 text-red-800' :
@@ -221,11 +221,11 @@ function renderTable() {
             ${item.status}
           </span>
         </td>
-        <td class="px-4 py-3 text-sm text-gray-700">${item.tgl_disetujui}</td>
-        <td class="px-4 py-3 text-sm text-gray-900 font-medium">${item.nomor_spk}</td>
-        <td class="px-4 py-3 text-sm text-gray-700">${item.dibuat_oleh}</td>
-        <td class="px-4 py-3 text-sm text-gray-700 font-mono">${item.nip}</td>
-        <td class="px-4 py-3 text-sm text-gray-700">${item.tgl_dibuat}</td>
+        <td class="px-3 py-2 text-xs text-gray-700 border-r whitespace-nowrap">${item.tgl_disetujui}</td>
+        <td class="px-3 py-2 text-xs text-gray-900 font-medium border-r whitespace-nowrap">${item.nomor_spk}</td>
+        <td class="px-3 py-2 text-xs text-gray-700 border-r whitespace-nowrap">${item.dibuat_oleh}</td>
+        <td class="px-3 py-2 text-xs text-gray-700 font-mono border-r whitespace-nowrap">${item.nip}</td>
+        <td class="px-3 py-2 text-xs text-gray-700 whitespace-nowrap">${item.tgl_dibuat}</td>
       </tr>
     `
   }).join('')

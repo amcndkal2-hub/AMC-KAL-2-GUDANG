@@ -12244,27 +12244,27 @@ function getDashboardDataSPKHTML() {
 
             <!-- Data Table -->
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto max-h-[600px] relative">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-blue-50">
+                        <thead class="bg-blue-600 text-white sticky top-0 z-10 shadow-md">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">No</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nomor Izin Prinsip</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Bidang</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Unit Pelaksana</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Metode Pengadaan</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Jenis Item</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Nilai (Rp)</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">PPN (Rp)</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Total + PPN</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Project</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Keterangan</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tgl Disetujui</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nomor SPK</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Dibuat Oleh</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">NIP</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tgl Dibuat</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 50px;">No</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 180px;">Nomor Izin Prinsip</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Bidang</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Unit Pelaksana</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Metode Pengadaan</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 100px;">Jenis Item</th>
+                                <th class="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 130px;">Nilai (Rp)</th>
+                                <th class="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 130px;">PPN (Rp)</th>
+                                <th class="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Total + PPN</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 250px;">Project</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 300px;">Keterangan</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 200px;">Status</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 120px;">Tgl Disetujui</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Nomor SPK</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 180px;">Dibuat Oleh</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 120px;">NIP</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 120px;">Tgl Dibuat</th>
                             </tr>
                         </thead>
                         <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200">
