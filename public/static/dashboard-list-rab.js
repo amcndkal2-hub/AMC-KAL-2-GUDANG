@@ -60,6 +60,35 @@ async function syncSCMData() {
   }
 }
 
+// Manual sync SCM (triggered by button)
+async function manualSyncSCM() {
+  try {
+    alert('🔄 Memulai sinkronisasi data SCM dari GitHub...')
+    
+    const result = await syncSCMData()
+    
+    if (result && result.success) {
+      alert(`✅ Sinkronisasi berhasil!\n\n` +
+            `- Total records: ${result.totalRecords}\n` +
+            `- TOR matched: ${result.matchedTORs}\n` +
+            `- RAB updated: ${result.updatedRABs}\n\n` +
+            (result.note ? `⚠️ ${result.note}\n\n` : '') +
+            `Refresh halaman untuk melihat data terbaru.`)
+      
+      // Reload data
+      await loadRABList()
+    } else {
+      alert('❌ Sinkronisasi gagal. Cek console untuk detail error.')
+    }
+  } catch (error) {
+    console.error('❌ Manual sync error:', error)
+    alert('❌ Terjadi error saat sinkronisasi: ' + error.message)
+  }
+}
+
+// Make function globally accessible
+window.manualSyncSCM = manualSyncSCM
+
 // Auto-check RAB status (Draft → Pengadaan → Tersedia)
 async function autoCheckRABStatus() {
   try {

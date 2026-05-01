@@ -11977,11 +11977,20 @@ function getDashboardListRABHTML() {
                 <div class="flex-1">
                     <!-- Header -->
                     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                            <i class="fas fa-list-alt text-blue-600 mr-3"></i>
-                            Daftar RAB (Rencana Anggaran Biaya)
-                        </h1>
-                        <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                                    <i class="fas fa-list-alt text-blue-600 mr-3"></i>
+                                    Daftar RAB (Rencana Anggaran Biaya)
+                                </h1>
+                                <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
+                            </div>
+                            <button onclick="manualSyncSCM()" 
+                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                                <i class="fas fa-sync-alt"></i>
+                                Sync SCM Data
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Main Table -->
