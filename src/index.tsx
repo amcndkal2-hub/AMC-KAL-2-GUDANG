@@ -3600,6 +3600,43 @@ app.post('/api/sync-scm-data', async (c) => {
   }
 })
 
+// API: Debug - Get all TOR numbers from database
+app.get('/api/debug/tor-list', async (c) => {
+  try {
+    const { env } = c
+    
+    // Get all RAB records with their TOR numbers
+    const rabRecords = await env.DB.prepare(`
+      SELECT id, nomor_rab, nomor_tor, status 
+      FROM rab 
+      ORDER BY id DESC 
+      LIMIT 50
+    `).all()
+    
+    // Get distinct TOR numbers
+    const distinctTORs = await env.DB.prepare(`
+      SELECT DISTINCT nomor_tor 
+      FROM rab 
+      WHERE nomor_tor IS NOT NULL AND nomor_tor != ''
+      ORDER BY nomor_tor
+    `).all()
+    
+    return c.json({
+      success: true,
+      totalRABs: rabRecords.results?.length || 0,
+      totalDistinctTORs: distinctTORs.results?.length || 0,
+      rabRecords: rabRecords.results || [],
+      distinctTORs: distinctTORs.results || []
+    })
+  } catch (error) {
+    console.error('❌ Failed to get TOR list:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to get TOR list'
+    }, 500)
+  }
+})
+
 // API: Get RAB by ID (MUST be after specific routes)
 app.get('/api/rab/:id', async (c) => {
   try {
