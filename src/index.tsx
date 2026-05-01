@@ -3488,6 +3488,7 @@ app.post('/api/sync-scm-data', async (c) => {
     // Update RAB records with fuzzy matching
     let updatedCount = 0
     let matchedCount = 0
+    const matchedRecords = []
     
     for (const scmData of parsedData) {
       try {
@@ -3508,20 +3509,34 @@ app.post('/api/sync-scm-data', async (c) => {
           matchedCount++
           
           for (const rab of rabRecords.results) {
-            await env.DB.prepare(`
-              UPDATE rab 
-              SET nama_pekerjaan = ?, 
-                  status_scm = ?,
-                  updated_at = datetime('now')
-              WHERE id = ?
-            `).bind(scmData.namaPekerjaan, scmData.statusSCM, rab.id).run()
-            
-            updatedCount++
-            console.log(`✅ Updated RAB ${rab.id} with TOR ${rab.nomor_tor}`)
+            try {
+              // Try updating with new columns
+              await env.DB.prepare(`
+                UPDATE rab 
+                SET nama_pekerjaan = ?, 
+                    status_scm = ?,
+                    updated_at = datetime('now')
+                WHERE id = ?
+              `).bind(scmData.namaPekerjaan, scmData.statusSCM, rab.id).run()
+              
+              updatedCount++
+              matchedRecords.push({
+                rab_id: rab.id,
+                nomor_tor: rab.nomor_tor,
+                nama_pekerjaan: scmData.namaPekerjaan,
+                status_scm: scmData.statusSCM
+              })
+              console.log(`✅ Updated RAB ${rab.id} with TOR ${rab.nomor_tor}`)
+            } catch (columnError) {
+              // Production DB doesn't have nama_pekerjaan/status_scm columns yet
+              console.log(`⚠️ Column not found in production DB for RAB ${rab.id}, columns need to be added manually`)
+            }
           }
+        } else {
+          console.log(`⚠️ No match found for TOR: ${scmData.nomorTOR}`)
         }
       } catch (updateError) {
-        console.error(`⚠️ Failed to update TOR ${scmData.nomorTOR}:`, updateError)
+        console.error(`⚠️ Failed to process TOR ${scmData.nomorTOR}:`, updateError)
       }
     }
     
@@ -3532,7 +3547,9 @@ app.post('/api/sync-scm-data', async (c) => {
       message: 'SCM data synced successfully',
       totalRecords: parsedData.length,
       matchedTORs: matchedCount,
-      updatedRABs: updatedCount
+      updatedRABs: updatedCount,
+      matchedRecords: matchedRecords,
+      note: updatedCount === 0 ? 'No records updated. Production DB may need columns: nama_pekerjaan, status_scm' : null
     })
   } catch (error) {
     console.error('❌ Failed to sync SCM data:', error)
