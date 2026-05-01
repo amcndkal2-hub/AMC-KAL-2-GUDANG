@@ -495,6 +495,7 @@ async function updateROKPercentage(rabId, percentage) {
 // View RAB detail
 async function viewRABDetail(rabId) {
   try {
+    console.log('🔍 View RAB Detail clicked! ID:', rabId)
     const response = await fetch(`/api/rab/${rabId}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
@@ -504,19 +505,25 @@ async function viewRABDetail(rabId) {
     if (!response.ok) throw new Error('Failed to load RAB detail')
     
     const rab = await response.json()
+    console.log('✅ RAB data loaded:', rab)
     currentRABDetail = rab
     
     showRABDetailModal(rab)
   } catch (error) {
-    console.error('Error loading RAB detail:', error)
+    console.error('❌ Error loading RAB detail:', error)
     showNotification('Gagal memuat detail RAB', 'error')
   }
 }
 
 // Show RAB detail modal
 function showRABDetailModal(rab) {
+  console.log('📋 Opening RAB detail modal for:', rab.nomor_rab)
   const modal = document.getElementById('rabDetailModal')
-  if (!modal) return
+  if (!modal) {
+    console.error('❌ Modal element not found! ID: rabDetailModal')
+    return
+  }
+  console.log('✅ Modal element found:', modal)
   
   const createdDate = rab.created_at ? new Date(rab.created_at).toLocaleDateString('id-ID', {
     day: '2-digit',
@@ -574,6 +581,7 @@ function closeRABDetailModal() {
 // View RAB history
 async function viewRABHistory(rabId) {
   try {
+    console.log('🕒 View RAB History clicked! ID:', rabId)
     const response = await fetch(`/api/rab/${rabId}/history`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
@@ -583,17 +591,23 @@ async function viewRABHistory(rabId) {
     if (!response.ok) throw new Error('Failed to load history')
     
     const history = await response.json()
+    console.log('✅ History data loaded:', history)
     showRABHistoryModal(history)
   } catch (error) {
-    console.error('Error loading history:', error)
+    console.error('❌ Error loading history:', error)
     showNotification('Gagal memuat history', 'error')
   }
 }
 
 // Show RAB history modal
 function showRABHistoryModal(history) {
+  console.log('📜 Opening RAB history modal')
   const modal = document.getElementById('rabHistoryModal')
-  if (!modal) return
+  if (!modal) {
+    console.error('❌ History modal not found! ID: rabHistoryModal')
+    return
+  }
+  console.log('✅ History modal found:', modal)
   
   const rab = history.rab
   const statusHistory = history.history || []
