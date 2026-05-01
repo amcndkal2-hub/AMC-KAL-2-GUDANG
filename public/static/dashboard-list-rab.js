@@ -12,10 +12,16 @@ let currentStatusFilter = 'All'
 let currentJenisFilter = 'All'
 let autoCheckInterval = null
 let spkData = [] // Store SPK data for matching
+let isDataLoaded = false
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOM loaded, loading data...')
+// MAIN LOADING FUNCTION
+async function initializeData() {
+  if (isDataLoaded) {
+    console.log('⚠️ Data already loaded, skipping...')
+    return
+  }
+  
+  console.log('🔄 Initializing List RAB data...')
   
   // IMPORTANT: Load SPK data FIRST and wait for it to complete
   console.log('⏳ Step 1: Loading SPK data (MUST complete first)...')
@@ -30,16 +36,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadRABList()
   console.log('✅ Step 3: RAB list loaded and rendered with SPK data')
   
-  // Start auto-check every 2 minutes (120000 ms)
-  console.log('Starting auto-check timer (2 minutes)...')
-  autoCheckInterval = setInterval(async () => {
-    console.log('⏱️ Auto-check triggered...')
-    await loadSPKData() // Refresh SPK data
-    await loadRABList() // Re-render RAB list with new SPK data
-  }, 120000) // 2 minutes
+  isDataLoaded = true
   
-  console.log('✅ Auto-check timer started')
+  // Start auto-check every 2 minutes (120000 ms) - only once
+  if (!autoCheckInterval) {
+    console.log('Starting auto-check timer (2 minutes)...')
+    autoCheckInterval = setInterval(async () => {
+      console.log('⏱️ Auto-check triggered...')
+      await loadSPKData() // Refresh SPK data
+      await loadRABList() // Re-render RAB list with new SPK data
+    }, 120000) // 2 minutes
+    console.log('✅ Auto-check timer started')
+  }
+}
+
+// Initialize on page load - MULTIPLE TRIGGERS
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('✅ DOMContentLoaded event triggered')
+  await initializeData()
 })
+
+// FALLBACK: Also load on window load (in case DOM event missed)
+window.addEventListener('load', async () => {
+  if (!isDataLoaded) {
+    console.log('⚠️ Fallback: window.load event triggered')
+    await initializeData()
+  }
+})
+
+// IMMEDIATE LOAD: Execute immediately if DOM is already ready
+if (document.readyState === 'loading') {
+  console.log('⏳ Document still loading, waiting for DOMContentLoaded...')
+} else {
+  console.log('✅ Document already loaded, loading data immediately...')
+  initializeData()
+}
 
 // Load SPK data from GitHub JSON for Status SCM matching
 async function loadSPKData() {
