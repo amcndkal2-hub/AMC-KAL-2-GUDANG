@@ -262,7 +262,7 @@ function renderRABList(rabList) {
   if (rabList.length === 0) {
     tableBody.innerHTML = `
       <tr>
-        <td colspan="12" class="px-6 py-8 text-center text-gray-500">
+        <td colspan="13" class="px-6 py-8 text-center text-gray-500">
           <i class="fas fa-inbox text-4xl mb-2"></i>
           <p class="text-lg">Tidak ada data RAB</p>
         </td>
@@ -351,6 +351,9 @@ function renderRABList(rabList) {
     <tr class="hover:bg-gray-50 transition-colors border-b" style="animation: slideIn 0.3s ease-out ${index * 0.05}s both;">
       <td class="px-3 py-2.5 border text-center align-middle font-medium text-sm">${index + 1}</td>
       <td class="px-3 py-2.5 border text-center align-middle">
+        <span class="text-gray-600 text-xs">-</span>
+      </td>
+      <td class="px-3 py-2.5 border text-center align-middle">
         <span class="text-blue-600 font-mono text-xs font-semibold">${rab.nomor_rab}</span>
       </td>
       <td class="px-3 py-2.5 border text-center align-middle">
@@ -417,6 +420,12 @@ function renderRABList(rabList) {
             ${statusSCM}
           </span>`
         })()}
+      </td>
+      <td class="px-2 py-2 border text-left align-middle">
+        <span class="text-gray-600 text-xs">-</span>
+      </td>
+      <td class="px-2 py-2 border text-center align-middle">
+        <span class="text-gray-600 text-xs">-</span>
       </td>
       <td class="px-2 py-2 border text-center align-middle">
         <div class="flex gap-1 justify-center items-center flex-nowrap">

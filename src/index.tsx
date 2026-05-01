@@ -12062,6 +12062,7 @@ function getDashboardListRABHTML() {
                         <thead class="bg-blue-50 sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <th class="px-3 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 50px;">No</th>
+                                <th class="px-3 py-2.5 border text-left bg-blue-50 text-xs font-semibold text-gray-700" style="width: 180px;">No. Ijin Prinsip</th>
                                 <th class="px-3 py-2.5 border text-left bg-blue-50 text-xs font-semibold text-gray-700" style="width: 140px;">Nomor RAB</th>
                                 <th class="px-2 py-2.5 border text-left bg-blue-50 text-xs font-semibold text-gray-700" style="width: 200px;">No. TOR</th>
                                 <th class="px-3 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 120px;">Jenis RAB</th>
@@ -12070,12 +12071,14 @@ function getDashboardListRABHTML() {
                                 <th class="px-3 py-2.5 border text-right bg-blue-50 text-xs font-semibold text-gray-700" style="width: 140px;">Total Harga</th>
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 110px;">Status</th>
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 150px;">Status SCM</th>
+                                <th class="px-2 py-2.5 border text-left bg-blue-50 text-xs font-semibold text-gray-700" style="width: 300px;">Nama Pekerjaan</th>
+                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 150px;">No. SPK</th>
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 120px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">
                             <tr>
-                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="13" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>
@@ -12466,7 +12469,7 @@ function getDashboardListTORHTML() {
                         </thead>
                         <tbody id="rabListTable">
                             <tr>
-                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="13" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>
