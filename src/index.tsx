@@ -12264,6 +12264,9 @@ function getDashboardDataSPKHTML() {
                         <p class="text-gray-600">Data Izin Prinsip dan SPK dari Sistem SCM</p>
                     </div>
                     <div class="flex space-x-2">
+                        <button onclick="toggleHiddenColumns()" id="toggleColumnsBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow">
+                            <i class="fas fa-eye mr-2"></i>Show Hidden Columns
+                        </button>
                         <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
                             <i class="fas fa-sync-alt mr-2"></i>Refresh Data
                         </button>
@@ -12305,15 +12308,15 @@ function getDashboardDataSPKHTML() {
                             <tr>
                                 <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 50px;">No</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 180px;">Nomor Izin Prinsip</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Bidang</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Unit Pelaksana</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Metode Pengadaan</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 100px;">Jenis Item</th>
-                                <th class="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 130px;">Nilai (Rp)</th>
-                                <th class="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 130px;">PPN (Rp)</th>
-                                <th class="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Total + PPN</th>
+                                <th class="hidden-col px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Bidang</th>
+                                <th class="hidden-col px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Unit Pelaksana</th>
+                                <th class="hidden-col px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Metode Pengadaan</th>
+                                <th class="hidden-col px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 100px;">Jenis Item</th>
+                                <th class="hidden-col px-3 py-2 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 130px;">Nilai (Rp)</th>
+                                <th class="hidden-col px-3 py-2 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 130px;">PPN (Rp)</th>
+                                <th class="hidden-col px-3 py-2 text-right text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Total + PPN</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 250px;">Project</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 300px;">Keterangan</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider" style="min-width: 400px;">Keterangan</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 200px;">Status</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 120px;">Tgl Disetujui</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap" style="min-width: 150px;">Nomor SPK</th>

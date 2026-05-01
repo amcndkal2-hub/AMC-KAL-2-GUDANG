@@ -190,22 +190,22 @@ function renderTable() {
       <tr class="hover:bg-blue-50 transition-colors">
         <td class="px-3 py-2 text-center text-xs border-r border-gray-200">${index + 1}</td>
         <td class="px-3 py-2 text-xs font-mono border-r border-gray-200">${item.nomor_ip}</td>
-        <td class="px-3 py-2 text-xs border-r border-gray-200">
+        <td class="hidden-col px-3 py-2 text-xs border-r border-gray-200">
           <span class="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">${item.bidang}</span>
         </td>
-        <td class="px-3 py-2 text-xs border-r border-gray-200">${item.unit_pelaksana}</td>
-        <td class="px-3 py-2 text-xs border-r border-gray-200">${item.metode_pengadaan}</td>
-        <td class="px-3 py-2 text-xs border-r border-gray-200">
+        <td class="hidden-col px-3 py-2 text-xs border-r border-gray-200">${item.unit_pelaksana}</td>
+        <td class="hidden-col px-3 py-2 text-xs border-r border-gray-200">${item.metode_pengadaan}</td>
+        <td class="hidden-col px-3 py-2 text-xs border-r border-gray-200">
           <span class="inline-block px-2 py-0.5 bg-purple-100 text-purple-800 rounded text-xs font-medium">${item.jenis_item}</span>
         </td>
-        <td class="px-3 py-2 text-right text-xs font-semibold border-r border-gray-200">${formatRupiah(item.nilai)}</td>
-        <td class="px-3 py-2 text-right text-xs font-semibold border-r border-gray-200">${formatRupiah(item.ppn)}</td>
-        <td class="px-3 py-2 text-right text-xs font-bold bg-yellow-50 border-r border-gray-200">${formatRupiah(item.total)}</td>
+        <td class="hidden-col px-3 py-2 text-right text-xs font-semibold border-r border-gray-200">${formatRupiah(item.nilai)}</td>
+        <td class="hidden-col px-3 py-2 text-right text-xs font-semibold border-r border-gray-200">${formatRupiah(item.ppn)}</td>
+        <td class="hidden-col px-3 py-2 text-right text-xs font-bold bg-yellow-50 border-r border-gray-200">${formatRupiah(item.total)}</td>
         <td class="px-3 py-2 text-xs border-r border-gray-200" style="max-width: 250px;">
           <div class="truncate" title="${item.project}">${item.project}</div>
         </td>
-        <td class="px-3 py-2 text-xs border-r border-gray-200" style="max-width: 300px;">
-          <div class="truncate" title="${item.keterangan}">${item.keterangan}</div>
+        <td class="px-3 py-2 text-xs border-r border-gray-200">
+          <div class="whitespace-normal break-words" style="max-width: 400px;">${item.keterangan}</div>
         </td>
         <td class="px-3 py-2 text-xs border-r border-gray-200">
           <span class="inline-block px-2 py-1 ${statusColor} rounded text-xs font-medium whitespace-normal">${item.status}</span>
@@ -329,6 +329,42 @@ function exportToExcel() {
   
   console.log('✅ Data exported to Excel')
 }
+
+// Toggle hidden columns
+let columnsVisible = false
+function toggleHiddenColumns() {
+  columnsVisible = !columnsVisible
+  const hiddenCols = document.querySelectorAll('.hidden-col')
+  const toggleBtn = document.getElementById('toggleColumnsBtn')
+  
+  hiddenCols.forEach(col => {
+    if (columnsVisible) {
+      col.style.display = ''
+    } else {
+      col.style.display = 'none'
+    }
+  })
+  
+  // Update button text and icon
+  if (columnsVisible) {
+    toggleBtn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i>Hide Columns'
+    toggleBtn.className = 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow'
+  } else {
+    toggleBtn.innerHTML = '<i class="fas fa-eye mr-2"></i>Show Hidden Columns'
+    toggleBtn.className = 'bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow'
+  }
+  
+  console.log(`✅ Hidden columns ${columnsVisible ? 'shown' : 'hidden'}`)
+}
+
+// Initialize: Hide columns by default
+document.addEventListener('DOMContentLoaded', () => {
+  const hiddenCols = document.querySelectorAll('.hidden-col')
+  hiddenCols.forEach(col => {
+    col.style.display = 'none'
+  })
+  console.log('✅ Hidden columns initialized (hidden by default)')
+})
 
 // Show error
 function showError(message) {
