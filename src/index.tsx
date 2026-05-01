@@ -3511,7 +3511,7 @@ app.post('/api/sync-scm-data', async (c) => {
           for (const rab of rabRecords.results) {
             try {
               // Try updating with new columns
-              await env.DB.prepare(`
+              const updateResult = await env.DB.prepare(`
                 UPDATE rab 
                 SET nama_pekerjaan = ?, 
                     status_scm = ?,
@@ -3519,17 +3519,28 @@ app.post('/api/sync-scm-data', async (c) => {
                 WHERE id = ?
               `).bind(scmData.namaPekerjaan, scmData.statusSCM, rab.id).run()
               
-              updatedCount++
+              if (updateResult.success) {
+                updatedCount++
+                matchedRecords.push({
+                  rab_id: rab.id,
+                  nomor_tor: rab.nomor_tor,
+                  nama_pekerjaan: scmData.namaPekerjaan,
+                  status_scm: scmData.statusSCM
+                })
+                console.log(`✅ Updated RAB ${rab.id} with TOR ${rab.nomor_tor}`)
+              }
+            } catch (columnError) {
+              // Production DB doesn't have nama_pekerjaan/status_scm columns yet
+              const errorMsg = columnError.message || String(columnError)
+              console.error(`❌ Failed to update RAB ${rab.id}: ${errorMsg}`)
+              
+              // Store error info for response
               matchedRecords.push({
                 rab_id: rab.id,
                 nomor_tor: rab.nomor_tor,
-                nama_pekerjaan: scmData.namaPekerjaan,
-                status_scm: scmData.statusSCM
+                error: errorMsg,
+                note: 'Database columns missing: nama_pekerjaan, status_scm'
               })
-              console.log(`✅ Updated RAB ${rab.id} with TOR ${rab.nomor_tor}`)
-            } catch (columnError) {
-              // Production DB doesn't have nama_pekerjaan/status_scm columns yet
-              console.log(`⚠️ Column not found in production DB for RAB ${rab.id}, columns need to be added manually`)
             }
           }
         } else {
@@ -3542,14 +3553,22 @@ app.post('/api/sync-scm-data', async (c) => {
     
     console.log(`🎉 Sync complete: ${matchedCount} matched, ${updatedCount} updated`)
     
+    // Check if columns are missing
+    const hasErrors = matchedRecords.some(r => r.error)
+    const warningMessage = hasErrors 
+      ? '⚠️ DATABASE BELUM SIAP: Kolom "nama_pekerjaan" dan "status_scm" belum ditambahkan di production database. Silakan tambahkan via Cloudflare Dashboard → D1 → Console.'
+      : null
+    
     return c.json({
       success: true,
-      message: 'SCM data synced successfully',
+      message: updatedCount > 0 ? 'SCM data synced successfully' : 'Sync completed but no records updated',
       totalRecords: parsedData.length,
       matchedTORs: matchedCount,
       updatedRABs: updatedCount,
       matchedRecords: matchedRecords,
-      note: updatedCount === 0 ? 'No records updated. Production DB may need columns: nama_pekerjaan, status_scm' : null
+      parsedSample: parsedData.slice(0, 5), // Show first 5 parsed records for debugging
+      warning: warningMessage,
+      sqlCommand: hasErrors ? 'ALTER TABLE rab ADD COLUMN nama_pekerjaan TEXT DEFAULT NULL;\nALTER TABLE rab ADD COLUMN status_scm TEXT DEFAULT NULL;' : null
     })
   } catch (error) {
     console.error('❌ Failed to sync SCM data:', error)

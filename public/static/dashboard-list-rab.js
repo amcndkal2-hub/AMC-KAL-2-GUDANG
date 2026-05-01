@@ -66,15 +66,32 @@ async function manualSyncSCM() {
     const result = await syncSCMData()
     
     if (result && result.success) {
-      alert(`✅ Sinkronisasi berhasil!\n\n` +
-            `- Total records: ${result.totalRecords}\n` +
-            `- TOR matched: ${result.matchedTORs}\n` +
-            `- RAB updated: ${result.updatedRABs}\n\n` +
-            (result.note ? `⚠️ ${result.note}\n\n` : '') +
-            `Refresh halaman untuk melihat data terbaru.`)
+      let message = `✅ Sinkronisasi Selesai!\n\n`
+      message += `📊 Ringkasan:\n`
+      message += `- Total records di JSON: ${result.totalRecords}\n`
+      message += `- TOR yang cocok: ${result.matchedTORs}\n`
+      message += `- RAB yang diupdate: ${result.updatedRABs}\n\n`
       
-      // Reload data
-      await loadRABList()
+      // Show warning if database columns are missing
+      if (result.warning) {
+        message += `${result.warning}\n\n`
+        message += `📝 SQL Command yang perlu dijalankan:\n`
+        message += `${result.sqlCommand}\n\n`
+        message += `Lokasi: Cloudflare Dashboard → D1 → amc-material-db → Console`
+      } else if (result.updatedRABs > 0) {
+        message += `✅ Data berhasil disinkronkan!\n`
+        message += `Refresh halaman untuk melihat perubahan.`
+      } else {
+        message += `⚠️ Tidak ada data yang diupdate.\n`
+        message += `Kemungkinan: TOR di database tidak match dengan JSON.`
+      }
+      
+      alert(message)
+      
+      // Reload data jika ada update
+      if (result.updatedRABs > 0) {
+        await loadRABList()
+      }
     } else {
       alert('❌ Sinkronisasi gagal. Cek console untuk detail error.')
     }
