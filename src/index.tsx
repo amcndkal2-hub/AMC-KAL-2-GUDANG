@@ -3439,6 +3439,110 @@ app.get('/api/rab/materials-tersedia', async (c) => {
   }
 })
 
+// API: Sync SCM data from GitHub JSON
+app.post('/api/sync-scm-data', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔄 Starting SCM data sync from GitHub...')
+    
+    // Fetch JSON from GitHub
+    const jsonUrl = 'https://raw.githubusercontent.com/ipanrifan-create/DATA-SPK/refs/heads/main/data_scm.json'
+    const response = await fetch(jsonUrl)
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch JSON: ${response.status}`)
+    }
+    
+    const jsonData = await response.json()
+    const scmRecords = jsonData['Data Izin Prinsip'] || []
+    
+    console.log(`📦 Found ${scmRecords.length} records in JSON`)
+    
+    // Parse SCM data (skip header rows)
+    const parsedData = []
+    for (let i = 2; i < scmRecords.length; i++) {
+      const row = scmRecords[i]
+      if (!row || row.length < 12) continue
+      
+      const keterangan = row[10] || ''
+      if (!keterangan || keterangan === '-') continue
+      
+      // Extract TOR number (before " - ") and project name (after " - ")
+      const parts = keterangan.split(' - ')
+      if (parts.length < 2) continue
+      
+      const nomorTOR = parts[0].trim()
+      const namaPekerjaan = parts.slice(1).join(' - ').trim()
+      const statusSCM = row[11] || 'Belum ada status'
+      
+      parsedData.push({
+        nomorTOR,
+        namaPekerjaan,
+        statusSCM
+      })
+    }
+    
+    console.log(`✅ Parsed ${parsedData.length} valid SCM records`)
+    
+    // Update RAB records with fuzzy matching
+    let updatedCount = 0
+    let matchedCount = 0
+    
+    for (const scmData of parsedData) {
+      try {
+        // Try exact match first
+        let rabRecords = await env.DB.prepare(`
+          SELECT id, nomor_tor FROM rab WHERE nomor_tor = ?
+        `).bind(scmData.nomorTOR).all()
+        
+        // If no exact match, try fuzzy match (contains)
+        if (!rabRecords.results || rabRecords.results.length === 0) {
+          rabRecords = await env.DB.prepare(`
+            SELECT id, nomor_tor FROM rab 
+            WHERE nomor_tor LIKE ? OR ? LIKE '%' || nomor_tor || '%'
+          `).bind(`%${scmData.nomorTOR}%`, scmData.nomorTOR).all()
+        }
+        
+        if (rabRecords.results && rabRecords.results.length > 0) {
+          matchedCount++
+          
+          for (const rab of rabRecords.results) {
+            await env.DB.prepare(`
+              UPDATE rab 
+              SET nama_pekerjaan = ?, 
+                  status_scm = ?,
+                  updated_at = datetime('now')
+              WHERE id = ?
+            `).bind(scmData.namaPekerjaan, scmData.statusSCM, rab.id).run()
+            
+            updatedCount++
+            console.log(`✅ Updated RAB ${rab.id} with TOR ${rab.nomor_tor}`)
+          }
+        }
+      } catch (updateError) {
+        console.error(`⚠️ Failed to update TOR ${scmData.nomorTOR}:`, updateError)
+      }
+    }
+    
+    console.log(`🎉 Sync complete: ${matchedCount} matched, ${updatedCount} updated`)
+    
+    return c.json({
+      success: true,
+      message: 'SCM data synced successfully',
+      totalRecords: parsedData.length,
+      matchedTORs: matchedCount,
+      updatedRABs: updatedCount
+    })
+  } catch (error) {
+    console.error('❌ Failed to sync SCM data:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Failed to sync SCM data'
+    }, 500)
+  }
+})
+
 // API: Get RAB by ID (MUST be after specific routes)
 app.get('/api/rab/:id', async (c) => {
   try {

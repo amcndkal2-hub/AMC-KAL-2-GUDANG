@@ -16,6 +16,10 @@ let autoCheckInterval = null // Auto-check timer
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded, loading data...')
+  
+  // Sync SCM data from GitHub JSON first
+  await syncSCMData()
+  
   await loadPengadaanData() // Load Pengadaan data first
   await loadRABList()
   
@@ -23,11 +27,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log('Starting auto-check timer (2 minutes)...')
   autoCheckInterval = setInterval(async () => {
     console.log('⏱️ Auto-check triggered...')
+    await syncSCMData() // Sync SCM data
     await autoCheckRABStatus()
   }, 120000) // 2 minutes
   
   console.log('✅ Auto-check timer started')
 })
+
+// Sync SCM data from GitHub JSON
+async function syncSCMData() {
+  try {
+    console.log('🔄 Syncing SCM data from GitHub...')
+    const response = await fetch('/api/sync-scm-data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    
+    const result = await response.json()
+    console.log('✅ SCM sync result:', result)
+    
+    return result
+  } catch (error) {
+    console.error('❌ SCM sync failed:', error)
+    return null
+  }
+}
 
 // Auto-check RAB status (Draft → Pengadaan → Tersedia)
 async function autoCheckRABStatus() {
@@ -472,8 +503,9 @@ function renderRABList(rabList) {
       </td>
       <td class="px-3 py-3 border text-center align-middle">
         ${(rab.jenis_rab === 'SPK') ? (() => {
-          const statusSCM = getStatusSCM(rab.nomor_tor)
-          const isNotFound = statusSCM === 'Belum ada di Pengadaan'
+          // Use status_scm from database if available, otherwise fallback to getStatusSCM
+          const statusSCM = rab.status_scm || getStatusSCM(rab.nomor_tor)
+          const isNotFound = statusSCM === 'Belum ada di Pengadaan' || !statusSCM
           
           // Get status badge color (same logic as Pengadaan page)
           let statusColor = 'bg-gray-100 text-gray-800'
@@ -487,13 +519,13 @@ function renderRABList(rabList) {
           
           return `<div class="flex items-center justify-center">
             <span class="inline-block px-2.5 py-1 ${statusColor} rounded text-xs font-medium whitespace-normal break-words max-w-full">
-              ${statusSCM}
+              ${statusSCM || 'Belum ada di Pengadaan'}
             </span>
           </div>`
         })() : `<span class="text-gray-400 text-xs font-medium">-</span>`}
       </td>
-      <td class="px-3 py-2 border text-center align-middle">
-        <span class="text-gray-400 text-xs">-</span>
+      <td class="px-3 py-2 border text-left align-middle">
+        <span class="text-gray-800 text-xs">${rab.nama_pekerjaan || '-'}</span>
       </td>
     </tr>
   `}).join('')

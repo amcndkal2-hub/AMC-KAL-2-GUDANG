@@ -1779,7 +1779,7 @@ async function insertRABItems(db: D1Database, rabId: number, nomorRAB: string, t
 
 export async function getAllRAB(db: D1Database) {
   try {
-    // Try with nomor_tor column first
+    // Try with nomor_tor, nama_pekerjaan, status_scm columns first
     try {
       const result = await db.prepare(`
         SELECT 
@@ -1792,6 +1792,8 @@ export async function getAllRAB(db: D1Database) {
           r.status,
           r.created_by,
           r.created_at,
+          r.nama_pekerjaan,
+          r.status_scm,
           COUNT(ri.id) as item_count
         FROM rab r
         LEFT JOIN rab_items ri ON r.id = ri.rab_id
