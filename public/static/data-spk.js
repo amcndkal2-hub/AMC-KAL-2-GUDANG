@@ -4,6 +4,19 @@ console.log('Data SPK script loaded')
 let allData = []
 let filteredData = []
 let isDataLoaded = false
+let columnsVisible = false
+
+// Apply hidden columns visibility
+function applyHiddenColumns() {
+  const hiddenCols = document.querySelectorAll('.hidden-col')
+  hiddenCols.forEach(col => {
+    if (columnsVisible) {
+      col.style.display = ''
+    } else {
+      col.style.display = 'none'
+    }
+  })
+}
 
 // Load data on page load - MULTIPLE TRIGGERS
 document.addEventListener('DOMContentLoaded', async () => {
@@ -334,19 +347,11 @@ function exportToExcel() {
 }
 
 // Toggle hidden columns
-let columnsVisible = false
 function toggleHiddenColumns() {
   columnsVisible = !columnsVisible
-  const hiddenCols = document.querySelectorAll('.hidden-col')
-  const toggleBtn = document.getElementById('toggleColumnsBtn')
+  applyHiddenColumns()
   
-  hiddenCols.forEach(col => {
-    if (columnsVisible) {
-      col.style.display = ''
-    } else {
-      col.style.display = 'none'
-    }
-  })
+  const toggleBtn = document.getElementById('toggleColumnsBtn')
   
   // Update button text and icon
   if (columnsVisible) {
