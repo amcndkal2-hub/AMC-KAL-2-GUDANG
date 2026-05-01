@@ -5376,6 +5376,11 @@ app.get('/dashboard/ref-harga', (c) => {
   return c.html(getDashboardRefHargaHTML())
 })
 
+// Dashboard Data SPK (PROTECTED - auth required)
+app.get('/dashboard/data-spk', (c) => {
+  return c.html(getDashboardDataSPKHTML())
+})
+
 // Dashboard Realisasi (PROTECTED - auth required)
 app.get('/dashboard/list-tor', (c) => {
   return c.html(getDashboardListTORHTML())
@@ -12140,6 +12145,142 @@ function getDashboardListRABHTML() {
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-list-rab.js"></script>
+    </body>
+    </html>
+  `
+}
+
+function getDashboardDataSPKHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Data SPK - Sistem Material AMC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+        <script src="/url-redirect.js?v=1770101032"></script>
+    </head>
+    <body class="bg-gray-50">
+        <!-- Navigation Bar -->
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/create-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-file-invoice-dollar mr-1"></i>Create RAB
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-list mr-1"></i>List RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-clipboard-check mr-1"></i>Realisasi
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
+                        <i class="fas fa-file-contract mr-1"></i>Data SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    </a>
+                    <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="max-w-full mx-auto p-6">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-file-contract text-blue-600 mr-2"></i>
+                            Data SPK (Surat Perintah Kerja)
+                        </h1>
+                        <p class="text-gray-600">Data Izin Prinsip dan SPK dari Sistem SCM</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh Data
+                        </button>
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+                            <i class="fas fa-file-excel mr-2"></i>Export Excel
+                        </button>
+                    </div>
+                </div>
+                <div id="dataInfo" class="mt-4 text-sm text-gray-500"></div>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter Bidang</label>
+                        <select id="filterBidang" onchange="filterData()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Bidang</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter Status</label>
+                        <select id="filterStatus" onchange="filterData()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Status</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Pencarian</label>
+                        <input type="text" id="searchBox" oninput="filterData()" placeholder="Cari nomor IP, TOR, atau keterangan..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-blue-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">No</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nomor Izin Prinsip</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Bidang</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Unit Pelaksana</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Metode Pengadaan</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Jenis Item</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Nilai (Rp)</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">PPN (Rp)</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Total + PPN</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Project</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Keterangan</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tgl Disetujui</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nomor SPK</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Dibuat Oleh</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">NIP</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tgl Dibuat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="17" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                                    <p>Memuat data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/data-spk.js"></script>
     </body>
     </html>
   `
