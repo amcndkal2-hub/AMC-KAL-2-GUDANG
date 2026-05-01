@@ -12,6 +12,8 @@ let currentStatusFilter = 'All'
 let currentJenisFilter = 'All'
 let autoCheckInterval = null
 let isDataLoaded = false
+let allSPKData = [] // Data SPK from GitHub JSON
+let isSPKDataLoaded = false
 
 // MAIN LOADING FUNCTION
 async function initializeData() {
@@ -22,6 +24,10 @@ async function initializeData() {
   
   console.log('🔄 Initializing List RAB data...')
   
+  // Load SPK data first (for Status SCM matching)
+  await loadSPKData()
+  
+  // Then load RAB list
   await loadRABList()
   console.log('✅ RAB list loaded and rendered')
   
@@ -88,6 +94,81 @@ async function autoCheckRABStatus() {
   } catch (error) {
     console.error('Auto-check error:', error)
   }
+}
+
+// Load Data SPK from GitHub JSON
+async function loadSPKData() {
+  if (isSPKDataLoaded) {
+    console.log('⚠️ SPK data already loaded, skipping...')
+    return
+  }
+  
+  try {
+    console.log('🔄 Loading SPK data from GitHub...')
+    const response = await fetch('https://raw.githubusercontent.com/ipanrifan-create/DATA-SPK/refs/heads/main/data_scm.json')
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    
+    const data = await response.json()
+    const rawData = data['Data Izin Prinsip']
+    
+    // Parse data (skip first 2 header rows)
+    allSPKData = rawData.slice(2).map(row => ({
+      keterangan: row[11] || '', // Kolom L (index 11)
+      status: row[12] || ''       // Kolom M (index 12)
+    })).filter(item => item.keterangan && item.status)
+    
+    console.log(`✅ Loaded ${allSPKData.length} SPK records`)
+    isSPKDataLoaded = true
+  } catch (error) {
+    console.error('❌ Failed to load SPK data:', error)
+    allSPKData = []
+  }
+}
+
+// Extract TOR number from Keterangan field
+function extractTORFromKeterangan(keterangan) {
+  if (!keterangan) return null
+  
+  // Pattern: 0120/TOR/AMC/PLND-UPKAL2/IV/2025
+  const regex = /(\d{4}\/TOR\/[A-Z0-9\/\-]+\/[IVX]+\/\d{4})/i
+  const match = keterangan.match(regex)
+  return match ? match[1] : null
+}
+
+// Get SPK Status by TOR number
+function getSPKStatusByTOR(nomorTOR) {
+  if (!nomorTOR || allSPKData.length === 0) return '-'
+  
+  const spkItem = allSPKData.find(item => {
+    const extractedTOR = extractTORFromKeterangan(item.keterangan)
+    return extractedTOR === nomorTOR
+  })
+  
+  return spkItem ? spkItem.status : '-'
+}
+
+// Get badge color for SCM Status
+function getSCMStatusColor(status) {
+  if (!status || status === '-') {
+    return 'bg-gray-200 text-gray-700'
+  }
+  
+  const statusLower = status.toLowerCase()
+  
+  if (statusLower.includes('acc') || statusLower.includes('disetujui')) {
+    return 'bg-green-500 text-white'
+  }
+  if (statusLower.includes('menunggu') || statusLower.includes('pending')) {
+    return 'bg-yellow-500 text-white'
+  }
+  if (statusLower.includes('reject') || statusLower.includes('ditolak')) {
+    return 'bg-red-500 text-white'
+  }
+  
+  return 'bg-blue-500 text-white'
 }
 
 // Add styles for animation
@@ -313,9 +394,12 @@ function renderRABList(rabList) {
         </select>
       </td>
       <td class="px-2 py-2 border text-center align-middle">
-        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
-          -
-        </span>
+        ${(() => {
+          const statusSCM = getSPKStatusByTOR(rab.nomor_tor)
+          return `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getSCMStatusColor(statusSCM)}">
+            ${statusSCM}
+          </span>`
+        })()}
       </td>
       <td class="px-2 py-2 border text-center align-middle">
         <div class="flex gap-1 justify-center items-center flex-nowrap">
