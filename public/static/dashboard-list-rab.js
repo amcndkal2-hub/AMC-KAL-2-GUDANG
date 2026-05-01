@@ -1113,22 +1113,15 @@ function exportRABDetailToPDF() {
     const fileName = `Detail_${rab.nomor_rab}_${new Date().toISOString().split('T')[0]}.pdf`
     doc.save(fileName)
     
-    showNotification('PDF berhasil di-export', 'success')
+    showNotification('PDF berhasil diunduh', 'success')
   } catch (error) {
-    console.error('Error exporting PDF:', error)
-    showNotification('Gagal export PDF', 'error')
-  }
-}
-    
-    showNotification('Excel berhasil di-export', 'success')
-  } catch (error) {
-    console.error('Error exporting Excel:', error)
-    showNotification('Gagal export Excel', 'error')
+    console.error('Error exporting to PDF:', error)
+    showNotification('Gagal export ke PDF', 'error')
   }
 }
 
-// Export to PDF
-function exportToPDF() {
+// Export to Excel (List RAB)
+function exportToExcel() {
   try {
     const { jsPDF } = window.jspdf
     const doc = new jsPDF('l', 'mm', 'a4')
