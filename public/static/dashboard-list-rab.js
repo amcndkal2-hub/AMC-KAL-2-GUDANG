@@ -256,12 +256,6 @@ function renderRABList(rabList) {
         <span class="text-blue-600 font-mono text-xs font-semibold">${rab.nomor_rab}</span>
       </td>
       <td class="px-3 py-2.5 border text-center align-middle">
-        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(rab.status)}">
-          ${rab.status}
-        </span>
-      </td>
-      ${rokColumn}
-      <td class="px-3 py-2.5 border text-center align-middle">
         ${(rab.jenis_rab === 'SPK') ? (() => {
           // Admin: Always editable
           if (isAdmin) {
@@ -297,7 +291,12 @@ function renderRABList(rabList) {
           ${rab.jenis_rab || '-'}
         </span>
       </td>
-      ${tanggalColumn}
+      <td class="px-3 py-2.5 border text-center align-middle">
+        <div class="text-xs">
+          <div class="font-semibold text-gray-800">${createdDate}</div>
+          <div class="text-gray-500">${createdTime}</div>
+        </div>
+      </td>
       <td class="px-3 py-2.5 border text-center align-middle">
         <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-semibold">
           ${rab.item_count || 0}
