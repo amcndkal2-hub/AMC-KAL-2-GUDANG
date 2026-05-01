@@ -3484,11 +3484,20 @@ app.post('/api/sync-scm-data', async (c) => {
     }
     
     console.log(`✅ Parsed ${parsedData.length} valid SCM records`)
+    console.log('📋 Sample parsed TORs:', parsedData.slice(0, 5).map(d => d.nomorTOR))
+    
+    // Get all TOR numbers from database for debugging
+    const allRABTORs = await env.DB.prepare(`
+      SELECT DISTINCT nomor_tor FROM rab WHERE nomor_tor IS NOT NULL AND nomor_tor != ''
+    `).all()
+    console.log(`📊 Database has ${allRABTORs.results?.length || 0} RAB records with TOR numbers`)
+    console.log('📋 Sample database TORs:', allRABTORs.results?.slice(0, 10).map(r => r.nomor_tor) || [])
     
     // Update RAB records with fuzzy matching
     let updatedCount = 0
     let matchedCount = 0
     const matchedRecords = []
+    const unmatchedTORs = []
     
     for (const scmData of parsedData) {
       try {
@@ -3545,6 +3554,7 @@ app.post('/api/sync-scm-data', async (c) => {
           }
         } else {
           console.log(`⚠️ No match found for TOR: ${scmData.nomorTOR}`)
+          unmatchedTORs.push(scmData.nomorTOR)
         }
       } catch (updateError) {
         console.error(`⚠️ Failed to process TOR ${scmData.nomorTOR}:`, updateError)
@@ -3552,11 +3562,14 @@ app.post('/api/sync-scm-data', async (c) => {
     }
     
     console.log(`🎉 Sync complete: ${matchedCount} matched, ${updatedCount} updated`)
+    console.log(`❌ Unmatched TORs (${unmatchedTORs.length}):`, unmatchedTORs.slice(0, 10))
     
     // Check if columns are missing
     const hasErrors = matchedRecords.some(r => r.error)
     const warningMessage = hasErrors 
       ? '⚠️ DATABASE BELUM SIAP: Kolom "nama_pekerjaan" dan "status_scm" belum ditambahkan di production database. Silakan tambahkan via Cloudflare Dashboard → D1 → Console.'
+      : matchedCount === 0 
+      ? '⚠️ TIDAK ADA TOR YANG MATCH: Format TOR di database berbeda dengan JSON. Lihat debug info untuk detail.'
       : null
     
     return c.json({
@@ -3567,6 +3580,8 @@ app.post('/api/sync-scm-data', async (c) => {
       updatedRABs: updatedCount,
       matchedRecords: matchedRecords,
       parsedSample: parsedData.slice(0, 5), // Show first 5 parsed records for debugging
+      databaseTORsSample: allRABTORs.results?.slice(0, 10).map(r => r.nomor_tor) || [],
+      unmatchedTORsSample: unmatchedTORs.slice(0, 10),
       warning: warningMessage,
       sqlCommand: hasErrors ? 'ALTER TABLE rab ADD COLUMN nama_pekerjaan TEXT DEFAULT NULL;\nALTER TABLE rab ADD COLUMN status_scm TEXT DEFAULT NULL;' : null
     })
