@@ -11879,11 +11879,12 @@ function getDashboardListRABHTML() {
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 110px;">Status</th>
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 120px;">Aksi</th>
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 180px;">Status SCM</th>
+                                <th class="px-3 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 200px;">Nama Pekerjaan</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">
                             <tr>
-                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="11" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>
@@ -12051,11 +12052,12 @@ function getDashboardListTORHTML() {
                                 <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 130px;">Status</th>
                                 <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 200px;">Aksi</th>
                                 <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 220px;">Status SCM</th>
+                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 200px;">Nama Pekerjaan</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">
                             <tr>
-                                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>

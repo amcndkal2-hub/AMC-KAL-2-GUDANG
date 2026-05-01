@@ -492,6 +492,9 @@ function renderRABList(rabList) {
           </div>`
         })() : `<span class="text-gray-400 text-xs font-medium">-</span>`}
       </td>
+      <td class="px-3 py-2 border text-center align-middle">
+        <span class="text-gray-400 text-xs">-</span>
+      </td>
     </tr>
   `}).join('')
 }
