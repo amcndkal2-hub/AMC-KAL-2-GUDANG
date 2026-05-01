@@ -58,18 +58,26 @@ async function loadSPKData() {
       const keterangan = row[10] || ''
       if (!keterangan || keterangan === '-') continue
       
-      // Extract TOR number (before " - ")
-      const parts = keterangan.split(' - ')
-      if (parts.length < 2) continue
+      // Extract TOR number from keterangan
+      // Format: "Description text 0133/TOR/AMC/PLND-UPKAL2/IV/2026"
+      const torPattern = /\d{4}\/TOR\/[A-Z\/\-]+\/[IVX]+\/\d{4}/
+      const torMatch = keterangan.match(torPattern)
       
-      const nomorTOR = parts[0].trim()
-      const namaPekerjaan = parts.slice(1).join(' - ').trim()
+      if (!torMatch) continue
+      
+      const nomorTOR = torMatch[0]
+      // Remove TOR from keterangan to get nama pekerjaan
+      // Format: "0133/TOR/AMC/PLND-UPKAL2/IV/2026 - PENGADAAN JASA..."
+      // We want to remove the TOR number and the " - " separator
+      const namaPekerjaan = keterangan.replace(nomorTOR, '').replace(/^\s*-\s*/, '').trim()
       const statusSCM = row[11] || 'Belum ada status'
+      const nomorIP = row[1] || '-' // Nomor Izin Prinsip (column index 1, not 0)
       
       spkData.push({
         nomorTOR,
         namaPekerjaan,
-        statusSCM
+        statusSCM,
+        nomorIP
       })
     }
     
@@ -82,10 +90,14 @@ async function loadSPKData() {
   }
 }
 
-// Get Status SCM from SPK data by matching TOR
-function getStatusSCMFromSPK(nomorTOR) {
+// Get SPK data by matching TOR (returns full object)
+function getSPKDataByTOR(nomorTOR) {
   if (!nomorTOR || nomorTOR === '-' || nomorTOR === '') {
-    return 'Belum ada di Pengadaan'
+    return {
+      statusSCM: 'Belum ada di Pengadaan',
+      namaPekerjaan: '-',
+      nomorIP: '-'
+    }
   }
   
   // Try exact match first
@@ -99,11 +111,19 @@ function getStatusSCMFromSPK(nomorTOR) {
   }
   
   if (match) {
-    console.log(`✅ TOR matched: ${nomorTOR} → ${match.statusSCM}`)
-    return match.statusSCM
+    console.log(`✅ TOR matched: ${nomorTOR} → Status: ${match.statusSCM}, IP: ${match.nomorIP}`)
+    return {
+      statusSCM: match.statusSCM,
+      namaPekerjaan: match.namaPekerjaan,
+      nomorIP: match.nomorIP
+    }
   }
   
-  return 'Belum ada di Pengadaan'
+  return {
+    statusSCM: 'Belum ada di Pengadaan',
+    namaPekerjaan: '-',
+    nomorIP: '-'
+  }
 }
 
 // Auto-check RAB status (Draft → Pengadaan → Tersedia)
@@ -367,7 +387,9 @@ function renderRABList(rabList) {
   
   if (rabList.length === 0) {
     // Adjust colspan based on page (Realisasi has fewer columns)
-    const colspanCount = isListTORPage ? 8 : 10
+    // List RAB: 12 columns (No, Nomor RAB, No. TOR, Jenis RAB, Tanggal, Jumlah Item, Total Harga, Status, Aksi, Status SCM, Nama Pekerjaan, Ijin Prinsip)
+    // Realisasi: 10 columns (No, No. TOR, Jenis RAB, Jumlah Item, Total Harga, Status, Aksi, Status SCM, Nama Pekerjaan, Ijin Prinsip)
+    const colspanCount = isListTORPage ? 10 : 12
     tbody.innerHTML = `
       <tr>
         <td colspan="${colspanCount}" class="px-4 py-8 text-center text-gray-500">
@@ -470,8 +492,9 @@ function renderRABList(rabList) {
       </td>
       <td class="px-3 py-3 border text-center align-middle">
         ${(rab.jenis_rab === 'SPK') ? (() => {
-          // Get Status SCM from SPK data by matching TOR
-          const statusSCM = getStatusSCMFromSPK(rab.nomor_tor)
+          // Get SPK data by matching TOR
+          const spkData = getSPKDataByTOR(rab.nomor_tor)
+          const statusSCM = spkData.statusSCM
           const isNotFound = statusSCM === 'Belum ada di Pengadaan'
           
           // Get status badge color
@@ -494,7 +517,16 @@ function renderRABList(rabList) {
         })() : `<span class="text-gray-400 text-xs font-medium">-</span>`}
       </td>
       <td class="px-3 py-2 border text-left align-middle">
-        <span class="text-gray-800 text-xs">${rab.nama_pekerjaan || '-'}</span>
+        ${(rab.jenis_rab === 'SPK') ? (() => {
+          const spkData = getSPKDataByTOR(rab.nomor_tor)
+          return `<span class="text-gray-800 text-xs">${spkData.namaPekerjaan}</span>`
+        })() : `<span class="text-gray-400 text-xs">-</span>`}
+      </td>
+      <td class="px-3 py-2 border text-left align-middle">
+        ${(rab.jenis_rab === 'SPK') ? (() => {
+          const spkData = getSPKDataByTOR(rab.nomor_tor)
+          return `<span class="text-gray-800 text-xs font-mono">${spkData.nomorIP}</span>`
+        })() : `<span class="text-gray-400 text-xs">-</span>`}
       </td>
     </tr>
   `}).join('')
