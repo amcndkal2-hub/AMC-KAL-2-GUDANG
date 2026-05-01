@@ -3600,39 +3600,60 @@ app.post('/api/sync-scm-data', async (c) => {
   }
 })
 
-// API: Debug - Get all TOR numbers from database
+// API: Debug - Get database structure and sample data
 app.get('/api/debug/tor-list', async (c) => {
   try {
     const { env } = c
     
-    // Get all RAB records with their TOR numbers
-    const rabRecords = await env.DB.prepare(`
-      SELECT id, nomor_rab, nomor_tor, status 
-      FROM rab 
-      ORDER BY id DESC 
-      LIMIT 50
-    `).all()
+    // Get table structure
+    let tableStructure = []
+    try {
+      const pragmaResult = await env.DB.prepare(`PRAGMA table_info(rab)`).all()
+      tableStructure = pragmaResult.results || []
+    } catch (e) {
+      console.error('Failed to get table structure:', e)
+    }
     
-    // Get distinct TOR numbers
-    const distinctTORs = await env.DB.prepare(`
-      SELECT DISTINCT nomor_tor 
-      FROM rab 
-      WHERE nomor_tor IS NOT NULL AND nomor_tor != ''
-      ORDER BY nomor_tor
-    `).all()
+    // Get all RAB records (without specifying columns)
+    let rabRecords = []
+    try {
+      const result = await env.DB.prepare(`
+        SELECT * 
+        FROM rab 
+        ORDER BY id DESC 
+        LIMIT 10
+      `).all()
+      rabRecords = result.results || []
+    } catch (e) {
+      console.error('Failed to get RAB records:', e)
+    }
+    
+    // Check if rab_tor table exists
+    let rabTorRecords = []
+    try {
+      const result = await env.DB.prepare(`
+        SELECT * 
+        FROM rab_tor 
+        LIMIT 10
+      `).all()
+      rabTorRecords = result.results || []
+    } catch (e) {
+      console.log('rab_tor table might not exist or has no data')
+    }
     
     return c.json({
       success: true,
-      totalRABs: rabRecords.results?.length || 0,
-      totalDistinctTORs: distinctTORs.results?.length || 0,
-      rabRecords: rabRecords.results || [],
-      distinctTORs: distinctTORs.results || []
+      tableStructure: tableStructure,
+      totalRABs: rabRecords.length,
+      rabRecords: rabRecords,
+      rabTorRecords: rabTorRecords,
+      note: 'Check tableStructure to see all columns in rab table'
     })
   } catch (error) {
-    console.error('❌ Failed to get TOR list:', error)
+    console.error('❌ Failed to get debug info:', error)
     return c.json({ 
       success: false,
-      error: error.message || 'Failed to get TOR list'
+      error: error.message || 'Failed to get debug info'
     }, 500)
   }
 })
