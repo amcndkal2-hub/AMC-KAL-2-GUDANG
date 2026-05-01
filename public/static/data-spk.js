@@ -3,12 +3,29 @@ console.log('Data SPK script loaded')
 
 let allData = []
 let filteredData = []
+let isDataLoaded = false
 
-// Load data on page load
+// Load data on page load - MULTIPLE TRIGGERS
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOM loaded, loading SPK data...')
+  console.log('✅ DOMContentLoaded event triggered')
   await loadData()
 })
+
+// FALLBACK: Also load on window load (in case DOM event missed)
+window.addEventListener('load', async () => {
+  if (!isDataLoaded) {
+    console.log('⚠️ Fallback: window.load event triggered (DOMContentLoaded was missed)')
+    await loadData()
+  }
+})
+
+// IMMEDIATE LOAD: Execute immediately if DOM is already ready
+if (document.readyState === 'loading') {
+  console.log('⏳ Document still loading, waiting for DOMContentLoaded...')
+} else {
+  console.log('✅ Document already loaded, loading data immediately...')
+  loadData()
+}
 
 // Load data from GitHub JSON
 async function loadData() {
@@ -56,6 +73,9 @@ async function loadData() {
     
     console.log(`✅ Parsed ${allData.length} valid records`)
     
+    // Mark as loaded
+    isDataLoaded = true
+    
     // Populate filter options
     populateFilters()
     
@@ -64,8 +84,12 @@ async function loadData() {
     renderTable()
     updateDataInfo()
     
+    console.log('✅ Data SPK successfully loaded and displayed!')
+    
   } catch (error) {
     console.error('❌ Failed to load data:', error)
+    console.error('Error details:', error.stack)
+    isDataLoaded = false
     showError('Gagal memuat data SPK: ' + error.message)
   }
 }
