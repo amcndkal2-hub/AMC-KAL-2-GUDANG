@@ -12037,21 +12037,21 @@ function getDashboardListRABHTML() {
                     <div class="bg-white rounded-lg shadow-md">
                         <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
                             <table class="border" style="width: 2310px; table-layout: fixed;">
-                        <thead class="bg-blue-50 sticky top-0 shadow-sm" style="z-index: 20;">
+                        <thead class="sticky top-0 shadow-sm" style="z-index: 20; background-color: #2C5282;">
                             <tr>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="position: sticky; left: 0; z-index: 20; background: white; width: 60px; min-width: 60px; max-width: 60px;">No</th>
-                                <th class="px-2 py-2.5 border text-left bg-blue-50 text-xs font-semibold text-gray-700" style="position: sticky; left: 60px; z-index: 20; background: white; width: 220px; min-width: 220px; max-width: 220px;">No. Ijin Prinsip</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="position: sticky; left: 280px; z-index: 20; background: white; width: 160px; min-width: 160px; max-width: 160px;">Nomor RAB</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 280px; min-width: 280px; max-width: 280px;">No. TOR</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 140px; min-width: 140px; max-width: 140px;">Jenis RAB</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 140px; min-width: 140px; max-width: 140px;">Tanggal</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 120px; min-width: 120px; max-width: 120px;">Jumlah Item</th>
-                                <th class="px-2 py-2.5 border text-right bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 180px; min-width: 180px; max-width: 180px;">Total Harga</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 140px; min-width: 140px; max-width: 140px;">Status</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 200px; min-width: 200px; max-width: 200px;">Status SCM</th>
-                                <th class="px-2 py-2.5 border text-left bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 400px; min-width: 400px; max-width: 400px;">Nama Pekerjaan</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 150px; min-width: 150px; max-width: 150px;">No. SPK</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 120px; min-width: 120px; max-width: 120px;">Aksi</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 0; z-index: 20; background-color: #2C5282; width: 60px; min-width: 60px; max-width: 60px;">No</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 60px; z-index: 20; background-color: #2C5282; width: 220px; min-width: 220px; max-width: 220px;">No. Ijin Prinsip</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 280px; z-index: 20; background-color: #2C5282; width: 160px; min-width: 160px; max-width: 160px;">Nomor RAB</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 280px; min-width: 280px; max-width: 280px;">No. TOR</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 140px; min-width: 140px; max-width: 140px;">Jenis RAB</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 140px; min-width: 140px; max-width: 140px;">Tanggal</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 120px; min-width: 120px; max-width: 120px;">Jumlah Item</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 180px; min-width: 180px; max-width: 180px;">Total Harga</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 140px; min-width: 140px; max-width: 140px;">Status</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 200px; min-width: 200px; max-width: 200px;">Status SCM</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 400px; min-width: 400px; max-width: 400px;">Nama Pekerjaan</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 150px; min-width: 150px; max-width: 150px;">No. SPK</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 120px; min-width: 120px; max-width: 120px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">
