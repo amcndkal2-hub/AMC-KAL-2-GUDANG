@@ -279,10 +279,13 @@ async function loadRABList() {
     console.log('Loaded RAB data:', data)
     
     allRABList = data
-    filteredRABList = data
     
-    sortRABByStatus()
-    renderRABList(filteredRABList)
+    // Re-apply current filters instead of resetting
+    applyFilters()
+    
+    // Update button pills state to match current filter
+    updateJenisFilterButtonState()
+    
   } catch (error) {
     console.error('Failed to load RAB list:', error)
     showNotification('Gagal memuat daftar RAB', 'error')
@@ -589,6 +592,24 @@ function selectJenisFilter(jenis) {
   }
   
   console.log(`✅ Jenis filter selected: ${jenis}`)
+}
+
+// Update button pills state based on current filter
+function updateJenisFilterButtonState() {
+  // Reset all buttons to gray
+  document.querySelectorAll('.jenis-filter-pill').forEach(btn => {
+    btn.classList.remove('bg-green-600', 'text-white')
+    btn.classList.add('bg-gray-200', 'text-gray-700')
+  })
+  
+  // Set active button based on currentJenisFilter
+  const activeBtn = document.getElementById(`btnJenis${currentJenisFilter.replace(/ /g, '')}`)
+  if (activeBtn) {
+    activeBtn.classList.remove('bg-gray-200', 'text-gray-700')
+    activeBtn.classList.add('bg-green-600', 'text-white')
+  }
+  
+  console.log(`✅ Button state updated: ${currentJenisFilter}`)
 }
 
 // Apply all filters (called by "Terapkan" button)
