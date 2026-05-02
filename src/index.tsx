@@ -12010,12 +12010,20 @@ function getDashboardListRABHTML() {
                         <div class="flex items-center gap-2">
                             <i class="fas fa-list text-green-600"></i>
                             <label class="text-sm font-semibold text-gray-700">Filter Jenis:</label>
-                            <select id="filterJenisDropdown" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                                <option value="All">Semua</option>
-                                <option value="SPK">SPK</option>
-                                <option value="Pembelian Langsung">Pembelian Langsung</option>
-                                <option value="KHS">KHS</option>
-                            </select>
+                            <div class="flex gap-2">
+                                <button onclick="selectJenisFilter('All')" id="btnJenisAll" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-green-600 text-white hover:bg-green-700">
+                                    Semua
+                                </button>
+                                <button onclick="selectJenisFilter('SPK')" id="btnJenisSPK" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                    SPK
+                                </button>
+                                <button onclick="selectJenisFilter('Pembelian Langsung')" id="btnJenisPembelianLangsung" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                    Pembelian Langsung
+                                </button>
+                                <button onclick="selectJenisFilter('KHS')" id="btnJenisKHS" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                    KHS
+                                </button>
+                            </div>
                         </div>
                         
                         <button onclick="applyFilters()" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">

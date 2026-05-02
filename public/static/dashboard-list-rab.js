@@ -572,19 +572,35 @@ function filterByJenis(jenis) {
   }
 }
 
+// Select jenis filter (for button pills)
+function selectJenisFilter(jenis) {
+  currentJenisFilter = jenis
+  
+  // Update button styles
+  document.querySelectorAll('.jenis-filter-pill').forEach(btn => {
+    btn.classList.remove('bg-green-600', 'text-white')
+    btn.classList.add('bg-gray-200', 'text-gray-700')
+  })
+  
+  const activeBtn = document.getElementById(`btnJenis${jenis.replace(/ /g, '')}`)
+  if (activeBtn) {
+    activeBtn.classList.remove('bg-gray-200', 'text-gray-700')
+    activeBtn.classList.add('bg-green-600', 'text-white')
+  }
+  
+  console.log(`✅ Jenis filter selected: ${jenis}`)
+}
+
 // Apply all filters (called by "Terapkan" button)
 function applyFilters() {
   // Get values from dropdowns
   const statusDropdown = document.getElementById('filterStatusDropdown')
-  const jenisDropdown = document.getElementById('filterJenisDropdown')
   
   if (statusDropdown) {
     currentStatusFilter = statusDropdown.value
   }
   
-  if (jenisDropdown) {
-    currentJenisFilter = jenisDropdown.value
-  }
+  // currentJenisFilter already set by selectJenisFilter()
   
   // Filter the list
   filteredRABList = allRABList.filter(rab => {
