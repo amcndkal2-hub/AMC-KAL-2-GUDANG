@@ -482,13 +482,13 @@ function renderRABList(rabList) {
           ${truncateStatus(spkData.status)}
         </span>
       </td>
-      <td class="px-2 py-2 border text-left align-middle" style="width: 400px; min-width: 400px; max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+      <td class="px-2 py-2 border text-left align-middle" style="background: white; width: 400px; min-width: 400px; max-width: 400px; height: 48px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
         <span class="text-gray-700 text-[10px]">${spkData.nama_pekerjaan}</span>
       </td>
-      <td class="px-2 py-2 border text-center align-middle" style="width: 150px; min-width: 150px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+      <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 150px; min-width: 150px; max-width: 150px; height: 48px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
         <span class="text-gray-700 font-mono text-xs">${spkData.nomor_spk}</span>
       </td>
-      <td class="px-2 py-2 border text-center align-middle" style="width: 120px; min-width: 120px; max-width: 120px; white-space: nowrap; overflow: visible;">
+      <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 120px; min-width: 120px; max-width: 120px; height: 48px; white-space: nowrap; overflow: visible;">
         <div class="flex gap-1 justify-center items-center flex-nowrap">
           <button onclick="viewRABDetail(${rab.id})" 
                   class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs inline-flex items-center whitespace-nowrap" title="View">

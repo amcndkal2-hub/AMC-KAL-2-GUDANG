@@ -12048,10 +12048,10 @@ function getDashboardListRABHTML() {
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="position: sticky; left: 1000px; z-index: 20; width: 120px; min-width: 120px; max-width: 120px;">Jumlah Item</th>
                                 <th class="px-2 py-2.5 border text-right bg-blue-50 text-xs font-semibold text-gray-700" style="position: sticky; left: 1120px; z-index: 20; width: 180px; min-width: 180px; max-width: 180px;">Total Harga</th>
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="position: sticky; left: 1300px; z-index: 20; width: 140px; min-width: 140px; max-width: 140px;">Status</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="position: sticky; left: 1440px; z-index: 20; width: 200px; min-width: 200px; max-width: 200px;">Status SCM</th>
-                                <th class="px-2 py-2.5 border text-left bg-blue-50 text-xs font-semibold text-gray-700" style="width: 400px; min-width: 400px; max-width: 400px;">Nama Pekerjaan</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 150px; min-width: 150px; max-width: 150px;">No. SPK</th>
-                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="width: 120px; min-width: 120px; max-width: 120px;">Aksi</th>
+                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="position: sticky; left: 1440px; z-index: 20; background: white; width: 200px; min-width: 200px; max-width: 200px;">Status SCM</th>
+                                <th class="px-2 py-2.5 border text-left bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 400px; min-width: 400px; max-width: 400px;">Nama Pekerjaan</th>
+                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 150px; min-width: 150px; max-width: 150px;">No. SPK</th>
+                                <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="background: white; width: 120px; min-width: 120px; max-width: 120px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">
