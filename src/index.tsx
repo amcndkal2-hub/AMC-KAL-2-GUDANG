@@ -12036,7 +12036,7 @@ function getDashboardListRABHTML() {
                 <!-- Main Table -->
                     <div class="bg-white rounded-lg shadow-md">
                         <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
-                            <table class="min-w-full border">
+                            <table class="border" style="width: 2310px; table-layout: fixed;">
                         <thead class="bg-blue-50 sticky top-0 shadow-sm" style="z-index: 20;">
                             <tr>
                                 <th class="px-2 py-2.5 border text-center bg-blue-50 text-xs font-semibold text-gray-700" style="position: sticky; left: 0; z-index: 20; width: 60px; min-width: 60px; max-width: 60px;">No</th>
