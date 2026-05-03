@@ -12338,7 +12338,7 @@ function getDashboardListTORHTML() {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
         <script src="/url-redirect.js?v=1770101032"></script>
         <style>
-            /* Fixed table layout with frozen columns */
+            /* Fixed table layout with frozen columns - REALISASI ONLY */
             .table-container {
                 position: relative;
                 overflow: auto;
@@ -12348,12 +12348,12 @@ function getDashboardListTORHTML() {
             
             .fixed-table {
                 table-layout: fixed;
-                width: 2310px;
+                width: 1810px; /* Reduced from 2310px (removed 3 columns: 160+140+140=440px) */
                 border-collapse: separate;
                 border-spacing: 0;
             }
             
-            /* Freeze first 3 columns */
+            /* Freeze first 2 columns only (NO + NO. IJIN PRINSIP) */
             .fixed-table th:nth-child(1),
             .fixed-table td:nth-child(1) {
                 position: sticky;
@@ -12370,14 +12370,6 @@ function getDashboardListTORHTML() {
                 background: inherit;
             }
             
-            .fixed-table th:nth-child(3),
-            .fixed-table td:nth-child(3) {
-                position: sticky;
-                left: 280px;
-                z-index: 3;
-                background: inherit;
-            }
-            
             /* Header row stays on top */
             .fixed-table thead th {
                 position: sticky;
@@ -12388,8 +12380,7 @@ function getDashboardListTORHTML() {
             
             /* Higher z-index for frozen header cells */
             .fixed-table thead th:nth-child(1),
-            .fixed-table thead th:nth-child(2),
-            .fixed-table thead th:nth-child(3) {
+            .fixed-table thead th:nth-child(2) {
                 z-index: 5;
             }
             
@@ -12470,12 +12461,9 @@ function getDashboardListTORHTML() {
                         </select>
                     </div>
                     <div class="flex-1">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Filter Jenis RAB</label>
-                        <select id="filterJenis" onchange="applyFilters()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">Semua Jenis</option>
-                            <option value="SPK">SPK</option>
-                            <option value="Pembelian Langsung">Pembelian Langsung</option>
-                            <option value="KHS">KHS</option>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Jenis RAB (SPK Only)</label>
+                        <select id="filterJenis" disabled class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 cursor-not-allowed">
+                            <option value="SPK" selected>SPK</option>
                         </select>
                     </div>
                     <div class="flex-1">
@@ -12485,7 +12473,7 @@ function getDashboardListTORHTML() {
                 </div>
             </div>
 
-            <!-- Main Table - Same structure as LIST RAB -->
+            <!-- Main Table - REALISASI (10 columns, removed: NOMOR RAB, JENIS RAB, TANGGAL) -->
             <div class="bg-white rounded-lg shadow-md p-4">
                 <div class="table-container">
                     <table class="fixed-table">
@@ -12493,10 +12481,7 @@ function getDashboardListTORHTML() {
                             <tr>
                                 <th class="text-center text-white font-bold uppercase border border-white" style="width: 60px;">NO</th>
                                 <th class="text-left text-white font-bold uppercase border border-white" style="width: 220px;">NO. IJIN PRINSIP</th>
-                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 160px;">NOMOR RAB</th>
                                 <th class="text-left text-white font-bold uppercase border border-white" style="width: 280px;">NO. TOR</th>
-                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 140px;">JENIS RAB</th>
-                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 140px;">TANGGAL</th>
                                 <th class="text-center text-white font-bold uppercase border border-white" style="width: 120px;">JUMLAH ITEM</th>
                                 <th class="text-right text-white font-bold uppercase border border-white" style="width: 180px;">TOTAL HARGA</th>
                                 <th class="text-center text-white font-bold uppercase border border-white" style="width: 140px;">STATUS</th>
@@ -12508,7 +12493,7 @@ function getDashboardListTORHTML() {
                         </thead>
                         <tbody id="rabListTable" class="bg-white">
                             <tr>
-                                <td colspan="13" class="text-center py-8 text-gray-500">
+                                <td colspan="10" class="text-center py-8 text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>
@@ -12631,6 +12616,30 @@ function getDashboardListTORHTML() {
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-list-rab.js"></script>
+        
+        <!-- REALISASI-specific customization -->
+        <script>
+            // Override for REALISASI page only
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('🔧 REALISASI customization loaded');
+                
+                // Force filter Jenis RAB to SPK only
+                const filterJenis = document.getElementById('filterJenis');
+                if (filterJenis) {
+                    filterJenis.value = 'SPK';
+                    filterJenis.disabled = true;
+                    console.log('✅ Filter Jenis RAB locked to SPK');
+                    
+                    // Trigger filter to apply SPK filter immediately
+                    setTimeout(() => {
+                        if (typeof applyFilters === 'function') {
+                            applyFilters();
+                            console.log('✅ SPK filter applied');
+                        }
+                    }, 1000);
+                }
+            });
+        </script>
     </body>
     </html>
   `
