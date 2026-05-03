@@ -5431,39 +5431,39 @@ function getDashboardMainHTML() {
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        FORM GANGGUAN
                     </a>
                     <a href="/dashboard/analytics" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        MUTASI
                     </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        GANGGUAN
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
 
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
                     </a>
                     <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -5624,36 +5624,36 @@ function getInputFormHTML() {
                     <a href="/dashboard/main" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        FORM GANGGUAN
                     </a>
-                    <a href="/dashboard/analytics" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/analytics" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        MUTASI
                     </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        GANGGUAN
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
 
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -6326,36 +6326,36 @@ function getDashboardStokHTML() {
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        MUTASI
                     </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        GANGGUAN
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
 
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -6517,36 +6517,36 @@ function getDashboardUmurHTML() {
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        FORM GANGGUAN
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
                     <a href="/dashboard/umur" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        MUTASI
                     </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        GANGGUAN
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
 
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -6673,36 +6673,36 @@ function getDashboardMutasiHTML() {
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        FORM GANGGUAN
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
                     <a href="/dashboard/mutasi" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
-                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                        MUTASI
                     </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        GANGGUAN
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
 
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -6894,26 +6894,26 @@ function getFormGangguanHTML() {
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
                     <a href="/form-gangguan" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                        FORM GANGGUAN
                     </a>
-                    <a href="/dashboard/analytics" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/analytics" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        MUTASI
                     </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        GANGGUAN
                     </a>
                 </div>
             </div>
@@ -7313,8 +7313,7 @@ function getLoginHTML() {
                     <p class="text-gray-600 mb-3">Akses Publik:</p>
                     <a href="/form-gangguan" 
                         class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        Form Gangguan dan Permintaan Material
+                        FORM GANGGUAN dan Permintaan Material
                         <i class="fas fa-arrow-right ml-2"></i>
                     </a>
                 </div>
@@ -7424,29 +7423,29 @@ function getDashboardKebutuhanMaterialHTML() {
         <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/create-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-file-invoice-dollar mr-1"></i>Create RAB
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE RAB
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/list-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-list mr-1"></i>List RAB
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
                     </a>
-                    <a href="/dashboard/list-tor" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-check mr-1"></i>Realisasi
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
                     </a>
-                    <a href="/dashboard/data-spk" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-file-contract mr-1"></i>Data SPK
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA SPK
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -7635,36 +7634,36 @@ function getDashboardGangguanHTML() {
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
-                    <a href="/" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        FORM GANGGUAN
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/umur" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-calendar-alt mr-1"></i>Umur
                     </a>
-                    <a href="/dashboard/mutasi" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exchange-alt mr-1"></i>Mutasi
+                    <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        MUTASI
                     </a>
                     <a href="/dashboard/gangguan" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                        GANGGUAN
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
 
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
                     </a>
-                    <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-blue-700 rounded ml-4">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -7834,38 +7833,38 @@ function getDashboardRefHargaHTML() {
         <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        FORM GANGGUAN
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        GANGGUAN
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
-                    <a href="/dashboard/create-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-file-invoice-dollar mr-1"></i>Create RAB
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE RAB
                     </a>
-                    <a href="/dashboard/list-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-list mr-1"></i>List RAB
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
                     </a>
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
                     </a>
                     <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -7973,29 +7972,29 @@ function getDashboardResumeHTML() {
         <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        FORM GANGGUAN
                     </a>
-                    <a href="/dashboard/analytics" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/analytics" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        GANGGUAN
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        RESUME
                     </a>
                     <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -8340,16 +8339,16 @@ function getDashboardCreateRABHTML() {
             <div class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
                     <a href="/form-gangguan" class="hover:text-blue-200"><i class="fas fa-wrench mr-2"></i>Form Gangguan</a>
-                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
-                    <a href="/dashboard/stok" class="hover:text-blue-200"><i class="fas fa-boxes mr-2"></i>Stok
-                    <a href="/dashboard/mutasi" class="hover:text-blue-200"><i class="fas fa-exchange-alt mr-2"></i>Mutasi</a>
+                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
+                    <a href="/dashboard/stok" class="hover:text-blue-200">STOK
+                    <a href="/dashboard/mutasi" class="hover:text-blue-200">MUTASI</a>
                     <a href="/dashboard/umur" class="hover:text-blue-200"><i class="fas fa-calendar-alt mr-2"></i>Umur</a>
                     <a href="/dashboard/gangguan" class="hover:text-blue-200"><i class="fas fa-exclamation-triangle mr-2"></i>Gangguan</a>
-                    <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
+                    <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
                     <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
-                    <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
+                    <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -8625,7 +8624,7 @@ function getDashboardPengadaanHTML() {
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
                     <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                        FORM GANGGUAN
                     </a>
                     <a href="/dashboard/analytics" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
@@ -8634,20 +8633,20 @@ function getDashboardPengadaanHTML() {
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
                     <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                        GANGGUAN
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                        KEBUTUHAN
                     </a>
 
                     <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                        REF. HARGA
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                        RESUME
                     </a>
                     <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-lg font-bold">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -9441,35 +9440,35 @@ function getDashboardPengadaanMaterialHTML() {
         <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-plus mr-1"></i>Input Material
                     </a>
-                    <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>Form Gangguan
+                    <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        FORM GANGGUAN
                     </a>
-                    <a href="/dashboard/analytics" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/analytics" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
-                    <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-chart-bar mr-1"></i>Stok
                     </a>
-                    <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tools mr-1"></i>Gangguan
+                    <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        GANGGUAN
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
-                    <a href="/dashboard/pengadaan-material" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
+                    <a href="/dashboard/pengadaan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
                         <i class="fas fa-shopping-cart mr-1"></i>Pengadaan
                     </a>
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
                     </a>
                     <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -11965,14 +11964,14 @@ function getDashboardListRABHTML() {
             <div class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
                     <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
-                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
-                    <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
-                    <a href="/dashboard/list-rab" class="bg-blue-800 px-3 py-2 rounded"><i class="fas fa-list mr-2"></i>List RAB</a>
+                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
+                    <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
+                    <a href="/dashboard/list-rab" class="bg-blue-800 px-3 py-2 rounded">LIST RAB</a>
                     <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
-                    <a href="/dashboard/data-spk" class="hover:text-blue-200"><i class="fas fa-file-contract mr-2"></i>Data SPK</a>
-                    <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
+                    <a href="/dashboard/data-spk" class="hover:text-blue-200">DATA SPK</a>
+                    <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -12204,29 +12203,29 @@ function getDashboardDataSPKHTML() {
         <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
-                    <a href="/dashboard/create-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-file-invoice-dollar mr-1"></i>Create RAB
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE RAB
                     </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-list mr-1"></i>Kebutuhan
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
                     </a>
-                    <a href="/dashboard/ref-harga" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-tags mr-1"></i>Ref. Harga
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
                     </a>
-                    <a href="/dashboard/list-rab" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-list mr-1"></i>List RAB
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
                     </a>
-                    <a href="/dashboard/list-tor" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-clipboard-check mr-1"></i>Realisasi
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
                     </a>
-                    <a href="/dashboard/data-spk" class="px-4 py-2 bg-blue-800 rounded text-base font-semibold">
-                        <i class="fas fa-file-contract mr-1"></i>Data SPK
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        DATA SPK
                     </a>
-                    <a href="/dashboard/resume" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
-                        <i class="fas fa-chart-line mr-1"></i>Resume
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
                     </a>
                     <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -12239,8 +12238,7 @@ function getDashboardDataSPKHTML() {
                 <div class="flex justify-between items-center">
                     <div>
                         <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                            <i class="fas fa-file-contract text-blue-600 mr-2"></i>
-                            Data SPK (Surat Perintah Kerja)
+                            DATA SPK (Surat Perintah Kerja)
                         </h1>
                         <p class="text-gray-600">Data Izin Prinsip dan SPK dari Sistem SCM</p>
                     </div>
@@ -12346,12 +12344,12 @@ function getDashboardListTORHTML() {
             <div class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
                     <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
-                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200"><i class="fas fa-clipboard-list mr-2"></i>Kebutuhan</a>
-                    <a href="/dashboard/ref-harga" class="hover:text-blue-200"><i class="fas fa-tags mr-2"></i>Ref. Harga</a>
+                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
+                    <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
                     <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
-                    <a href="/dashboard/resume" class="hover:text-blue-200"><i class="fas fa-chart-line mr-2"></i>Resume</a>
+                    <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        LOGOUT
                     </button>
                 </div>
             </div>
@@ -12605,14 +12603,14 @@ function getInputFormV2HTML() {
                     <span class="bg-yellow-500 text-xs px-2 py-1 rounded">NEW</span>
                 </div>
                 <div class="flex space-x-2">
-                    <a href="/" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-arrow-left mr-1"></i>Kembali ke V1
                     </a>
-                    <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-base font-semibold">
+                    <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
                     </a>
                     <button onclick="logout()" class="px-3 py-2 bg-red-600 hover:bg-red-700 rounded">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                        LOGOUT
                     </button>
                 </div>
             </div>
