@@ -12630,7 +12630,7 @@ function getDashboardListTORHTML() {
         <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
         <script src="/static/auth-check.js"></script>
-        <script src="/static/dashboard-resume.js"></script>
+        <script src="/static/dashboard-list-rab.js"></script>
     </body>
     </html>
   `
