@@ -12336,19 +12336,101 @@ function getDashboardListTORHTML() {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="/url-redirect.js?v=1770101032"></script>
+        <script src="/url-redirect.js?v=1770101032"></script>
+        <style>
+            /* Fixed table layout with frozen columns */
+            .table-container {
+                position: relative;
+                overflow: auto;
+                max-height: calc(100vh - 300px);
+                border: 1px solid #e5e7eb;
+            }
+            
+            .fixed-table {
+                table-layout: fixed;
+                width: 2310px;
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+            
+            /* Freeze first 3 columns */
+            .fixed-table th:nth-child(1),
+            .fixed-table td:nth-child(1) {
+                position: sticky;
+                left: 0;
+                z-index: 3;
+                background: inherit;
+            }
+            
+            .fixed-table th:nth-child(2),
+            .fixed-table td:nth-child(2) {
+                position: sticky;
+                left: 60px;
+                z-index: 3;
+                background: inherit;
+            }
+            
+            .fixed-table th:nth-child(3),
+            .fixed-table td:nth-child(3) {
+                position: sticky;
+                left: 280px;
+                z-index: 3;
+                background: inherit;
+            }
+            
+            /* Header row stays on top */
+            .fixed-table thead th {
+                position: sticky;
+                top: 0;
+                z-index: 4;
+                background: #1e3a8a !important;
+            }
+            
+            /* Higher z-index for frozen header cells */
+            .fixed-table thead th:nth-child(1),
+            .fixed-table thead th:nth-child(2),
+            .fixed-table thead th:nth-child(3) {
+                z-index: 5;
+            }
+            
+            /* Uniform row height */
+            .fixed-table tbody tr {
+                height: 48px;
+            }
+            
+            .fixed-table tbody td {
+                height: 48px;
+                padding: 8px 12px;
+            }
+        </style>
     </head>
     <body class="bg-gray-100">
-        <!-- Navbar -->
-        <nav class="bg-blue-600 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
-                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
-                    <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
-                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
-                    <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
-                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+        <!-- Navigation Bar - Updated Style -->
+        <nav class="bg-blue-900 text-white shadow-lg">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center justify-between">
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE RAB
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
+                    </a>
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
                         LOGOUT
                     </button>
                 </div>
@@ -12356,104 +12438,83 @@ function getDashboardListTORHTML() {
         </nav>
 
         <div class="container mx-auto px-4 py-6">
-            <!-- Main Content with Sidebar -->
-            <div class="flex gap-6">
-                <!-- Sidebar Filter -->
-                <div class="w-64 flex-shrink-0">
-                    <!-- Filter Status -->
-                    <div class="bg-white rounded-lg shadow-md p-4 mb-4">
-                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
-                            <i class="fas fa-filter mr-2 text-blue-600"></i>
-                            Filter Status
-                        </h3>
-                        <div class="space-y-2">
-                            <button onclick="filterByStatus('All')" id="btnAll" 
-                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-                                <i class="fas fa-th-large mr-2"></i>Semua
-                            </button>
-                            <button onclick="filterByStatus('Draft')" id="btnDraft" 
-                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-edit mr-2"></i>Draft
-                            </button>
-                            <button onclick="filterByStatus('Pengadaan')" id="btnPengadaan" 
-                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-shopping-cart mr-2"></i>Pengadaan
-                            </button>
-                            <button onclick="filterByStatus('Tersedia')" id="btnTersedia" 
-                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-check-circle mr-2"></i>Tersedia
-                            </button>
-                            <button onclick="filterByStatus('Masuk Gudang')" id="btnMasukGudang" 
-                                    class="status-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-warehouse mr-2"></i>Masuk Gudang
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Filter Jenis RAB -->
-                    <div class="bg-white rounded-lg shadow-md p-4">
-                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
-                            <i class="fas fa-list mr-2 text-green-600"></i>
-                            Filter Jenis RAB
-                        </h3>
-                        <div class="space-y-2">
-                            <button onclick="filterByJenis('All')" id="btnJenisAll" 
-                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
-                                <i class="fas fa-th-large mr-2"></i>Semua
-                            </button>
-                            <button onclick="filterByJenis('SPK')" id="btnJenisSPK" 
-                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-file-contract mr-2"></i>SPK
-                            </button>
-                            <button onclick="filterByJenis('Pembelian Langsung')" id="btnJenisPembelianLangsung" 
-                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-shopping-bag mr-2"></i>Pembelian Langsung
-                            </button>
-                            <button onclick="filterByJenis('KHS')" id="btnJenisKHS" 
-                                    class="jenis-filter-btn w-full text-left px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-                                <i class="fas fa-handshake mr-2"></i>KHS
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Content Area -->
-                <div class="flex-1">
-                    <!-- Header -->
-                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                            <i class="fas fa-file-invoice-dollar text-blue-600 mr-3"></i>
-                            Realisasi
-                        </h1>
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">REALISASI</h1>
                         <p class="text-gray-600 mt-2">Daftar realisasi pembayaran untuk semua RAB</p>
                     </div>
+                    <div class="flex gap-3">
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200">
+                            <i class="fas fa-file-excel mr-2"></i>Export Excel
+                        </button>
+                        <button onclick="exportToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200">
+                            <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-                    <!-- Main Table -->
-                    <div class="bg-white rounded-lg shadow-md">
-                        <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
-                            <table class="min-w-full border">
-                        <thead class="bg-blue-50 sticky top-0 z-10 shadow-md">
+            <!-- Filters -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <div class="flex gap-4 items-center">
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Filter Status</label>
+                        <select id="filterStatus" onchange="applyFilters()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Semua Status</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Pengadaan">Pengadaan</option>
+                            <option value="Tersedia">Tersedia</option>
+                            <option value="Masuk Gudang">Masuk Gudang</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Filter Jenis RAB</label>
+                        <select id="filterJenis" onchange="applyFilters()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Semua Jenis</option>
+                            <option value="SPK">SPK</option>
+                            <option value="Pembelian Langsung">Pembelian Langsung</option>
+                            <option value="KHS">KHS</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Pencarian</label>
+                        <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Cari nomor RAB, TOR, atau nama pekerjaan..." class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Table - Same structure as LIST RAB -->
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="table-container">
+                    <table class="fixed-table">
+                        <thead>
                             <tr>
-                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 60px;">No</th>
-                                <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 280px;">No. TOR</th>
-                                <th class="px-4 py-3 border text-left bg-blue-50" style="min-width: 140px;">Jenis RAB</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 120px;">Jumlah Item</th>
-                                <th class="px-4 py-3 border text-right bg-blue-50" style="min-width: 150px;">Total Harga</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 130px;">Status</th>
-                                <th class="px-4 py-3 border text-center bg-blue-50" style="min-width: 200px;">Aksi</th>
+                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 60px;">NO</th>
+                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 220px;">NO. IJIN PRINSIP</th>
+                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 160px;">NOMOR RAB</th>
+                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 280px;">NO. TOR</th>
+                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 140px;">JENIS RAB</th>
+                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 140px;">TANGGAL</th>
+                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 120px;">JUMLAH ITEM</th>
+                                <th class="text-right text-white font-bold uppercase border border-white" style="width: 180px;">TOTAL HARGA</th>
+                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 140px;">STATUS</th>
+                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 200px;">STATUS SCM</th>
+                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 400px;">NAMA PEKERJAAN</th>
+                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 150px;">NO. SPK</th>
+                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 120px;">AKSI</th>
                             </tr>
                         </thead>
-                        <tbody id="rabListTable">
+                        <tbody id="rabListTable" class="bg-white">
                             <tr>
-                                <td colspan="13" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="13" class="text-center py-8 text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-                </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -12569,7 +12630,7 @@ function getDashboardListTORHTML() {
         <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
         <script src="/static/auth-check.js"></script>
-        <script src="/static/dashboard-list-rab.js"></script>
+        <script src="/static/dashboard-resume.js"></script>
     </body>
     </html>
   `
