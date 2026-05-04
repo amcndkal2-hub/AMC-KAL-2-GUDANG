@@ -818,7 +818,15 @@ function showRABDetailModal(rab) {
       })
       
       // Conditionally show 4 new columns only for REALISASI page
-      const itemId = item.id || item.item_id || 0
+      const itemId = item.id || item.item_id || index
+      console.log('🔍 Item ID Debug:', { 
+        'item.id': item.id, 
+        'item.item_id': item.item_id, 
+        'index': index,
+        'final itemId': itemId,
+        'item keys': Object.keys(item)
+      })
+      
       const realisasiColumns = isListTORPage ? `
         <td class="px-2 py-2 text-right text-xs">${formatRupiah(tanpaROK)}</td>
         <td class="px-2 py-2 text-right text-xs">${formatRupiah(totalTanpaROK)}</td>
