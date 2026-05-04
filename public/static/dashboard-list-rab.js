@@ -816,13 +816,16 @@ function showRABDetailModal(rab) {
       })
       
       // Conditionally show 4 new columns only for REALISASI page
+      const itemId = item.id || item.item_id || 0
       const realisasiColumns = isListTORPage ? `
         <td class="px-2 py-2 text-right text-xs">${formatRupiah(tanpaROK)}</td>
         <td class="px-2 py-2 text-right text-xs">${formatRupiah(totalTanpaROK)}</td>
         <td class="px-2 py-2 text-center text-xs">
           <input type="number" 
                  value="${realisasi}" 
-                 onchange="updateRealisasi(${rab.id}, ${item.id || index}, this.value)"
+                 data-item-id="${itemId}"
+                 data-rab-id="${rab.id}"
+                 onchange="updateRealisasi(${rab.id}, ${itemId}, this.value)"
                  class="w-full px-2 py-1 text-xs text-right border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
                  placeholder="0" />
         </td>
@@ -875,6 +878,13 @@ async function updateRealisasi(rabId, itemId, value) {
   try {
     console.log('💰 Update Realisasi:', { rabId, itemId, value })
     
+    // Validate itemId
+    if (!itemId || itemId === 0 || isNaN(itemId)) {
+      console.error('❌ Invalid itemId:', itemId)
+      showNotification('Error: Item ID tidak valid', 'error')
+      return
+    }
+    
     const response = await fetch(`/api/rab/${rabId}/item/${itemId}/realisasi`, {
       method: 'PUT',
       headers: {
@@ -884,14 +894,21 @@ async function updateRealisasi(rabId, itemId, value) {
       body: JSON.stringify({ realisasi: parseFloat(value) || 0 })
     })
     
-    if (!response.ok) throw new Error('Failed to update realisasi')
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('❌ API Error:', errorData)
+      throw new Error(errorData.error || 'Failed to update realisasi')
+    }
+    
+    const result = await response.json()
+    console.log('✅ Realisasi updated:', result)
     
     showNotification('Realisasi berhasil diupdate', 'success')
     // Reload modal to show updated totals
     await viewRABDetail(rabId)
   } catch (error) {
-    console.error('Error updating realisasi:', error)
-    showNotification('Gagal update realisasi', 'error')
+    console.error('❌ Error updating realisasi:', error)
+    showNotification(`Gagal update realisasi: ${error.message}`, 'error')
   }
 }
 
