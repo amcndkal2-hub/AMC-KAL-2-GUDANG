@@ -12637,15 +12637,33 @@ function getDashboardListTORHTML() {
                     filterJenis.value = 'SPK';
                     filterJenis.disabled = true;
                     console.log('✅ Filter Jenis RAB locked to SPK');
-                    
-                    // Trigger filter to apply SPK filter immediately
-                    setTimeout(() => {
-                        if (typeof applyFilters === 'function') {
-                            applyFilters();
-                            console.log('✅ SPK filter applied');
-                        }
-                    }, 1000);
                 }
+                
+                // Override currentJenisFilter globally and force re-render
+                let checkInterval = setInterval(() => {
+                    if (typeof currentJenisFilter !== 'undefined' && typeof allRABList !== 'undefined' && allRABList.length > 0) {
+                        console.log('🔄 Forcing SPK filter on loaded data...');
+                        
+                        // Set global filter variable
+                        window.currentJenisFilter = 'SPK';
+                        
+                        // Filter only SPK data
+                        window.filteredRABList = allRABList.filter(rab => rab.jenis_rab === 'SPK');
+                        
+                        console.log(\`✅ Filtered to SPK only: \${window.filteredRABList.length} items\`);
+                        
+                        // Re-render table with filtered data
+                        if (typeof renderRABTable === 'function') {
+                            renderRABTable();
+                            console.log('✅ Table re-rendered with SPK data only');
+                        }
+                        
+                        clearInterval(checkInterval);
+                    }
+                }, 500);
+                
+                // Clear interval after 10 seconds to prevent infinite loop
+                setTimeout(() => clearInterval(checkInterval), 10000);
                 
                 // Hide 3 columns in tbody dynamically after data loads
                 const observer = new MutationObserver(function(mutations) {
