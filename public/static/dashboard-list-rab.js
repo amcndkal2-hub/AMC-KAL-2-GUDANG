@@ -1199,6 +1199,7 @@ function exportRABDetailToExcel() {
         'Total Realisasi': totalRealisasi,
         'Saldo': saldo
       }
+    })
     
     // Calculate summary totals
     let subtotalTotal = 0
@@ -1507,8 +1508,8 @@ function exportToExcel() {
 // Export RAB Detail to PDF
 // Fungsi exportRABDetailToPDF yang lama sudah dihapus - menggunakan versi baru dengan 14 kolom di atas
 
-// Export to Excel (List RAB)
-function exportToExcel() {
+// Export List RAB to PDF
+function exportListRABToPDF() {
   try {
     const { jsPDF } = window.jspdf
     const doc = new jsPDF('l', 'mm', 'a4')
