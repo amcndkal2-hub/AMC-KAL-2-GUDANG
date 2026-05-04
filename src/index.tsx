@@ -12338,7 +12338,7 @@ function getDashboardListTORHTML() {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
         <script src="/url-redirect.js?v=1770101032"></script>
         <style>
-            /* Fixed table layout with frozen columns - REALISASI ONLY */
+            /* Fixed table layout with frozen columns - REALISASI (same as LIST RAB) */
             .table-container {
                 position: relative;
                 overflow: auto;
@@ -12348,12 +12348,12 @@ function getDashboardListTORHTML() {
             
             .fixed-table {
                 table-layout: fixed;
-                width: 1810px; /* Reduced from 2310px (removed 3 columns: 160+140+140=440px) */
+                width: 1870px; /* Adjusted: removed NOMOR RAB (160px), JENIS RAB (140px), TANGGAL (140px) = -440px from 2310px */
                 border-collapse: separate;
                 border-spacing: 0;
             }
             
-            /* Freeze first 2 columns only (NO + NO. IJIN PRINSIP) */
+            /* Freeze first 2 columns (NO + NO. IJIN PRINSIP) */
             .fixed-table th:nth-child(1),
             .fixed-table td:nth-child(1) {
                 position: sticky;
@@ -12392,6 +12392,11 @@ function getDashboardListTORHTML() {
             .fixed-table tbody td {
                 height: 48px;
                 padding: 8px 12px;
+            }
+            
+            /* Hide specific columns in REALISASI */
+            .realisasi-hide {
+                display: none !important;
             }
         </style>
     </head>
@@ -12473,7 +12478,7 @@ function getDashboardListTORHTML() {
                 </div>
             </div>
 
-            <!-- Main Table - REALISASI (10 columns, removed: NOMOR RAB, JENIS RAB, TANGGAL) -->
+            <!-- Main Table - REALISASI (keep all 13 columns, hide 3 via CSS) -->
             <div class="bg-white rounded-lg shadow-md p-4">
                 <div class="table-container">
                     <table class="fixed-table">
@@ -12481,7 +12486,10 @@ function getDashboardListTORHTML() {
                             <tr>
                                 <th class="text-center text-white font-bold uppercase border border-white" style="width: 60px;">NO</th>
                                 <th class="text-left text-white font-bold uppercase border border-white" style="width: 220px;">NO. IJIN PRINSIP</th>
+                                <th class="realisasi-hide text-left text-white font-bold uppercase border border-white" style="width: 160px;">NOMOR RAB</th>
                                 <th class="text-left text-white font-bold uppercase border border-white" style="width: 280px;">NO. TOR</th>
+                                <th class="realisasi-hide text-left text-white font-bold uppercase border border-white" style="width: 140px;">JENIS RAB</th>
+                                <th class="realisasi-hide text-center text-white font-bold uppercase border border-white" style="width: 140px;">TANGGAL</th>
                                 <th class="text-center text-white font-bold uppercase border border-white" style="width: 120px;">JUMLAH ITEM</th>
                                 <th class="text-right text-white font-bold uppercase border border-white" style="width: 180px;">TOTAL HARGA</th>
                                 <th class="text-center text-white font-bold uppercase border border-white" style="width: 140px;">STATUS</th>
@@ -12493,7 +12501,7 @@ function getDashboardListTORHTML() {
                         </thead>
                         <tbody id="rabListTable" class="bg-white">
                             <tr>
-                                <td colspan="10" class="text-center py-8 text-gray-500">
+                                <td colspan="13" class="text-center py-8 text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>
@@ -12637,6 +12645,28 @@ function getDashboardListTORHTML() {
                             console.log('✅ SPK filter applied');
                         }
                     }, 1000);
+                }
+                
+                // Hide 3 columns in tbody dynamically after data loads
+                const observer = new MutationObserver(function(mutations) {
+                    const tbody = document.getElementById('rabListTable');
+                    if (tbody && tbody.querySelectorAll('tr').length > 1) {
+                        tbody.querySelectorAll('tr').forEach(row => {
+                            const cells = row.querySelectorAll('td');
+                            if (cells.length >= 13) {
+                                // Hide column 3 (NOMOR RAB), 5 (JENIS RAB), 6 (TANGGAL)
+                                if (cells[2]) cells[2].classList.add('realisasi-hide'); // NOMOR RAB
+                                if (cells[4]) cells[4].classList.add('realisasi-hide'); // JENIS RAB
+                                if (cells[5]) cells[5].classList.add('realisasi-hide'); // TANGGAL
+                            }
+                        });
+                        console.log('✅ Hidden 3 columns in table rows');
+                    }
+                });
+                
+                const tbody = document.getElementById('rabListTable');
+                if (tbody) {
+                    observer.observe(tbody, { childList: true, subtree: true });
                 }
             });
         </script>
