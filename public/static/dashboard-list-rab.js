@@ -855,35 +855,39 @@ function showRABDetailModal(rab) {
     if (isListTORPage && rab.items && rab.items.length > 0) {
       const rokPercentage = rab.rok_percentage || 0
       
-      // Calculate subtotals (only Total and Total Realisasi, NO Tanpa ROK)
+      // Calculate subtotals for Total, Total tanpa ROK, and Total Realisasi
       let subtotalTotal = 0
+      let subtotalTanpaROK = 0
       let subtotalRealisasi = 0
       
       rab.items.forEach(item => {
         const qty = item.qty || item.quantity || item.jumlah || 0
         const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
         const total = qty * hargaSatuan
+        // Tanpa ROK = Harga Satuan / (1 + ROK%), then × Qty
+        const tanpaROKPerItem = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
+        const totalTanpaROK = tanpaROKPerItem * qty
         const realisasi = item.realisasi || 0
         
         subtotalTotal += total
+        subtotalTanpaROK += totalTanpaROK
         subtotalRealisasi += (realisasi * qty)
       })
       
-      // Calculate PPN 11%
+      // Calculate PPN 11% ONLY for Total column
       const ppnTotal = subtotalTotal * 0.11
-      const ppnRealisasi = subtotalRealisasi * 0.11
       
-      // Calculate Total + PPN
+      // Calculate Total + PPN ONLY for Total column
       const grandTotalTotal = subtotalTotal + ppnTotal
-      const grandTotalRealisasi = subtotalRealisasi + ppnRealisasi
       
-      // Add summary rows (NO Tanpa ROK columns)
+      // Add summary rows
+      // Row 1: Subtotal (for Total, Total tanpa ROK, and Total Realisasi)
       itemsTable.innerHTML += `
         <tr class="bg-gray-100 font-semibold border-t-2 border-gray-400">
           <td colspan="9" class="px-2 py-2 text-right text-xs">Subtotal:</td>
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTotal)}</td>
           <td class="px-2 py-2 text-right text-xs">-</td>
-          <td class="px-2 py-2 text-right text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTanpaROK)}</td>
           <td class="px-2 py-2 text-center text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalRealisasi)}</td>
         </tr>
@@ -893,7 +897,7 @@ function showRABDetailModal(rab) {
           <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-center text-xs">-</td>
-          <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnRealisasi)}</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
         </tr>
         <tr class="bg-blue-100 font-bold border-t-2 border-blue-400">
           <td colspan="9" class="px-2 py-2 text-right text-xs">Total + PPN:</td>
@@ -901,7 +905,7 @@ function showRABDetailModal(rab) {
           <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-center text-xs">-</td>
-          <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalRealisasi)}</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
         </tr>
       `
     }
