@@ -855,58 +855,51 @@ function showRABDetailModal(rab) {
     if (isListTORPage && rab.items && rab.items.length > 0) {
       const rokPercentage = rab.rok_percentage || 0
       
-      // Calculate subtotals
+      // Calculate subtotals (only Total and Total Realisasi, NO Tanpa ROK)
       let subtotalTotal = 0
-      let subtotalTanpaROK = 0
       let subtotalRealisasi = 0
       
       rab.items.forEach(item => {
         const qty = item.qty || item.quantity || item.jumlah || 0
         const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
         const total = qty * hargaSatuan
-        // Tanpa ROK = Harga Satuan / (1 + ROK%), then × Qty
-        const tanpaROKPerItem = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
-        const totalTanpaROK = tanpaROKPerItem * qty
         const realisasi = item.realisasi || 0
         
         subtotalTotal += total
-        subtotalTanpaROK += totalTanpaROK
         subtotalRealisasi += (realisasi * qty)
       })
       
       // Calculate PPN 11%
       const ppnTotal = subtotalTotal * 0.11
-      const ppnTanpaROK = subtotalTanpaROK * 0.11
       const ppnRealisasi = subtotalRealisasi * 0.11
       
       // Calculate Total + PPN
       const grandTotalTotal = subtotalTotal + ppnTotal
-      const grandTotalTanpaROK = subtotalTanpaROK + ppnTanpaROK
       const grandTotalRealisasi = subtotalRealisasi + ppnRealisasi
       
-      // Add summary rows
+      // Add summary rows (NO Tanpa ROK columns)
       itemsTable.innerHTML += `
         <tr class="bg-gray-100 font-semibold border-t-2 border-gray-400">
           <td colspan="9" class="px-2 py-2 text-right text-xs">Subtotal:</td>
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTotal)}</td>
-          <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTanpaROK)}</td>
-          <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTanpaROK)}</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-center text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalRealisasi)}</td>
         </tr>
         <tr class="bg-gray-100 font-semibold">
           <td colspan="9" class="px-2 py-2 text-right text-xs">PPN 11%:</td>
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnTotal)}</td>
-          <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnTanpaROK)}</td>
-          <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnTanpaROK)}</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-center text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnRealisasi)}</td>
         </tr>
         <tr class="bg-blue-100 font-bold border-t-2 border-blue-400">
           <td colspan="9" class="px-2 py-2 text-right text-xs">Total + PPN:</td>
           <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalTotal)}</td>
-          <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalTanpaROK)}</td>
-          <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalTanpaROK)}</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-center text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalRealisasi)}</td>
         </tr>
@@ -917,14 +910,24 @@ function showRABDetailModal(rab) {
     itemsTable.innerHTML = `<tr><td colspan="${colspanCount}" class="px-4 py-8 text-center text-gray-500 text-xs">Tidak ada item</td></tr>`
   }
   
-  // Calculate totals
+  // Calculate totals (keep this for LIST RAB page, but hide for REALISASI)
   const subtotal = rab.total_harga || 0
   const ppn = subtotal * 0.11
   const total = subtotal + ppn
   
-  document.getElementById('detailSubtotal').textContent = formatRupiah(subtotal)
-  document.getElementById('detailPPN').textContent = formatRupiah(ppn)
-  document.getElementById('detailTotal').textContent = formatRupiah(total)
+  // Hide summary below table for REALISASI page
+  if (isListTORPage) {
+    // Hide the summary section
+    const summarySection = document.querySelector('.mt-4.text-right')
+    if (summarySection) {
+      summarySection.style.display = 'none'
+    }
+  } else {
+    // Show for LIST RAB
+    document.getElementById('detailSubtotal').textContent = formatRupiah(subtotal)
+    document.getElementById('detailPPN').textContent = formatRupiah(ppn)
+    document.getElementById('detailTotal').textContent = formatRupiah(total)
+  }
   
   modal.classList.remove('hidden')
 }
