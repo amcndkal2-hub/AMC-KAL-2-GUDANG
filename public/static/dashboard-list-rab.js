@@ -1223,8 +1223,10 @@ function exportRABDetailToPDF() {
   try {
     const rab = currentRABDetail
     const items = rab.items || []
+    const rokPercentage = rab.rok_percentage || 0
     
-    const doc = new jsPDF()
+    // Use landscape orientation for more columns
+    const doc = new jsPDF('l', 'mm', 'a4')
     
     // Title
     doc.setFontSize(16)
@@ -1235,17 +1237,25 @@ function exportRABDetailToPDF() {
     doc.text(`Status: ${rab.status}`, 14, 25)
     doc.text(`Jenis RAB: ${rab.jenis_rab}`, 14, 30)
     doc.text(`Nomor TOR: ${rab.nomor_tor || '-'}`, 14, 35)
-    doc.text(`ROK: ${rab.rok_percentage || 0}%`, 14, 40)
+    doc.text(`ROK: ${rokPercentage}%`, 14, 40)
     
     const createdDate = rab.created_at ? new Date(rab.created_at).toLocaleDateString('id-ID') : '-'
     doc.text(`Tanggal Dibuat: ${createdDate}`, 14, 45)
     doc.text(`Dibuat Oleh: ${rab.username || '-'}`, 14, 50)
     
-    // Table data
+    // Table data with 14 columns (for REALISASI page)
     const tableData = items.map((item, index) => {
       const qty = item.qty || item.quantity || item.jumlah || 0
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
       const total = qty * hargaSatuan
+      
+      // Calculate Tanpa ROK columns
+      const tanpaROK = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
+      const totalTanpaROK = tanpaROK * qty
+      
+      // Realisasi columns
+      const realisasi = item.realisasi || 0
+      const totalRealisasi = realisasi * qty
       
       return [
         index + 1,
@@ -1256,43 +1266,86 @@ function exportRABDetailToPDF() {
         item.sn_mesin || '-',
         item.unit_uld || '-',
         qty,
-        hargaSatuan.toLocaleString('id-ID'),
-        total.toLocaleString('id-ID')
+        'Rp ' + hargaSatuan.toLocaleString('id-ID'),
+        'Rp ' + total.toLocaleString('id-ID'),
+        'Rp ' + tanpaROK.toLocaleString('id-ID'),
+        'Rp ' + totalTanpaROK.toLocaleString('id-ID'),
+        realisasi > 0 ? 'Rp ' + realisasi.toLocaleString('id-ID') : '-',
+        totalRealisasi > 0 ? 'Rp ' + totalRealisasi.toLocaleString('id-ID') : 'Rp 0'
       ]
     })
     
-    // Calculate totals
-    const subtotal = items.reduce((sum, item) => {
+    // Calculate summary totals
+    let subtotalTotal = 0
+    let subtotalTanpaROK = 0
+    let subtotalRealisasi = 0
+    
+    items.forEach(item => {
       const qty = item.qty || item.quantity || item.jumlah || 0
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
-      return sum + (qty * hargaSatuan)
-    }, 0)
-    const ppn = subtotal * 0.11
-    const totalWithPPN = subtotal + ppn
+      const total = qty * hargaSatuan
+      const tanpaROKPerItem = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
+      const totalTanpaROK = tanpaROKPerItem * qty
+      const realisasi = item.realisasi || 0
+      
+      subtotalTotal += total
+      subtotalTanpaROK += totalTanpaROK
+      subtotalRealisasi += (realisasi * qty)
+    })
     
-    // Add totals to table
-    tableData.push(['', '', '', '', '', '', '', '', 'Subtotal:', subtotal.toLocaleString('id-ID')])
-    tableData.push(['', '', '', '', '', '', '', '', 'PPN 11%:', ppn.toLocaleString('id-ID')])
-    tableData.push(['', '', '', '', '', '', '', '', 'Total + PPN:', totalWithPPN.toLocaleString('id-ID')])
+    const ppnTotal = subtotalTotal * 0.11
+    const grandTotalTotal = subtotalTotal + ppnTotal
+    
+    // Add summary rows
+    tableData.push([
+      '', '', '', '', '', '', '', '', 
+      'Subtotal:', 
+      'Rp ' + subtotalTotal.toLocaleString('id-ID'),
+      '-',
+      'Rp ' + subtotalTanpaROK.toLocaleString('id-ID'),
+      '-',
+      'Rp ' + subtotalRealisasi.toLocaleString('id-ID')
+    ])
+    tableData.push([
+      '', '', '', '', '', '', '', '', 
+      'PPN 11%:', 
+      'Rp ' + ppnTotal.toLocaleString('id-ID'),
+      '-', '-', '-', '-'
+    ])
+    tableData.push([
+      '', '', '', '', '', '', '', '', 
+      'Total + PPN:', 
+      'Rp ' + grandTotalTotal.toLocaleString('id-ID'),
+      '-', '-', '-', '-'
+    ])
     
     doc.autoTable({
       startY: 60,
-      head: [['No', 'Nama Material', 'No. LH05', 'Part Number', 'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty', 'Harga Satuan', 'Total']],
+      head: [[
+        'No', 'Nama Material', 'No. LH05', 'Part Number', 
+        'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty', 
+        'Harga Satuan', 'Total', 'Tanpa ROK', 'Total tanpa ROK', 
+        'Realisasi', 'Total Realisasi'
+      ]],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [34, 197, 94], textColor: 255, fontSize: 8 },
-      bodyStyles: { fontSize: 7 },
+      headStyles: { fillColor: [34, 197, 94], textColor: 255, fontSize: 7 },
+      bodyStyles: { fontSize: 6 },
       columnStyles: {
-        0: { cellWidth: 10, halign: 'center' },
-        1: { cellWidth: 35 },
-        2: { cellWidth: 20, halign: 'center' },
-        3: { cellWidth: 20, halign: 'center' },
-        4: { cellWidth: 20, halign: 'center' },
-        5: { cellWidth: 20, halign: 'center' },
-        6: { cellWidth: 20, halign: 'center' },
-        7: { cellWidth: 12, halign: 'center' },
-        8: { cellWidth: 25, halign: 'right' },
-        9: { cellWidth: 25, halign: 'right' }
+        0: { cellWidth: 8, halign: 'center' },   // No
+        1: { cellWidth: 30 },                     // Nama Material
+        2: { cellWidth: 15, halign: 'center' },   // No. LH05
+        3: { cellWidth: 15, halign: 'center' },   // Part Number
+        4: { cellWidth: 15, halign: 'center' },   // Type Mesin
+        5: { cellWidth: 15, halign: 'center' },   // S/N Mesin
+        6: { cellWidth: 15, halign: 'center' },   // Unit/ULD
+        7: { cellWidth: 10, halign: 'center' },   // Qty
+        8: { cellWidth: 20, halign: 'right' },    // Harga Satuan
+        9: { cellWidth: 22, halign: 'right' },    // Total
+        10: { cellWidth: 20, halign: 'right' },   // Tanpa ROK
+        11: { cellWidth: 22, halign: 'right' },   // Total tanpa ROK
+        12: { cellWidth: 20, halign: 'right' },   // Realisasi
+        13: { cellWidth: 22, halign: 'right' }    // Total Realisasi
       }
     })
     
