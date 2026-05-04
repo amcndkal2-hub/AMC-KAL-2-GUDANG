@@ -796,8 +796,10 @@ function showRABDetailModal(rab) {
       
       // NEW: Calculate for REALISASI page only
       const rokPercentage = rab.rok_percentage || 0
-      const tanpaROK = rokPercentage > 0 ? total / (1 + (rokPercentage / 100)) : total
-      const totalTanpaROK = tanpaROK
+      // Tanpa ROK = Harga Satuan / (1 + ROK%)
+      const tanpaROK = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
+      // Total tanpa ROK = Tanpa ROK × Qty
+      const totalTanpaROK = tanpaROK * qty
       const realisasi = item.realisasi || 0
       const totalRealisasi = realisasi * qty
       
@@ -862,11 +864,13 @@ function showRABDetailModal(rab) {
         const qty = item.qty || item.quantity || item.jumlah || 0
         const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
         const total = qty * hargaSatuan
-        const tanpaROK = rokPercentage > 0 ? total / (1 + (rokPercentage / 100)) : total
+        // Tanpa ROK = Harga Satuan / (1 + ROK%), then × Qty
+        const tanpaROKPerItem = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
+        const totalTanpaROK = tanpaROKPerItem * qty
         const realisasi = item.realisasi || 0
         
         subtotalTotal += total
-        subtotalTanpaROK += tanpaROK
+        subtotalTanpaROK += totalTanpaROK
         subtotalRealisasi += (realisasi * qty)
       })
       
