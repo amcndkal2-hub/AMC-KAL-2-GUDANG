@@ -12620,6 +12620,7 @@ function getDashboardListTORHTML() {
                                     <th class="px-2 py-2 border border-white">Total tanpa ROK</th>
                                     <th class="px-2 py-2 border border-white">Realisasi</th>
                                     <th class="px-2 py-2 border border-white">Total Realisasi</th>
+                                    <th class="px-2 py-2 border border-white">Saldo</th>
                                 </tr>
                             </thead>
                             <tbody id="detailItemsTable"></tbody>

@@ -817,7 +817,7 @@ function showRABDetailModal(rab) {
         realisasi: realisasi
       })
       
-      // Conditionally show 4 new columns only for REALISASI page
+      // Conditionally show 5 new columns only for REALISASI page
       const itemId = item.id || item.item_id || index
       console.log('🔍 Item ID Debug:', { 
         'item.id': item.id, 
@@ -826,6 +826,9 @@ function showRABDetailModal(rab) {
         'final itemId': itemId,
         'item keys': Object.keys(item)
       })
+      
+      // Calculate Saldo = Total tanpa ROK - Total Realisasi
+      const saldo = totalTanpaROK - totalRealisasi
       
       const realisasiColumns = isListTORPage ? `
         <td class="px-2 py-2 text-right text-xs">${formatRupiah(tanpaROK)}</td>
@@ -840,6 +843,7 @@ function showRABDetailModal(rab) {
                  placeholder="0" />
         </td>
         <td class="px-2 py-2 text-right text-xs font-semibold">${formatRupiah(totalRealisasi)}</td>
+        <td class="px-2 py-2 text-right text-xs font-semibold ${saldo < 0 ? 'text-red-600' : 'text-green-600'}">${formatRupiah(saldo)}</td>
       ` : ''
       
       return `
@@ -888,8 +892,11 @@ function showRABDetailModal(rab) {
       // Calculate Total + PPN ONLY for Total column
       const grandTotalTotal = subtotalTotal + ppnTotal
       
+      // Calculate Saldo Subtotal = Subtotal Total tanpa ROK - Subtotal Total Realisasi
+      const saldoSubtotal = subtotalTanpaROK - subtotalRealisasi
+      
       // Add summary rows
-      // Row 1: Subtotal (for Total, Total tanpa ROK, and Total Realisasi)
+      // Row 1: Subtotal (for Total, Total tanpa ROK, Total Realisasi, and Saldo)
       itemsTable.innerHTML += `
         <tr class="bg-gray-100 font-semibold border-t-2 border-gray-400">
           <td colspan="9" class="px-2 py-2 text-right text-xs">Subtotal:</td>
@@ -898,6 +905,7 @@ function showRABDetailModal(rab) {
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTanpaROK)}</td>
           <td class="px-2 py-2 text-center text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalRealisasi)}</td>
+          <td class="px-2 py-2 text-right text-xs font-semibold ${saldoSubtotal < 0 ? 'text-red-600' : 'text-green-600'}">${formatRupiah(saldoSubtotal)}</td>
         </tr>
         <tr class="bg-gray-100 font-semibold">
           <td colspan="9" class="px-2 py-2 text-right text-xs">PPN 11%:</td>
@@ -906,6 +914,7 @@ function showRABDetailModal(rab) {
           <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-center text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
         </tr>
         <tr class="bg-blue-100 font-bold border-t-2 border-blue-400">
           <td colspan="9" class="px-2 py-2 text-right text-xs">Total + PPN:</td>
@@ -913,6 +922,7 @@ function showRABDetailModal(rab) {
           <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-center text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs">-</td>
         </tr>
       `
@@ -1155,7 +1165,7 @@ function exportRABDetailToExcel() {
     const items = rab.items || []
     const rokPercentage = rab.rok_percentage || 0
     
-    // Prepare data for Excel with 14 columns (matching REALISASI view)
+    // Prepare data for Excel with 15 columns (matching REALISASI view)
     const excelData = items.map((item, index) => {
       const qty = item.qty || item.quantity || item.jumlah || 0
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
@@ -1168,6 +1178,9 @@ function exportRABDetailToExcel() {
       // Realisasi columns
       const realisasi = item.realisasi || 0
       const totalRealisasi = realisasi * qty
+      
+      // Saldo = Total tanpa ROK - Total Realisasi
+      const saldo = totalTanpaROK - totalRealisasi
       
       return {
         'No': index + 1,
@@ -1183,9 +1196,9 @@ function exportRABDetailToExcel() {
         'Tanpa ROK': tanpaROK,
         'Total tanpa ROK': totalTanpaROK,
         'Realisasi': realisasi,
-        'Total Realisasi': totalRealisasi
+        'Total Realisasi': totalRealisasi,
+        'Saldo': saldo
       }
-    })
     
     // Calculate summary totals
     let subtotalTotal = 0
@@ -1205,6 +1218,7 @@ function exportRABDetailToExcel() {
     
     const ppn = subtotalTotal * 0.11
     const totalWithPPN = subtotalTotal + ppn
+    const saldoSubtotal = subtotalTanpaROK - subtotalRealisasi
     
     // Add summary rows
     excelData.push({})
@@ -1222,7 +1236,8 @@ function exportRABDetailToExcel() {
       'Tanpa ROK': '-',
       'Total tanpa ROK': subtotalTanpaROK,
       'Realisasi': '-',
-      'Total Realisasi': subtotalRealisasi
+      'Total Realisasi': subtotalRealisasi,
+      'Saldo': saldoSubtotal
     })
     excelData.push({
       'No': '',
@@ -1238,7 +1253,8 @@ function exportRABDetailToExcel() {
       'Tanpa ROK': '-',
       'Total tanpa ROK': '-',
       'Realisasi': '-',
-      'Total Realisasi': '-'
+      'Total Realisasi': '-',
+      'Saldo': '-'
     })
     excelData.push({
       'No': '',
@@ -1254,7 +1270,8 @@ function exportRABDetailToExcel() {
       'Tanpa ROK': '-',
       'Total tanpa ROK': '-',
       'Realisasi': '-',
-      'Total Realisasi': '-'
+      'Total Realisasi': '-',
+      'Saldo': '-'
     })
     
     const ws = XLSX.utils.json_to_sheet(excelData)
@@ -1309,7 +1326,7 @@ function exportRABDetailToPDF() {
     doc.text(`Tanggal Dibuat: ${createdDate}`, 14, 45)
     doc.text(`Dibuat Oleh: ${rab.username || '-'}`, 14, 50)
     
-    // Table data with 14 columns (for REALISASI page)
+    // Table data with 15 columns (for REALISASI page)
     const tableData = items.map((item, index) => {
       const qty = item.qty || item.quantity || item.jumlah || 0
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
@@ -1322,6 +1339,9 @@ function exportRABDetailToPDF() {
       // Realisasi columns
       const realisasi = item.realisasi || 0
       const totalRealisasi = realisasi * qty
+      
+      // Saldo = Total tanpa ROK - Total Realisasi
+      const saldo = totalTanpaROK - totalRealisasi
       
       return [
         index + 1,
@@ -1337,7 +1357,8 @@ function exportRABDetailToPDF() {
         'Rp ' + tanpaROK.toLocaleString('id-ID'),
         'Rp ' + totalTanpaROK.toLocaleString('id-ID'),
         realisasi > 0 ? 'Rp ' + realisasi.toLocaleString('id-ID') : '-',
-        totalRealisasi > 0 ? 'Rp ' + totalRealisasi.toLocaleString('id-ID') : 'Rp 0'
+        totalRealisasi > 0 ? 'Rp ' + totalRealisasi.toLocaleString('id-ID') : 'Rp 0',
+        'Rp ' + saldo.toLocaleString('id-ID')
       ]
     })
     
@@ -1361,6 +1382,7 @@ function exportRABDetailToPDF() {
     
     const ppnTotal = subtotalTotal * 0.11
     const grandTotalTotal = subtotalTotal + ppnTotal
+    const saldoSubtotal = subtotalTanpaROK - subtotalRealisasi
     
     // Add summary rows
     tableData.push([
@@ -1370,19 +1392,20 @@ function exportRABDetailToPDF() {
       '-',
       'Rp ' + subtotalTanpaROK.toLocaleString('id-ID'),
       '-',
-      'Rp ' + subtotalRealisasi.toLocaleString('id-ID')
+      'Rp ' + subtotalRealisasi.toLocaleString('id-ID'),
+      'Rp ' + saldoSubtotal.toLocaleString('id-ID')
     ])
     tableData.push([
       '', '', '', '', '', '', '', '', 
       'PPN 11%:', 
       'Rp ' + ppnTotal.toLocaleString('id-ID'),
-      '-', '-', '-', '-'
+      '-', '-', '-', '-', '-'
     ])
     tableData.push([
       '', '', '', '', '', '', '', '', 
       'Total + PPN:', 
       'Rp ' + grandTotalTotal.toLocaleString('id-ID'),
-      '-', '-', '-', '-'
+      '-', '-', '-', '-', '-'
     ])
     
     doc.autoTable({
@@ -1391,7 +1414,7 @@ function exportRABDetailToPDF() {
         'No', 'Nama Material', 'No. LH05', 'Part Number', 
         'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty', 
         'Harga Satuan', 'Total', 'Tanpa ROK', 'Total tanpa ROK', 
-        'Realisasi', 'Total Realisasi'
+        'Realisasi', 'Total Realisasi', 'Saldo'
       ]],
       body: tableData,
       theme: 'grid',
@@ -1399,19 +1422,20 @@ function exportRABDetailToPDF() {
       bodyStyles: { fontSize: 6 },
       columnStyles: {
         0: { cellWidth: 8, halign: 'center' },   // No
-        1: { cellWidth: 30 },                     // Nama Material
-        2: { cellWidth: 15, halign: 'center' },   // No. LH05
-        3: { cellWidth: 15, halign: 'center' },   // Part Number
-        4: { cellWidth: 15, halign: 'center' },   // Type Mesin
-        5: { cellWidth: 15, halign: 'center' },   // S/N Mesin
-        6: { cellWidth: 15, halign: 'center' },   // Unit/ULD
+        1: { cellWidth: 28 },                     // Nama Material
+        2: { cellWidth: 14, halign: 'center' },   // No. LH05
+        3: { cellWidth: 14, halign: 'center' },   // Part Number
+        4: { cellWidth: 14, halign: 'center' },   // Type Mesin
+        5: { cellWidth: 14, halign: 'center' },   // S/N Mesin
+        6: { cellWidth: 14, halign: 'center' },   // Unit/ULD
         7: { cellWidth: 10, halign: 'center' },   // Qty
-        8: { cellWidth: 20, halign: 'right' },    // Harga Satuan
-        9: { cellWidth: 22, halign: 'right' },    // Total
-        10: { cellWidth: 20, halign: 'right' },   // Tanpa ROK
-        11: { cellWidth: 22, halign: 'right' },   // Total tanpa ROK
-        12: { cellWidth: 20, halign: 'right' },   // Realisasi
-        13: { cellWidth: 22, halign: 'right' }    // Total Realisasi
+        8: { cellWidth: 18, halign: 'right' },    // Harga Satuan
+        9: { cellWidth: 20, halign: 'right' },    // Total
+        10: { cellWidth: 18, halign: 'right' },   // Tanpa ROK
+        11: { cellWidth: 20, halign: 'right' },   // Total tanpa ROK
+        12: { cellWidth: 18, halign: 'right' },   // Realisasi
+        13: { cellWidth: 20, halign: 'right' },   // Total Realisasi
+        14: { cellWidth: 20, halign: 'right' }    // Saldo
       }
     })
     
