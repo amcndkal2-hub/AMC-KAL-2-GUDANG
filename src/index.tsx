@@ -12336,97 +12336,21 @@ function getDashboardListTORHTML() {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-        <script src="/url-redirect.js?v=1770101032"></script>
-        <style>
-            /* Fixed table layout with frozen columns - REALISASI (same as LIST RAB) */
-            .table-container {
-                position: relative;
-                overflow: auto;
-                max-height: calc(100vh - 300px);
-                border: 1px solid #e5e7eb;
-            }
-            
-            .fixed-table {
-                table-layout: fixed;
-                width: 1870px; /* Adjusted: removed NOMOR RAB (160px), JENIS RAB (140px), TANGGAL (140px) = -440px from 2310px */
-                border-collapse: separate;
-                border-spacing: 0;
-            }
-            
-            /* Freeze first 2 columns (NO + NO. IJIN PRINSIP) */
-            .fixed-table th:nth-child(1),
-            .fixed-table td:nth-child(1) {
-                position: sticky;
-                left: 0;
-                z-index: 3;
-                background: inherit;
-            }
-            
-            .fixed-table th:nth-child(2),
-            .fixed-table td:nth-child(2) {
-                position: sticky;
-                left: 60px;
-                z-index: 3;
-                background: inherit;
-            }
-            
-            /* Header row stays on top */
-            .fixed-table thead th {
-                position: sticky;
-                top: 0;
-                z-index: 4;
-                background: #1e3a8a !important;
-            }
-            
-            /* Higher z-index for frozen header cells */
-            .fixed-table thead th:nth-child(1),
-            .fixed-table thead th:nth-child(2) {
-                z-index: 5;
-            }
-            
-            /* Uniform row height */
-            .fixed-table tbody tr {
-                height: 48px;
-            }
-            
-            .fixed-table tbody td {
-                height: 48px;
-                padding: 8px 12px;
-            }
-            
-            /* Hide specific columns in REALISASI */
-            .realisasi-hide {
-                display: none !important;
-            }
-        </style>
+    <script src="/url-redirect.js?v=1770101032"></script>
     </head>
     <body class="bg-gray-100">
-        <!-- Navigation Bar - Updated Style -->
-        <nav class="bg-blue-900 text-white shadow-lg">
-            <div class="container mx-auto px-4">
-                <div class="flex items-center justify-between">
-                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        CREATE RAB
-                    </a>
-                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        KEBUTUHAN
-                    </a>
-                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        REF. HARGA
-                    </a>
-                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        LIST RAB
-                    </a>
-                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-700 rounded transition-colors duration-200">
-                        REALISASI
-                    </a>
-                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        DATA SPK
-                    </a>
-                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        RESUME
-                    </a>
-                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+        <!-- Navbar -->
+        <nav class="bg-blue-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
+                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
+                    <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
+                    <a href="/dashboard/list-rab" class="hover:text-blue-200">LIST RAB</a>
+                    <a href="/dashboard/list-tor" class="bg-blue-800 px-3 py-2 rounded">Realisasi</a>
+                    <a href="/dashboard/data-spk" class="hover:text-blue-200">DATA SPK</a>
+                    <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
+                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         LOGOUT
                     </button>
                 </div>
@@ -12434,80 +12358,199 @@ function getDashboardListTORHTML() {
         </nav>
 
         <div class="container mx-auto px-4 py-6">
-            <!-- Header -->
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-800">REALISASI</h1>
-                        <p class="text-gray-600 mt-2">Daftar realisasi pembayaran untuk semua RAB</p>
+            <!-- Main Content (Full Width) -->
+            <div>
+                <!-- Header -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                                <i class="fas fa-list-alt text-blue-600 mr-3"></i>
+                                Realisasi
+                            </h1>
+                            <p class="text-gray-600 mt-2">Daftar realisasi pembayaran untuk semua RAB</p>
+                        </div>
                     </div>
-                    <div class="flex gap-3">
-                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200">
-                            <i class="fas fa-file-excel mr-2"></i>Export Excel
-                        </button>
-                        <button onclick="exportToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200">
-                            <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                    
+                    <!-- Horizontal Filters -->
+                    <div class="mt-6 flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-filter text-blue-600"></i>
+                            <label class="text-sm font-semibold text-gray-700">Filter Status:</label>
+                            <select id="filterStatusDropdown" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="All">Semua</option>
+                                <option value="Draft">Draft</option>
+                                <option value="Pengadaan">Pengadaan</option>
+                                <option value="Tersedia">Tersedia</option>
+                                <option value="Masuk Gudang">Masuk Gudang</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-list text-green-600"></i>
+                            <label class="text-sm font-semibold text-gray-700">Filter Jenis:</label>
+                            <div class="flex gap-2">
+                                <button onclick="selectJenisFilter('All')" id="btnJenisAll" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-green-600 text-white hover:bg-green-700">
+                                    Semua
+                                </button>
+                                <button onclick="selectJenisFilter('SPK')" id="btnJenisSPK" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                    SPK
+                                </button>
+                                <button onclick="selectJenisFilter('Pembelian Langsung')" id="btnJenisPembelianLangsung" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                    Pembelian Langsung
+                                </button>
+                                <button onclick="selectJenisFilter('KHS')" id="btnJenisKHS" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                    KHS
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button onclick="applyFilters()" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">
+                            <i class="fas fa-search"></i>
+                            Terapkan
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Filters -->
-            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-                <div class="flex gap-4 items-center">
-                    <div class="flex-1">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Filter Status</label>
-                        <select id="filterStatus" onchange="applyFilters()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">Semua Status</option>
-                            <option value="Draft">Draft</option>
-                            <option value="Pengadaan">Pengadaan</option>
-                            <option value="Tersedia">Tersedia</option>
-                            <option value="Masuk Gudang">Masuk Gudang</option>
-                        </select>
-                    </div>
-                    <div class="flex-1">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Jenis RAB (SPK Only)</label>
-                        <select id="filterJenis" disabled class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 cursor-not-allowed">
-                            <option value="SPK" selected>SPK</option>
-                        </select>
-                    </div>
-                    <div class="flex-1">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Pencarian</label>
-                        <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Cari nomor RAB, TOR, atau nama pekerjaan..." class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Main Table - REALISASI (keep all 13 columns, hide 3 via CSS) -->
-            <div class="bg-white rounded-lg shadow-md p-4">
-                <div class="table-container">
-                    <table class="fixed-table">
-                        <thead>
+                <!-- Main Table -->
+                    <div class="bg-white rounded-lg shadow-md">
+                        <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
+                            <table class="border" style="width: 2310px; table-layout: fixed;">
+                        <thead class="sticky top-0 shadow-sm" style="z-index: 20; background-color: #2C5282;">
                             <tr>
-                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 60px;">NO</th>
-                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 220px;">NO. IJIN PRINSIP</th>
-                                <th class="realisasi-hide text-left text-white font-bold uppercase border border-white" style="width: 160px;">NOMOR RAB</th>
-                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 280px;">NO. TOR</th>
-                                <th class="realisasi-hide text-left text-white font-bold uppercase border border-white" style="width: 140px;">JENIS RAB</th>
-                                <th class="realisasi-hide text-center text-white font-bold uppercase border border-white" style="width: 140px;">TANGGAL</th>
-                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 120px;">JUMLAH ITEM</th>
-                                <th class="text-right text-white font-bold uppercase border border-white" style="width: 180px;">TOTAL HARGA</th>
-                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 140px;">STATUS</th>
-                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 200px;">STATUS SCM</th>
-                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 400px;">NAMA PEKERJAAN</th>
-                                <th class="text-left text-white font-bold uppercase border border-white" style="width: 150px;">NO. SPK</th>
-                                <th class="text-center text-white font-bold uppercase border border-white" style="width: 120px;">AKSI</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 0; z-index: 20; background-color: #2C5282; width: 60px; min-width: 60px; max-width: 60px;">No</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 60px; z-index: 20; background-color: #2C5282; width: 220px; min-width: 220px; max-width: 220px;">No. Ijin Prinsip</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 280px; z-index: 20; background-color: #2C5282; width: 160px; min-width: 160px; max-width: 160px;">Nomor RAB</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 280px; min-width: 280px; max-width: 280px;">No. TOR</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 140px; min-width: 140px; max-width: 140px;">Jenis RAB</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 140px; min-width: 140px; max-width: 140px;">Tanggal</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 120px; min-width: 120px; max-width: 120px;">Jumlah Item</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 180px; min-width: 180px; max-width: 180px;">Total Harga</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 140px; min-width: 140px; max-width: 140px;">Status</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 200px; min-width: 200px; max-width: 200px;">Status SCM</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 400px; min-width: 400px; max-width: 400px;">Nama Pekerjaan</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 150px; min-width: 150px; max-width: 150px;">No. SPK</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 120px; min-width: 120px; max-width: 120px;">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="rabListTable" class="bg-white">
+                        <tbody id="rabListTable">
                             <tr>
-                                <td colspan="13" class="text-center py-8 text-gray-500">
+                                <td colspan="13" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data RAB...</p>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View RAB Modal -->
+        <!-- RAB Detail Modal -->
+        <div id="rabDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl w-[98vw] max-w-[1800px] h-[95vh] flex flex-col">
+                <div class="p-4 border-b flex justify-between items-center bg-white z-10 flex-shrink-0">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
+                        Detail RAB: <span id="detailNomorRAB" class="text-blue-600"></span>
+                    </h2>
+                    <button onclick="closeRABDetailModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-auto flex-1">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p class="text-sm text-gray-600">Status</p>
+                            <p id="detailStatus" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Jenis RAB</p>
+                            <p id="detailJenisRAB" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Nomor TOR</p>
+                            <p id="detailNomorTOR" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">ROK</p>
+                            <p id="detailROK" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Tanggal Dibuat</p>
+                            <p id="detailCreated" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Dibuat Oleh</p>
+                            <p id="detailUsername" class="font-semibold"></p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Daftar Item</h3>
+                        <div class="space-x-2">
+                            <button onclick="exportRABDetailToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                                <i class="fas fa-file-excel mr-2"></i>Download Excel
+                            </button>
+                            <button onclick="exportRABDetailToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                                <i class="fas fa-file-pdf mr-2"></i>Download PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border text-xs">
+                            <thead class="bg-green-600 text-white">
+                                <tr>
+                                    <th class="px-2 py-2 border border-white">No</th>
+                                    <th class="px-2 py-2 border border-white">Nama Material</th>
+                                    <th class="px-2 py-2 border border-white">No. LH05</th>
+                                    <th class="px-2 py-2 border border-white">Part Number</th>
+                                    <th class="px-2 py-2 border border-white">Type Mesin</th>
+                                    <th class="px-2 py-2 border border-white">S/N Mesin</th>
+                                    <th class="px-2 py-2 border border-white">Unit/ULD</th>
+                                    <th class="px-2 py-2 border border-white">Qty</th>
+                                    <th class="px-2 py-2 border border-white">Harga Satuan</th>
+                                    <th class="px-2 py-2 border border-white">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailItemsTable"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 text-right">
+                        <p class="text-lg"><strong>Subtotal:</strong> <span id="detailSubtotal"></span></p>
+                        <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
+                        <p class="text-xl font-bold text-blue-600"><strong>Total + PPN:</strong> <span id="detailTotal"></span></p>
+                    </div>
+                </div>
+                <div class="p-4 border-t bg-gray-50 flex justify-end space-x-4 flex-shrink-0">
+                    <button onclick="closeRABDetailModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RAB History Modal -->
+        <div id="rabHistoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-history text-purple-600 mr-2"></i>
+                        History RAB: <span id="historyNomorRAB" class="text-blue-600"></span>
+                    </h2>
+                    <button onclick="closeRABHistoryModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-auto" style="max-height: 70vh;">
+                    <div id="historyTimeline"></div>
+                </div>
+                <div class="p-4 border-t bg-gray-50 flex justify-end">
+                    <button onclick="closeRABHistoryModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Tutup
+                    </button>
                 </div>
             </div>
         </div>
@@ -12624,70 +12667,6 @@ function getDashboardListTORHTML() {
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-list-rab.js"></script>
-        
-        <!-- REALISASI-specific customization -->
-        <script>
-            // Override for REALISASI page only
-            document.addEventListener('DOMContentLoaded', function() {
-                console.log('🔧 REALISASI customization loaded');
-                
-                // Force filter Jenis RAB to SPK only
-                const filterJenis = document.getElementById('filterJenis');
-                if (filterJenis) {
-                    filterJenis.value = 'SPK';
-                    filterJenis.disabled = true;
-                    console.log('✅ Filter Jenis RAB locked to SPK');
-                }
-                
-                // Override currentJenisFilter globally and force re-render
-                let checkInterval = setInterval(() => {
-                    if (typeof currentJenisFilter !== 'undefined' && typeof allRABList !== 'undefined' && allRABList.length > 0) {
-                        console.log('🔄 Forcing SPK filter on loaded data...');
-                        
-                        // Set global filter variable
-                        window.currentJenisFilter = 'SPK';
-                        
-                        // Filter only SPK data
-                        window.filteredRABList = allRABList.filter(rab => rab.jenis_rab === 'SPK');
-                        
-                        console.log(\`✅ Filtered to SPK only: \${window.filteredRABList.length} items\`);
-                        
-                        // Re-render table with filtered data
-                        if (typeof renderRABTable === 'function') {
-                            renderRABTable();
-                            console.log('✅ Table re-rendered with SPK data only');
-                        }
-                        
-                        clearInterval(checkInterval);
-                    }
-                }, 500);
-                
-                // Clear interval after 10 seconds to prevent infinite loop
-                setTimeout(() => clearInterval(checkInterval), 10000);
-                
-                // Hide 3 columns in tbody dynamically after data loads
-                const observer = new MutationObserver(function(mutations) {
-                    const tbody = document.getElementById('rabListTable');
-                    if (tbody && tbody.querySelectorAll('tr').length > 1) {
-                        tbody.querySelectorAll('tr').forEach(row => {
-                            const cells = row.querySelectorAll('td');
-                            if (cells.length >= 13) {
-                                // Hide column 3 (NOMOR RAB), 5 (JENIS RAB), 6 (TANGGAL)
-                                if (cells[2]) cells[2].classList.add('realisasi-hide'); // NOMOR RAB
-                                if (cells[4]) cells[4].classList.add('realisasi-hide'); // JENIS RAB
-                                if (cells[5]) cells[5].classList.add('realisasi-hide'); // TANGGAL
-                            }
-                        });
-                        console.log('✅ Hidden 3 columns in table rows');
-                    }
-                });
-                
-                const tbody = document.getElementById('rabListTable');
-                if (tbody) {
-                    observer.observe(tbody, { childList: true, subtree: true });
-                }
-            });
-        </script>
     </body>
     </html>
   `
