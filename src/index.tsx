@@ -3683,14 +3683,28 @@ app.put('/api/rab/:rabId/item/:itemId/realisasi', async (c) => {
     const { env } = c
     const rabId = parseInt(c.req.param('rabId'))
     const itemId = parseInt(c.req.param('itemId'))
-    const { realisasi } = await c.req.json()
+    const body = await c.req.json()
+    const realisasiValue = parseFloat(body.realisasi)
     
-    console.log('💰 Update Realisasi:', { rabId, itemId, realisasi })
+    console.log('💰 Update Realisasi - RAW REQUEST:', { 
+      rabId, 
+      itemId, 
+      bodyRaw: body,
+      realisasiRaw: body.realisasi,
+      realisasiParsed: realisasiValue,
+      isNaN: isNaN(realisasiValue)
+    })
     
-    // Validate input
-    if (isNaN(realisasi) || realisasi < 0) {
-      return c.json({ error: 'Invalid realisasi value' }, 400)
+    // Validate input - allow 0 or positive numbers
+    if (isNaN(realisasiValue) || realisasiValue < 0) {
+      console.error('❌ Invalid realisasi value:', { realisasiValue, isNaN: isNaN(realisasiValue) })
+      return c.json({ 
+        error: 'Invalid realisasi value',
+        details: { received: body.realisasi, parsed: realisasiValue }
+      }, 400)
     }
+    
+    console.log('✅ Validation passed, checking RAB...')
     
     // Check if RAB exists
     const rab = await env.DB.prepare(`
@@ -3698,26 +3712,45 @@ app.put('/api/rab/:rabId/item/:itemId/realisasi', async (c) => {
     `).bind(rabId).first()
     
     if (!rab) {
+      console.error('❌ RAB not found:', rabId)
       return c.json({ error: 'RAB not found' }, 404)
     }
     
+    console.log('✅ RAB found, checking item...')
+    
+    // Check if item exists
+    const item = await env.DB.prepare(`
+      SELECT id FROM rab_items WHERE id = ? AND rab_id = ?
+    `).bind(itemId, rabId).first()
+    
+    if (!item) {
+      console.error('❌ Item not found:', { itemId, rabId })
+      return c.json({ error: 'Item not found' }, 404)
+    }
+    
+    console.log('✅ Item found, updating realisasi...')
+    
     // Update realisasi value in rab_items table
-    await env.DB.prepare(`
+    const updateResult = await env.DB.prepare(`
       UPDATE rab_items 
       SET realisasi = ? 
       WHERE id = ? AND rab_id = ?
-    `).bind(realisasi, itemId, rabId).run()
+    `).bind(realisasiValue, itemId, rabId).run()
     
-    console.log('✅ Realisasi updated successfully')
+    console.log('✅ Update result:', updateResult)
+    console.log('✅ Realisasi updated successfully!')
     
     return c.json({ 
       success: true,
       message: 'Realisasi berhasil diupdate',
-      data: { rabId, itemId, realisasi }
+      data: { rabId, itemId, realisasi: realisasiValue }
     })
   } catch (error) {
-    console.error('❌ Failed to update realisasi:', error)
-    return c.json({ error: 'Failed to update realisasi' }, 500)
+    console.error('❌ Failed to update realisasi - EXCEPTION:', error)
+    return c.json({ 
+      error: 'Failed to update realisasi',
+      details: error.message 
+    }, 500)
   }
 })
 

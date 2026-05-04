@@ -955,7 +955,7 @@ function closeRABDetailModal() {
 // Update Realisasi value (for REALISASI page only)
 async function updateRealisasi(rabId, itemId, value) {
   try {
-    console.log('💰 Update Realisasi:', { rabId, itemId, value })
+    console.log('💰 Update Realisasi - RAW INPUT:', { rabId, itemId, value, valueType: typeof value })
     
     // Validate itemId
     if (!itemId || itemId === 0 || isNaN(itemId)) {
@@ -964,23 +964,38 @@ async function updateRealisasi(rabId, itemId, value) {
       return
     }
     
+    // Convert value to number and validate
+    const realisasiValue = parseFloat(value)
+    console.log('💰 Converted realisasi value:', { realisasiValue, isNaN: isNaN(realisasiValue) })
+    
+    if (isNaN(realisasiValue) || realisasiValue < 0) {
+      console.error('❌ Invalid realisasi value:', { value, realisasiValue })
+      showNotification('Error: Nilai realisasi tidak valid. Harus berupa angka positif.', 'error')
+      return
+    }
+    
+    const requestBody = { realisasi: realisasiValue }
+    console.log('💰 Request body:', requestBody)
+    
     const response = await fetch(`/api/rab/${rabId}/item/${itemId}/realisasi`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
       },
-      body: JSON.stringify({ realisasi: parseFloat(value) || 0 })
+      body: JSON.stringify(requestBody)
     })
+    
+    console.log('💰 Response status:', response.status)
     
     if (!response.ok) {
       const errorData = await response.json()
-      console.error('❌ API Error:', errorData)
+      console.error('❌ API Error Response:', errorData)
       throw new Error(errorData.error || 'Failed to update realisasi')
     }
     
     const result = await response.json()
-    console.log('✅ Realisasi updated:', result)
+    console.log('✅ Realisasi updated successfully:', result)
     
     showNotification('Realisasi berhasil diupdate', 'success')
     // Reload modal to show updated totals
