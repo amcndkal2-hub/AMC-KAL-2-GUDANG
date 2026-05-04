@@ -1130,12 +1130,21 @@ function exportRABDetailToExcel() {
   try {
     const rab = currentRABDetail
     const items = rab.items || []
+    const rokPercentage = rab.rok_percentage || 0
     
-    // Prepare data for Excel
+    // Prepare data for Excel with 14 columns (matching REALISASI view)
     const excelData = items.map((item, index) => {
       const qty = item.qty || item.quantity || item.jumlah || 0
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
       const total = qty * hargaSatuan
+      
+      // Calculate Tanpa ROK columns
+      const tanpaROK = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
+      const totalTanpaROK = tanpaROK * qty
+      
+      // Realisasi columns
+      const realisasi = item.realisasi || 0
+      const totalRealisasi = realisasi * qty
       
       return {
         'No': index + 1,
@@ -1147,56 +1156,82 @@ function exportRABDetailToExcel() {
         'Unit/ULD': item.unit_uld || item.unitULD || item.lokasi_gangguan || '-',
         'Qty': qty,
         'Harga Satuan': hargaSatuan,
-        'Total': total
+        'Total': total,
+        'Tanpa ROK': tanpaROK,
+        'Total tanpa ROK': totalTanpaROK,
+        'Realisasi': realisasi,
+        'Total Realisasi': totalRealisasi
       }
     })
     
-    // Calculate totals
-    const subtotal = items.reduce((sum, item) => {
+    // Calculate summary totals
+    let subtotalTotal = 0
+    let subtotalTanpaROK = 0
+    let subtotalRealisasi = 0
+    
+    items.forEach(item => {
       const qty = item.qty || item.quantity || item.jumlah || 0
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
-      return sum + (qty * hargaSatuan)
-    }, 0)
-    const ppn = subtotal * 0.11
-    const totalWithPPN = subtotal + ppn
+      const tanpaROKPerItem = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
+      const realisasi = item.realisasi || 0
+      
+      subtotalTotal += (qty * hargaSatuan)
+      subtotalTanpaROK += (tanpaROKPerItem * qty)
+      subtotalRealisasi += (realisasi * qty)
+    })
+    
+    const ppn = subtotalTotal * 0.11
+    const totalWithPPN = subtotalTotal + ppn
     
     // Add summary rows
     excelData.push({})
     excelData.push({
       'No': '',
-      'Nama Material': 'Subtotal',
+      'Nama Material': '',
       'No. LH05': '',
       'Part Number': '',
       'Type Mesin': '',
       'S/N Mesin': '',
       'Unit/ULD': '',
       'Qty': '',
-      'Harga Satuan': '',
-      'Total': subtotal
+      'Harga Satuan': 'Subtotal:',
+      'Total': subtotalTotal,
+      'Tanpa ROK': '-',
+      'Total tanpa ROK': subtotalTanpaROK,
+      'Realisasi': '-',
+      'Total Realisasi': subtotalRealisasi
     })
     excelData.push({
       'No': '',
-      'Nama Material': 'PPN 11%',
+      'Nama Material': '',
       'No. LH05': '',
       'Part Number': '',
       'Type Mesin': '',
       'S/N Mesin': '',
       'Unit/ULD': '',
       'Qty': '',
-      'Harga Satuan': '',
-      'Total': ppn
+      'Harga Satuan': 'PPN 11%:',
+      'Total': ppn,
+      'Tanpa ROK': '-',
+      'Total tanpa ROK': '-',
+      'Realisasi': '-',
+      'Total Realisasi': '-'
     })
     excelData.push({
       'No': '',
-      'Nama Material': 'Total + PPN',
+      'Nama Material': '',
       'No. LH05': '',
       'Part Number': '',
       'Type Mesin': '',
       'S/N Mesin': '',
       'Unit/ULD': '',
       'Qty': '',
-      'Harga Satuan': '',
-      'Total': totalWithPPN
+      'Harga Satuan': 'Total + PPN:',
+      'Total': totalWithPPN,
+      'Tanpa ROK': '-',
+      'Total tanpa ROK': '-',
+      'Realisasi': '-',
+      'Total Realisasi': '-'
     })
     
     const ws = XLSX.utils.json_to_sheet(excelData)
@@ -1221,11 +1256,19 @@ function exportRABDetailToPDF() {
   }
   
   try {
+    // Check if jsPDF is loaded
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      console.error('❌ jsPDF library not loaded!')
+      showNotification('Library PDF belum dimuat. Silakan refresh halaman.', 'error')
+      return
+    }
+
     const rab = currentRABDetail
     const items = rab.items || []
     const rokPercentage = rab.rok_percentage || 0
     
     // Use landscape orientation for more columns
+    const { jsPDF } = window.jspdf
     const doc = new jsPDF('l', 'mm', 'a4')
     
     // Title
@@ -1412,51 +1455,7 @@ function exportToExcel() {
 }
 
 // Export RAB Detail to Excel
-function exportRABDetailToExcel() {
-  try {
-    if (!currentRABDetail) {
-      showNotification('Tidak ada data RAB untuk di-export', 'error')
-      return
-    }
-    
-    const rab = currentRABDetail
-    const data = rab.items.map((item, index) => {
-      const namaMaterial = item.nama_material || item.material_name || item.name || item.material || '-'
-      const qty = item.qty || item.quantity || item.jumlah || 0
-      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
-      const noLH05 = item.no_lh05 || item.nomor_lh05 || item.lh05_number || item.lh05 || '-'
-      const partNumber = item.part_number || item.partNumber || item.part_no || '-'
-      const snMesin = item.sn_mesin || item.snMesin || item.serial_number || '-'
-      const typeMesin = item.mesin || item.type_mesin || item.tipe_mesin || item.mesin_type || '-'
-      const unitULD = item.unit_uld || item.unitULD || item.lokasi_gangguan || item.lokasi_tujuan || '-'
-      
-      return {
-        'No': index + 1,
-        'Nama Material': namaMaterial,
-        'No. LH05': noLH05,
-        'Part Number': partNumber,
-        'Type Mesin': typeMesin,
-        'S/N Mesin': snMesin,
-        'Unit/ULD': unitULD,
-        'Qty': qty,
-        'Harga Satuan': hargaSatuan,
-        'Total': qty * hargaSatuan
-      }
-    })
-    
-    const ws = XLSX.utils.json_to_sheet(data)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Detail RAB')
-    
-    const fileName = `Detail_${rab.nomor_rab}_${new Date().toISOString().split('T')[0]}.xlsx`
-    XLSX.writeFile(wb, fileName)
-    
-    showNotification('Excel berhasil di-export', 'success')
-  } catch (error) {
-    console.error('Error exporting Excel:', error)
-    showNotification('Gagal export Excel', 'error')
-  }
-}
+// Fungsi exportRABDetailToExcel yang lama sudah dihapus - menggunakan versi baru dengan 14 kolom di atas
 
 // Export RAB Detail to PDF
 // Fungsi exportRABDetailToPDF yang lama sudah dihapus - menggunakan versi baru dengan 14 kolom di atas
