@@ -848,6 +848,66 @@ function showRABDetailModal(rab) {
       </tr>
       `
     }).join('')
+    
+    // Calculate summary totals for REALISASI page
+    if (isListTORPage && rab.items && rab.items.length > 0) {
+      const rokPercentage = rab.rok_percentage || 0
+      
+      // Calculate subtotals
+      let subtotalTotal = 0
+      let subtotalTanpaROK = 0
+      let subtotalRealisasi = 0
+      
+      rab.items.forEach(item => {
+        const qty = item.qty || item.quantity || item.jumlah || 0
+        const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+        const total = qty * hargaSatuan
+        const tanpaROK = rokPercentage > 0 ? total / (1 + (rokPercentage / 100)) : total
+        const realisasi = item.realisasi || 0
+        
+        subtotalTotal += total
+        subtotalTanpaROK += tanpaROK
+        subtotalRealisasi += (realisasi * qty)
+      })
+      
+      // Calculate PPN 11%
+      const ppnTotal = subtotalTotal * 0.11
+      const ppnTanpaROK = subtotalTanpaROK * 0.11
+      const ppnRealisasi = subtotalRealisasi * 0.11
+      
+      // Calculate Total + PPN
+      const grandTotalTotal = subtotalTotal + ppnTotal
+      const grandTotalTanpaROK = subtotalTanpaROK + ppnTanpaROK
+      const grandTotalRealisasi = subtotalRealisasi + ppnRealisasi
+      
+      // Add summary rows
+      itemsTable.innerHTML += `
+        <tr class="bg-gray-100 font-semibold border-t-2 border-gray-400">
+          <td colspan="9" class="px-2 py-2 text-right text-xs">Subtotal:</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTotal)}</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTanpaROK)}</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTanpaROK)}</td>
+          <td class="px-2 py-2 text-center text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalRealisasi)}</td>
+        </tr>
+        <tr class="bg-gray-100 font-semibold">
+          <td colspan="9" class="px-2 py-2 text-right text-xs">PPN 11%:</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnTotal)}</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnTanpaROK)}</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnTanpaROK)}</td>
+          <td class="px-2 py-2 text-center text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnRealisasi)}</td>
+        </tr>
+        <tr class="bg-blue-100 font-bold border-t-2 border-blue-400">
+          <td colspan="9" class="px-2 py-2 text-right text-xs">Total + PPN:</td>
+          <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalTotal)}</td>
+          <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalTanpaROK)}</td>
+          <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalTanpaROK)}</td>
+          <td class="px-2 py-2 text-center text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalRealisasi)}</td>
+        </tr>
+      `
+    }
   } else {
     const colspanCount = isListTORPage ? 14 : 10
     itemsTable.innerHTML = `<tr><td colspan="${colspanCount}" class="px-4 py-8 text-center text-gray-500 text-xs">Tidak ada item</td></tr>`
