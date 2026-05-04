@@ -12337,12 +12337,6 @@ function getDashboardListTORHTML() {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="/url-redirect.js?v=1770101032"></script>
-    <style>
-        /* REALISASI: Hide 3 columns (NOMOR RAB, JENIS RAB, TANGGAL) */
-        .realisasi-hide-col {
-            display: none !important;
-        }
-    </style>
     </head>
     <body class="bg-gray-100">
         <!-- Navbar -->
@@ -12413,15 +12407,12 @@ function getDashboardListTORHTML() {
                 <!-- Main Table -->
                     <div class="bg-white rounded-lg shadow-md">
                         <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
-                            <table class="border" style="width: 1870px; table-layout: fixed;">
+                            <table class="border" style="width: 1430px; table-layout: fixed;">
                         <thead class="sticky top-0 shadow-sm" style="z-index: 20; background-color: #2C5282;">
                             <tr>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 0; z-index: 20; background-color: #2C5282; width: 50px; min-width: 50px; max-width: 50px;">No</th>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 50px; z-index: 20; background-color: #2C5282; width: 200px; min-width: 200px; max-width: 200px;">No. Ijin Prinsip</th>
-                                <th class="realisasi-hide-col px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 250px; z-index: 20; background-color: #2C5282; width: 160px; min-width: 160px; max-width: 160px;">Nomor RAB</th>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 280px; min-width: 280px; max-width: 280px;">No. TOR</th>
-                                <th class="realisasi-hide-col px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 140px; min-width: 140px; max-width: 140px;">Jenis RAB</th>
-                                <th class="realisasi-hide-col px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 140px; min-width: 140px; max-width: 140px;">Tanggal</th>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 100px; min-width: 100px; max-width: 100px;">Jumlah Item</th>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 160px; min-width: 160px; max-width: 160px;">Total Harga</th>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 130px; min-width: 130px; max-width: 130px;">Status</th>
@@ -12433,9 +12424,9 @@ function getDashboardListTORHTML() {
                         </thead>
                         <tbody id="rabListTable">
                             <tr>
-                                <td colspan="13" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
-                                    <p>Memuat data RAB...</p>
+                                    <p>Memuat data realisasi...</p>
                                 </td>
                             </tr>
                         </tbody>
@@ -12687,28 +12678,6 @@ function getDashboardListTORHTML() {
                         }, 500);
                     }
                 }, 1000);
-                
-                // Hide 3 columns in tbody rows after data loads
-                const observer = new MutationObserver(function(mutations) {
-                    const tbody = document.getElementById('rabListTable');
-                    if (tbody) {
-                        tbody.querySelectorAll('tr').forEach(row => {
-                            const cells = row.querySelectorAll('td');
-                            if (cells.length >= 13) {
-                                // Hide column 3 (NOMOR RAB), 5 (JENIS RAB), 6 (TANGGAL)
-                                if (cells[2]) cells[2].classList.add('realisasi-hide-col'); // Index 2 = NOMOR RAB
-                                if (cells[4]) cells[4].classList.add('realisasi-hide-col'); // Index 4 = JENIS RAB
-                                if (cells[5]) cells[5].classList.add('realisasi-hide-col'); // Index 5 = TANGGAL
-                            }
-                        });
-                    }
-                });
-                
-                const tbody = document.getElementById('rabListTable');
-                if (tbody) {
-                    observer.observe(tbody, { childList: true, subtree: true });
-                    console.log('✅ Column hide observer activated');
-                }
             });
         </script>
     </body>

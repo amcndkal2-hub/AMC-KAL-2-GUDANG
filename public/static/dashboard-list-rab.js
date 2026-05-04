@@ -320,11 +320,12 @@ function renderRABList(rabList) {
   console.log(`📊 Rendering ${rabList.length} RAB items`)
   
   if (rabList.length === 0) {
+    const totalColumns = isListTORPage ? 10 : 13
     tableBody.innerHTML = `
       <tr>
-        <td colspan="13" class="px-6 py-8 text-center text-gray-500">
+        <td colspan="${totalColumns}" class="px-6 py-8 text-center text-gray-500">
           <i class="fas fa-inbox text-4xl mb-2"></i>
-          <p class="text-lg">Tidak ada data RAB</p>
+          <p class="text-lg">Tidak ada data ${isListTORPage ? 'realisasi' : 'RAB'}</p>
         </td>
       </tr>
     `
@@ -410,15 +411,20 @@ function renderRABList(rabList) {
     // Get SPK data for this RAB (matching by TOR)
     const spkData = getSPKDataByTOR(rab.nomor_tor)
     
+    // Nomor RAB column (skip for Realisasi page)
+    const nomorRABColumn = !isListTORPage ? `
+      <td class="px-2 py-2 border text-center align-middle" style="position: sticky; left: 280px; background: white; z-index: 10; width: 160px; min-width: 160px; max-width: 160px;">
+        <span class="text-blue-600 font-mono text-xs font-semibold">${rab.nomor_rab}</span>
+      </td>
+    ` : ''
+    
     return `
     <tr class="hover:bg-gray-50 transition-colors border-b" style="animation: slideIn 0.3s ease-out ${index * 0.05}s both; height: 48px;">
       <td class="px-2 py-2 border text-center align-middle font-medium text-xs" style="position: sticky; left: 0; background: white; z-index: 10; width: 60px; min-width: 60px; max-width: 60px;">${index + 1}</td>
       <td class="px-2 py-2 border text-left align-middle" style="position: sticky; left: 60px; background: white; z-index: 10; width: 220px; min-width: 220px; max-width: 220px;">
         <span class="text-gray-700 font-mono text-xs">${spkData.nomor_ip}</span>
       </td>
-      <td class="px-2 py-2 border text-center align-middle" style="position: sticky; left: 280px; background: white; z-index: 10; width: 160px; min-width: 160px; max-width: 160px;">
-        <span class="text-blue-600 font-mono text-xs font-semibold">${rab.nomor_rab}</span>
-      </td>
+      ${nomorRABColumn}
       <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 280px; min-width: 280px; max-width: 280px;">
         ${(rab.jenis_rab === 'SPK') ? (() => {
           // Admin: Always editable
@@ -449,17 +455,17 @@ function renderRABList(rabList) {
           }
         })() : `<span class="text-gray-400 text-xs">-</span>`}
       </td>
-      <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 140px; min-width: 140px; max-width: 140px;">
+      ${!isListTORPage ? `<td class="px-2 py-2 border text-center align-middle" style="background: white; width: 140px; min-width: 140px; max-width: 140px;">
         <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getJenisRABColor(rab.jenis_rab)}">
           ${rab.jenis_rab || '-'}
         </span>
-      </td>
-      <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 140px; min-width: 140px; max-width: 140px;">
+      </td>` : ''}
+      ${!isListTORPage ? `<td class="px-2 py-2 border text-center align-middle" style="background: white; width: 140px; min-width: 140px; max-width: 140px;">
         <div class="text-xs">
           <div class="font-semibold text-gray-800">${createdDate}</div>
           <div class="text-gray-500">${createdTime}</div>
         </div>
-      </td>
+      </td>` : ''}
       <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 120px; min-width: 120px; max-width: 120px;">
         <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-semibold">
           ${rab.item_count || 0}
