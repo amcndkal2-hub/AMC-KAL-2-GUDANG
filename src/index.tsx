@@ -3677,6 +3677,50 @@ app.get('/api/rab/:id', async (c) => {
   }
 })
 
+// API: Update realisasi value for RAB item
+app.put('/api/rab/:rabId/item/:itemId/realisasi', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('rabId'))
+    const itemId = parseInt(c.req.param('itemId'))
+    const { realisasi } = await c.req.json()
+    
+    console.log('💰 Update Realisasi:', { rabId, itemId, realisasi })
+    
+    // Validate input
+    if (isNaN(realisasi) || realisasi < 0) {
+      return c.json({ error: 'Invalid realisasi value' }, 400)
+    }
+    
+    // Check if RAB exists
+    const rab = await env.DB.prepare(`
+      SELECT id FROM rab WHERE id = ?
+    `).bind(rabId).first()
+    
+    if (!rab) {
+      return c.json({ error: 'RAB not found' }, 404)
+    }
+    
+    // Update realisasi value in rab_items table
+    await env.DB.prepare(`
+      UPDATE rab_items 
+      SET realisasi = ? 
+      WHERE id = ? AND rab_id = ?
+    `).bind(realisasi, itemId, rabId).run()
+    
+    console.log('✅ Realisasi updated successfully')
+    
+    return c.json({ 
+      success: true,
+      message: 'Realisasi berhasil diupdate',
+      data: { rabId, itemId, realisasi }
+    })
+  } catch (error) {
+    console.error('❌ Failed to update realisasi:', error)
+    return c.json({ error: 'Failed to update realisasi' }, 500)
+  }
+})
+
 // API: Save transaction from RAB
 app.post('/api/save-transaction-from-rab', async (c) => {
   try {
