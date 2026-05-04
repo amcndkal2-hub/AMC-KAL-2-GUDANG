@@ -794,6 +794,13 @@ function showRABDetailModal(rab) {
       
       const total = qty * hargaSatuan
       
+      // NEW: Calculate for REALISASI page only
+      const rokPercentage = rab.rok_percentage || 0
+      const tanpaROK = rokPercentage > 0 ? total / (1 + (rokPercentage / 100)) : total
+      const totalTanpaROK = tanpaROK
+      const realisasi = item.realisasi || 0
+      const totalRealisasi = realisasi * qty
+      
       console.log(`Item ${index + 1}:`, {
         nama: namaMaterial,
         qty: qty,
@@ -803,8 +810,24 @@ function showRABDetailModal(rab) {
         sn_mesin: snMesin,
         type_mesin: typeMesin,
         unit_uld: unitULD,
-        total: total
+        total: total,
+        tanpaROK: tanpaROK,
+        realisasi: realisasi
       })
+      
+      // Conditionally show 4 new columns only for REALISASI page
+      const realisasiColumns = isListTORPage ? `
+        <td class="px-2 py-2 text-right text-xs">${formatRupiah(tanpaROK)}</td>
+        <td class="px-2 py-2 text-right text-xs">${formatRupiah(totalTanpaROK)}</td>
+        <td class="px-2 py-2 text-center text-xs">
+          <input type="number" 
+                 value="${realisasi}" 
+                 onchange="updateRealisasi(${rab.id}, ${item.id || index}, this.value)"
+                 class="w-full px-2 py-1 text-xs text-right border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                 placeholder="0" />
+        </td>
+        <td class="px-2 py-2 text-right text-xs font-semibold">${formatRupiah(totalRealisasi)}</td>
+      ` : ''
       
       return `
       <tr class="border-b hover:bg-gray-50">
@@ -818,11 +841,13 @@ function showRABDetailModal(rab) {
         <td class="px-2 py-2 text-center text-xs">${qty}</td>
         <td class="px-2 py-2 text-right text-xs">${formatRupiah(hargaSatuan)}</td>
         <td class="px-2 py-2 text-right text-xs font-semibold">${formatRupiah(total)}</td>
+        ${realisasiColumns}
       </tr>
       `
     }).join('')
   } else {
-    itemsTable.innerHTML = '<tr><td colspan="10" class="px-4 py-8 text-center text-gray-500 text-xs">Tidak ada item</td></tr>'
+    const colspanCount = isListTORPage ? 14 : 10
+    itemsTable.innerHTML = `<tr><td colspan="${colspanCount}" class="px-4 py-8 text-center text-gray-500 text-xs">Tidak ada item</td></tr>`
   }
   
   // Calculate totals
@@ -842,6 +867,31 @@ function closeRABDetailModal() {
   const modal = document.getElementById('rabDetailModal')
   if (modal) {
     modal.classList.add('hidden')
+  }
+}
+
+// Update Realisasi value (for REALISASI page only)
+async function updateRealisasi(rabId, itemId, value) {
+  try {
+    console.log('💰 Update Realisasi:', { rabId, itemId, value })
+    
+    const response = await fetch(`/api/rab/${rabId}/item/${itemId}/realisasi`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      },
+      body: JSON.stringify({ realisasi: parseFloat(value) || 0 })
+    })
+    
+    if (!response.ok) throw new Error('Failed to update realisasi')
+    
+    showNotification('Realisasi berhasil diupdate', 'success')
+    // Reload modal to show updated totals
+    await viewRABDetail(rabId)
+  } catch (error) {
+    console.error('Error updating realisasi:', error)
+    showNotification('Gagal update realisasi', 'error')
   }
 }
 
