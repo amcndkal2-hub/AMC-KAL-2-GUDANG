@@ -12390,17 +12390,9 @@ function getDashboardListTORHTML() {
                             <i class="fas fa-list text-green-600"></i>
                             <label class="text-sm font-semibold text-gray-700">Filter Jenis:</label>
                             <div class="flex gap-2">
-                                <button onclick="selectJenisFilter('All')" id="btnJenisAll" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-green-600 text-white hover:bg-green-700">
-                                    Semua
-                                </button>
-                                <button onclick="selectJenisFilter('SPK')" id="btnJenisSPK" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
-                                    SPK
-                                </button>
-                                <button onclick="selectJenisFilter('Pembelian Langsung')" id="btnJenisPembelianLangsung" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
-                                    Pembelian Langsung
-                                </button>
-                                <button onclick="selectJenisFilter('KHS')" id="btnJenisKHS" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
-                                    KHS
+                                <!-- REALISASI: Only SPK button, always active -->
+                                <button id="btnJenisSPK" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-green-600 text-white cursor-default">
+                                    SPK (Locked)
                                 </button>
                             </div>
                         </div>
@@ -12667,6 +12659,30 @@ function getDashboardListTORHTML() {
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/dashboard-list-rab.js"></script>
+        
+        <!-- REALISASI: Auto-select SPK filter on page load -->
+        <script>
+            console.log('🔧 REALISASI: Forcing SPK filter');
+            
+            // Override selectJenisFilter to always select SPK on this page
+            document.addEventListener('DOMContentLoaded', function() {
+                // Wait for dashboard-list-rab.js to load
+                setTimeout(() => {
+                    if (typeof selectJenisFilter === 'function') {
+                        console.log('✅ Auto-selecting SPK filter');
+                        selectJenisFilter('SPK');
+                        
+                        // Trigger applyFilters after 500ms to ensure data is loaded
+                        setTimeout(() => {
+                            if (typeof applyFilters === 'function') {
+                                applyFilters();
+                                console.log('✅ SPK filter applied');
+                            }
+                        }, 500);
+                    }
+                }, 1000);
+            });
+        </script>
     </body>
     </html>
   `
