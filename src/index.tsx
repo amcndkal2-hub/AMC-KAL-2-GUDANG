@@ -3730,21 +3730,58 @@ app.put('/api/rab/:rabId/item/:itemId/realisasi', async (c) => {
     
     console.log('✅ Item found, updating realisasi...')
     
-    // Update realisasi value in rab_items table
-    const updateResult = await env.DB.prepare(`
-      UPDATE rab_items 
-      SET realisasi = ? 
-      WHERE id = ? AND rab_id = ?
-    `).bind(realisasiValue, itemId, rabId).run()
-    
-    console.log('✅ Update result:', updateResult)
-    console.log('✅ Realisasi updated successfully!')
-    
-    return c.json({ 
-      success: true,
-      message: 'Realisasi berhasil diupdate',
-      data: { rabId, itemId, realisasi: realisasiValue }
-    })
+    // Try to update realisasi value with fallback for missing column
+    let updateResult
+    try {
+      updateResult = await env.DB.prepare(`
+        UPDATE rab_items 
+        SET realisasi = ? 
+        WHERE id = ? AND rab_id = ?
+      `).bind(realisasiValue, itemId, rabId).run()
+      
+      console.log('✅ Update result:', updateResult)
+      console.log('✅ Realisasi updated successfully!')
+      
+      return c.json({ 
+        success: true,
+        message: 'Realisasi berhasil diupdate',
+        data: { rabId, itemId, realisasi: realisasiValue }
+      })
+    } catch (updateError) {
+      console.error('❌ Update failed - checking if realisasi column exists...')
+      
+      // If update fails, try to add the column first
+      try {
+        console.log('🔧 Attempting to add realisasi column...')
+        await env.DB.prepare(`
+          ALTER TABLE rab_items ADD COLUMN realisasi INTEGER DEFAULT 0
+        `).run()
+        
+        console.log('✅ Column added, retrying update...')
+        
+        // Retry the update
+        updateResult = await env.DB.prepare(`
+          UPDATE rab_items 
+          SET realisasi = ? 
+          WHERE id = ? AND rab_id = ?
+        `).bind(realisasiValue, itemId, rabId).run()
+        
+        console.log('✅ Update successful after adding column!')
+        
+        return c.json({ 
+          success: true,
+          message: 'Realisasi berhasil diupdate (kolom baru ditambahkan)',
+          data: { rabId, itemId, realisasi: realisasiValue }
+        })
+      } catch (alterError) {
+        console.error('❌ Failed to add column:', alterError)
+        return c.json({ 
+          error: 'Database schema error - realisasi column missing',
+          details: 'Silakan jalankan migration atau hubungi admin',
+          technicalDetails: alterError.message
+        }, 500)
+      }
+    }
   } catch (error) {
     console.error('❌ Failed to update realisasi - EXCEPTION:', error)
     return c.json({ 
