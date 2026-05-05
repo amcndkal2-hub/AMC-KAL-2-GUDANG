@@ -1303,14 +1303,15 @@ function exportRABDetailToExcel() {
         'S/N Mesin': '',
         'Unit/ULD': '',
         'Qty': '',
-      'Harga Satuan': 'Total + PPN:',
-      'Total': totalWithPPN,
-      'Tanpa ROK': '-',
-      'Total tanpa ROK': '-',
-      'Realisasi': '-',
-      'Total Realisasi': '-',
-      'Saldo': '-'
-    })
+        'Harga Satuan': 'Total + PPN:',
+        'Total': totalWithPPN,
+        'Tanpa ROK': '-',
+        'Total tanpa ROK': '-',
+        'Realisasi': '-',
+        'Total Realisasi': '-',
+        'Saldo': '-'
+      })
+    }
     
     const ws = XLSX.utils.json_to_sheet(excelData)
     const wb = XLSX.utils.book_new()
