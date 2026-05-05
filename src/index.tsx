@@ -8609,7 +8609,7 @@ function getDashboardCreateRABHTML() {
                             <i class="fas fa-percent mr-2"></i>PPN 11%
                         </label>
                         <label class="flex items-center cursor-pointer bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 h-[42px]">
-                            <input type="checkbox" id="usePPN" class="w-5 h-5 text-blue-600 rounded mr-3" checked onchange="updateTotalHarga()">
+                            <input type="checkbox" id="usePPN" class="w-5 h-5 text-blue-600 rounded mr-3" onchange="updateTotalHarga()">
                             <span class="text-sm font-semibold text-gray-800">
                                 Gunakan PPN 11%
                             </span>
