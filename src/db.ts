@@ -1677,15 +1677,20 @@ export async function saveRAB(db: D1Database, data: any) {
     // Calculate subtotal from items
     const subtotal = data.items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
     
-    // Add PPN if use_ppn is true
-    const ppnAmount = (data.use_ppn === true) ? (data.ppn_amount || subtotal * 0.11) : 0
+    // CRITICAL: Check use_ppn with explicit false check
+    // JavaScript falsy values: false, 0, "", null, undefined, NaN
+    const usePPN = data.use_ppn === true
+    const ppnAmount = usePPN ? (data.ppn_amount || subtotal * 0.11) : 0
     const totalHarga = subtotal + ppnAmount
     
-    console.log('📊 RAB Calculation:', {
+    console.log('📊 RAB Calculation (DETAILED):', {
       subtotal,
-      use_ppn: data.use_ppn,
+      'data.use_ppn (raw)': data.use_ppn,
+      'typeof data.use_ppn': typeof data.use_ppn,
+      'usePPN (computed)': usePPN,
       ppn_amount: ppnAmount,
-      total_harga: totalHarga
+      total_harga: totalHarga,
+      'Formula': usePPN ? 'subtotal + PPN' : 'subtotal only'
     })
     
     // Insert RAB header
