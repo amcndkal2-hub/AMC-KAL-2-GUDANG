@@ -1674,8 +1674,19 @@ export async function saveRAB(db: D1Database, data: any) {
     // Generate nomor RAB
     const nomorRAB = await getNextRABNumber(db, data.tanggal_rab)
     
-    // Calculate total harga from items
-    const totalHarga = data.items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
+    // Calculate subtotal from items
+    const subtotal = data.items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
+    
+    // Add PPN if use_ppn is true
+    const ppnAmount = (data.use_ppn === true) ? (data.ppn_amount || subtotal * 0.11) : 0
+    const totalHarga = subtotal + ppnAmount
+    
+    console.log('📊 RAB Calculation:', {
+      subtotal,
+      use_ppn: data.use_ppn,
+      ppn_amount: ppnAmount,
+      total_harga: totalHarga
+    })
     
     // Insert RAB header
     // Try with jenis_rab column first
