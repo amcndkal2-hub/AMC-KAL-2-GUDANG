@@ -12183,6 +12183,93 @@ function getDashboardListRABHTML() {
         </div>
 
         <!-- View RAB Modal -->
+        <!-- RAB Detail Modal -->
+        <div id="rabDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl w-[98vw] max-w-[1800px] h-[95vh] flex flex-col">
+                <div class="p-4 border-b flex justify-between items-center bg-white z-10 flex-shrink-0">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
+                        Detail RAB: <span id="detailNomorRAB" class="text-blue-600"></span>
+                    </h2>
+                    <button onclick="closeRABDetailModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-auto flex-1">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p class="text-sm text-gray-600">Status</p>
+                            <p id="detailStatus" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Jenis RAB</p>
+                            <p id="detailJenisRAB" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Nomor TOR</p>
+                            <p id="detailNomorTOR" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">ROK</p>
+                            <p id="detailROK" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Tanggal Dibuat</p>
+                            <p id="detailCreated" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Dibuat Oleh</p>
+                            <p id="detailUsername" class="font-semibold"></p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">Daftar Item</h3>
+                        <div class="space-x-2">
+                            <button onclick="exportRABDetailToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                                <i class="fas fa-file-excel mr-2"></i>Download Excel
+                            </button>
+                            <button onclick="exportRABDetailToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                                <i class="fas fa-file-pdf mr-2"></i>Download PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border text-xs">
+                            <thead class="bg-green-600 text-white">
+                                <tr>
+                                    <th class="px-2 py-2 border border-white">No</th>
+                                    <th class="px-2 py-2 border border-white">Nama Material</th>
+                                    <th class="px-2 py-2 border border-white">No. LH05</th>
+                                    <th class="px-2 py-2 border border-white">Part Number</th>
+                                    <th class="px-2 py-2 border border-white">Type Mesin</th>
+                                    <th class="px-2 py-2 border border-white">S/N Mesin</th>
+                                    <th class="px-2 py-2 border border-white">Unit/ULD</th>
+                                    <th class="px-2 py-2 border border-white">Qty</th>
+                                    <th class="px-2 py-2 border border-white">Harga Satuan</th>
+                                    <th class="px-2 py-2 border border-white">Total</th>
+                                    <th class="px-2 py-2 border border-white">Tanpa ROK</th>
+                                    <th class="px-2 py-2 border border-white">Total tanpa ROK</th>
+                                    <th class="px-2 py-2 border border-white">Realisasi</th>
+                                    <th class="px-2 py-2 border border-white">Total Realisasi</th>
+                                    <th class="px-2 py-2 border border-white">Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailItemsTable"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 text-right">
+                        <p class="text-lg"><strong>Subtotal:</strong> <span id="detailSubtotal"></span></p>
+                        <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
+                        <p class="text-xl font-bold text-blue-600"><strong>Total + PPN:</strong> <span id="detailTotal"></span></p>
+                    </div>
+                </div>
+                <div class="p-4 border-t bg-gray-50 flex justify-end space-x-4 flex-shrink-0">
+                    <button onclick="closeRABDetailModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- RAB History Modal -->
         <div id="rabHistoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
