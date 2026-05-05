@@ -747,13 +747,32 @@ async function viewRABDetail(rabId) {
 // Show RAB detail modal
 function showRABDetailModal(rab) {
   console.log('📋 Opening RAB detail modal for:', rab.nomor_rab)
+  
+  // Retry mechanism: Wait for DOM if modal not found
   const modal = document.getElementById('rabDetailModal')
   if (!modal) {
-    console.error('❌ Modal element not found! ID: rabDetailModal')
+    console.warn('⚠️ Modal not found on first attempt, retrying in 100ms...')
+    setTimeout(() => {
+      const retryModal = document.getElementById('rabDetailModal')
+      if (!retryModal) {
+        console.error('❌ Modal element not found after retry! ID: rabDetailModal')
+        console.error('❌ Available modals:', Array.from(document.querySelectorAll('[id*="Modal"]')).map(m => m.id))
+        alert('Error: Modal tidak ditemukan. Silakan refresh halaman.')
+        return
+      }
+      console.log('✅ Modal found on retry:', retryModal)
+      _showRABDetailModalContent(rab, retryModal)
+    }, 100)
     return
   }
   console.log('✅ Modal element found:', modal)
-  
+  _showRABDetailModalContent(rab, modal)
+}
+
+// Helper function to populate modal content
+function _showRABDetailModalContent(rab, modal)
+// Helper function to populate modal content
+function _showRABDetailModalContent(rab, modal) {
   const createdDate = rab.created_at ? new Date(rab.created_at).toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'long',
