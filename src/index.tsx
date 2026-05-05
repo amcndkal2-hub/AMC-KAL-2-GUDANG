@@ -12581,24 +12581,6 @@ function getDashboardListTORHTML() {
             </div>
         </div>
 
-        <!-- View RAB Modal -->
-                        History RAB: <span id="historyNomorRAB" class="text-blue-600"></span>
-                    </h2>
-                    <button onclick="closeRABHistoryModal()" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
-                </div>
-                <div class="p-6 overflow-auto" style="max-height: 70vh;">
-                    <div id="historyTimeline"></div>
-                </div>
-                <div class="p-4 border-t bg-gray-50 flex justify-end">
-                    <button onclick="closeRABHistoryModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
-                        <i class="fas fa-times mr-2"></i>Tutup
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- Notification Container -->
         <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
