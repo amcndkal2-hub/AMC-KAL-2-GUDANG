@@ -839,34 +839,30 @@ function _showRABDetailModalContent(rab, modal) {
         realisasi: realisasi
       })
       
-      // Conditionally show 5 new columns only for REALISASI page
-      const itemId = item.id || item.item_id || index
-      console.log('🔍 Item ID Debug:', { 
-        'item.id': item.id, 
-        'item.item_id': item.item_id, 
-        'index': index,
-        'final itemId': itemId,
-        'item keys': Object.keys(item)
-      })
+      // For REALISASI page: show 5 additional columns (Tanpa ROK to Saldo)
+      // For LIST RAB page: hide these columns
+      let realisasiColumns = ''
       
-      // Calculate Saldo = Total tanpa ROK - Total Realisasi
-      const saldo = totalTanpaROK - totalRealisasi
-      
-      const realisasiColumns = isListTORPage ? `
-        <td class="px-2 py-2 text-right text-xs">${formatRupiah(tanpaROK)}</td>
-        <td class="px-2 py-2 text-right text-xs">${formatRupiah(totalTanpaROK)}</td>
-        <td class="px-2 py-2 text-center text-xs">
-          <input type="number" 
-                 value="${realisasi}" 
-                 data-item-id="${itemId}"
-                 data-rab-id="${rab.id}"
-                 onchange="updateRealisasi(${rab.id}, ${itemId}, this.value)"
-                 class="w-full px-2 py-1 text-xs text-right border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
-                 placeholder="0" />
-        </td>
-        <td class="px-2 py-2 text-right text-xs font-semibold">${formatRupiah(totalRealisasi)}</td>
-        <td class="px-2 py-2 text-right text-xs font-semibold ${saldo < 0 ? 'text-red-600' : 'text-green-600'}">${formatRupiah(saldo)}</td>
-      ` : ''
+      if (isListTORPage) {
+        const itemId = item.id || item.item_id || index
+        const saldo = totalTanpaROK - totalRealisasi
+        
+        realisasiColumns = `
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(tanpaROK)}</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(totalTanpaROK)}</td>
+          <td class="px-2 py-2 text-center text-xs">
+            <input type="number" 
+                   value="${realisasi}" 
+                   data-item-id="${itemId}"
+                   data-rab-id="${rab.id}"
+                   onchange="updateRealisasi(${rab.id}, ${itemId}, this.value)"
+                   class="w-full px-2 py-1 text-xs text-right border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                   placeholder="0" />
+          </td>
+          <td class="px-2 py-2 text-right text-xs font-semibold">${formatRupiah(totalRealisasi)}</td>
+          <td class="px-2 py-2 text-right text-xs font-semibold ${saldo < 0 ? 'text-red-600' : 'text-green-600'}">${formatRupiah(saldo)}</td>
+        `
+      }
       
       return `
       <tr class="border-b hover:bg-gray-50">
@@ -959,7 +955,7 @@ function _showRABDetailModalContent(rab, modal) {
       }
     }
   } else {
-    const colspanCount = isListTORPage ? 14 : 10
+    const colspanCount = isListTORPage ? 15 : 10
     itemsTable.innerHTML = `<tr><td colspan="${colspanCount}" class="px-4 py-8 text-center text-gray-500 text-xs">Tidak ada item</td></tr>`
   }
   
@@ -1196,24 +1192,14 @@ function exportRABDetailToExcel() {
     const items = rab.items || []
     const rokPercentage = rab.rok_percentage || 0
     
-    // Prepare data for Excel with 15 columns (matching REALISASI view)
+    // For LIST RAB: 10 columns only (No to Total)
+    // For REALISASI: 15 columns (include Tanpa ROK to Saldo)
     const excelData = items.map((item, index) => {
       const qty = item.qty || item.quantity || item.jumlah || 0
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
       const total = qty * hargaSatuan
       
-      // Calculate Tanpa ROK columns
-      const tanpaROK = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
-      const totalTanpaROK = tanpaROK * qty
-      
-      // Realisasi columns
-      const realisasi = item.realisasi || 0
-      const totalRealisasi = realisasi * qty
-      
-      // Saldo = Total tanpa ROK - Total Realisasi
-      const saldo = totalTanpaROK - totalRealisasi
-      
-      return {
+      const baseData = {
         'No': index + 1,
         'Nama Material': item.nama_material || item.material_name || item.name || '-',
         'No. LH05': item.no_lh05 || item.nomor_lh05 || '-',
@@ -1223,13 +1209,25 @@ function exportRABDetailToExcel() {
         'Unit/ULD': item.unit_uld || item.unitULD || item.lokasi_gangguan || '-',
         'Qty': qty,
         'Harga Satuan': hargaSatuan,
-        'Total': total,
-        'Tanpa ROK': tanpaROK,
-        'Total tanpa ROK': totalTanpaROK,
-        'Realisasi': realisasi,
-        'Total Realisasi': totalRealisasi,
-        'Saldo': saldo
+        'Total': total
       }
+      
+      // Add extra columns for REALISASI page only
+      if (isListTORPage) {
+        const tanpaROK = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
+        const totalTanpaROK = tanpaROK * qty
+        const realisasi = item.realisasi || 0
+        const totalRealisasi = realisasi * qty
+        const saldo = totalTanpaROK - totalRealisasi
+        
+        baseData['Tanpa ROK'] = tanpaROK
+        baseData['Total tanpa ROK'] = totalTanpaROK
+        baseData['Realisasi'] = realisasi
+        baseData['Total Realisasi'] = totalRealisasi
+        baseData['Saldo'] = saldo
+      }
+      
+      return baseData
     })
     
     // Calculate summary totals
@@ -1257,7 +1255,10 @@ function exportRABDetailToExcel() {
     
     // Add summary rows
     excelData.push({})
-    excelData.push({
+    
+    // For LIST RAB: only show Subtotal for Total column
+    // For REALISASI: show all summary columns
+    const subtotalRow = {
       'No': '',
       'Nama Material': '',
       'No. LH05': '',
@@ -1267,17 +1268,22 @@ function exportRABDetailToExcel() {
       'Unit/ULD': '',
       'Qty': '',
       'Harga Satuan': 'Subtotal:',
-      'Total': subtotalTotal,
-      'Tanpa ROK': '-',
-      'Total tanpa ROK': subtotalTanpaROK,
-      'Realisasi': '-',
-      'Total Realisasi': subtotalRealisasi,
-      'Saldo': saldoSubtotal
-    })
+      'Total': subtotalTotal
+    }
+    
+    if (isListTORPage) {
+      subtotalRow['Tanpa ROK'] = '-'
+      subtotalRow['Total tanpa ROK'] = subtotalTanpaROK
+      subtotalRow['Realisasi'] = '-'
+      subtotalRow['Total Realisasi'] = subtotalRealisasi
+      subtotalRow['Saldo'] = saldoSubtotal
+    }
+    
+    excelData.push(subtotalRow)
     
     // Only add PPN rows if usePPN is true
     if (usePPN) {
-      excelData.push({
+      const ppnRow = {
         'No': '',
         'Nama Material': '',
         'No. LH05': '',
@@ -1287,14 +1293,10 @@ function exportRABDetailToExcel() {
         'Unit/ULD': '',
         'Qty': '',
         'Harga Satuan': 'PPN 11%:',
-        'Total': ppn,
-        'Tanpa ROK': '-',
-        'Total tanpa ROK': '-',
-        'Realisasi': '-',
-        'Total Realisasi': '-',
-        'Saldo': '-'
-      })
-      excelData.push({
+        'Total': ppn
+      }
+      
+      const totalPPNRow = {
         'No': '',
         'Nama Material': '',
         'No. LH05': '',
@@ -1304,13 +1306,25 @@ function exportRABDetailToExcel() {
         'Unit/ULD': '',
         'Qty': '',
         'Harga Satuan': 'Total + PPN:',
-        'Total': totalWithPPN,
-        'Tanpa ROK': '-',
-        'Total tanpa ROK': '-',
-        'Realisasi': '-',
-        'Total Realisasi': '-',
-        'Saldo': '-'
-      })
+        'Total': totalWithPPN
+      }
+      
+      if (isListTORPage) {
+        ppnRow['Tanpa ROK'] = '-'
+        ppnRow['Total tanpa ROK'] = '-'
+        ppnRow['Realisasi'] = '-'
+        ppnRow['Total Realisasi'] = '-'
+        ppnRow['Saldo'] = '-'
+        
+        totalPPNRow['Tanpa ROK'] = '-'
+        totalPPNRow['Total tanpa ROK'] = '-'
+        totalPPNRow['Realisasi'] = '-'
+        totalPPNRow['Total Realisasi'] = '-'
+        totalPPNRow['Saldo'] = '-'
+      }
+      
+      excelData.push(ppnRow)
+      excelData.push(totalPPNRow)
     }
     
     const ws = XLSX.utils.json_to_sheet(excelData)
@@ -1365,24 +1379,13 @@ function exportRABDetailToPDF() {
     doc.text(`Tanggal Dibuat: ${createdDate}`, 14, 45)
     doc.text(`Dibuat Oleh: ${rab.username || '-'}`, 14, 50)
     
-    // Table data with 15 columns (for REALISASI page)
+    // Table data: LIST RAB = 10 columns, REALISASI = 15 columns
     const tableData = items.map((item, index) => {
       const qty = item.qty || item.quantity || item.jumlah || 0
       const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
       const total = qty * hargaSatuan
       
-      // Calculate Tanpa ROK columns
-      const tanpaROK = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
-      const totalTanpaROK = tanpaROK * qty
-      
-      // Realisasi columns
-      const realisasi = item.realisasi || 0
-      const totalRealisasi = realisasi * qty
-      
-      // Saldo = Total tanpa ROK - Total Realisasi
-      const saldo = totalTanpaROK - totalRealisasi
-      
-      return [
+      const baseRow = [
         index + 1,
         item.nama_material || item.material_name || '-',
         item.no_lh05 || '-',
@@ -1392,13 +1395,27 @@ function exportRABDetailToPDF() {
         item.unit_uld || '-',
         qty,
         'Rp ' + hargaSatuan.toLocaleString('id-ID'),
-        'Rp ' + total.toLocaleString('id-ID'),
-        'Rp ' + tanpaROK.toLocaleString('id-ID'),
-        'Rp ' + totalTanpaROK.toLocaleString('id-ID'),
-        realisasi > 0 ? 'Rp ' + realisasi.toLocaleString('id-ID') : '-',
-        totalRealisasi > 0 ? 'Rp ' + totalRealisasi.toLocaleString('id-ID') : 'Rp 0',
-        'Rp ' + saldo.toLocaleString('id-ID')
+        'Rp ' + total.toLocaleString('id-ID')
       ]
+      
+      // Add extra columns for REALISASI page only
+      if (isListTORPage) {
+        const tanpaROK = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
+        const totalTanpaROK = tanpaROK * qty
+        const realisasi = item.realisasi || 0
+        const totalRealisasi = realisasi * qty
+        const saldo = totalTanpaROK - totalRealisasi
+        
+        baseRow.push(
+          'Rp ' + tanpaROK.toLocaleString('id-ID'),
+          'Rp ' + totalTanpaROK.toLocaleString('id-ID'),
+          realisasi > 0 ? 'Rp ' + realisasi.toLocaleString('id-ID') : '-',
+          totalRealisasi > 0 ? 'Rp ' + totalRealisasi.toLocaleString('id-ID') : 'Rp 0',
+          'Rp ' + saldo.toLocaleString('id-ID')
+        )
+      }
+      
+      return baseRow
     })
     
     // Calculate summary totals
@@ -1426,63 +1443,85 @@ function exportRABDetailToPDF() {
     const grandTotalTotal = subtotalTotal + ppnTotal
     const saldoSubtotal = subtotalTanpaROK - subtotalRealisasi
     
-    // Add summary rows
-    tableData.push([
+    // Add summary rows: LIST RAB = simpler, REALISASI = full summary
+    const subtotalRow = [
       '', '', '', '', '', '', '', '', 
       'Subtotal:', 
-      'Rp ' + subtotalTotal.toLocaleString('id-ID'),
-      '-',
-      'Rp ' + subtotalTanpaROK.toLocaleString('id-ID'),
-      '-',
-      'Rp ' + subtotalRealisasi.toLocaleString('id-ID'),
-      'Rp ' + saldoSubtotal.toLocaleString('id-ID')
-    ])
+      'Rp ' + subtotalTotal.toLocaleString('id-ID')
+    ]
+    
+    if (isListTORPage) {
+      subtotalRow.push(
+        '-',
+        'Rp ' + subtotalTanpaROK.toLocaleString('id-ID'),
+        '-',
+        'Rp ' + subtotalRealisasi.toLocaleString('id-ID'),
+        'Rp ' + saldoSubtotal.toLocaleString('id-ID')
+      )
+    }
+    
+    tableData.push(subtotalRow)
     
     // Only add PPN rows if usePPN is true
     if (usePPN) {
-      tableData.push([
+      const ppnRow = [
         '', '', '', '', '', '', '', '', 
         'PPN 11%:', 
-        'Rp ' + ppnTotal.toLocaleString('id-ID'),
-        '-', '-', '-', '-', '-'
-      ])
-      tableData.push([
+        'Rp ' + ppnTotal.toLocaleString('id-ID')
+      ]
+      
+      const totalPPNRow = [
         '', '', '', '', '', '', '', '', 
         'Total + PPN:', 
-        'Rp ' + grandTotalTotal.toLocaleString('id-ID'),
-        '-', '-', '-', '-', '-'
-      ])
+        'Rp ' + grandTotalTotal.toLocaleString('id-ID')
+      ]
+      
+      if (isListTORPage) {
+        ppnRow.push('-', '-', '-', '-', '-')
+        totalPPNRow.push('-', '-', '-', '-', '-')
+      }
+      
+      tableData.push(ppnRow)
+      tableData.push(totalPPNRow)
+    }
+    
+    // Dynamic headers: LIST RAB = 10 columns, REALISASI = 15 columns
+    const headers = [
+      'No', 'Nama Material', 'No. LH05', 'Part Number', 
+      'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty', 
+      'Harga Satuan', 'Total'
+    ]
+    
+    const columnStyles = {
+      0: { cellWidth: 8, halign: 'center' },   // No
+      1: { cellWidth: 28 },                     // Nama Material
+      2: { cellWidth: 14, halign: 'center' },   // No. LH05
+      3: { cellWidth: 14, halign: 'center' },   // Part Number
+      4: { cellWidth: 14, halign: 'center' },   // Type Mesin
+      5: { cellWidth: 14, halign: 'center' },   // S/N Mesin
+      6: { cellWidth: 14, halign: 'center' },   // Unit/ULD
+      7: { cellWidth: 10, halign: 'center' },   // Qty
+      8: { cellWidth: 18, halign: 'right' },    // Harga Satuan
+      9: { cellWidth: 20, halign: 'right' }     // Total
+    }
+    
+    if (isListTORPage) {
+      headers.push('Tanpa ROK', 'Total tanpa ROK', 'Realisasi', 'Total Realisasi', 'Saldo')
+      columnStyles[10] = { cellWidth: 18, halign: 'right' }  // Tanpa ROK
+      columnStyles[11] = { cellWidth: 20, halign: 'right' }  // Total tanpa ROK
+      columnStyles[12] = { cellWidth: 18, halign: 'right' }  // Realisasi
+      columnStyles[13] = { cellWidth: 20, halign: 'right' }  // Total Realisasi
+      columnStyles[14] = { cellWidth: 20, halign: 'right' }  // Saldo
     }
     
     doc.autoTable({
       startY: 60,
-      head: [[
-        'No', 'Nama Material', 'No. LH05', 'Part Number', 
-        'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty', 
-        'Harga Satuan', 'Total', 'Tanpa ROK', 'Total tanpa ROK', 
-        'Realisasi', 'Total Realisasi', 'Saldo'
-      ]],
+      head: [headers],
       body: tableData,
       theme: 'grid',
       headStyles: { fillColor: [34, 197, 94], textColor: 255, fontSize: 7 },
       bodyStyles: { fontSize: 6 },
-      columnStyles: {
-        0: { cellWidth: 8, halign: 'center' },   // No
-        1: { cellWidth: 28 },                     // Nama Material
-        2: { cellWidth: 14, halign: 'center' },   // No. LH05
-        3: { cellWidth: 14, halign: 'center' },   // Part Number
-        4: { cellWidth: 14, halign: 'center' },   // Type Mesin
-        5: { cellWidth: 14, halign: 'center' },   // S/N Mesin
-        6: { cellWidth: 14, halign: 'center' },   // Unit/ULD
-        7: { cellWidth: 10, halign: 'center' },   // Qty
-        8: { cellWidth: 18, halign: 'right' },    // Harga Satuan
-        9: { cellWidth: 20, halign: 'right' },    // Total
-        10: { cellWidth: 18, halign: 'right' },   // Tanpa ROK
-        11: { cellWidth: 20, halign: 'right' },   // Total tanpa ROK
-        12: { cellWidth: 18, halign: 'right' },   // Realisasi
-        13: { cellWidth: 20, halign: 'right' },   // Total Realisasi
-        14: { cellWidth: 20, halign: 'right' }    // Saldo
-      }
+      columnStyles: columnStyles
     })
     
     const date = new Date().toISOString().split('T')[0]
