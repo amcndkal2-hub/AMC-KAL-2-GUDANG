@@ -471,7 +471,7 @@ function renderRABList(rabList) {
           ${rab.item_count || 0}
         </span>
       </td>
-      <td class="px-2 py-2 border text-right align-middle font-semibold text-xs" style="background: white; width: 180px; min-width: 180px; max-width: 180px;">${formatRupiah((rab.total_harga || 0) * 1.11)}</td>
+      <td class="px-2 py-2 border text-right align-middle font-semibold text-xs" style="background: white; width: 180px; min-width: 180px; max-width: 180px;">${formatRupiah(rab.total_harga || 0)}</td>
       <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 140px; min-width: 140px; max-width: 140px;">
         <select onchange="updateRABStatus(${rab.id}, this.value)" 
                 class="w-full px-2 py-1 rounded text-xs font-semibold border cursor-pointer ${getStatusColorSelect(rab.status)}">
@@ -1483,7 +1483,7 @@ function exportToExcel() {
       'No. TOR': rab.nomor_tor || '-',
       'Jenis RAB': rab.jenis_rab,
       'Item': rab.item_count || 0,
-      'Total (+ PPN 11%)': (rab.total_harga || 0) * 1.11,
+      'Total': rab.total_harga || 0,
       'Dibuat': rab.created_at ? new Date(rab.created_at).toLocaleDateString('id-ID') : '-',
       'User': rab.username || rab.created_by || '-'
     }))
@@ -1529,12 +1529,12 @@ function exportListRABToPDF() {
       rab.nomor_tor || '-',
       rab.jenis_rab,
       rab.item_count || 0,
-      formatRupiah((rab.total_harga || 0) * 1.11)
+      formatRupiah(rab.total_harga || 0)
     ])
     
     doc.autoTable({
       startY: 32,
-      head: [['No', 'Nomor RAB', 'Status', 'ROK', 'No. TOR', 'Jenis', 'Item', 'Total + PPN']],
+      head: [['No', 'Nomor RAB', 'Status', 'ROK', 'No. TOR', 'Jenis', 'Item', 'Total']],
       body: tableData,
       theme: 'grid',
       headStyles: { fillColor: [37, 99, 235] },
