@@ -349,14 +349,15 @@ function renderRABList(rabList) {
       minute: '2-digit'
     }) : ''
     
-    // Check if current user is admin or AMC@12345
+    // Check if current user is admin or AMC@12345 or Andalcekatan
     const currentUser = localStorage.getItem('username') || ''
     const isAdmin = currentUser === 'admin'
     const isAMC = currentUser === 'AMC@12345'
+    const isAndalcekatan = currentUser === 'Andalcekatan'
     const isCreator = currentUser === (rab.username || rab.created_by)
     
-    // Delete permission: admin OR creator
-    const canDelete = isAdmin || isCreator
+    // Delete permission: admin OR creator OR Andalcekatan
+    const canDelete = isAdmin || isCreator || isAndalcekatan
     
     // ROK Column (only for List RAB, not Realisasi)
     const rokColumn = !isListTORPage ? `
