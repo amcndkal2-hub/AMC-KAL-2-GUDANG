@@ -908,8 +908,11 @@ function _showRABDetailModalContent(rab, modal) {
         subtotalRealisasi += (realisasi * qty)
       })
       
-      // Calculate PPN 11% ONLY for Total column
-      const ppnTotal = subtotalTotal * 0.11
+      // Check if RAB uses PPN (Jenis RAB = "Pembelian Langsung" dan ROK = 0% = tidak pakai PPN)
+      const usePPN = !(rab.jenis_rab === 'Pembelian Langsung' && rokPercentage === 0)
+      
+      // Calculate PPN 11% ONLY for Total column (if usePPN)
+      const ppnTotal = usePPN ? subtotalTotal * 0.11 : 0
       
       // Calculate Total + PPN ONLY for Total column
       const grandTotalTotal = subtotalTotal + ppnTotal
@@ -929,25 +932,31 @@ function _showRABDetailModalContent(rab, modal) {
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalRealisasi)}</td>
           <td class="px-2 py-2 text-right text-xs font-semibold ${saldoSubtotal < 0 ? 'text-red-600' : 'text-green-600'}">${formatRupiah(saldoSubtotal)}</td>
         </tr>
-        <tr class="bg-gray-100 font-semibold">
-          <td colspan="9" class="px-2 py-2 text-right text-xs">PPN 11%:</td>
-          <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnTotal)}</td>
-          <td class="px-2 py-2 text-right text-xs">-</td>
-          <td class="px-2 py-2 text-right text-xs">-</td>
-          <td class="px-2 py-2 text-center text-xs">-</td>
-          <td class="px-2 py-2 text-right text-xs">-</td>
-          <td class="px-2 py-2 text-right text-xs">-</td>
-        </tr>
-        <tr class="bg-blue-100 font-bold border-t-2 border-blue-400">
-          <td colspan="9" class="px-2 py-2 text-right text-xs">Total + PPN:</td>
-          <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalTotal)}</td>
-          <td class="px-2 py-2 text-right text-xs">-</td>
-          <td class="px-2 py-2 text-right text-xs">-</td>
-          <td class="px-2 py-2 text-center text-xs">-</td>
-          <td class="px-2 py-2 text-right text-xs">-</td>
-          <td class="px-2 py-2 text-right text-xs">-</td>
-        </tr>
       `
+      
+      // Only show PPN rows if usePPN is true
+      if (usePPN) {
+        itemsTable.innerHTML += `
+          <tr class="bg-gray-100 font-semibold">
+            <td colspan="9" class="px-2 py-2 text-right text-xs">PPN 11%:</td>
+            <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnTotal)}</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+            <td class="px-2 py-2 text-center text-xs">-</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+          </tr>
+          <tr class="bg-blue-100 font-bold border-t-2 border-blue-400">
+            <td colspan="9" class="px-2 py-2 text-right text-xs">Total + PPN:</td>
+            <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalTotal)}</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+            <td class="px-2 py-2 text-center text-xs">-</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+          </tr>
+        `
+      }
     }
   } else {
     const colspanCount = isListTORPage ? 14 : 10
@@ -1239,7 +1248,10 @@ function exportRABDetailToExcel() {
       subtotalRealisasi += (realisasi * qty)
     })
     
-    const ppn = subtotalTotal * 0.11
+    // Check if RAB uses PPN
+    const usePPN = !(rab.jenis_rab === 'Pembelian Langsung' && rokPercentage === 0)
+    
+    const ppn = usePPN ? subtotalTotal * 0.11 : 0
     const totalWithPPN = subtotalTotal + ppn
     const saldoSubtotal = subtotalTanpaROK - subtotalRealisasi
     
@@ -1262,32 +1274,35 @@ function exportRABDetailToExcel() {
       'Total Realisasi': subtotalRealisasi,
       'Saldo': saldoSubtotal
     })
-    excelData.push({
-      'No': '',
-      'Nama Material': '',
-      'No. LH05': '',
-      'Part Number': '',
-      'Type Mesin': '',
-      'S/N Mesin': '',
-      'Unit/ULD': '',
-      'Qty': '',
-      'Harga Satuan': 'PPN 11%:',
-      'Total': ppn,
-      'Tanpa ROK': '-',
-      'Total tanpa ROK': '-',
-      'Realisasi': '-',
-      'Total Realisasi': '-',
-      'Saldo': '-'
-    })
-    excelData.push({
-      'No': '',
-      'Nama Material': '',
-      'No. LH05': '',
-      'Part Number': '',
-      'Type Mesin': '',
-      'S/N Mesin': '',
-      'Unit/ULD': '',
-      'Qty': '',
+    
+    // Only add PPN rows if usePPN is true
+    if (usePPN) {
+      excelData.push({
+        'No': '',
+        'Nama Material': '',
+        'No. LH05': '',
+        'Part Number': '',
+        'Type Mesin': '',
+        'S/N Mesin': '',
+        'Unit/ULD': '',
+        'Qty': '',
+        'Harga Satuan': 'PPN 11%:',
+        'Total': ppn,
+        'Tanpa ROK': '-',
+        'Total tanpa ROK': '-',
+        'Realisasi': '-',
+        'Total Realisasi': '-',
+        'Saldo': '-'
+      })
+      excelData.push({
+        'No': '',
+        'Nama Material': '',
+        'No. LH05': '',
+        'Part Number': '',
+        'Type Mesin': '',
+        'S/N Mesin': '',
+        'Unit/ULD': '',
+        'Qty': '',
       'Harga Satuan': 'Total + PPN:',
       'Total': totalWithPPN,
       'Tanpa ROK': '-',
@@ -1403,7 +1418,10 @@ function exportRABDetailToPDF() {
       subtotalRealisasi += (realisasi * qty)
     })
     
-    const ppnTotal = subtotalTotal * 0.11
+    // Check if RAB uses PPN
+    const usePPN = !(rab.jenis_rab === 'Pembelian Langsung' && rokPercentage === 0)
+    
+    const ppnTotal = usePPN ? subtotalTotal * 0.11 : 0
     const grandTotalTotal = subtotalTotal + ppnTotal
     const saldoSubtotal = subtotalTanpaROK - subtotalRealisasi
     
@@ -1418,18 +1436,22 @@ function exportRABDetailToPDF() {
       'Rp ' + subtotalRealisasi.toLocaleString('id-ID'),
       'Rp ' + saldoSubtotal.toLocaleString('id-ID')
     ])
-    tableData.push([
-      '', '', '', '', '', '', '', '', 
-      'PPN 11%:', 
-      'Rp ' + ppnTotal.toLocaleString('id-ID'),
-      '-', '-', '-', '-', '-'
-    ])
-    tableData.push([
-      '', '', '', '', '', '', '', '', 
-      'Total + PPN:', 
-      'Rp ' + grandTotalTotal.toLocaleString('id-ID'),
-      '-', '-', '-', '-', '-'
-    ])
+    
+    // Only add PPN rows if usePPN is true
+    if (usePPN) {
+      tableData.push([
+        '', '', '', '', '', '', '', '', 
+        'PPN 11%:', 
+        'Rp ' + ppnTotal.toLocaleString('id-ID'),
+        '-', '-', '-', '-', '-'
+      ])
+      tableData.push([
+        '', '', '', '', '', '', '', '', 
+        'Total + PPN:', 
+        'Rp ' + grandTotalTotal.toLocaleString('id-ID'),
+        '-', '-', '-', '-', '-'
+      ])
+    }
     
     doc.autoTable({
       startY: 60,
