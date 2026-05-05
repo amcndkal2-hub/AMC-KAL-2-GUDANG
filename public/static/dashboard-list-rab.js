@@ -24,12 +24,17 @@ async function initializeData() {
   
   console.log('🔄 Initializing List RAB data...')
   
-  // Load SPK data first (for Status SCM matching)
-  await loadSPKData()
-  
-  // Then load RAB list
+  // Load RAB list immediately (don't wait for SPK data)
   await loadRABList()
   console.log('✅ RAB list loaded and rendered')
+  
+  // Load SPK data in background (for Status SCM matching)
+  loadSPKData().then(() => {
+    console.log('✅ SPK data loaded, re-rendering to show Status SCM...')
+    renderRABList(filteredRABList) // Re-render to show Status SCM column
+  }).catch(err => {
+    console.error('SPK data load failed:', err)
+  })
   
   isDataLoaded = true
   
