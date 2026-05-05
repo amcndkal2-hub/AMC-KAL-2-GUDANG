@@ -770,8 +770,6 @@ function showRABDetailModal(rab) {
 }
 
 // Helper function to populate modal content
-function _showRABDetailModalContent(rab, modal)
-// Helper function to populate modal content
 function _showRABDetailModalContent(rab, modal) {
   const createdDate = rab.created_at ? new Date(rab.created_at).toLocaleDateString('id-ID', {
     day: '2-digit',
