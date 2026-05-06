@@ -789,7 +789,26 @@ function _showRABDetailModalContent(rab, modal) {
   document.getElementById('detailStatus').innerHTML = `<span class="inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(rab.status)}">${rab.status}</span>`
   document.getElementById('detailJenisRAB').innerHTML = `<span class="inline-block px-3 py-1 rounded-full text-sm font-semibold ${getJenisRABColor(rab.jenis_rab)}">${rab.jenis_rab}</span>`
   document.getElementById('detailNomorTOR').textContent = rab.nomor_tor || '-'
-  document.getElementById('detailROK').textContent = `${rab.rok_percentage || 0}%`
+  
+  // ROK: Editable for admin and Andalcekatan
+  const currentUser = localStorage.getItem('username') || ''
+  const isAdmin = currentUser === 'admin'
+  const isAndalcekatan = currentUser === 'Andalcekatan'
+  const canEditROK = isAdmin || isAndalcekatan
+  
+  if (canEditROK) {
+    document.getElementById('detailROK').innerHTML = `
+      <input type="number" 
+             value="${rab.rok_percentage || 0}" 
+             min="0" 
+             max="100" 
+             onchange="updateRABROKInModal(${rab.id}, this.value)"
+             class="w-24 px-2 py-1 text-sm text-center border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+             /> %`
+  } else {
+    document.getElementById('detailROK').textContent = `${rab.rok_percentage || 0}%`
+  }
+  
   document.getElementById('detailCreated').textContent = createdDate
   document.getElementById('detailUsername').textContent = rab.username || '-'
   
@@ -826,6 +845,14 @@ function _showRABDetailModalContent(rab, modal) {
       const realisasi = item.realisasi || 0
       const totalRealisasi = realisasi * qty
       
+      // Check if current user can edit Harga Satuan
+      const currentUser = localStorage.getItem('username') || ''
+      const isAdmin = currentUser === 'admin'
+      const isAndalcekatan = currentUser === 'Andalcekatan'
+      const canEditHarga = isAdmin || isAndalcekatan
+      
+      const itemId = item.id || item.item_id || index
+      
       console.log(`Item ${index + 1}:`, {
         nama: namaMaterial,
         qty: qty,
@@ -840,12 +867,23 @@ function _showRABDetailModalContent(rab, modal) {
         realisasi: realisasi
       })
       
+      // Harga Satuan column: editable for admin and Andalcekatan
+      const hargaSatuanCell = canEditHarga ? `
+        <input type="number" 
+               value="${hargaSatuan}" 
+               min="0"
+               data-item-id="${itemId}"
+               data-rab-id="${rab.id}"
+               onchange="updateItemHargaSatuan(${rab.id}, ${itemId}, this.value)"
+               class="w-full px-2 py-1 text-xs text-right border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+               placeholder="0" />
+      ` : `${formatRupiah(hargaSatuan)}`
+      
       // For REALISASI page: show 5 additional columns (Tanpa ROK to Saldo)
       // For LIST RAB page: hide these columns
       let realisasiColumns = ''
       
       if (isListTORPage) {
-        const itemId = item.id || item.item_id || index
         const saldo = totalTanpaROK - totalRealisasi
         
         realisasiColumns = `
@@ -875,7 +913,7 @@ function _showRABDetailModalContent(rab, modal) {
         <td class="px-2 py-2 text-center text-xs">${snMesin}</td>
         <td class="px-2 py-2 text-center text-xs">${unitULD}</td>
         <td class="px-2 py-2 text-center text-xs">${qty}</td>
-        <td class="px-2 py-2 text-right text-xs">${formatRupiah(hargaSatuan)}</td>
+        <td class="px-2 py-2 text-right text-xs">${hargaSatuanCell}</td>
         <td class="px-2 py-2 text-right text-xs font-semibold">${formatRupiah(total)}</td>
         ${realisasiColumns}
       </tr>
@@ -1041,6 +1079,95 @@ async function updateRealisasi(rabId, itemId, value) {
   } catch (error) {
     console.error('❌ Error updating realisasi:', error)
     showNotification(`Gagal update realisasi: ${error.message}`, 'error')
+  }
+}
+
+// Update RAB ROK in modal (for admin and Andalcekatan)
+async function updateRABROKInModal(rabId, percentage) {
+  try {
+    const rok = parseFloat(percentage)
+    if (isNaN(rok) || rok < 0 || rok > 100) {
+      showNotification('ROK harus antara 0-100%', 'error')
+      await viewRABDetail(rabId)
+      return
+    }
+    
+    const response = await fetch(`/api/rab/${rabId}/rok`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      },
+      body: JSON.stringify({ rok_percentage: rok })
+    })
+    
+    if (!response.ok) throw new Error('Failed to update ROK')
+    
+    showNotification('ROK berhasil diupdate', 'success')
+    // Reload modal to show updated calculations
+    await viewRABDetail(rabId)
+  } catch (error) {
+    console.error('Error updating ROK:', error)
+    showNotification('Gagal update ROK', 'error')
+    await viewRABDetail(rabId)
+  }
+}
+
+// Update item Harga Satuan (for admin and Andalcekatan)
+async function updateItemHargaSatuan(rabId, itemId, value) {
+  try {
+    console.log('💰 Update Harga Satuan - RAW INPUT:', { rabId, itemId, value, valueType: typeof value })
+    
+    // Validate itemId
+    if (!itemId || itemId === 0 || isNaN(itemId)) {
+      console.error('❌ Invalid itemId:', itemId)
+      showNotification('Error: Item ID tidak valid', 'error')
+      return
+    }
+    
+    // Convert value to number and validate
+    const hargaSatuan = parseFloat(value)
+    console.log('💰 Converted harga satuan value:', { hargaSatuan, isNaN: isNaN(hargaSatuan) })
+    
+    if (isNaN(hargaSatuan) || hargaSatuan < 0) {
+      console.error('❌ Invalid harga satuan value:', { value, hargaSatuan })
+      showNotification('Error: Nilai harga satuan tidak valid. Harus berupa angka positif.', 'error')
+      await viewRABDetail(rabId)
+      return
+    }
+    
+    console.log('📤 Sending update request:', {
+      itemId,
+      hargaSatuan,
+      endpoint: `/api/rab/items/${itemId}/harga`
+    })
+    
+    const response = await fetch(`/api/rab/items/${itemId}/harga`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      },
+      body: JSON.stringify({ harga_satuan: hargaSatuan })
+    })
+    
+    console.log('📥 Response status:', response.status)
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('❌ Server error:', errorData)
+      throw new Error(errorData.error || 'Failed to update harga satuan')
+    }
+    
+    const result = await response.json()
+    console.log('✅ Harga satuan updated successfully:', result)
+    
+    showNotification('Harga satuan berhasil diupdate', 'success')
+    // Reload modal to show updated totals
+    await viewRABDetail(rabId)
+  } catch (error) {
+    console.error('❌ Error updating harga satuan:', error)
+    showNotification(`Gagal update harga satuan: ${error.message}`, 'error')
   }
 }
 

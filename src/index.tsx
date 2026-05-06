@@ -3791,6 +3791,87 @@ app.put('/api/rab/:rabId/item/:itemId/realisasi', async (c) => {
   }
 })
 
+// API: Update harga satuan for RAB item (for admin and Andalcekatan)
+app.put('/api/rab/items/:itemId/harga', async (c) => {
+  try {
+    const { env } = c
+    const itemId = parseInt(c.req.param('itemId'))
+    const body = await c.req.json()
+    const hargaSatuan = parseFloat(body.harga_satuan)
+    
+    console.log('💰 Update Harga Satuan - RAW REQUEST:', { 
+      itemId, 
+      bodyRaw: body,
+      hargaSatuanRaw: body.harga_satuan,
+      hargaSatuanParsed: hargaSatuan,
+      isNaN: isNaN(hargaSatuan)
+    })
+    
+    // Validate input - allow 0 or positive numbers
+    if (isNaN(hargaSatuan) || hargaSatuan < 0) {
+      console.error('❌ Invalid harga satuan value:', { hargaSatuan, isNaN: isNaN(hargaSatuan) })
+      return c.json({ 
+        error: 'Invalid harga satuan value',
+        details: { received: body.harga_satuan, parsed: hargaSatuan }
+      }, 400)
+    }
+    
+    console.log('✅ Validation passed, checking item...')
+    
+    // Check if item exists
+    const item = await env.DB.prepare(`
+      SELECT id, rab_id FROM rab_items WHERE id = ?
+    `).bind(itemId).first()
+    
+    if (!item) {
+      console.error('❌ Item not found:', itemId)
+      return c.json({ error: 'Item not found' }, 404)
+    }
+    
+    console.log('✅ Item found, updating harga satuan...')
+    
+    // Update harga satuan
+    const updateResult = await env.DB.prepare(`
+      UPDATE rab_items 
+      SET harga_satuan = ? 
+      WHERE id = ?
+    `).bind(hargaSatuan, itemId).run()
+    
+    console.log('✅ Update result:', updateResult)
+    
+    // Recalculate RAB total_harga
+    const rabId = item.rab_id
+    const totalResult = await env.DB.prepare(`
+      SELECT SUM(qty * harga_satuan) as total 
+      FROM rab_items 
+      WHERE rab_id = ?
+    `).bind(rabId).first()
+    
+    const newTotal = totalResult?.total || 0
+    
+    await env.DB.prepare(`
+      UPDATE rab 
+      SET total_harga = ? 
+      WHERE id = ?
+    `).bind(newTotal, rabId).run()
+    
+    console.log('✅ Harga satuan and RAB total updated successfully!')
+    
+    return c.json({ 
+      success: true,
+      message: 'Harga satuan berhasil diupdate',
+      data: { itemId, harga_satuan: hargaSatuan, new_total: newTotal }
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to update harga satuan - EXCEPTION:', error)
+    return c.json({ 
+      error: 'Failed to update harga satuan',
+      details: error.message 
+    }, 500)
+  }
+})
+
 // API: Save transaction from RAB
 app.post('/api/save-transaction-from-rab', async (c) => {
   try {
