@@ -3872,6 +3872,70 @@ app.put('/api/rab/items/:itemId/harga', async (c) => {
   }
 })
 
+// API: Update ROK percentage for RAB (for admin and Andalcekatan)
+app.put('/api/rab/:rabId/rok', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('rabId'))
+    const body = await c.req.json()
+    const rokPercentage = parseFloat(body.rok_percentage)
+    
+    console.log('📊 Update ROK - RAW REQUEST:', { 
+      rabId, 
+      bodyRaw: body,
+      rokRaw: body.rok_percentage,
+      rokParsed: rokPercentage,
+      isNaN: isNaN(rokPercentage)
+    })
+    
+    // Validate input - allow 0-100
+    if (isNaN(rokPercentage) || rokPercentage < 0 || rokPercentage > 100) {
+      console.error('❌ Invalid ROK percentage:', { rokPercentage })
+      return c.json({ 
+        error: 'Invalid ROK percentage',
+        details: 'ROK must be between 0-100'
+      }, 400)
+    }
+    
+    console.log('✅ Validation passed, checking RAB...')
+    
+    // Check if RAB exists
+    const rab = await env.DB.prepare(`
+      SELECT id FROM rab WHERE id = ?
+    `).bind(rabId).first()
+    
+    if (!rab) {
+      console.error('❌ RAB not found:', rabId)
+      return c.json({ error: 'RAB not found' }, 404)
+    }
+    
+    console.log('✅ RAB found, updating ROK...')
+    
+    // Update ROK percentage
+    const updateResult = await env.DB.prepare(`
+      UPDATE rab 
+      SET rok_percentage = ? 
+      WHERE id = ?
+    `).bind(rokPercentage, rabId).run()
+    
+    console.log('✅ Update result:', updateResult)
+    console.log('✅ ROK percentage updated successfully!')
+    
+    return c.json({ 
+      success: true,
+      message: 'ROK berhasil diupdate',
+      data: { rabId, rok_percentage: rokPercentage }
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to update ROK - EXCEPTION:', error)
+    return c.json({ 
+      error: 'Failed to update ROK',
+      details: error.message 
+    }, 500)
+  }
+})
+
 // API: Save transaction from RAB
 app.post('/api/save-transaction-from-rab', async (c) => {
   try {
