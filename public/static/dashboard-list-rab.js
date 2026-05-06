@@ -759,14 +759,14 @@ async function viewRABDetail(rabId) {
 }
 
 // Show RAB detail modal
-function showRABDetailModal(rab) {
+async function showRABDetailModal(rab) {
   console.log('📋 Opening RAB detail modal for:', rab.nomor_rab)
   
   // Retry mechanism: Wait for DOM if modal not found
   const modal = document.getElementById('rabDetailModal')
   if (!modal) {
     console.warn('⚠️ Modal not found on first attempt, retrying in 100ms...')
-    setTimeout(() => {
+    setTimeout(async () => {
       const retryModal = document.getElementById('rabDetailModal')
       if (!retryModal) {
         console.error('❌ Modal element not found after retry! ID: rabDetailModal')
@@ -775,16 +775,16 @@ function showRABDetailModal(rab) {
         return
       }
       console.log('✅ Modal found on retry:', retryModal)
-      _showRABDetailModalContent(rab, retryModal)
+      await _showRABDetailModalContent(rab, retryModal)
     }, 100)
     return
   }
   console.log('✅ Modal element found:', modal)
-  _showRABDetailModalContent(rab, modal)
+  await _showRABDetailModalContent(rab, modal)
 }
 
 // Helper function to populate modal content
-function _showRABDetailModalContent(rab, modal) {
+async function _showRABDetailModalContent(rab, modal) {
   const createdDate = rab.created_at ? new Date(rab.created_at).toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'long',
