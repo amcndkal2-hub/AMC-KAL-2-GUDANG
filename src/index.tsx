@@ -3842,7 +3842,7 @@ app.put('/api/rab/items/:itemId/harga', async (c) => {
     // Recalculate RAB total_harga
     const rabId = item.rab_id
     const totalResult = await env.DB.prepare(`
-      SELECT SUM(qty * harga_satuan) as total 
+      SELECT SUM(jumlah * harga_satuan) as total 
       FROM rab_items 
       WHERE rab_id = ?
     `).bind(rabId).first()
