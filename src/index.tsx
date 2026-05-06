@@ -12241,22 +12241,22 @@ function getDashboardListRABHTML() {
             <div>
                 <!-- Header -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <div class="flex justify-between items-center">
+                    <div class="flex justify-between items-center mb-4">
                         <div>
                             <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                                <i class="fas fa-list-alt text-blue-600 mr-3"></i>
+                                <i class="fas fa-file-invoice-dollar text-blue-600 mr-3"></i>
                                 Daftar RAB (Rencana Anggaran Biaya)
                             </h1>
-                            <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
+                            <p class="text-sm text-gray-500 mt-1">Daftar semua RAB yang telah dibuat.</p>
                         </div>
                     </div>
                     
                     <!-- Horizontal Filters -->
-                    <div class="mt-6 flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="mt-4 flex flex-wrap items-center gap-3">
                         <div class="flex items-center gap-2">
-                            <i class="fas fa-filter text-blue-600"></i>
-                            <label class="text-sm font-semibold text-gray-700">Filter Status:</label>
-                            <select id="filterStatusDropdown" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <i class="fas fa-filter text-blue-600 text-sm"></i>
+                            <label class="text-sm font-medium text-gray-700">Filter Status:</label>
+                            <select id="filterStatusDropdown" class="px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
                                 <option value="All">Semua</option>
                                 <option value="Draft">Draft</option>
                                 <option value="Pengadaan">Pengadaan</option>
@@ -12266,25 +12266,25 @@ function getDashboardListRABHTML() {
                         </div>
                         
                         <div class="flex items-center gap-2">
-                            <i class="fas fa-list text-green-600"></i>
-                            <label class="text-sm font-semibold text-gray-700">Filter Jenis:</label>
+                            <i class="fas fa-list text-blue-600 text-sm"></i>
+                            <label class="text-sm font-medium text-gray-700">Filter Jenis:</label>
                             <div class="flex gap-2">
-                                <button onclick="selectJenisFilter('All')" id="btnJenisAll" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-green-600 text-white hover:bg-green-700">
+                                <button onclick="selectJenisFilter('All')" id="btnJenisAll" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-blue-600 text-white hover:bg-blue-700">
                                     Semua
                                 </button>
-                                <button onclick="selectJenisFilter('SPK')" id="btnJenisSPK" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                <button onclick="selectJenisFilter('SPK')" id="btnJenisSPK" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">
                                     SPK
                                 </button>
-                                <button onclick="selectJenisFilter('Pembelian Langsung')" id="btnJenisPembelianLangsung" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                <button onclick="selectJenisFilter('Pembelian Langsung')" id="btnJenisPembelianLangsung" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">
                                     Pembelian Langsung
                                 </button>
-                                <button onclick="selectJenisFilter('KHS')" id="btnJenisKHS" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                <button onclick="selectJenisFilter('KHS')" id="btnJenisKHS" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">
                                     KHS
                                 </button>
                             </div>
                         </div>
                         
-                        <button onclick="applyFilters()" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">
+                        <button onclick="applyFilters()" class="ml-auto bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition shadow-sm">
                             <i class="fas fa-search"></i>
                             Terapkan
                         </button>
