@@ -1087,9 +1087,15 @@ async function _showRABDetailModalContent(rab, modal) {
     summarySection.style.display = 'none'
   }
   
-  // Load RAB Pembelian Langsung if on Realisasi page and RAB is SPK
-  if (isListTORPage && rab.jenis_rab === 'SPK') {
-    loadAvailablePembelianLangsung()
+  // Show/hide RAB Pembelian Langsung section based on page and RAB type
+  const rabPembelianLangsungSection = document.getElementById('rabPembelianLangsungSection')
+  if (rabPembelianLangsungSection) {
+    if (isListTORPage && rab.jenis_rab === 'SPK') {
+      rabPembelianLangsungSection.style.display = 'block'
+      loadAvailablePembelianLangsung()
+    } else {
+      rabPembelianLangsungSection.style.display = 'none'
+    }
   }
   
   modal.classList.remove('hidden')

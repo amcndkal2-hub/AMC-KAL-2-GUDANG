@@ -3941,6 +3941,25 @@ app.get('/api/rab/pembelian-langsung/available', async (c) => {
   try {
     const { env } = c
     
+    // Check if table exists first (graceful degradation)
+    try {
+      await env.DB.prepare(`SELECT 1 FROM rab_pembelian_langsung_link LIMIT 1`).first()
+    } catch (tableError) {
+      // Table doesn't exist yet - return all Pembelian Langsung RAB
+      console.warn('⚠️ Table rab_pembelian_langsung_link not found, returning all Pembelian Langsung RAB')
+      const result = await env.DB.prepare(`
+        SELECT r.id, r.nomor_rab, r.total_harga, r.rok_percentage
+        FROM rab r
+        WHERE r.jenis_rab = 'Pembelian Langsung'
+        ORDER BY r.created_at DESC
+      `).all()
+      
+      return c.json({ 
+        success: true, 
+        data: result.results || [] 
+      })
+    }
+    
     // Get all RAB Pembelian Langsung that are NOT already linked
     const result = await env.DB.prepare(`
       SELECT r.id, r.nomor_rab, r.total_harga, r.rok_percentage
@@ -13060,6 +13079,29 @@ function getDashboardListTORHTML() {
                             <tbody id="detailItemsTable"></tbody>
                         </table>
                     </div>
+                    
+                    <!-- RAB Pembelian Langsung Section (only for RAB SPK on Realisasi page) -->
+                    <div id="rabPembelianLangsungSection" class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <h3 class="text-base font-semibold mb-3 text-gray-800">
+                            <i class="fas fa-link mr-2 text-yellow-600"></i>RAB Pembelian Langsung Terkait
+                        </h3>
+                        <div class="flex gap-2 mb-4">
+                            <select id="selectPembelianLangsung" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                                <option value="">-- Pilih RAB Pembelian Langsung --</option>
+                            </select>
+                            <button onclick="addPembelianLangsung()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                <i class="fas fa-plus mr-1"></i> Tambah
+                            </button>
+                        </div>
+                        <div id="linkedPembelianLangsungList" class="space-y-2"></div>
+                        <div class="mt-4 pt-3 border-t border-yellow-300">
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-gray-700">Total RAB Pembelian Langsung:</span>
+                                <span id="totalPembelianLangsung" class="text-lg font-bold text-red-600">Rp 0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="mt-4 text-right">
                         <p class="text-lg"><strong>Subtotal:</strong> <span id="detailSubtotal"></span></p>
                         <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
