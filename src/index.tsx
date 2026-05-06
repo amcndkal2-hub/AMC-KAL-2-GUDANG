@@ -12219,18 +12219,32 @@ function getDashboardListRABHTML() {
     </head>
     <body class="bg-gray-100">
         <!-- Navbar -->
-        <nav class="bg-blue-600 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
-                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
-                    <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
-                    <a href="/dashboard/list-rab" class="bg-blue-800 px-3 py-2 rounded">LIST RAB</a>
-                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
-                    <a href="/dashboard/data-spk" class="hover:text-blue-200">DATA SPK</a>
-                    <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
-                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
-                        LOGOUT
+        <nav class="bg-blue-600 text-white shadow-md">
+            <div class="container mx-auto px-6 py-2.5 flex justify-between items-center">
+                <div class="flex items-center space-x-1">
+                    <a href="/dashboard/create-rab" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition">
+                        <i class="fas fa-plus-circle mr-1.5"></i>Create RAB
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        Kebutuhan
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        Ref. Harga
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-4 py-2 text-sm font-semibold rounded bg-blue-800 uppercase">
+                        List RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition">
+                        <i class="fas fa-file-alt mr-1.5"></i>Realisasi
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        Data SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        Resume
+                    </a>
+                    <button onclick="logout()" class="ml-2 bg-red-500 hover:bg-red-600 px-5 py-2 text-sm font-semibold rounded transition shadow-sm uppercase">
+                        Logout
                     </button>
                 </div>
             </div>
