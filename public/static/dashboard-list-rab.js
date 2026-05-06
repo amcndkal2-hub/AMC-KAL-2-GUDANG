@@ -1941,6 +1941,8 @@ function displayLinkedPembelianLangsung(linkedRABs) {
 // Load available RAB Pembelian Langsung for dropdown
 async function loadAvailablePembelianLangsung() {
   try {
+    console.log('🔄 Loading available RAB Pembelian Langsung...')
+    
     const response = await fetch('/api/rab/pembelian-langsung/available', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
@@ -1952,8 +1954,15 @@ async function loadAvailablePembelianLangsung() {
     const result = await response.json()
     const availableRABs = result.data || []
     
+    console.log('✅ Loaded RAB Pembelian Langsung:', availableRABs.length, 'items')
+    
     const select = document.getElementById('selectPembelianLangsung')
-    if (!select) return
+    if (!select) {
+      console.error('❌ Dropdown element not found: selectPembelianLangsung')
+      return
+    }
+    
+    console.log('✅ Dropdown element found, populating options...')
     
     select.innerHTML = '<option value="">-- Pilih RAB Pembelian Langsung --</option>'
     
@@ -1965,12 +1974,14 @@ async function loadAvailablePembelianLangsung() {
       
       const option = document.createElement('option')
       option.value = rab.id
-      option.textContent = `${rab.nomor_rab} - ${formatRupiah(totalTanpaROK)} (Tanpa ROK)`
+      option.textContent = `${rab.nomor_rab} - ${formatRupiah(totalTanpaROK)}`
       select.appendChild(option)
     })
     
+    console.log('✅ Dropdown populated with', availableRABs.length, 'options')
+    
   } catch (error) {
-    console.error('Error loading available Pembelian Langsung:', error)
+    console.error('❌ Error loading available Pembelian Langsung:', error)
     showNotification('Gagal memuat daftar RAB Pembelian Langsung', 'error')
   }
 }
