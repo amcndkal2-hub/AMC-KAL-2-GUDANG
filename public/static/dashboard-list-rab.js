@@ -920,6 +920,44 @@ function _showRABDetailModalContent(rab, modal) {
       `
     }).join('')
     
+    // Add summary rows for LIST RAB page
+    if (!isListTORPage && rab.items && rab.items.length > 0) {
+      // Calculate totals for LIST RAB
+      let subtotalTotal = 0
+      rab.items.forEach(item => {
+        const qty = item.qty || item.quantity || item.jumlah || 0
+        const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+        subtotalTotal += (qty * hargaSatuan)
+      })
+      
+      const rokPercentage = rab.rok_percentage || 0
+      const usePPN = !(rab.jenis_rab === 'Pembelian Langsung' && rokPercentage === 0)
+      const ppnTotal = usePPN ? subtotalTotal * 0.11 : 0
+      const grandTotalTotal = subtotalTotal + ppnTotal
+      
+      // Add Subtotal row
+      itemsTable.innerHTML += `
+        <tr class="bg-gray-100 font-semibold border-t-2 border-gray-400">
+          <td colspan="9" class="px-2 py-2 text-right text-xs">Subtotal:</td>
+          <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTotal)}</td>
+        </tr>
+      `
+      
+      // Add PPN rows if applicable
+      if (usePPN) {
+        itemsTable.innerHTML += `
+          <tr class="bg-gray-100 font-semibold">
+            <td colspan="9" class="px-2 py-2 text-right text-xs">PPN 11%:</td>
+            <td class="px-2 py-2 text-right text-xs">${formatRupiah(ppnTotal)}</td>
+          </tr>
+          <tr class="bg-blue-100 font-bold border-t-2 border-blue-400">
+            <td colspan="9" class="px-2 py-2 text-right text-xs">Total + PPN:</td>
+            <td class="px-2 py-2 text-right text-xs text-blue-600">${formatRupiah(grandTotalTotal)}</td>
+          </tr>
+        `
+      }
+    }
+    
     // Calculate summary totals for REALISASI page
     if (isListTORPage && rab.items && rab.items.length > 0) {
       const rokPercentage = rab.rok_percentage || 0
@@ -998,23 +1036,11 @@ function _showRABDetailModalContent(rab, modal) {
     itemsTable.innerHTML = `<tr><td colspan="${colspanCount}" class="px-4 py-8 text-center text-gray-500 text-xs">Tidak ada item</td></tr>`
   }
   
-  // Calculate totals (keep this for LIST RAB page, but hide for REALISASI)
-  const subtotal = rab.total_harga || 0
-  const ppn = subtotal * 0.11
-  const total = subtotal + ppn
-  
-  // Hide summary below table for REALISASI page
-  if (isListTORPage) {
-    // Hide the summary section
-    const summarySection = document.querySelector('.mt-4.text-right')
-    if (summarySection) {
-      summarySection.style.display = 'none'
-    }
-  } else {
-    // Show for LIST RAB
-    document.getElementById('detailSubtotal').textContent = formatRupiah(subtotal)
-    document.getElementById('detailPPN').textContent = formatRupiah(ppn)
-    document.getElementById('detailTotal').textContent = formatRupiah(total)
+  // Hide summary section below table for both LIST RAB and REALISASI
+  // Summary is now inside the table
+  const summarySection = document.querySelector('.mt-4.text-right')
+  if (summarySection) {
+    summarySection.style.display = 'none'
   }
   
   modal.classList.remove('hidden')
