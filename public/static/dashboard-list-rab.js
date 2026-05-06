@@ -1995,8 +1995,13 @@ async function loadAvailablePembelianLangsung() {
 // Add RAB Pembelian Langsung
 async function addPembelianLangsung() {
   try {
+    console.log('🔄 Adding RAB Pembelian Langsung...')
+    
     const select = document.getElementById('selectPembelianLangsung')
     const rabPembelianLangsungId = parseInt(select.value)
+    
+    console.log('📝 Selected RAB ID:', rabPembelianLangsungId)
+    console.log('📝 Current RAB Detail:', currentRABDetail)
     
     if (!rabPembelianLangsungId) {
       showNotification('Silakan pilih RAB Pembelian Langsung terlebih dahulu', 'error')
@@ -2004,9 +2009,13 @@ async function addPembelianLangsung() {
     }
     
     if (!currentRABDetail || !currentRABDetail.id) {
+      console.error('❌ Current RAB Detail is missing!')
       showNotification('RAB SPK tidak ditemukan', 'error')
       return
     }
+    
+    console.log(`🌐 Sending POST request to /api/rab/${currentRABDetail.id}/link-pembelian-langsung`)
+    console.log('📦 Request body:', { rab_pembelian_langsung_id: rabPembelianLangsungId })
     
     const response = await fetch(`/api/rab/${currentRABDetail.id}/link-pembelian-langsung`, {
       method: 'POST',
@@ -2017,19 +2026,25 @@ async function addPembelianLangsung() {
       body: JSON.stringify({ rab_pembelian_langsung_id: rabPembelianLangsungId })
     })
     
+    console.log('📡 Response status:', response.status)
+    
     const result = await response.json()
+    console.log('📦 Response data:', result)
     
     if (!response.ok) {
+      console.error('❌ API Error:', result)
       throw new Error(result.details || result.error || 'Failed to link Pembelian Langsung')
     }
     
+    console.log('✅ RAB Pembelian Langsung added successfully!')
     showNotification('RAB Pembelian Langsung berhasil ditambahkan', 'success')
     
     // Reload modal to show updated data
+    console.log('🔄 Reloading RAB detail...')
     await viewRABDetail(currentRABDetail.id)
     
   } catch (error) {
-    console.error('Error adding Pembelian Langsung:', error)
+    console.error('❌ Error adding Pembelian Langsung:', error)
     showNotification(`Gagal menambahkan: ${error.message}`, 'error')
   }
 }

@@ -4022,13 +4022,18 @@ app.get('/api/rab/:rabId/linked-pembelian-langsung', async (c) => {
 // API: Link RAB Pembelian Langsung to RAB SPK
 app.post('/api/rab/:rabId/link-pembelian-langsung', async (c) => {
   try {
+    console.log('🔵 POST /api/rab/:rabId/link-pembelian-langsung - START')
     const { env } = c
     const rabSpkId = parseInt(c.req.param('rabId'))
     const body = await c.req.json()
     const rabPembelianLangsungId = parseInt(body.rab_pembelian_langsung_id)
     
+    console.log('📝 RAB SPK ID:', rabSpkId)
+    console.log('📝 RAB Pembelian Langsung ID:', rabPembelianLangsungId)
+    
     // Validate input
     if (isNaN(rabSpkId) || isNaN(rabPembelianLangsungId)) {
+      console.error('❌ Invalid RAB IDs')
       return c.json({ 
         error: 'Invalid RAB ID',
         details: 'Both RAB SPK ID and RAB Pembelian Langsung ID must be valid numbers'
