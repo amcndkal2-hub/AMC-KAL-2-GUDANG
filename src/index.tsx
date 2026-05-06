@@ -3936,6 +3936,250 @@ app.put('/api/rab/:rabId/rok', async (c) => {
   }
 })
 
+// API: Get available RAB Pembelian Langsung (not yet linked)
+app.get('/api/rab/pembelian-langsung/available', async (c) => {
+  try {
+    const { env } = c
+    
+    // Get all RAB Pembelian Langsung that are NOT already linked
+    const result = await env.DB.prepare(`
+      SELECT r.id, r.nomor_rab, r.total_harga, r.rok_percentage
+      FROM rab r
+      WHERE r.jenis_rab = 'Pembelian Langsung'
+      AND r.id NOT IN (
+        SELECT rab_pembelian_langsung_id 
+        FROM rab_pembelian_langsung_link
+      )
+      ORDER BY r.created_at DESC
+    `).all()
+    
+    return c.json({ 
+      success: true, 
+      data: result.results || [] 
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to get available Pembelian Langsung:', error)
+    return c.json({ 
+      error: 'Failed to get available RAB Pembelian Langsung',
+      details: error.message 
+    }, 500)
+  }
+})
+
+// API: Get linked RAB Pembelian Langsung for specific RAB SPK
+app.get('/api/rab/:rabId/linked-pembelian-langsung', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('rabId'))
+    
+    const result = await env.DB.prepare(`
+      SELECT 
+        l.id as link_id,
+        r.id as rab_id,
+        r.nomor_rab,
+        r.total_harga,
+        r.rok_percentage
+      FROM rab_pembelian_langsung_link l
+      JOIN rab r ON l.rab_pembelian_langsung_id = r.id
+      WHERE l.rab_spk_id = ?
+      ORDER BY l.created_at DESC
+    `).bind(rabId).all()
+    
+    return c.json({ 
+      success: true, 
+      data: result.results || [] 
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to get linked Pembelian Langsung:', error)
+    return c.json({ 
+      error: 'Failed to get linked RAB Pembelian Langsung',
+      details: error.message 
+    }, 500)
+  }
+})
+
+// API: Link RAB Pembelian Langsung to RAB SPK
+app.post('/api/rab/:rabId/link-pembelian-langsung', async (c) => {
+  try {
+    const { env } = c
+    const rabSpkId = parseInt(c.req.param('rabId'))
+    const body = await c.req.json()
+    const rabPembelianLangsungId = parseInt(body.rab_pembelian_langsung_id)
+    
+    // Validate input
+    if (isNaN(rabSpkId) || isNaN(rabPembelianLangsungId)) {
+      return c.json({ 
+        error: 'Invalid RAB ID',
+        details: 'Both RAB SPK ID and RAB Pembelian Langsung ID must be valid numbers'
+      }, 400)
+    }
+    
+    // Check if RAB SPK exists and is SPK type
+    const rabSpk = await env.DB.prepare(`
+      SELECT id, jenis_rab, rok_percentage FROM rab WHERE id = ?
+    `).bind(rabSpkId).first()
+    
+    if (!rabSpk) {
+      return c.json({ error: 'RAB SPK not found' }, 404)
+    }
+    
+    if (rabSpk.jenis_rab !== 'SPK') {
+      return c.json({ 
+        error: 'Invalid RAB type',
+        details: 'Only RAB with type SPK can link to Pembelian Langsung'
+      }, 400)
+    }
+    
+    // Check if RAB Pembelian Langsung exists
+    const rabPL = await env.DB.prepare(`
+      SELECT id, nomor_rab, total_harga, rok_percentage FROM rab WHERE id = ? AND jenis_rab = 'Pembelian Langsung'
+    `).bind(rabPembelianLangsungId).first()
+    
+    if (!rabPL) {
+      return c.json({ error: 'RAB Pembelian Langsung not found' }, 404)
+    }
+    
+    // Check if already linked (UNIQUE constraint will prevent this, but check first)
+    const existingLink = await env.DB.prepare(`
+      SELECT id FROM rab_pembelian_langsung_link 
+      WHERE rab_pembelian_langsung_id = ?
+    `).bind(rabPembelianLangsungId).first()
+    
+    if (existingLink) {
+      return c.json({ 
+        error: 'RAB Pembelian Langsung already linked',
+        details: 'This RAB Pembelian Langsung is already linked to another RAB SPK'
+      }, 400)
+    }
+    
+    // Get current saldo calculation for RAB SPK
+    const itemsResult = await env.DB.prepare(`
+      SELECT jumlah, harga_satuan, realisasi FROM rab_items WHERE rab_id = ?
+    `).bind(rabSpkId).all()
+    
+    const items = itemsResult.results || []
+    const rokPercentage = rabSpk.rok_percentage || 0
+    
+    let subtotalTanpaROK = 0
+    let totalRealisasi = 0
+    
+    items.forEach(item => {
+      const qty = item.jumlah || 0
+      const harga = item.harga_satuan || 0
+      const realisasi = item.realisasi || 0
+      
+      const hargaTanpaROK = rokPercentage > 0 ? Math.round(harga / (1 + rokPercentage / 100)) : harga
+      subtotalTanpaROK += (qty * hargaTanpaROK)
+      totalRealisasi += (qty * realisasi)
+    })
+    
+    // Get total from already linked Pembelian Langsung
+    const linkedResult = await env.DB.prepare(`
+      SELECT SUM(r.total_harga) as total
+      FROM rab_pembelian_langsung_link l
+      JOIN rab r ON l.rab_pembelian_langsung_id = r.id
+      WHERE l.rab_spk_id = ?
+    `).bind(rabSpkId).first()
+    
+    const currentLinkedTotal = linkedResult?.total || 0
+    
+    // Calculate new saldo after adding this Pembelian Langsung
+    const rabPLTotalTanpaROK = rabPL.rok_percentage > 0 
+      ? Math.round(rabPL.total_harga / (1 + rabPL.rok_percentage / 100))
+      : rabPL.total_harga
+    
+    const newSaldo = subtotalTanpaROK - totalRealisasi - currentLinkedTotal - rabPLTotalTanpaROK
+    
+    // Validation: Saldo must not be negative
+    if (newSaldo < 0) {
+      return c.json({ 
+        error: 'Validation failed',
+        details: 'Total RAB Pembelian Langsung melebihi Saldo yang tersedia',
+        data: {
+          subtotal_tanpa_rok: subtotalTanpaROK,
+          total_realisasi: totalRealisasi,
+          current_linked_total: currentLinkedTotal,
+          new_pembelian_langsung: rabPLTotalTanpaROK,
+          calculated_saldo: newSaldo
+        }
+      }, 400)
+    }
+    
+    // Insert link
+    await env.DB.prepare(`
+      INSERT INTO rab_pembelian_langsung_link (rab_spk_id, rab_pembelian_langsung_id)
+      VALUES (?, ?)
+    `).bind(rabSpkId, rabPembelianLangsungId).run()
+    
+    console.log('✅ RAB Pembelian Langsung linked successfully!')
+    
+    return c.json({ 
+      success: true,
+      message: 'RAB Pembelian Langsung berhasil ditambahkan',
+      data: {
+        rab_spk_id: rabSpkId,
+        rab_pembelian_langsung_id: rabPembelianLangsungId,
+        new_saldo: newSaldo
+      }
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to link Pembelian Langsung:', error)
+    return c.json({ 
+      error: 'Failed to link RAB Pembelian Langsung',
+      details: error.message 
+    }, 500)
+  }
+})
+
+// API: Unlink RAB Pembelian Langsung from RAB SPK
+app.delete('/api/rab/:rabId/unlink-pembelian-langsung/:linkId', async (c) => {
+  try {
+    const { env } = c
+    const rabSpkId = parseInt(c.req.param('rabId'))
+    const linkId = parseInt(c.req.param('linkId'))
+    
+    // Validate input
+    if (isNaN(rabSpkId) || isNaN(linkId)) {
+      return c.json({ 
+        error: 'Invalid ID',
+        details: 'Both RAB SPK ID and Link ID must be valid numbers'
+      }, 400)
+    }
+    
+    // Check if link exists
+    const link = await env.DB.prepare(`
+      SELECT id FROM rab_pembelian_langsung_link 
+      WHERE id = ? AND rab_spk_id = ?
+    `).bind(linkId, rabSpkId).first()
+    
+    if (!link) {
+      return c.json({ error: 'Link not found' }, 404)
+    }
+    
+    // Delete link
+    await env.DB.prepare(`
+      DELETE FROM rab_pembelian_langsung_link WHERE id = ?
+    `).bind(linkId).run()
+    
+    console.log('✅ RAB Pembelian Langsung unlinked successfully!')
+    
+    return c.json({ 
+      success: true,
+      message: 'RAB Pembelian Langsung berhasil dihapus dari daftar'
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to unlink Pembelian Langsung:', error)
+    return c.json({ 
+      error: 'Failed to unlink RAB Pembelian Langsung',
+      details: error.message 
+    }, 500)
+  }
+})
+
 // API: Save transaction from RAB
 app.post('/api/save-transaction-from-rab', async (c) => {
   try {
@@ -12415,6 +12659,37 @@ function getDashboardListRABHTML() {
                         <p class="text-lg"><strong>Subtotal:</strong> <span id="detailSubtotal"></span></p>
                         <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
                         <p class="text-xl font-bold text-blue-600"><strong>Total + PPN:</strong> <span id="detailTotal"></span></p>
+                    </div>
+                    
+                    <!-- RAB Pembelian Langsung Section (Only for SPK RAB in Realisasi page) -->
+                    <div id="rabPembelianLangsungSection" class="mt-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg hidden">
+                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-link text-yellow-600 mr-2"></i>
+                            RAB Pembelian Langsung Terkait
+                        </h3>
+                        
+                        <!-- Add RAB Pembelian Langsung -->
+                        <div class="flex gap-2 mb-4">
+                            <select id="selectPembelianLangsung" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                <option value="">-- Pilih RAB Pembelian Langsung --</option>
+                            </select>
+                            <button onclick="addPembelianLangsung()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition">
+                                <i class="fas fa-plus mr-1"></i> Tambah
+                            </button>
+                        </div>
+                        
+                        <!-- List of linked RAB Pembelian Langsung -->
+                        <div id="linkedPembelianLangsungList" class="space-y-2 mb-4">
+                            <!-- Dynamically populated -->
+                        </div>
+                        
+                        <!-- Total RAB Pembelian Langsung -->
+                        <div class="pt-3 border-t border-yellow-300">
+                            <div class="flex justify-between items-center font-semibold text-gray-800">
+                                <span>Total RAB Pembelian Langsung:</span>
+                                <span class="text-red-600 text-lg" id="totalPembelianLangsung">Rp 0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="p-4 border-t bg-gray-50 flex justify-end space-x-4 flex-shrink-0">

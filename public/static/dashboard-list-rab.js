@@ -998,8 +998,16 @@ function _showRABDetailModalContent(rab, modal) {
       // Calculate Total + PPN ONLY for Total column
       const grandTotalTotal = subtotalTotal + ppnTotal
       
-      // Calculate Saldo Subtotal = Subtotal Total tanpa ROK - Subtotal Total Realisasi
-      const saldoSubtotal = subtotalTanpaROK - subtotalRealisasi
+      // Load linked RAB Pembelian Langsung and calculate total
+      let totalPembelianLangsung = 0
+      if (rab.jenis_rab === 'SPK') {
+        await loadLinkedPembelianLangsung(rab.id).then(total => {
+          totalPembelianLangsung = total
+        })
+      }
+      
+      // Calculate Saldo Subtotal = Subtotal Total tanpa ROK - Subtotal Total Realisasi - Total Pembelian Langsung
+      const saldoSubtotal = subtotalTanpaROK - subtotalRealisasi - totalPembelianLangsung
       
       // Add summary rows
       // Row 1: Subtotal (for Total, Total tanpa ROK, Total Realisasi, and Saldo)
@@ -1011,6 +1019,34 @@ function _showRABDetailModalContent(rab, modal) {
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalTanpaROK)}</td>
           <td class="px-2 py-2 text-center text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs">${formatRupiah(subtotalRealisasi)}</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
+        </tr>
+      `
+      
+      // Row 2: RAB Pembelian Langsung (only for RAB SPK)
+      if (rab.jenis_rab === 'SPK' && totalPembelianLangsung > 0) {
+        itemsTable.innerHTML += `
+          <tr class="bg-yellow-50 font-semibold">
+            <td colspan="9" class="px-2 py-2 text-right text-xs">(-) RAB Pembelian Langsung:</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+            <td class="px-2 py-2 text-right text-xs text-red-600">${formatRupiah(totalPembelianLangsung)}</td>
+            <td class="px-2 py-2 text-center text-xs">-</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+            <td class="px-2 py-2 text-right text-xs">-</td>
+          </tr>
+        `
+      }
+      
+      // Row 3: Saldo (final calculation)
+      itemsTable.innerHTML += `
+        <tr class="bg-gray-200 font-bold border-t-2 border-gray-500">
+          <td colspan="9" class="px-2 py-2 text-right text-xs">Saldo:</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
+          <td class="px-2 py-2 text-center text-xs">-</td>
+          <td class="px-2 py-2 text-right text-xs">-</td>
           <td class="px-2 py-2 text-right text-xs font-semibold ${saldoSubtotal < 0 ? 'text-red-600' : 'text-green-600'}">${formatRupiah(saldoSubtotal)}</td>
         </tr>
       `
@@ -1049,6 +1085,11 @@ function _showRABDetailModalContent(rab, modal) {
   const summarySection = document.querySelector('.mt-4.text-right')
   if (summarySection) {
     summarySection.style.display = 'none'
+  }
+  
+  // Load RAB Pembelian Langsung if on Realisasi page and RAB is SPK
+  if (isListTORPage && rab.jenis_rab === 'SPK') {
+    loadAvailablePembelianLangsung()
   }
   
   modal.classList.remove('hidden')
@@ -1821,6 +1862,194 @@ function formatRupiah(amount) {
     minimumFractionDigits: 0
   }).format(amount)
 }
+
+// ==================== RAB Pembelian Langsung Functions ====================
+
+// Load linked RAB Pembelian Langsung and return total
+async function loadLinkedPembelianLangsung(rabSpkId) {
+  try {
+    const response = await fetch(`/api/rab/${rabSpkId}/linked-pembelian-langsung`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      }
+    })
+    
+    if (!response.ok) throw new Error('Failed to load linked Pembelian Langsung')
+    
+    const result = await response.json()
+    const linkedRABs = result.data || []
+    
+    // Calculate total
+    let total = 0
+    linkedRABs.forEach(rab => {
+      const rokPercentage = rab.rok_percentage || 0
+      const totalTanpaROK = rokPercentage > 0 
+        ? Math.round(rab.total_harga / (1 + rokPercentage / 100))
+        : rab.total_harga
+      total += totalTanpaROK
+    })
+    
+    // Update UI if on Realisasi page and RAB is SPK
+    if (isListTORPage && currentRABDetail && currentRABDetail.jenis_rab === 'SPK') {
+      displayLinkedPembelianLangsung(linkedRABs)
+      document.getElementById('totalPembelianLangsung').textContent = formatRupiah(total)
+      document.getElementById('rabPembelianLangsungSection').classList.remove('hidden')
+    }
+    
+    return total
+  } catch (error) {
+    console.error('Error loading linked Pembelian Langsung:', error)
+    return 0
+  }
+}
+
+// Display linked RAB Pembelian Langsung
+function displayLinkedPembelianLangsung(linkedRABs) {
+  const container = document.getElementById('linkedPembelianLangsungList')
+  if (!container) return
+  
+  if (linkedRABs.length === 0) {
+    container.innerHTML = '<p class="text-sm text-gray-500 italic">Belum ada RAB Pembelian Langsung terkait</p>'
+    return
+  }
+  
+  container.innerHTML = linkedRABs.map(rab => {
+    const rokPercentage = rab.rok_percentage || 0
+    const totalTanpaROK = rokPercentage > 0 
+      ? Math.round(rab.total_harga / (1 + rokPercentage / 100))
+      : rab.total_harga
+    
+    return `
+      <div class="flex items-center justify-between p-3 bg-white border border-gray-300 rounded">
+        <div class="flex-1">
+          <div class="font-semibold text-sm text-gray-800">${rab.nomor_rab}</div>
+          <div class="text-xs text-gray-600">
+            Total: ${formatRupiah(rab.total_harga)} 
+            ${rokPercentage > 0 ? `(ROK ${rokPercentage}%)` : ''}
+            → Tanpa ROK: ${formatRupiah(totalTanpaROK)}
+          </div>
+        </div>
+        <button onclick="removePembelianLangsung(${rab.link_id})" 
+                class="ml-3 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `
+  }).join('')
+}
+
+// Load available RAB Pembelian Langsung for dropdown
+async function loadAvailablePembelianLangsung() {
+  try {
+    const response = await fetch('/api/rab/pembelian-langsung/available', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      }
+    })
+    
+    if (!response.ok) throw new Error('Failed to load available Pembelian Langsung')
+    
+    const result = await response.json()
+    const availableRABs = result.data || []
+    
+    const select = document.getElementById('selectPembelianLangsung')
+    if (!select) return
+    
+    select.innerHTML = '<option value="">-- Pilih RAB Pembelian Langsung --</option>'
+    
+    availableRABs.forEach(rab => {
+      const rokPercentage = rab.rok_percentage || 0
+      const totalTanpaROK = rokPercentage > 0 
+        ? Math.round(rab.total_harga / (1 + rokPercentage / 100))
+        : rab.total_harga
+      
+      const option = document.createElement('option')
+      option.value = rab.id
+      option.textContent = `${rab.nomor_rab} - ${formatRupiah(totalTanpaROK)} (Tanpa ROK)`
+      select.appendChild(option)
+    })
+    
+  } catch (error) {
+    console.error('Error loading available Pembelian Langsung:', error)
+    showNotification('Gagal memuat daftar RAB Pembelian Langsung', 'error')
+  }
+}
+
+// Add RAB Pembelian Langsung
+async function addPembelianLangsung() {
+  try {
+    const select = document.getElementById('selectPembelianLangsung')
+    const rabPembelianLangsungId = parseInt(select.value)
+    
+    if (!rabPembelianLangsungId) {
+      showNotification('Silakan pilih RAB Pembelian Langsung terlebih dahulu', 'error')
+      return
+    }
+    
+    if (!currentRABDetail || !currentRABDetail.id) {
+      showNotification('RAB SPK tidak ditemukan', 'error')
+      return
+    }
+    
+    const response = await fetch(`/api/rab/${currentRABDetail.id}/link-pembelian-langsung`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      },
+      body: JSON.stringify({ rab_pembelian_langsung_id: rabPembelianLangsungId })
+    })
+    
+    const result = await response.json()
+    
+    if (!response.ok) {
+      throw new Error(result.details || result.error || 'Failed to link Pembelian Langsung')
+    }
+    
+    showNotification('RAB Pembelian Langsung berhasil ditambahkan', 'success')
+    
+    // Reload modal to show updated data
+    await viewRABDetail(currentRABDetail.id)
+    
+  } catch (error) {
+    console.error('Error adding Pembelian Langsung:', error)
+    showNotification(`Gagal menambahkan: ${error.message}`, 'error')
+  }
+}
+
+// Remove RAB Pembelian Langsung
+async function removePembelianLangsung(linkId) {
+  try {
+    if (!confirm('Apakah Anda yakin ingin menghapus RAB Pembelian Langsung ini dari daftar?')) {
+      return
+    }
+    
+    if (!currentRABDetail || !currentRABDetail.id) {
+      showNotification('RAB SPK tidak ditemukan', 'error')
+      return
+    }
+    
+    const response = await fetch(`/api/rab/${currentRABDetail.id}/unlink-pembelian-langsung/${linkId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      }
+    })
+    
+    if (!response.ok) throw new Error('Failed to unlink Pembelian Langsung')
+    
+    showNotification('RAB Pembelian Langsung berhasil dihapus dari daftar', 'success')
+    
+    // Reload modal to show updated data
+    await viewRABDetail(currentRABDetail.id)
+    
+  } catch (error) {
+    console.error('Error removing Pembelian Langsung:', error)
+    showNotification('Gagal menghapus RAB Pembelian Langsung', 'error')
+  }
+}
+
+// ==================== End RAB Pembelian Langsung Functions ====================
 
 // Logout
 function logout() {
