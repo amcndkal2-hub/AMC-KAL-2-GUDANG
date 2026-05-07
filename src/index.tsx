@@ -12929,25 +12929,27 @@ function getDashboardListTORHTML() {
             </div>
         </nav>
 
-        <div class="container mx-auto px-4 py-6">
+        <div class="container mx-auto px-6 py-6" style="max-width: 1600px;">
             <!-- Layout: Sidebar + Main Content -->
-            <div class="flex gap-6">
+            <div class="flex gap-5">
                 <!-- Left Sidebar: Filters -->
-                <div class="w-64 flex-shrink-0">
-                    <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
-                        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-filter text-blue-600 mr-2"></i>
-                            Filter
-                        </h2>
+                <div class="w-72 flex-shrink-0">
+                    <div class="bg-white rounded-lg shadow-md p-5 sticky" style="top: 24px;">
+                        <div class="border-b border-gray-200 pb-3 mb-4">
+                            <h2 class="text-lg font-bold text-gray-800 flex items-center">
+                                <i class="fas fa-filter text-blue-600 mr-2"></i>
+                                Filter
+                            </h2>
+                        </div>
                         
                         <!-- Filter Status -->
-                        <div class="mb-6">
+                        <div class="mb-5">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-tasks text-blue-600 mr-1"></i>
+                                <i class="fas fa-tasks text-blue-600 mr-1.5"></i>
                                 Status RAB
                             </label>
-                            <select id="filterStatusDropdown" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="All">Semua</option>
+                            <select id="filterStatusDropdown" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                <option value="All">Semua Status</option>
                                 <option value="Draft">Draft</option>
                                 <option value="Pengadaan">Pengadaan</option>
                                 <option value="Tersedia">Tersedia</option>
@@ -12956,28 +12958,30 @@ function getDashboardListTORHTML() {
                         </div>
                         
                         <!-- Filter Jenis (Locked to SPK) -->
-                        <div class="mb-6">
+                        <div class="mb-5">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-list text-green-600 mr-1"></i>
+                                <i class="fas fa-list text-green-600 mr-1.5"></i>
                                 Jenis RAB
                             </label>
-                            <div class="px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-center">
-                                <i class="fas fa-lock text-green-600 mr-2"></i>
-                                <span class="text-sm font-semibold text-green-700">SPK</span>
-                                <p class="text-xs text-green-600 mt-1">(Khusus Realisasi)</p>
+                            <div class="px-4 py-3 bg-green-50 border-2 border-green-200 rounded-lg text-center">
+                                <div class="flex items-center justify-center">
+                                    <i class="fas fa-lock text-green-600 mr-2"></i>
+                                    <span class="text-sm font-bold text-green-700">SPK</span>
+                                </div>
+                                <p class="text-xs text-green-600 mt-1.5">(Khusus Realisasi)</p>
                             </div>
                         </div>
                         
                         <!-- Apply Button -->
-                        <button onclick="applyFilters()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition shadow-md hover:shadow-lg">
+                        <button onclick="applyFilters()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95">
                             <i class="fas fa-search"></i>
                             Terapkan Filter
                         </button>
                         
                         <!-- Info Box -->
-                        <div class="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p class="text-xs text-blue-700">
-                                <i class="fas fa-info-circle mr-1"></i>
+                        <div class="mt-5 p-3.5 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p class="text-xs text-blue-700 leading-relaxed">
+                                <i class="fas fa-info-circle mr-1.5"></i>
                                 Halaman Realisasi hanya menampilkan RAB dengan jenis SPK.
                             </p>
                         </div>
@@ -12985,24 +12989,20 @@ function getDashboardListTORHTML() {
                 </div>
                 
                 <!-- Right Content: Header + Table -->
-                <div class="flex-1">
+                <div class="flex-1 min-w-0">
                     <!-- Header -->
-                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                                    <i class="fas fa-list-alt text-blue-600 mr-3"></i>
-                                    Realisasi
-                                </h1>
-                                <p class="text-gray-600 mt-2">Daftar realisasi pembayaran untuk semua RAB</p>
-                            </div>
-                        </div>
+                    <div class="bg-white rounded-lg shadow-md p-5 mb-5">
+                        <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-list-alt text-blue-600 mr-3"></i>
+                            Realisasi
+                        </h1>
+                        <p class="text-gray-600 text-sm mt-2">Daftar realisasi pembayaran untuk semua RAB</p>
                     </div>
 
                     <!-- Main Table -->
-                    <div class="bg-white rounded-lg shadow-md">
-                        <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
-                            <table class="border" style="width: 1430px; table-layout: fixed;">
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <div class="overflow-x-auto" style="max-height: calc(100vh - 280px); overflow-y: auto;">
+                            <table class="border" style="width: 100%; min-width: 1400px; table-layout: fixed;">
                         <thead class="sticky top-0 shadow-sm" style="z-index: 20; background-color: #2C5282;">
                             <tr>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 0; z-index: 20; background-color: #2C5282; width: 50px; min-width: 50px; max-width: 50px;">No</th>
