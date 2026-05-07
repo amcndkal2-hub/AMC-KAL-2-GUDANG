@@ -12579,7 +12579,7 @@ function getDashboardListRABHTML() {
             </div>
         </nav>
 
-        <div class="container mx-auto px-4 py-6">
+        <div class="w-full px-4 py-6">
             <!-- Main Content (Full Width) -->
             <div>
                 <!-- Header -->
