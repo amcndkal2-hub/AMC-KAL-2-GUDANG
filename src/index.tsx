@@ -12990,7 +12990,7 @@ function getDashboardListTORHTML() {
             </div>
         </nav>
 
-        <div class="container mx-auto px-6 py-6" style="max-width: 1600px;">
+        <div class="w-full px-4 py-6">
             <!-- Layout: Sidebar + Main Content -->
             <div class="flex gap-5">
                 <!-- Left Sidebar: Filters -->
