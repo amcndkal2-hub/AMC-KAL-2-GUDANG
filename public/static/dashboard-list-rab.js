@@ -676,11 +676,28 @@ function applyFilters() {
     // TOR search filter (if input exists and has value)
     const torMatch = !searchTOR || (rab.nomor_tor && rab.nomor_tor.toLowerCase().includes(searchTOR))
     
-    // Ijin Prinsip search filter
-    const ipMatch = !searchIP || (rab.nomor_ip && rab.nomor_ip.toLowerCase().includes(searchIP))
+    // Ijin Prinsip search filter - match first 4 characters
+    let ipMatch = true
+    if (searchIP && rab.nomor_ip) {
+      const nomorIPLower = rab.nomor_ip.toLowerCase()
+      const searchIPPrefix = searchIP.substring(0, 4) // Take first 4 chars from search input
+      // Check if nomor_ip starts with the search prefix
+      ipMatch = nomorIPLower.startsWith(searchIPPrefix)
+    } else if (searchIP) {
+      ipMatch = false // If search input exists but nomor_ip is null/empty, no match
+    }
     
-    // Nama Pekerjaan search filter
-    const namaPekerjaanMatch = !searchNamaPekerjaan || (rab.nama_pekerjaan && rab.nama_pekerjaan.toLowerCase().includes(searchNamaPekerjaan))
+    // Nama Pekerjaan search filter - match any word in the job name
+    let namaPekerjaanMatch = true
+    if (searchNamaPekerjaan && rab.nama_pekerjaan) {
+      const namaPekerjaanLower = rab.nama_pekerjaan.toLowerCase()
+      const searchWords = searchNamaPekerjaan.split(/\s+/).filter(w => w.length > 0) // Split by spaces
+      
+      // Match if ANY search word is found in nama_pekerjaan
+      namaPekerjaanMatch = searchWords.some(word => namaPekerjaanLower.includes(word))
+    } else if (searchNamaPekerjaan) {
+      namaPekerjaanMatch = false // If search input exists but nama_pekerjaan is null/empty, no match
+    }
     
     return statusMatch && jenisMatch && torMatch && ipMatch && namaPekerjaanMatch
   })
