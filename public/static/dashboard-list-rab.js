@@ -744,8 +744,10 @@ function clearFilters() {
 // Update RAB status
 async function updateRABStatus(rabId, newStatus) {
   try {
-    const response = await fetch(`/api/rab/${rabId}/status`, {
-      method: 'PUT',
+    console.log('🔄 Updating RAB status:', { rabId, newStatus })
+    
+    const response = await fetch(`/api/rab/${rabId}/update-status`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
@@ -753,13 +755,22 @@ async function updateRABStatus(rabId, newStatus) {
       body: JSON.stringify({ status: newStatus })
     })
     
-    if (!response.ok) throw new Error('Failed to update status')
+    console.log('📡 Response status:', response.status)
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('❌ Error response:', errorData)
+      throw new Error(errorData.details || errorData.error || 'Failed to update status')
+    }
+    
+    const result = await response.json()
+    console.log('✅ Update status success:', result)
     
     showNotification('Status berhasil diupdate', 'success')
     await loadRABList()
   } catch (error) {
-    console.error('Error updating status:', error)
-    showNotification('Gagal update status', 'error')
+    console.error('❌ Error updating status:', error)
+    showNotification(`Gagal update status: ${error.message}`, 'error')
     await loadRABList()
   }
 }

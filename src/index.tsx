@@ -4382,13 +4382,13 @@ app.post('/api/rab/:id/update-status', async (c) => {
   try {
     const { env } = c
     const rabId = parseInt(c.req.param('id'))
-    const { status } = await c.req.json()
+    const { status: newStatus } = await c.req.json()
     
-    console.log('📝 Updating RAB status:', { rabId, status })
+    console.log('📝 Updating RAB status:', { rabId, newStatus })
     
     // Validate status
     const validStatuses = ['Draft', 'Pengadaan', 'Tersedia', 'Masuk Gudang']
-    if (!validStatuses.includes(status)) {
+    if (!validStatuses.includes(newStatus)) {
       return c.json({ error: 'Invalid status' }, 400)
     }
     
@@ -4398,16 +4398,77 @@ app.post('/api/rab/:id/update-status', async (c) => {
       return c.json({ error: 'RAB not found' }, 404)
     }
     
+    // Get username from session
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    let username = 'guest'
+    if (sessionToken) {
+      const session = await env.DB.prepare(
+        'SELECT username FROM sessions WHERE session_token = ?'
+      ).bind(sessionToken).first()
+      if (session) username = session.username
+    }
+    
+    console.log('👤 User:', username, '| RAB Jenis:', rab.jenis_rab, '| Current:', rab.status, '→ New:', newStatus)
+    
+    // ===== VALIDATION FOR PEMBELIAN LANGSUNG =====
+    if (rab.jenis_rab === 'Pembelian Langsung') {
+      const currentStatus = rab.status
+      const statusOrder = { 'Draft': 1, 'Pengadaan': 2, 'Tersedia': 3, 'Masuk Gudang': 4 }
+      
+      // 1. Masuk Gudang is final/locked
+      if (currentStatus === 'Masuk Gudang') {
+        return c.json({ 
+          error: 'Status Masuk Gudang tidak bisa diubah',
+          details: 'Status sudah final. RAB ini sudah masuk gudang dan terkunci.'
+        }, 400)
+      }
+      
+      // 2. Cannot manually set to Masuk Gudang
+      if (newStatus === 'Masuk Gudang') {
+        return c.json({ 
+          error: 'Status Masuk Gudang hanya bisa otomatis',
+          details: 'Status "Masuk Gudang" akan diset otomatis saat material dari RAB Tersedia di-input di menu Input Material.'
+        }, 400)
+      }
+      
+      // 3. Rollback only for Andalcekatan
+      const isRollback = statusOrder[newStatus] < statusOrder[currentStatus]
+      if (isRollback && username !== 'Andalcekatan') {
+        return c.json({ 
+          error: 'Akses ditolak',
+          details: 'Hanya akun Andalcekatan yang bisa rollback status RAB Pembelian Langsung.'
+        }, 403)
+      }
+      
+      // 4. Cannot skip Pengadaan (Draft → Tersedia)
+      if (currentStatus === 'Draft' && newStatus === 'Tersedia') {
+        return c.json({ 
+          error: 'Transisi status tidak valid',
+          details: 'Status harus melalui Pengadaan terlebih dahulu. Ubah ke Pengadaan dulu, baru ke Tersedia.'
+        }, 400)
+      }
+      
+      // 5. Cannot skip Tersedia (Pengadaan → Masuk Gudang)
+      if (currentStatus === 'Pengadaan' && newStatus === 'Masuk Gudang') {
+        return c.json({ 
+          error: 'Transisi status tidak valid',
+          details: 'Status harus ke Tersedia terlebih dahulu. Status Masuk Gudang hanya bisa otomatis.'
+        }, 400)
+      }
+      
+      console.log('✅ Status transition valid for Pembelian Langsung')
+    }
+    
     // Determine which timestamp field to update based on status
     let updateQuery = 'UPDATE rab SET status = ?, updated_at = datetime(\'now\') WHERE id = ?'
-    let bindParams = [status, rabId]
+    let bindParams = [newStatus, rabId]
     
     // Try to update timestamp columns if they exist
-    if (status === 'Pengadaan') {
+    if (newStatus === 'Pengadaan') {
       updateQuery = 'UPDATE rab SET status = ?, tanggal_pengadaan = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
-    } else if (status === 'Tersedia') {
+    } else if (newStatus === 'Tersedia') {
       updateQuery = 'UPDATE rab SET status = ?, tanggal_tersedia = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
-    } else if (status === 'Masuk Gudang') {
+    } else if (newStatus === 'Masuk Gudang') {
       updateQuery = 'UPDATE rab SET status = ?, tanggal_masuk_gudang = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
     }
     
@@ -4421,11 +4482,11 @@ app.post('/api/rab/:id/update-status', async (c) => {
         UPDATE rab 
         SET status = ?, updated_at = datetime('now')
         WHERE id = ?
-      `).bind(status, rabId).run()
+      `).bind(newStatus, rabId).run()
     }
     
     // Sync status to material_gangguan if status is Pengadaan or Tersedia
-    if (status === 'Pengadaan' || status === 'Tersedia') {
+    if (newStatus === 'Pengadaan' || newStatus === 'Tersedia') {
       const items = rab.items || []
       
       for (const item of items) {
@@ -4435,16 +4496,16 @@ app.post('/api/rab/:id/update-status', async (c) => {
           SET status = ?
           WHERE part_number = ? 
           AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
-        `).bind(status, item.part_number, item.nomor_lh05).run()
+        `).bind(newStatus, item.part_number, item.nomor_lh05).run()
         
-        console.log(`✅ Synced status ${status} to material ${item.part_number}`)
+        console.log(`✅ Synced status ${newStatus} to material ${item.part_number}`)
       }
     }
     
     return c.json({
       success: true,
       message: 'Status RAB berhasil diupdate!',
-      status
+      status: newStatus
     })
   } catch (error: any) {
     console.error('Failed to update RAB status:', error)
