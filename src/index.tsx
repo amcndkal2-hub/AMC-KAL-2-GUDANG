@@ -12957,25 +12957,61 @@ function getDashboardListTORHTML() {
                             </select>
                         </div>
                         
-                        <!-- Filter Jenis (Locked to SPK) -->
+                        <!-- Hidden Filter Jenis (Locked to SPK - Background Only) -->
+                        <input type="hidden" id="filterJenisHidden" value="SPK">
+                        
+                        <!-- Filter No. TOR -->
                         <div class="mb-5">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-list text-green-600 mr-1.5"></i>
-                                Jenis RAB
+                                <i class="fas fa-file-alt text-purple-600 mr-1.5"></i>
+                                No. TOR
                             </label>
-                            <div class="px-4 py-3 bg-green-50 border-2 border-green-200 rounded-lg text-center">
-                                <div class="flex items-center justify-center">
-                                    <i class="fas fa-lock text-green-600 mr-2"></i>
-                                    <span class="text-sm font-bold text-green-700">SPK</span>
-                                </div>
-                                <p class="text-xs text-green-600 mt-1.5">(Khusus Realisasi)</p>
-                            </div>
+                            <input 
+                                type="text" 
+                                id="filterTORInput" 
+                                placeholder="Cari No. TOR..."
+                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                            />
+                        </div>
+                        
+                        <!-- Filter No. Ijin Prinsip -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-id-card text-orange-600 mr-1.5"></i>
+                                No. Ijin Prinsip
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filterIPInput" 
+                                placeholder="Cari No. Ijin Prinsip..."
+                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                            />
+                        </div>
+                        
+                        <!-- Filter Nama Pekerjaan -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-briefcase text-teal-600 mr-1.5"></i>
+                                Nama Pekerjaan
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filterNamaPekerjaanInput" 
+                                placeholder="Cari Nama Pekerjaan..."
+                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                            />
                         </div>
                         
                         <!-- Apply Button -->
                         <button onclick="applyFilters()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95">
                             <i class="fas fa-search"></i>
                             Terapkan Filter
+                        </button>
+                        
+                        <!-- Clear Filter Button -->
+                        <button onclick="clearFilters()" class="w-full mt-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all">
+                            <i class="fas fa-times"></i>
+                            Reset Filter
                         </button>
                         
                         <!-- Info Box -->

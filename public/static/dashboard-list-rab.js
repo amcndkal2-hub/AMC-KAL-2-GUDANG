@@ -650,7 +650,20 @@ function applyFilters() {
     currentStatusFilter = statusDropdown.value
   }
   
-  // currentJenisFilter already set by selectJenisFilter()
+  // Get search input values (for Realisasi page)
+  const filterTORInput = document.getElementById('filterTORInput')
+  const filterIPInput = document.getElementById('filterIPInput')
+  const filterNamaPekerjaanInput = document.getElementById('filterNamaPekerjaanInput')
+  const filterJenisHidden = document.getElementById('filterJenisHidden')
+  
+  const searchTOR = filterTORInput ? filterTORInput.value.toLowerCase().trim() : ''
+  const searchIP = filterIPInput ? filterIPInput.value.toLowerCase().trim() : ''
+  const searchNamaPekerjaan = filterNamaPekerjaanInput ? filterNamaPekerjaanInput.value.toLowerCase().trim() : ''
+  
+  // If hidden filter exists (Realisasi page), use it
+  if (filterJenisHidden) {
+    currentJenisFilter = filterJenisHidden.value
+  }
   
   // Filter the list
   filteredRABList = allRABList.filter(rab => {
@@ -660,13 +673,55 @@ function applyFilters() {
     // Jenis RAB filter
     const jenisMatch = currentJenisFilter === 'All' || rab.jenis_rab === currentJenisFilter
     
-    return statusMatch && jenisMatch
+    // TOR search filter (if input exists and has value)
+    const torMatch = !searchTOR || (rab.nomor_tor && rab.nomor_tor.toLowerCase().includes(searchTOR))
+    
+    // Ijin Prinsip search filter
+    const ipMatch = !searchIP || (rab.nomor_ip && rab.nomor_ip.toLowerCase().includes(searchIP))
+    
+    // Nama Pekerjaan search filter
+    const namaPekerjaanMatch = !searchNamaPekerjaan || (rab.nama_pekerjaan && rab.nama_pekerjaan.toLowerCase().includes(searchNamaPekerjaan))
+    
+    return statusMatch && jenisMatch && torMatch && ipMatch && namaPekerjaanMatch
   })
   
   sortRABByStatus()
   renderRABList(filteredRABList)
   
-  console.log(`✅ Filters applied: Status="${currentStatusFilter}", Jenis="${currentJenisFilter}", Results=${filteredRABList.length}`)
+  console.log(`✅ Filters applied: Status="${currentStatusFilter}", Jenis="${currentJenisFilter}", TOR="${searchTOR}", IP="${searchIP}", Pekerjaan="${searchNamaPekerjaan}", Results=${filteredRABList.length}`)
+}
+
+// Clear all filters
+function clearFilters() {
+  // Reset status filter
+  const statusDropdown = document.getElementById('filterStatusDropdown')
+  if (statusDropdown) {
+    statusDropdown.value = 'All'
+    currentStatusFilter = 'All'
+  }
+  
+  // Reset search inputs (for Realisasi page)
+  const filterTORInput = document.getElementById('filterTORInput')
+  const filterIPInput = document.getElementById('filterIPInput')
+  const filterNamaPekerjaanInput = document.getElementById('filterNamaPekerjaanInput')
+  
+  if (filterTORInput) filterTORInput.value = ''
+  if (filterIPInput) filterIPInput.value = ''
+  if (filterNamaPekerjaanInput) filterNamaPekerjaanInput.value = ''
+  
+  // Reset jenis filter (but keep SPK for Realisasi page)
+  const filterJenisHidden = document.getElementById('filterJenisHidden')
+  if (filterJenisHidden) {
+    currentJenisFilter = filterJenisHidden.value // Keep SPK for Realisasi
+  } else {
+    currentJenisFilter = 'All' // Reset to All for List RAB page
+  }
+  
+  // Apply filters (will show all items matching jenis filter)
+  applyFilters()
+  
+  console.log('🔄 Filters cleared')
+  showNotification('Filter telah di-reset', 'info')
 }
 
 // Update RAB status
