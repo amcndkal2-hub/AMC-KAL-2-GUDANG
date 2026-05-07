@@ -8459,7 +8459,7 @@ function getDashboardRefHargaHTML() {
         </nav>
 
         <!-- Main Content -->
-        <div class="max-w-7xl mx-auto p-6">
+        <div class="w-full px-4 py-6">
             <!-- Header -->
             <div class="mb-6">
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">
@@ -8942,9 +8942,9 @@ function getDashboardCreateRABHTML() {
             </div>
         </nav>
 
-        <div class="flex">
+        <div class="w-full flex">
             <!-- Sidebar Filter (Kiri) -->
-            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen">
+            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen flex-shrink-0">
                 <h2 class="text-xl font-bold mb-6 text-white">
                     <i class="fas fa-filter mr-2 text-blue-400"></i>
                     Filter Data
