@@ -7572,127 +7572,131 @@ function getFormGangguanHTML() {
                         </div>
                     </div>
 
-                    <!-- 2. Kelompok SPD yang rusak -->
+                    <!-- Section 2-10: Grid 3 Columns Layout -->
                     <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            2. Kelompok SPD yang rusak
-                        </h2>
-                        <select id="kelompokSPD" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                            <option value="">-- Pilih Kelompok SPD --</option>
-                            <option value="MEKANIK">MEKANIK</option>
-                            <option value="ELEKTRIK">ELEKTRIK</option>
-                        </select>
-                    </div>
-
-                    <!-- 3-6. Isian Manual -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            Analisa Gangguan
+                        <h2 class="text-xl font-bold text-gray-800 mb-5 pb-3 border-b-2 border-red-500">
+                            <i class="fas fa-clipboard-list text-red-600 mr-2"></i>
+                            Detail Gangguan & Analisa (No. 2-10)
                         </h2>
                         
-                        <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <!-- 2. Kelompok SPD yang rusak -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    3. Komponen yang rusak
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-tools text-red-600 mr-1"></i>
+                                    2. Kelompok SPD yang rusak *
+                                </label>
+                                <select id="kelompokSPD" required
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                                    <option value="">-- Pilih Kelompok SPD --</option>
+                                    <option value="MEKANIK">MEKANIK</option>
+                                    <option value="ELEKTRIK">ELEKTRIK</option>
+                                </select>
+                            </div>
+
+                            <!-- 3. Komponen yang rusak -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-cog text-red-600 mr-1"></i>
+                                    3. Komponen yang rusak *
                                 </label>
                                 <input type="text" id="komponenRusak" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
                             </div>
-                            
+
+                            <!-- 4. Gejala yang timbul -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    4. Gejala yang timbul
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-exclamation-triangle text-red-600 mr-1"></i>
+                                    4. Gejala yang timbul *
                                 </label>
                                 <textarea id="gejala" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
                             </div>
-                            
+
+                            <!-- 5. Uraian kejadian -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    5. Uraian kejadian
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-file-alt text-red-600 mr-1"></i>
+                                    5. Uraian kejadian *
                                 </label>
                                 <textarea id="uraianKejadian" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
                             </div>
-                            
+
+                            <!-- 6. Analisa penyebab -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    6. Analisa penyebab
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-search text-red-600 mr-1"></i>
+                                    6. Analisa penyebab *
                                 </label>
                                 <textarea id="analisaPenyebab" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
                             </div>
-                            
+
+                            <!-- 7. Kesimpulan kerusakan -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    7. Kesimpulan kerusakan
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-check-circle text-red-600 mr-1"></i>
+                                    7. Kesimpulan kerusakan *
                                 </label>
                                 <textarea id="kesimpulan" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- 8. Akibat terhadap sistem pembangkit -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            8. Akibat terhadap sistem pembangkit
-                        </h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- 8. Beban Puncak (MW) -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    Beban Puncak (MW)
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-bolt text-red-600 mr-1"></i>
+                                    8. Beban Puncak (MW) *
                                 </label>
                                 <input type="number" id="bebanPuncak" step="0.01" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
                             </div>
-                            
+
+                            <!-- 8. Daya Mampu (MW) -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    Daya Mampu (MW)
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-tachometer-alt text-red-600 mr-1"></i>
+                                    8. Daya Mampu (MW) *
                                 </label>
                                 <input type="number" id="dayaMampu" step="0.01" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
                             </div>
-                            
+
+                            <!-- 8. Status Pemadaman -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    Status Pemadaman
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-power-off text-red-600 mr-1"></i>
+                                    8. Status Pemadaman *
                                 </label>
                                 <select id="pemadaman" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
                                     <option value="">-- Pilih Status --</option>
                                     <option value="NORMAL">NORMAL</option>
                                     <option value="SIAGA">SIAGA</option>
                                     <option value="DEFISIT">DEFISIT</option>
                                 </select>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- 9-10. Tindakan -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            Tindakan dan Rencana
-                        </h2>
-                        
-                        <div class="space-y-4">
+                            <!-- 9. Tindakan penanggulangan -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    9. Tindakan penanggulangan
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-wrench text-red-600 mr-1"></i>
+                                    9. Tindakan penanggulangan *
                                 </label>
                                 <textarea id="tindakanPenanggulangan" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
                             </div>
-                            
+
+                            <!-- 10. Rencana perbaikan -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    10. Rencana perbaikan
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-calendar-check text-red-600 mr-1"></i>
+                                    10. Rencana perbaikan *
                                 </label>
                                 <textarea id="rencanaPerbaikan" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
                             </div>
                         </div>
                     </div>
