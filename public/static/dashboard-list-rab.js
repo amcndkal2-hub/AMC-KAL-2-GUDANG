@@ -442,7 +442,7 @@ function renderRABList(rabList) {
                      class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-mono"
                      />`
           }
-          // AMC@12345: Editable only if empty
+          // AMC@12345: Editable only if empty or null
           else if (isAMC) {
             if (!rab.nomor_tor || rab.nomor_tor === '') {
               return `<input type="text" 
@@ -452,8 +452,18 @@ function renderRABList(rabList) {
                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-mono"
                        />`
             } else {
-              return `<span class="text-gray-800 text-xs font-mono block">${rab.nomor_tor}</span>`
+              return `<span class="text-gray-800 text-xs font-mono block">${rab.nomor_tor}</span>
+                      <span class="text-gray-400 text-xs italic">(locked)</span>`
             }
+          }
+          // Andalcekatan: Always editable (can edit existing values)
+          else if (isAndalcekatan) {
+            return `<input type="text" 
+                     value="${rab.nomor_tor || ''}" 
+                     placeholder="Isi No. TOR"
+                     onchange="updateNomorTOR(${rab.id}, this.value)"
+                     class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                     />`
           }
           // Other users: Read-only
           else {
