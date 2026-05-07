@@ -7507,51 +7507,69 @@ function getFormGangguanHTML() {
             </div>
         </nav>
 
-        <div class="min-h-screen py-8 px-4">
-            <div class="max-w-6xl mx-auto">
+        <div class="w-full min-h-screen py-6 px-4">
+            <div class="w-full">
                 <!-- Header -->
-                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                        <i class="fas fa-file-alt text-red-600 mr-3"></i>
-                        Form Gangguan dan Permintaan Material
-                    </h1>
-                    <p class="text-gray-600">Berita Acara LH05</p>
+                <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-lg shadow-lg p-6 mb-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-2">
+                                <i class="fas fa-file-alt mr-3"></i>
+                                Form Gangguan dan Permintaan Material
+                            </h1>
+                            <p class="text-red-100">Berita Acara LH05 - Sistem Pelaporan Gangguan</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-lg px-6 py-3">
+                            <p class="text-white text-sm font-semibold">Auto Generate</p>
+                            <p class="text-red-100 text-xs">Nomor LH05</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Form -->
-                <form id="gangguanForm" class="space-y-6">
-                    <!-- BA LH05 Number (Auto) -->
+                <form id="gangguanForm" class="space-y-5">
+                    <!-- Section 1: Informasi Dasar (2 Columns Grid) -->
                     <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-hashtag text-red-600 mr-2"></i>
-                            Nomor BA LH05 (Auto)
+                        <h2 class="text-xl font-bold text-gray-800 mb-5 pb-3 border-b-2 border-red-500">
+                            <i class="fas fa-info-circle text-red-600 mr-2"></i>
+                            Informasi Dasar
                         </h2>
-                        <div class="bg-gray-100 p-4 rounded-lg">
-                            <p class="text-sm text-gray-600 mb-2">Nomor akan di-generate otomatis:</p>
-                            <p class="text-2xl font-bold text-red-600">Format: XXX/ND KAL 2/LH05/TAHUN</p>
-                            <p class="text-sm text-gray-500 mt-2">Contoh: 001/ND KAL 2/LH05/2025</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <!-- Nomor BA LH05 (Auto) -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-hashtag text-red-600 mr-1"></i>
+                                    Nomor BA LH05 (Auto Generate)
+                                </label>
+                                <div class="bg-red-50 border-l-4 border-red-600 p-4 rounded-lg">
+                                    <p class="text-xs text-gray-600 mb-1">Format:</p>
+                                    <p class="text-lg font-bold text-red-600">XXX/ND KAL 2/LH05/TAHUN</p>
+                                    <p class="text-xs text-gray-500 mt-1">Contoh: 001/ND KAL 2/LH05/2025</p>
+                                </div>
+                            </div>
+
+                            <!-- Hari/Tanggal/Jam Kejadian -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-calendar-alt text-red-600 mr-1"></i>
+                                    1. Hari/Tanggal/Jam Kejadian *
+                                </label>
+                                <input type="datetime-local" id="hariTanggal" required
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                            </div>
+
+                            <!-- Unit/ULD -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-building text-red-600 mr-1"></i>
+                                    Unit / ULD *
+                                </label>
+                                <select id="unitULD" required
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                                    <option value="">-- Pilih Unit/ULD --</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- 1. Hari/Tanggal/Jam Kejadian -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            1. Hari/Tanggal/Jam Kejadian
-                        </h2>
-                        <input type="datetime-local" id="hariTanggal" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-
-                    <!-- Unit/ULD -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-building text-red-600 mr-2"></i>
-                            Unit / ULD
-                        </h2>
-                        <select id="unitULD" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                            <option value="">-- Pilih Unit/ULD --</option>
-                        </select>
                     </div>
 
                     <!-- 2. Kelompok SPD yang rusak -->
