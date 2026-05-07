@@ -695,8 +695,10 @@ async function updateRABStatus(rabId, newStatus) {
 // Update Nomor TOR
 async function updateNomorTOR(rabId, nomorTOR) {
   try {
-    const response = await fetch(`/api/rab/${rabId}/tor`, {
-      method: 'PUT',
+    console.log('🔄 Updating Nomor TOR:', { rabId, nomorTOR })
+    
+    const response = await fetch(`/api/rab/${rabId}/update-tor`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
@@ -704,13 +706,22 @@ async function updateNomorTOR(rabId, nomorTOR) {
       body: JSON.stringify({ nomor_tor: nomorTOR })
     })
     
-    if (!response.ok) throw new Error('Failed to update TOR')
+    console.log('📡 Response status:', response.status)
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('❌ Error response:', errorData)
+      throw new Error(errorData.details || errorData.error || 'Failed to update TOR')
+    }
+    
+    const result = await response.json()
+    console.log('✅ Update TOR success:', result)
     
     showNotification('Nomor TOR berhasil diupdate', 'success')
     await loadRABList()
   } catch (error) {
-    console.error('Error updating TOR:', error)
-    showNotification('Gagal update Nomor TOR', 'error')
+    console.error('❌ Error updating TOR:', error)
+    showNotification(`Gagal update Nomor TOR: ${error.message}`, 'error')
     await loadRABList()
   }
 }
