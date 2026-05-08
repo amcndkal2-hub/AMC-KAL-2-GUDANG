@@ -1505,15 +1505,29 @@ function exportRABDetailToExcel() {
     const items = rab.items || []
     const rokPercentage = rab.rok_percentage || 0
     
+    console.log('📊 EXCEL EXPORT - RAB Items:', items)
+    console.log('📊 EXCEL EXPORT - First item:', items[0])
+    
     // Map items with exact same format as view
     const excelData = items.map((item, index) => {
       const qty = item.qty || item.quantity || item.jumlah || 0
       const hargaSatuan = item.harga || item.harga_satuan || item.unit_price || item.price || 0
       const total = qty * hargaSatuan
       
+      // Debug each field
+      const namaMaterial = item.nama || item.nama_material || item.material_name || item.name || '-'
+      console.log(`📊 Excel Item ${index + 1}:`, {
+        original_item: item,
+        nama: item.nama,
+        nama_material: item.nama_material,
+        final_namaMaterial: namaMaterial,
+        qty: qty,
+        harga: hargaSatuan
+      })
+      
       return {
         'No': index + 1,
-        'Nama Material': item.nama || item.nama_material || item.material_name || item.name || '-',
+        'Nama Material': namaMaterial,
         'No. LH05': item.no_lh05 || item.nomor_lh05 || '-',
         'Part Number': item.part_number || item.partNumber || '-',
         'Type Mesin': item.mesin || item.type_mesin || '-',
