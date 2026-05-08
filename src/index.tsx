@@ -5969,6 +5969,11 @@ app.get('/dashboard/data-spk', (c) => {
   return c.html(getDashboardDataSPKHTML())
 })
 
+// Dashboard Tagihan SPK (PROTECTED - auth required)
+app.get('/dashboard/tagihan-spk', (c) => {
+  return c.html(getDashboardTagihanSPKHTML())
+})
+
 // Dashboard Realisasi (PROTECTED - auth required)
 app.get('/dashboard/list-tor', (c) => {
   return c.html(getDashboardListTORHTML())
@@ -8051,6 +8056,9 @@ function getDashboardKebutuhanMaterialHTML() {
                     <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         DATA SPK
                     </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
                     <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         RESUME
                     </a>
@@ -8563,6 +8571,295 @@ function getDashboardRefHargaHTML() {
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/ref-harga.js"></script>
+    </body>
+    </html>
+  `
+}
+
+function getDashboardTagihanSPKHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tagihan SPK - Sistem Material AMC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+        <script src="/url-redirect.js?v=1770101032"></script>
+    </head>
+    <body class="bg-gray-50">
+        <!-- Navigation Bar -->
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE RAB
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA SPK
+                    </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
+                    </a>
+                    <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
+                        LOGOUT
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="w-full px-4 py-6">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-file-invoice-dollar text-blue-600 mr-3"></i>
+                            TAGIHAN SPK
+                        </h1>
+                        <p class="text-gray-600">Data tagihan berdasarkan SPK yang sudah disetujui</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+                            <i class="fas fa-file-excel mr-2"></i>Export Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter Bidang</label>
+                        <select id="filterBidang" onchange="filterData()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Bidang</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter Status</label>
+                        <select id="filterStatus" onchange="filterData()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Status</option>
+                            <option value="Belum Dibayar">Belum Dibayar</option>
+                            <option value="Sudah Dibayar">Sudah Dibayar</option>
+                            <option value="Sebagian Dibayar">Sebagian Dibayar</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Pencarian</label>
+                        <input type="text" id="searchBox" oninput="filterData()" placeholder="Cari nomor SPK atau TOR..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border-collapse">
+                        <thead class="bg-blue-600 text-white sticky top-0 z-10">
+                            <tr>
+                                <th class="px-4 py-3 border text-left font-semibold">No</th>
+                                <th class="px-4 py-3 border text-left font-semibold">Nomor SPK</th>
+                                <th class="px-4 py-3 border text-left font-semibold">Nomor TOR</th>
+                                <th class="px-4 py-3 border text-left font-semibold">Nomor IP</th>
+                                <th class="px-4 py-3 border text-left font-semibold">Bidang</th>
+                                <th class="px-4 py-3 border text-left font-semibold">Keterangan</th>
+                                <th class="px-4 py-3 border text-right font-semibold">Nilai Tagihan (Rp)</th>
+                                <th class="px-4 py-3 border text-right font-semibold">PPN (Rp)</th>
+                                <th class="px-4 py-3 border text-right font-semibold">Total + PPN (Rp)</th>
+                                <th class="px-4 py-3 border text-center font-semibold">Status Pembayaran</th>
+                                <th class="px-4 py-3 border text-left font-semibold">Tanggal Tagihan</th>
+                                <th class="px-4 py-3 border text-center font-semibold">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tagihanTable">
+                            <tr>
+                                <td colspan="12" class="px-4 py-12 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-5xl mb-4 text-blue-500"></i>
+                                    <p class="text-lg">Memuat data tagihan SPK...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Check authentication
+            if (!localStorage.getItem('sessionToken')) {
+                window.location.href = '/'
+                throw new Error('Not authenticated')
+            }
+
+            let allData = []
+            let filteredData = []
+
+            // Load data on page load
+            window.addEventListener('DOMContentLoaded', () => {
+                loadTagihanData()
+            })
+
+            async function loadTagihanData() {
+                try {
+                    console.log('Loading tagihan SPK data...')
+                    
+                    // TODO: Replace with actual API endpoint
+                    // For now, show empty state
+                    allData = []
+                    filteredData = []
+                    
+                    renderTable()
+                    
+                } catch (error) {
+                    console.error('Error loading tagihan data:', error)
+                    showError('Gagal memuat data tagihan SPK')
+                }
+            }
+
+            function renderTable() {
+                const tbody = document.getElementById('tagihanTable')
+                
+                if (filteredData.length === 0) {
+                    tbody.innerHTML = \`
+                        <tr>
+                            <td colspan="12" class="px-4 py-12 text-center text-gray-500">
+                                <i class="fas fa-inbox text-5xl mb-4 text-gray-400"></i>
+                                <p class="text-lg">Belum ada data tagihan SPK</p>
+                                <p class="text-sm mt-2">Data tagihan akan muncul setelah SPK disetujui</p>
+                            </td>
+                        </tr>
+                    \`
+                    return
+                }
+
+                tbody.innerHTML = filteredData.map((item, index) => {
+                    const statusBadge = getStatusBadge(item.status_pembayaran)
+                    
+                    return \`
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 border text-center">\${index + 1}</td>
+                            <td class="px-4 py-3 border">\${item.nomor_spk || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.nomor_tor || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.nomor_ip || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.bidang || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.keterangan || '-'}</td>
+                            <td class="px-4 py-3 border text-right font-medium">\${formatRupiah(item.nilai_tagihan)}</td>
+                            <td class="px-4 py-3 border text-right">\${formatRupiah(item.ppn)}</td>
+                            <td class="px-4 py-3 border text-right font-bold text-blue-600">\${formatRupiah(item.total_dengan_ppn)}</td>
+                            <td class="px-4 py-3 border text-center">\${statusBadge}</td>
+                            <td class="px-4 py-3 border">\${item.tanggal_tagihan || '-'}</td>
+                            <td class="px-4 py-3 border text-center">
+                                <button onclick="viewDetail('\${item.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                    <i class="fas fa-eye mr-1"></i>Detail
+                                </button>
+                            </td>
+                        </tr>
+                    \`
+                }).join('')
+            }
+
+            function getStatusBadge(status) {
+                const badges = {
+                    'Belum Dibayar': '<span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Belum Dibayar</span>',
+                    'Sudah Dibayar': '<span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Sudah Dibayar</span>',
+                    'Sebagian Dibayar': '<span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">Sebagian Dibayar</span>'
+                }
+                return badges[status] || '<span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">-</span>'
+            }
+
+            function filterData() {
+                const bidang = document.getElementById('filterBidang').value
+                const status = document.getElementById('filterStatus').value
+                const search = document.getElementById('searchBox').value.toLowerCase()
+
+                filteredData = allData.filter(item => {
+                    const matchBidang = !bidang || item.bidang === bidang
+                    const matchStatus = !status || item.status_pembayaran === status
+                    const matchSearch = !search || 
+                        (item.nomor_spk && item.nomor_spk.toLowerCase().includes(search)) ||
+                        (item.nomor_tor && item.nomor_tor.toLowerCase().includes(search)) ||
+                        (item.nomor_ip && item.nomor_ip.toLowerCase().includes(search))
+
+                    return matchBidang && matchStatus && matchSearch
+                })
+
+                renderTable()
+            }
+
+            function viewDetail(id) {
+                alert('Detail tagihan ID: ' + id + '\\n\\nFitur ini akan segera ditambahkan.')
+            }
+
+            function exportToExcel() {
+                if (filteredData.length === 0) {
+                    alert('Tidak ada data untuk di-export')
+                    return
+                }
+
+                const excelData = filteredData.map((item, index) => ({
+                    'No': index + 1,
+                    'Nomor SPK': item.nomor_spk || '-',
+                    'Nomor TOR': item.nomor_tor || '-',
+                    'Nomor IP': item.nomor_ip || '-',
+                    'Bidang': item.bidang || '-',
+                    'Keterangan': item.keterangan || '-',
+                    'Nilai Tagihan': item.nilai_tagihan || 0,
+                    'PPN': item.ppn || 0,
+                    'Total + PPN': item.total_dengan_ppn || 0,
+                    'Status Pembayaran': item.status_pembayaran || '-',
+                    'Tanggal Tagihan': item.tanggal_tagihan || '-'
+                }))
+
+                const ws = XLSX.utils.json_to_sheet(excelData)
+                const wb = XLSX.utils.book_new()
+                XLSX.utils.book_append_sheet(wb, ws, 'Tagihan SPK')
+
+                const date = new Date().toISOString().split('T')[0]
+                XLSX.writeFile(wb, \`Tagihan_SPK_\${date}.xlsx\`)
+            }
+
+            function formatRupiah(value) {
+                if (!value && value !== 0) return 'Rp 0'
+                return 'Rp ' + parseInt(value).toLocaleString('id-ID')
+            }
+
+            function showError(message) {
+                const tbody = document.getElementById('tagihanTable')
+                tbody.innerHTML = \`
+                    <tr>
+                        <td colspan="12" class="px-4 py-12 text-center text-red-500">
+                            <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
+                            <p class="text-lg">\${message}</p>
+                        </td>
+                    </tr>
+                \`
+            }
+
+            function logout() {
+                localStorage.removeItem('sessionToken')
+                localStorage.removeItem('username')
+                window.location.href = '/'
+            }
+        </script>
     </body>
     </html>
   `
@@ -12593,6 +12890,9 @@ function getDashboardListRABHTML() {
                     <a href="/dashboard/data-spk" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
                         Data SPK
                     </a>
+                    <a href="/dashboard/tagihan-spk" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        Tagihan SPK
+                    </a>
                     <a href="/dashboard/resume" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
                         Resume
                     </a>
@@ -12878,6 +13178,9 @@ function getDashboardDataSPKHTML() {
                     <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
                         DATA SPK
                     </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
                     <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         RESUME
                     </a>
@@ -13006,6 +13309,7 @@ function getDashboardListTORHTML() {
                     <a href="/dashboard/list-rab" class="hover:text-blue-200">LIST RAB</a>
                     <a href="/dashboard/list-tor" class="bg-blue-800 px-3 py-2 rounded">Realisasi</a>
                     <a href="/dashboard/data-spk" class="hover:text-blue-200">DATA SPK</a>
+                    <a href="/dashboard/tagihan-spk" class="hover:text-blue-200">TAGIHAN SPK</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         LOGOUT
