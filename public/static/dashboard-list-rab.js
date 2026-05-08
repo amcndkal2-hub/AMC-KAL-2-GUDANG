@@ -935,7 +935,7 @@ async function _showRABDetailModalContent(rab, modal) {
       // Try ALL possible field name variations
       const namaMaterial = item.nama_material || item.material_name || item.name || item.material || 'undefined'
       const qty = item.qty || item.quantity || item.jumlah || 0
-      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      const hargaSatuan = item.harga_satuan || item.harga || item.unit_price || item.price || 0
       
       // Existing fields
       const noLH05 = item.no_lh05 || item.nomor_lh05 || item.lh05_number || item.lh05 || '-'
@@ -1038,7 +1038,7 @@ async function _showRABDetailModalContent(rab, modal) {
       let subtotalTotal = 0
       rab.items.forEach(item => {
         const qty = item.qty || item.quantity || item.jumlah || 0
-        const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+        const hargaSatuan = item.harga_satuan || item.harga || item.unit_price || item.price || 0
         subtotalTotal += (qty * hargaSatuan)
       })
       
@@ -1081,7 +1081,7 @@ async function _showRABDetailModalContent(rab, modal) {
       
       rab.items.forEach(item => {
         const qty = item.qty || item.quantity || item.jumlah || 0
-        const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+        const hargaSatuan = item.harga_satuan || item.harga || item.unit_price || item.price || 0
         const total = qty * hargaSatuan
         // Tanpa ROK = Harga Satuan / (1 + ROK%), then × Qty
         const tanpaROKPerItem = rokPercentage > 0 ? hargaSatuan / (1 + (rokPercentage / 100)) : hargaSatuan
@@ -1508,12 +1508,12 @@ function exportRABDetailToExcel() {
     // Map items with exact same format as view
     const excelData = items.map((item, index) => {
       const qty = item.qty || item.quantity || item.jumlah || 0
-      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      const hargaSatuan = item.harga_satuan || item.harga || item.unit_price || item.price || 0
       const total = qty * hargaSatuan
       
       return {
         'No': index + 1,
-        'Nama Material': item.nama_material || item.material_name || item.name || '-',
+        'Nama Material': item.nama || item.nama_material || item.material_name || item.name || '-',
         'No. LH05': item.no_lh05 || item.nomor_lh05 || '-',
         'Part Number': item.part_number || item.partNumber || '-',
         'Type Mesin': item.mesin || item.type_mesin || '-',
@@ -1530,7 +1530,7 @@ function exportRABDetailToExcel() {
     
     items.forEach(item => {
       const qty = item.qty || item.quantity || item.jumlah || 0
-      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      const hargaSatuan = item.harga_satuan || item.harga || item.unit_price || item.price || 0
       subtotalTotal += (qty * hargaSatuan)
     })
     
@@ -1669,12 +1669,12 @@ function exportRABDetailToPDF() {
     // Table data - 10 columns matching view exactly
     const tableData = items.map((item, index) => {
       const qty = item.qty || item.quantity || item.jumlah || 0
-      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      const hargaSatuan = item.harga_satuan || item.harga || item.unit_price || item.price || 0
       const total = qty * hargaSatuan
       
       return [
         index + 1,
-        item.nama_material || item.material_name || '-',
+        item.nama || item.nama_material || item.material_name || '-',
         item.no_lh05 || '-',
         item.part_number || '-',
         item.mesin || '-',
@@ -1691,7 +1691,7 @@ function exportRABDetailToPDF() {
     
     items.forEach(item => {
       const qty = item.qty || item.quantity || item.jumlah || 0
-      const hargaSatuan = item.harga_satuan || item.unit_price || item.price || 0
+      const hargaSatuan = item.harga_satuan || item.harga || item.unit_price || item.price || 0
       subtotalTotal += (qty * hargaSatuan)
     })
     
