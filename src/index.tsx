@@ -8482,20 +8482,20 @@ function getDashboardRefHargaHTML() {
 
         <!-- Main Content -->
         <div class="w-full px-4 py-6">
-            <!-- Header -->
-            <div class="mb-4">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                    <i class="fas fa-tags text-blue-600 mr-3"></i>
-                    Referensi Harga Material
-                </h1>
-                <p class="text-gray-600">Cari dan lihat harga historis material dari RAB yang pernah dibuat</p>
-            </div>
-
-            <!-- Search Label - Aligned with Header -->
-            <div class="mb-2">
-                <label class="block text-sm font-semibold text-gray-700">
-                    <i class="fas fa-search text-gray-500 mr-2"></i>Cari Material
-                </label>
+            <!-- Header with Search Label on Same Line -->
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                        <i class="fas fa-tags text-blue-600 mr-3"></i>
+                        Referensi Harga Material
+                    </h1>
+                    <p class="text-gray-600">Cari dan lihat harga historis material dari RAB yang pernah dibuat</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700">
+                        <i class="fas fa-search text-gray-500 mr-2"></i>Cari Material
+                    </label>
+                </div>
             </div>
 
             <!-- Search Bar -->
