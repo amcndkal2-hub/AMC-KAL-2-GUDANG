@@ -1507,32 +1507,36 @@ function exportRABDetailToExcel() {
     
     console.log('📊 EXCEL EXPORT - RAB Items:', items)
     console.log('📊 EXCEL EXPORT - First item:', items[0])
+    console.log('📊 EXCEL EXPORT - Item keys:', Object.keys(items[0] || {}))
+    console.log('📊 EXCEL EXPORT - Item[0].nama direct access:', items[0]?.nama)
     
     // Map items with exact same format as view
     const excelData = items.map((item, index) => {
-      const qty = item.qty || item.quantity || item.jumlah || 0
-      const hargaSatuan = item.harga || item.harga_satuan || item.unit_price || item.price || 0
+      // Direct access to fields
+      const namaMaterial = item.nama || '-'
+      const qty = item.qty || 0
+      const hargaSatuan = item.harga || 0
       const total = qty * hargaSatuan
       
-      // Debug each field
-      const namaMaterial = item.nama || item.nama_material || item.material_name || item.name || '-'
-      console.log(`📊 Excel Item ${index + 1}:`, {
-        original_item: item,
-        nama: item.nama,
-        nama_material: item.nama_material,
-        final_namaMaterial: namaMaterial,
-        qty: qty,
-        harga: hargaSatuan
+      console.log(`📊 Excel Item ${index + 1} - Direct field access:`, {
+        'item.nama': item.nama,
+        'item.harga': item.harga,
+        'item.qty': item.qty,
+        'item.no_lh05': item.no_lh05,
+        'item.part_number': item.part_number,
+        'namaMaterial': namaMaterial,
+        'typeof item': typeof item,
+        'item keys': Object.keys(item)
       })
       
       return {
         'No': index + 1,
         'Nama Material': namaMaterial,
-        'No. LH05': item.no_lh05 || item.nomor_lh05 || '-',
-        'Part Number': item.part_number || item.partNumber || '-',
-        'Type Mesin': item.mesin || item.type_mesin || '-',
-        'S/N Mesin': item.sn_mesin || item.snMesin || '-',
-        'Unit/ULD': item.unit_uld || item.unitULD || item.lokasi_gangguan || '-',
+        'No. LH05': item.no_lh05 || '-',
+        'Part Number': item.part_number || '-',
+        'Type Mesin': item.type_mesin || '-',
+        'S/N Mesin': item.sn_mesin || '-',
+        'Unit/ULD': item.unit_uld || '-',
         'Qty': qty,
         'Harga Satuan': hargaSatuan,
         'Total': total
