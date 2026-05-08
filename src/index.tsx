@@ -8625,80 +8625,98 @@ function getDashboardTagihanSPKHTML() {
             </div>
         </nav>
 
-        <!-- Main Content -->
-        <div class="w-full px-4 py-6">
-            <!-- Header -->
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                            <i class="fas fa-file-invoice-dollar text-blue-600 mr-3"></i>
-                            TAGIHAN SPK
-                        </h1>
-                        <p class="text-gray-600">Data tagihan berdasarkan SPK yang sudah disetujui</p>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
-                            <i class="fas fa-file-excel mr-2"></i>Export Excel
-                        </button>
-                    </div>
+        <!-- Main Content with Sidebar Layout -->
+        <div class="flex">
+            <!-- Sidebar Filter (Kiri) -->
+            <div class="w-72 bg-gray-900 shadow-lg p-6 min-h-screen flex-shrink-0">
+                <h2 class="text-xl font-bold mb-6 text-white border-b border-gray-700 pb-3">
+                    <i class="fas fa-filter mr-2"></i>Filter Data
+                </h2>
+                
+                <!-- Filter Bidang -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Filter Bidang</label>
+                    <select id="filterBidang" onchange="filterData()" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Semua Bidang</option>
+                    </select>
+                </div>
+
+                <!-- Filter Status Pembayaran -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Status Pembayaran</label>
+                    <select id="filterStatus" onchange="filterData()" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Semua Status</option>
+                        <option value="Belum Dibayar">Belum Dibayar</option>
+                        <option value="Sudah Dibayar">Sudah Dibayar</option>
+                        <option value="Sebagian Dibayar">Sebagian Dibayar</option>
+                    </select>
+                </div>
+
+                <!-- Pencarian -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Pencarian</label>
+                    <input type="text" id="searchBox" oninput="filterData()" placeholder="Cari nomor SPK atau TOR..." class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500">
+                </div>
+
+                <!-- Info -->
+                <div class="mt-8 p-4 bg-blue-900 bg-opacity-50 rounded-lg border border-blue-700">
+                    <p class="text-xs text-gray-300">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Filter akan diterapkan secara otomatis
+                    </p>
                 </div>
             </div>
 
-            <!-- Filters -->
-            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter Bidang</label>
-                        <select id="filterBidang" onchange="filterData()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <option value="">Semua Bidang</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter Status</label>
-                        <select id="filterStatus" onchange="filterData()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <option value="">Semua Status</option>
-                            <option value="Belum Dibayar">Belum Dibayar</option>
-                            <option value="Sudah Dibayar">Sudah Dibayar</option>
-                            <option value="Sebagian Dibayar">Sebagian Dibayar</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Pencarian</label>
-                        <input type="text" id="searchBox" oninput="filterData()" placeholder="Cari nomor SPK atau TOR..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <!-- Main Content (Kanan) -->
+            <div class="flex-1 p-6">
+                <!-- Header -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                                <i class="fas fa-file-invoice-dollar text-blue-600 mr-3"></i>
+                                TAGIHAN SPK
+                            </h1>
+                            <p class="text-gray-600">Data tagihan berdasarkan SPK yang sudah disetujui</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+                                <i class="fas fa-file-excel mr-2"></i>Export Excel
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Data Table -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full border-collapse">
-                        <thead class="bg-blue-600 text-white sticky top-0 z-10">
-                            <tr>
-                                <th class="px-4 py-3 border text-left font-semibold">No</th>
-                                <th class="px-4 py-3 border text-left font-semibold">Nomor SPK</th>
-                                <th class="px-4 py-3 border text-left font-semibold">Nomor TOR</th>
-                                <th class="px-4 py-3 border text-left font-semibold">Nomor IP</th>
-                                <th class="px-4 py-3 border text-left font-semibold">Bidang</th>
-                                <th class="px-4 py-3 border text-left font-semibold">Keterangan</th>
-                                <th class="px-4 py-3 border text-right font-semibold">Nilai Tagihan (Rp)</th>
-                                <th class="px-4 py-3 border text-right font-semibold">PPN (Rp)</th>
-                                <th class="px-4 py-3 border text-right font-semibold">Total + PPN (Rp)</th>
-                                <th class="px-4 py-3 border text-center font-semibold">Status Pembayaran</th>
-                                <th class="px-4 py-3 border text-left font-semibold">Tanggal Tagihan</th>
-                                <th class="px-4 py-3 border text-center font-semibold">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tagihanTable">
-                            <tr>
-                                <td colspan="12" class="px-4 py-12 text-center text-gray-500">
-                                    <i class="fas fa-spinner fa-spin text-5xl mb-4 text-blue-500"></i>
-                                    <p class="text-lg">Memuat data tagihan SPK...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Data Table -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full border-collapse">
+                            <thead class="bg-blue-600 text-white sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 border text-left font-semibold">No</th>
+                                    <th class="px-4 py-3 border text-left font-semibold">Nomor SPK</th>
+                                    <th class="px-4 py-3 border text-left font-semibold">Nomor TOR</th>
+                                    <th class="px-4 py-3 border text-left font-semibold">Nomor IP</th>
+                                    <th class="px-4 py-3 border text-left font-semibold">Bidang</th>
+                                    <th class="px-4 py-3 border text-left font-semibold">Keterangan</th>
+                                    <th class="px-4 py-3 border text-right font-semibold">Nilai Tagihan (Rp)</th>
+                                    <th class="px-4 py-3 border text-right font-semibold">PPN (Rp)</th>
+                                    <th class="px-4 py-3 border text-right font-semibold">Total + PPN (Rp)</th>
+                                    <th class="px-4 py-3 border text-center font-semibold">Status Pembayaran</th>
+                                    <th class="px-4 py-3 border text-left font-semibold">Tanggal Tagihan</th>
+                                    <th class="px-4 py-3 border text-center font-semibold">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tagihanTable">
+                                <tr>
+                                    <td colspan="12" class="px-4 py-12 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-5xl mb-4 text-blue-500"></i>
+                                        <p class="text-lg">Memuat data tagihan SPK...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
