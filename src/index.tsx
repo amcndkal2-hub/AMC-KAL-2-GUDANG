@@ -8735,11 +8735,30 @@ function getDashboardTagihanSPKHTML() {
                 try {
                     console.log('Loading tagihan SPK data...')
                     
-                    // TODO: Replace with actual API endpoint
-                    // For now, show empty state
-                    allData = []
-                    filteredData = []
+                    // Load data from GitHub JSON
+                    const response = await fetch('https://raw.githubusercontent.com/ipanrifan-create/TAGIHAN-SPK/main/data_tagihan_spk.json')
+                    const jsonData = await response.json()
                     
+                    // Filter only PEMBANGKITAN data (index 8 = bidang)
+                    allData = jsonData.Worksheet.slice(2).filter(row => row[8] === 'PEMBANGKITAN').map(row => ({
+                        no: row[0],
+                        nama: row[1],
+                        nip: row[2],
+                        nomor_ip: row[3],
+                        nomor_spk: row[4],
+                        nomor_po: row[5],
+                        up: row[6],
+                        area: row[7],
+                        bidang: row[8],
+                        project: row[9],
+                        jenis_item: row[10],
+                        mitra: row[11],
+                        nilai: row[12]
+                    }))
+                    
+                    filteredData = [...allData]
+                    
+                    console.log(\`Loaded \${allData.length} PEMBANGKITAN records\`)
                     renderTable()
                     
                 } catch (error) {
@@ -8832,7 +8851,15 @@ function getDashboardTagihanSPKHTML() {
             }
 
             function formatRupiah(value) {
-                if (!value && value !== 0) return 'Rp 0'
+                if (!value) return 'Rp 0'
+                // If value is already formatted string like "Rp 117.687.750"
+                if (typeof value === 'string') {
+                    if (value.startsWith('Rp')) return value
+                    // Remove Rp and dots, convert to number
+                    const cleanValue = value.replace(/Rp\s?/g, '').replace(/\./g, '')
+                    return 'Rp ' + parseInt(cleanValue).toLocaleString('id-ID')
+                }
+                // If value is number
                 return 'Rp ' + parseInt(value).toLocaleString('id-ID')
             }
 
