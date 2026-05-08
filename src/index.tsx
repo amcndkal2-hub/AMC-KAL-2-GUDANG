@@ -8693,23 +8693,18 @@ function getDashboardTagihanSPKHTML() {
                         <table class="min-w-full border-collapse">
                             <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                 <tr>
-                                    <th class="px-4 py-3 border text-left font-semibold">No</th>
+                                    <th class="px-4 py-3 border text-center font-semibold">No</th>
+                                    <th class="px-4 py-3 border text-left font-semibold">Nomor Izin Prinsip</th>
                                     <th class="px-4 py-3 border text-left font-semibold">Nomor SPK</th>
-                                    <th class="px-4 py-3 border text-left font-semibold">Nomor TOR</th>
-                                    <th class="px-4 py-3 border text-left font-semibold">Nomor IP</th>
-                                    <th class="px-4 py-3 border text-left font-semibold">Bidang</th>
-                                    <th class="px-4 py-3 border text-left font-semibold">Keterangan</th>
-                                    <th class="px-4 py-3 border text-right font-semibold">Nilai Tagihan (Rp)</th>
-                                    <th class="px-4 py-3 border text-right font-semibold">PPN (Rp)</th>
-                                    <th class="px-4 py-3 border text-right font-semibold">Total + PPN (Rp)</th>
-                                    <th class="px-4 py-3 border text-center font-semibold">Status Pembayaran</th>
-                                    <th class="px-4 py-3 border text-left font-semibold">Tanggal Tagihan</th>
-                                    <th class="px-4 py-3 border text-center font-semibold">Aksi</th>
+                                    <th class="px-4 py-3 border text-left font-semibold">Nomor PO</th>
+                                    <th class="px-4 py-3 border text-left font-semibold">Jenis Item</th>
+                                    <th class="px-4 py-3 border text-left font-semibold">Mitra</th>
+                                    <th class="px-4 py-3 border text-right font-semibold">Nilai</th>
                                 </tr>
                             </thead>
                             <tbody id="tagihanTable">
                                 <tr>
-                                    <td colspan="12" class="px-4 py-12 text-center text-gray-500">
+                                    <td colspan="7" class="px-4 py-12 text-center text-gray-500">
                                         <i class="fas fa-spinner fa-spin text-5xl mb-4 text-blue-500"></i>
                                         <p class="text-lg">Memuat data tagihan SPK...</p>
                                     </td>
@@ -8759,7 +8754,7 @@ function getDashboardTagihanSPKHTML() {
                 if (filteredData.length === 0) {
                     tbody.innerHTML = \`
                         <tr>
-                            <td colspan="12" class="px-4 py-12 text-center text-gray-500">
+                            <td colspan="7" class="px-4 py-12 text-center text-gray-500">
                                 <i class="fas fa-inbox text-5xl mb-4 text-gray-400"></i>
                                 <p class="text-lg">Belum ada data tagihan SPK</p>
                                 <p class="text-sm mt-2">Data tagihan akan muncul setelah SPK disetujui</p>
@@ -8770,26 +8765,15 @@ function getDashboardTagihanSPKHTML() {
                 }
 
                 tbody.innerHTML = filteredData.map((item, index) => {
-                    const statusBadge = getStatusBadge(item.status_pembayaran)
-                    
                     return \`
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3 border text-center">\${index + 1}</td>
-                            <td class="px-4 py-3 border">\${item.nomor_spk || '-'}</td>
-                            <td class="px-4 py-3 border">\${item.nomor_tor || '-'}</td>
                             <td class="px-4 py-3 border">\${item.nomor_ip || '-'}</td>
-                            <td class="px-4 py-3 border">\${item.bidang || '-'}</td>
-                            <td class="px-4 py-3 border">\${item.keterangan || '-'}</td>
-                            <td class="px-4 py-3 border text-right font-medium">\${formatRupiah(item.nilai_tagihan)}</td>
-                            <td class="px-4 py-3 border text-right">\${formatRupiah(item.ppn)}</td>
-                            <td class="px-4 py-3 border text-right font-bold text-blue-600">\${formatRupiah(item.total_dengan_ppn)}</td>
-                            <td class="px-4 py-3 border text-center">\${statusBadge}</td>
-                            <td class="px-4 py-3 border">\${item.tanggal_tagihan || '-'}</td>
-                            <td class="px-4 py-3 border text-center">
-                                <button onclick="viewDetail('\${item.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                                    <i class="fas fa-eye mr-1"></i>Detail
-                                </button>
-                            </td>
+                            <td class="px-4 py-3 border">\${item.nomor_spk || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.nomor_po || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.jenis_item || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.mitra || '-'}</td>
+                            <td class="px-4 py-3 border text-right font-bold text-blue-600">\${formatRupiah(item.nilai)}</td>
                         </tr>
                     \`
                 }).join('')
@@ -8814,17 +8798,13 @@ function getDashboardTagihanSPKHTML() {
                     const matchStatus = !status || item.status_pembayaran === status
                     const matchSearch = !search || 
                         (item.nomor_spk && item.nomor_spk.toLowerCase().includes(search)) ||
-                        (item.nomor_tor && item.nomor_tor.toLowerCase().includes(search)) ||
-                        (item.nomor_ip && item.nomor_ip.toLowerCase().includes(search))
+                        (item.nomor_ip && item.nomor_ip.toLowerCase().includes(search)) ||
+                        (item.nomor_po && item.nomor_po.toLowerCase().includes(search))
 
                     return matchBidang && matchStatus && matchSearch
                 })
 
                 renderTable()
-            }
-
-            function viewDetail(id) {
-                alert('Detail tagihan ID: ' + id + '\\n\\nFitur ini akan segera ditambahkan.')
             }
 
             function exportToExcel() {
@@ -8835,16 +8815,12 @@ function getDashboardTagihanSPKHTML() {
 
                 const excelData = filteredData.map((item, index) => ({
                     'No': index + 1,
+                    'Nomor Izin Prinsip': item.nomor_ip || '-',
                     'Nomor SPK': item.nomor_spk || '-',
-                    'Nomor TOR': item.nomor_tor || '-',
-                    'Nomor IP': item.nomor_ip || '-',
-                    'Bidang': item.bidang || '-',
-                    'Keterangan': item.keterangan || '-',
-                    'Nilai Tagihan': item.nilai_tagihan || 0,
-                    'PPN': item.ppn || 0,
-                    'Total + PPN': item.total_dengan_ppn || 0,
-                    'Status Pembayaran': item.status_pembayaran || '-',
-                    'Tanggal Tagihan': item.tanggal_tagihan || '-'
+                    'Nomor PO': item.nomor_po || '-',
+                    'Jenis Item': item.jenis_item || '-',
+                    'Mitra': item.mitra || '-',
+                    'Nilai': item.nilai || 0
                 }))
 
                 const ws = XLSX.utils.json_to_sheet(excelData)
@@ -8864,7 +8840,7 @@ function getDashboardTagihanSPKHTML() {
                 const tbody = document.getElementById('tagihanTable')
                 tbody.innerHTML = \`
                     <tr>
-                        <td colspan="12" class="px-4 py-12 text-center text-red-500">
+                        <td colspan="7" class="px-4 py-12 text-center text-red-500">
                             <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
                             <p class="text-lg">\${message}</p>
                         </td>
