@@ -1493,7 +1493,7 @@ function closeRABHistoryModal() {
   }
 }
 
-// Export RAB Detail to Excel
+// Export RAB Detail to Excel - RESET VERSION
 function exportRABDetailToExcel() {
   if (!currentRABDetail) {
     showNotification('Tidak ada data RAB untuk di-export', 'error')
@@ -1505,60 +1505,62 @@ function exportRABDetailToExcel() {
     const items = rab.items || []
     const rokPercentage = rab.rok_percentage || 0
     
-    console.log('📊 EXCEL EXPORT - RAB Items:', items)
-    console.log('📊 EXCEL EXPORT - First item:', items[0])
-    console.log('📊 EXCEL EXPORT - Item keys:', Object.keys(items[0] || {}))
-    console.log('📊 EXCEL EXPORT - Item[0].nama direct access:', items[0]?.nama)
+    console.log('📊 EXCEL EXPORT START - Total items:', items.length)
     
-    // Map items with exact same format as view
-    const excelData = items.map((item, index) => {
-      // Direct access to fields
-      const namaMaterial = item.nama || '-'
-      const qty = item.qty || 0
-      const hargaSatuan = item.harga || 0
-      const total = qty * hargaSatuan
+    // Build Excel data array directly without complex mapping
+    const excelData = []
+    
+    // Add data rows
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
       
-      console.log(`📊 Excel Item ${index + 1} - Direct field access:`, {
-        'item.nama': item.nama,
-        'item.harga': item.harga,
-        'item.qty': item.qty,
-        'item.no_lh05': item.no_lh05,
-        'item.part_number': item.part_number,
-        'namaMaterial': namaMaterial,
-        'typeof item': typeof item,
-        'item keys': Object.keys(item)
-      })
+      // Extract values directly
+      const no = i + 1
+      const nama = String(item.nama || '-')
+      const noLH05 = String(item.no_lh05 || '-')
+      const partNumber = String(item.part_number || '-')
+      const typeMesin = String(item.type_mesin || '-')
+      const snMesin = String(item.sn_mesin || '-')
+      const unitULD = String(item.unit_uld || '-')
+      const qty = Number(item.qty || 0)
+      const harga = Number(item.harga || 0)
+      const total = qty * harga
       
-      return {
-        'No': index + 1,
-        'Nama Material': namaMaterial,
-        'No. LH05': item.no_lh05 || '-',
-        'Part Number': item.part_number || '-',
-        'Type Mesin': item.type_mesin || '-',
-        'S/N Mesin': item.sn_mesin || '-',
-        'Unit/ULD': item.unit_uld || '-',
+      console.log(`Row ${no}:`, {nama, qty, harga, noLH05, partNumber})
+      
+      // Push row object
+      excelData.push({
+        'No': no,
+        'Nama Material': nama,
+        'No. LH05': noLH05,
+        'Part Number': partNumber,
+        'Type Mesin': typeMesin,
+        'S/N Mesin': snMesin,
+        'Unit/ULD': unitULD,
         'Qty': qty,
-        'Harga Satuan': hargaSatuan,
+        'Harga Satuan': harga,
         'Total': total
-      }
-    })
+      })
+    }
     
-    // Calculate summary totals (same as view)
+    // Calculate subtotal
     let subtotalTotal = 0
+    for (let i = 0; i < items.length; i++) {
+      const qty = Number(items[i].qty || 0)
+      const harga = Number(items[i].harga || 0)
+      subtotalTotal += (qty * harga)
+    }
     
-    items.forEach(item => {
-      const qty = item.qty || item.quantity || item.jumlah || 0
-      const hargaSatuan = item.harga || item.harga_satuan || item.unit_price || item.price || 0
-      subtotalTotal += (qty * hargaSatuan)
-    })
+    console.log('📊 Subtotal calculated:', subtotalTotal)
     
-    // Check if RAB uses PPN (same logic as view)
+    // Check if RAB uses PPN
     const usePPN = !(rab.jenis_rab === 'Pembelian Langsung' && rokPercentage === 0)
-    
     const ppn = usePPN ? Math.round(subtotalTotal * 0.11) : 0
     const totalWithPPN = subtotalTotal + ppn
     
-    // Add empty row before summary
+    console.log('📊 PPN:', ppn, 'Total+PPN:', totalWithPPN)
+    
+    // Add empty row
     excelData.push({
       'No': '',
       'Nama Material': '',
@@ -1586,7 +1588,7 @@ function exportRABDetailToExcel() {
       'Total': subtotalTotal
     })
     
-    // Add PPN rows only if usePPN is true
+    // Add PPN rows if applicable
     if (usePPN) {
       excelData.push({
         'No': '',
@@ -1684,34 +1686,51 @@ function exportRABDetailToPDF() {
     doc.text(`Tanggal: ${createdDate}`, 180, 25)
     doc.text(`Dibuat: ${rab.username || '-'}`, 180, 30)
     
-    // Table data - 10 columns matching view exactly
-    const tableData = items.map((item, index) => {
-      const qty = item.qty || item.quantity || item.jumlah || 0
-      const hargaSatuan = item.harga || item.harga_satuan || item.unit_price || item.price || 0
-      const total = qty * hargaSatuan
+    console.log('📄 PDF EXPORT START - Total items:', items.length)
+    
+    // Build table data array directly
+    const tableData = []
+    
+    // Add data rows
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
       
-      return [
-        index + 1,
-        item.nama || item.nama_material || item.material_name || '-',
-        item.no_lh05 || '-',
-        item.part_number || '-',
-        item.mesin || '-',
-        item.sn_mesin || '-',
-        item.unit_uld || '-',
+      const no = i + 1
+      const nama = String(item.nama || '-')
+      const noLH05 = String(item.no_lh05 || '-')
+      const partNumber = String(item.part_number || '-')
+      const typeMesin = String(item.type_mesin || '-')
+      const snMesin = String(item.sn_mesin || '-')
+      const unitULD = String(item.unit_uld || '-')
+      const qty = Number(item.qty || 0)
+      const harga = Number(item.harga || 0)
+      const total = qty * harga
+      
+      console.log(`PDF Row ${no}:`, {nama, qty, harga})
+      
+      tableData.push([
+        no,
+        nama,
+        noLH05,
+        partNumber,
+        typeMesin,
+        snMesin,
+        unitULD,
         qty,
-        formatRupiah(hargaSatuan),
+        formatRupiah(harga),
         formatRupiah(total)
-      ]
-    })
+      ])
+    }
     
-    // Calculate summary totals (same as view)
+    // Calculate subtotal
     let subtotalTotal = 0
+    for (let i = 0; i < items.length; i++) {
+      const qty = Number(items[i].qty || 0)
+      const harga = Number(items[i].harga || 0)
+      subtotalTotal += (qty * harga)
+    }
     
-    items.forEach(item => {
-      const qty = item.qty || item.quantity || item.jumlah || 0
-      const hargaSatuan = item.harga || item.harga_satuan || item.unit_price || item.price || 0
-      subtotalTotal += (qty * hargaSatuan)
-    })
+    console.log('📄 PDF Subtotal:', subtotalTotal)
     
     // Check if RAB uses PPN (same logic as view)
     const usePPN = !(rab.jenis_rab === 'Pembelian Langsung' && rokPercentage === 0)
