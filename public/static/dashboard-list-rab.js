@@ -1502,10 +1502,27 @@ function exportRABDetailToExcel() {
   
   try {
     const rab = currentRABDetail
+    
+    // CRITICAL DEBUG: Log entire RAB object structure
+    console.log('🔍 FULL RAB OBJECT:', rab)
+    console.log('🔍 RAB keys:', Object.keys(rab))
+    console.log('🔍 RAB.items type:', typeof rab.items)
+    console.log('🔍 RAB.items is array?:', Array.isArray(rab.items))
+    console.log('🔍 RAB.items length:', rab.items ? rab.items.length : 'UNDEFINED')
+    console.log('🔍 RAB.items full:', rab.items)
+    
     const items = rab.items || []
     const rokPercentage = rab.rok_percentage || 0
     
+    if (items.length === 0) {
+      console.error('❌ No items found in RAB!')
+      showNotification('Tidak ada item untuk di-export', 'error')
+      return
+    }
+    
     console.log('📊 EXCEL EXPORT START - Total items:', items.length)
+    console.log('📊 First item full object:', items[0])
+    console.log('📊 First item keys:', Object.keys(items[0]))
     
     // Build Excel data array directly without complex mapping
     const excelData = []
@@ -1513,6 +1530,19 @@ function exportRABDetailToExcel() {
     // Add data rows
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
+      
+      // Log every single field access
+      console.log(`📊 Item ${i} - Field by field:`, {
+        'item': item,
+        'item.nama': item.nama,
+        'item.qty': item.qty,
+        'item.harga': item.harga,
+        'item.no_lh05': item.no_lh05,
+        'item.part_number': item.part_number,
+        'item.type_mesin': item.type_mesin,
+        'item.sn_mesin': item.sn_mesin,
+        'item.unit_uld': item.unit_uld
+      })
       
       // Extract values directly
       const no = i + 1
@@ -1526,7 +1556,7 @@ function exportRABDetailToExcel() {
       const harga = Number(item.harga || 0)
       const total = qty * harga
       
-      console.log(`Row ${no}:`, {nama, qty, harga, noLH05, partNumber})
+      console.log(`📊 Row ${no} - After extraction:`, {nama, qty, harga, noLH05, partNumber})
       
       // Push row object
       excelData.push({
