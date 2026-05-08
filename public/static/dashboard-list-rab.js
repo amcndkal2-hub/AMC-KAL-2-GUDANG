@@ -2023,29 +2023,61 @@ function displayLinkedPembelianLangsung(linkedRABs) {
     return
   }
   
-  container.innerHTML = linkedRABs.map(rab => {
+  // Check if user is Andalcekatan
+  const username = localStorage.getItem('username') || ''
+  const canDelete = username === 'Andalcekatan'
+  
+  // Create table with RAB Pembelian Langsung list
+  let tableHTML = `
+    <div class="overflow-x-auto">
+      <table class="min-w-full border border-gray-300 text-sm">
+        <thead class="bg-green-600 text-white">
+          <tr>
+            <th class="px-3 py-2 text-left border-r border-green-500">No</th>
+            <th class="px-3 py-2 text-left border-r border-green-500">Nomor RAB</th>
+            <th class="px-3 py-2 text-right border-r border-green-500">Total Harga</th>
+            <th class="px-3 py-2 text-center border-r border-green-500">ROK %</th>
+            <th class="px-3 py-2 text-right border-r border-green-500">Total Tanpa ROK</th>
+            ${canDelete ? '<th class="px-3 py-2 text-center">Aksi</th>' : ''}
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+  `
+  
+  linkedRABs.forEach((rab, index) => {
     const rokPercentage = rab.rok_percentage || 0
     const totalTanpaROK = rokPercentage > 0 
       ? Math.round(rab.total_harga / (1 + rokPercentage / 100))
       : rab.total_harga
     
-    return `
-      <div class="flex items-center justify-between p-3 bg-white border border-gray-300 rounded">
-        <div class="flex-1">
-          <div class="font-semibold text-sm text-gray-800">${rab.nomor_rab}</div>
-          <div class="text-xs text-gray-600">
-            Total: ${formatRupiah(rab.total_harga)} 
-            ${rokPercentage > 0 ? `(ROK ${rokPercentage}%)` : ''}
-            → Tanpa ROK: ${formatRupiah(totalTanpaROK)}
-          </div>
-        </div>
-        <button onclick="removePembelianLangsung(${rab.link_id})" 
-                class="ml-3 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
+    tableHTML += `
+      <tr class="hover:bg-gray-50">
+        <td class="px-3 py-2 border-r border-gray-200 text-center font-medium">${index + 1}</td>
+        <td class="px-3 py-2 border-r border-gray-200 font-semibold text-gray-800">${rab.nomor_rab}</td>
+        <td class="px-3 py-2 border-r border-gray-200 text-right">${formatRupiah(rab.total_harga)}</td>
+        <td class="px-3 py-2 border-r border-gray-200 text-center">
+          ${rokPercentage > 0 ? `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-semibold">${rokPercentage}%</span>` : '<span class="text-gray-400">-</span>'}
+        </td>
+        <td class="px-3 py-2 border-r border-gray-200 text-right font-semibold text-green-700">${formatRupiah(totalTanpaROK)}</td>
+        ${canDelete ? `
+        <td class="px-3 py-2 text-center">
+          <button onclick="removePembelianLangsung(${rab.link_id})" 
+                  class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition shadow-sm">
+            <i class="fas fa-trash-alt mr-1"></i>Hapus
+          </button>
+        </td>
+        ` : ''}
+      </tr>
     `
-  }).join('')
+  })
+  
+  tableHTML += `
+        </tbody>
+      </table>
+    </div>
+  `
+  
+  container.innerHTML = tableHTML
 }
 
 // Load available RAB Pembelian Langsung for dropdown
@@ -2156,6 +2188,13 @@ async function addPembelianLangsung() {
 // Remove RAB Pembelian Langsung
 async function removePembelianLangsung(linkId) {
   try {
+    // Check if user is Andalcekatan
+    const username = localStorage.getItem('username') || ''
+    if (username !== 'Andalcekatan') {
+      showNotification('Hanya akun Andalcekatan yang dapat menghapus RAB Pembelian Langsung', 'error')
+      return
+    }
+    
     if (!confirm('Apakah Anda yakin ingin menghapus RAB Pembelian Langsung ini dari daftar?')) {
       return
     }
