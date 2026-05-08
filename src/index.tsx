@@ -8693,13 +8693,13 @@ function getDashboardTagihanSPKHTML() {
                         <table class="min-w-full border-collapse">
                             <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                 <tr>
-                                    <th class="px-4 py-3 border text-center font-semibold">No</th>
-                                    <th class="px-4 py-3 border text-left font-semibold">Nomor Izin Prinsip</th>
-                                    <th class="px-4 py-3 border text-left font-semibold">Nomor SPK</th>
-                                    <th class="px-4 py-3 border text-left font-semibold">Nomor PO</th>
-                                    <th class="px-4 py-3 border text-left font-semibold">Jenis Item</th>
-                                    <th class="px-4 py-3 border text-left font-semibold">Mitra</th>
-                                    <th class="px-4 py-3 border text-right font-semibold">Nilai</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">NO</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">NOMOR IZIN PRINSIP</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">NOMOR SPK</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">NOMOR PO</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">JENIS ITEM</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">MITRA</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">NILAI</th>
                                 </tr>
                             </thead>
                             <tbody id="tagihanTable">
