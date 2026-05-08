@@ -8689,7 +8689,7 @@ function getDashboardTagihanSPKHTML() {
 
                 <!-- Data Table -->
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto max-h-[calc(100vh-280px)] overflow-y-auto">
                         <table class="min-w-full border-collapse">
                             <thead class="bg-blue-600 text-white sticky top-0 z-10">
                                 <tr>
