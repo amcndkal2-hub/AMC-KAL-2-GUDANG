@@ -1780,29 +1780,6 @@ function exportRABDetailToPDF() {
     showNotification('Gagal export ke PDF', 'error')
   }
 }
-    
-    const columnStyles = {
-      0: { cellWidth: 8, halign: 'center' },   // No
-      1: { cellWidth: 28 },                     // Nama Material
-      2: { cellWidth: 14, halign: 'center' },   // No. LH05
-      3: { cellWidth: 14, halign: 'center' },   // Part Number
-      4: { cellWidth: 14, halign: 'center' },   // Type Mesin
-      5: { cellWidth: 14, halign: 'center' },   // S/N Mesin
-      6: { cellWidth: 14, halign: 'center' },   // Unit/ULD
-      7: { cellWidth: 10, halign: 'center' },   // Qty
-      8: { cellWidth: 18, halign: 'right' },    // Harga Satuan
-      9: { cellWidth: 20, halign: 'right' }     // Total
-    }
-    
-    if (isListTORPage) {
-      headers.push('Tanpa ROK', 'Total tanpa ROK', 'Realisasi', 'Total Realisasi', 'Saldo')
-      columnStyles[10] = { cellWidth: 18, halign: 'right' }  // Tanpa ROK
-      columnStyles[11] = { cellWidth: 20, halign: 'right' }  // Total tanpa ROK
-      columnStyles[12] = { cellWidth: 18, halign: 'right' }  // Realisasi
-      columnStyles[13] = { cellWidth: 20, halign: 'right' }  // Total Realisasi
-      columnStyles[14] = { cellWidth: 20, halign: 'right' }  // Saldo
-    }
-}
 
 // Delete RAB
 async function deleteRAB(rabId, nomorRAB) {
