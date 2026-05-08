@@ -1544,16 +1544,16 @@ function exportRABDetailToExcel() {
         'item.unit_uld': item.unit_uld
       })
       
-      // Extract values directly
+      // Extract values directly - FIXED FIELD NAMES
       const no = i + 1
-      const nama = String(item.nama || '-')
-      const noLH05 = String(item.no_lh05 || '-')
+      const nama = String(item.material || item.nama || '-')
+      const noLH05 = String(item.nomor_lh05 || item.no_lh05 || '-')
       const partNumber = String(item.part_number || '-')
-      const typeMesin = String(item.type_mesin || '-')
+      const typeMesin = String(item.mesin || item.type_mesin || item.tipe_mesin || '-')
       const snMesin = String(item.sn_mesin || '-')
-      const unitULD = String(item.unit_uld || '-')
-      const qty = Number(item.qty || 0)
-      const harga = Number(item.harga || 0)
+      const unitULD = String(item.unit_uld || item.lokasi_gangguan || item.lokasi_tujuan || '-')
+      const qty = Number(item.jumlah || item.qty || item.quantity || 1)
+      const harga = Number(item.harga_satuan || item.harga || item.unit_price || item.price || 0)
       const total = qty * harga
       
       console.log(`📊 Row ${no} - After extraction:`, {nama, qty, harga, noLH05, partNumber})
@@ -1573,11 +1573,11 @@ function exportRABDetailToExcel() {
       })
     }
     
-    // Calculate subtotal
+    // Calculate subtotal - FIXED FIELD NAMES
     let subtotalTotal = 0
     for (let i = 0; i < items.length; i++) {
-      const qty = Number(items[i].qty || 0)
-      const harga = Number(items[i].harga || 0)
+      const qty = Number(items[i].jumlah || items[i].qty || items[i].quantity || 1)
+      const harga = Number(items[i].harga_satuan || items[i].harga || items[i].unit_price || items[i].price || 0)
       subtotalTotal += (qty * harga)
     }
     
@@ -1726,14 +1726,14 @@ function exportRABDetailToPDF() {
       const item = items[i]
       
       const no = i + 1
-      const nama = String(item.nama || '-')
-      const noLH05 = String(item.no_lh05 || '-')
+      const nama = String(item.material || item.nama || '-')
+      const noLH05 = String(item.nomor_lh05 || item.no_lh05 || '-')
       const partNumber = String(item.part_number || '-')
-      const typeMesin = String(item.type_mesin || '-')
+      const typeMesin = String(item.mesin || item.type_mesin || item.tipe_mesin || '-')
       const snMesin = String(item.sn_mesin || '-')
-      const unitULD = String(item.unit_uld || '-')
-      const qty = Number(item.qty || 0)
-      const harga = Number(item.harga || 0)
+      const unitULD = String(item.unit_uld || item.lokasi_gangguan || item.lokasi_tujuan || '-')
+      const qty = Number(item.jumlah || item.qty || item.quantity || 1)
+      const harga = Number(item.harga_satuan || item.harga || item.unit_price || item.price || 0)
       const total = qty * harga
       
       console.log(`PDF Row ${no}:`, {nama, qty, harga})
@@ -1755,8 +1755,8 @@ function exportRABDetailToPDF() {
     // Calculate subtotal
     let subtotalTotal = 0
     for (let i = 0; i < items.length; i++) {
-      const qty = Number(items[i].qty || 0)
-      const harga = Number(items[i].harga || 0)
+      const qty = Number(items[i].jumlah || items[i].qty || items[i].quantity || 1)
+      const harga = Number(items[i].harga_satuan || items[i].harga || items[i].unit_price || items[i].price || 0)
       subtotalTotal += (qty * harga)
     }
     
