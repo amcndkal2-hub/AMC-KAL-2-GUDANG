@@ -8493,24 +8493,26 @@ function getDashboardRefHargaHTML() {
 
             <!-- Search Bar -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div class="flex items-center space-x-4">
-                    <div class="flex-1">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-search text-gray-500 mr-2"></i>Cari Material
-                        </label>
-                        <input type="text" 
-                               id="searchInput" 
-                               placeholder="Ketik nama material, part number, atau mesin..."
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                               oninput="filterMaterials()">
-                        <p class="text-xs text-gray-500 mt-2">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Hasil pencarian akan tampil secara otomatis
-                        </p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-sm text-gray-600 mb-1">Total Data</p>
-                        <p class="text-3xl font-bold text-blue-600" id="totalCount">0</p>
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-search text-gray-500 mr-2"></i>Cari Material
+                    </label>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-1">
+                            <input type="text" 
+                                   id="searchInput" 
+                                   placeholder="Ketik nama material, part number, atau mesin..."
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                                   oninput="filterMaterials()">
+                            <p class="text-xs text-gray-500 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Hasil pencarian akan tampil secara otomatis
+                            </p>
+                        </div>
+                        <div class="text-center flex-shrink-0">
+                            <p class="text-sm text-gray-600 mb-1">Total Data</p>
+                            <p class="text-3xl font-bold text-blue-600" id="totalCount">0</p>
+                        </div>
                     </div>
                 </div>
             </div>
