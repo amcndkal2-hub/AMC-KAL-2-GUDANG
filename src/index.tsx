@@ -2853,15 +2853,21 @@ app.get('/api/kebutuhan-material', async (c) => {
       else if (isTerkirim) {
         finalStatus = 'Terkirim'
       }
-      // Priority 3: Material punya S/N tapi belum dikirim = Auto-set Tersedia
+      // Priority 3: Keep N/A as-is if status is explicitly null/empty in DB
+      // IMPORTANT: Do NOT auto-update to "Tersedia" if user hasn't set status yet
+      // This allows users to see materials that need attention in "N/A" filter
+      else if (!mat.status || mat.status === '' || mat.status === 'N/A') {
+        finalStatus = 'N/A'
+      }
+      // Priority 4: Material punya S/N tapi belum dikirim = Auto-set Tersedia
       else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
         finalStatus = 'Tersedia'
       }
-      // Priority 4: Material ada stok (dari transaksi Masuk) = Auto-set Tersedia
+      // Priority 5: Material ada stok (dari transaksi Masuk) = Auto-set Tersedia
       else if (stok > 0) {
         finalStatus = 'Tersedia'
       }
-      // Priority 5: Default fallback - stok habis dan tidak ada manual status = N/A
+      // Priority 6: Default fallback - stok habis dan tidak ada manual status = N/A
       else {
         finalStatus = 'N/A'
       }
