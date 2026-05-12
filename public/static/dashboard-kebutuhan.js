@@ -73,7 +73,8 @@ async function loadKebutuhanMaterial() {
       partNumber: item.part_number,
       lokasiTujuan: item.lokasi_tujuan || item.unit_uld,
       unitULD: item.unit_uld,
-      status: item.status || 'N/A', // CRITICAL: Explicitly map status
+      // Normalize status: treat null, undefined, empty string, and "N/A" all as "N/A"
+      status: (!item.status || item.status === '' || item.status === 'N/A') ? 'N/A' : item.status,
       stok: item.stok || 0, // Include stock info
       isTerkirim: item.isTerkirim || false, // Include shipment status
       jenisBarang: item.jenis_barang || 'Material Handal', // Include jenis barang
