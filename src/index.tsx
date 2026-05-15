@@ -3392,6 +3392,193 @@ app.get('/api/rab', async (c) => {
   }
 })
 
+// =====================================================
+// PUBLIC API: List RAB Pembelian Langsung with Draft Status (with API Key)
+// =====================================================
+app.get('/api/public/rab-pembelian-langsung-draft', async (c) => {
+  try {
+    // API Key authentication
+    const apiKey = c.req.header('X-API-Key')
+    const validApiKey = 'AMC-RAB-DRAFT-2025-KEY-9g8h7f6e5d4c3b2a' // Production API Key for Draft
+    
+    if (!apiKey || apiKey !== validApiKey) {
+      return c.json({ 
+        error: 'Unauthorized',
+        message: 'Invalid or missing API key. Please provide X-API-Key header.'
+      }, 401)
+    }
+    
+    const { env } = c
+    
+    console.log('🔓 Public API: Fetching RAB Pembelian Langsung with Draft status...')
+    
+    // Query RAB dengan jenis_rab = "Pembelian Langsung" AND status = "Draft"
+    const query = `
+      SELECT 
+        r.id,
+        r.nomor_rab,
+        r.jenis_rab,
+        r.status,
+        r.nomor_tor,
+        r.rok_percentage,
+        r.nama_pekerjaan,
+        r.status_scm,
+        r.created_at,
+        r.updated_at
+      FROM rab r
+      WHERE r.jenis_rab = 'Pembelian Langsung' AND r.status = 'Draft'
+      ORDER BY r.created_at DESC
+    `
+    
+    const result = await env.DB.prepare(query).all()
+    
+    console.log(`✅ Found ${result.results?.length || 0} RAB Pembelian Langsung with Draft status`)
+    
+    // Get items for each RAB
+    const rabList = await Promise.all((result.results || []).map(async (rab: any) => {
+      const itemsQuery = `
+        SELECT 
+          id,
+          rab_id,
+          nomor_lh05,
+          part_number,
+          material,
+          mesin,
+          sn_mesin,
+          unit_uld,
+          jumlah,
+          harga_satuan,
+          nama,
+          harga
+        FROM rab_items
+        WHERE rab_id = ?
+        ORDER BY id ASC
+      `
+      
+      const itemsResult = await env.DB.prepare(itemsQuery).bind(rab.id).all()
+      
+      return {
+        ...rab,
+        items: itemsResult.results || [],
+        item_count: itemsResult.results?.length || 0
+      }
+    }))
+    
+    return c.json({
+      success: true,
+      message: 'RAB Pembelian Langsung (Draft) retrieved successfully',
+      filter: {
+        jenis_rab: 'Pembelian Langsung',
+        status: 'Draft'
+      },
+      count: rabList.length,
+      data: rabList,
+      timestamp: new Date().toISOString()
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Public API error:', error)
+    return c.json({ 
+      success: false,
+      error: 'Internal server error',
+      message: error.message || 'Failed to fetch RAB data'
+    }, 500)
+  }
+})
+
+// =====================================================
+// PUBLIC API: List RAB Pembelian Langsung (All Status) (with API Key)
+// =====================================================
+app.get('/api/public/rab-pembelian-langsung', async (c) => {
+  try {
+    // API Key authentication
+    const apiKey = c.req.header('X-API-Key')
+    const validApiKey = 'AMC-RAB-2025-PL-KEY-8f9d3a1b4c6e7h2i' // Production API Key
+    
+    if (!apiKey || apiKey !== validApiKey) {
+      return c.json({ 
+        error: 'Unauthorized',
+        message: 'Invalid or missing API key. Please provide X-API-Key header.'
+      }, 401)
+    }
+    
+    const { env } = c
+    
+    console.log('🔓 Public API: Fetching RAB Pembelian Langsung (all status)...')
+    
+    // Query RAB dengan jenis_rab = "Pembelian Langsung"
+    const query = `
+      SELECT 
+        r.id,
+        r.nomor_rab,
+        r.jenis_rab,
+        r.status,
+        r.nomor_tor,
+        r.rok_percentage,
+        r.nama_pekerjaan,
+        r.status_scm,
+        r.created_at,
+        r.updated_at
+      FROM rab r
+      WHERE r.jenis_rab = 'Pembelian Langsung'
+      ORDER BY r.created_at DESC
+    `
+    
+    const result = await env.DB.prepare(query).all()
+    
+    console.log(`✅ Found ${result.results?.length || 0} RAB Pembelian Langsung`)
+    
+    // Get items for each RAB
+    const rabList = await Promise.all((result.results || []).map(async (rab: any) => {
+      const itemsQuery = `
+        SELECT 
+          id,
+          rab_id,
+          nomor_lh05,
+          part_number,
+          material,
+          mesin,
+          sn_mesin,
+          unit_uld,
+          jumlah,
+          harga_satuan,
+          nama,
+          harga
+        FROM rab_items
+        WHERE rab_id = ?
+        ORDER BY id ASC
+      `
+      
+      const itemsResult = await env.DB.prepare(itemsQuery).bind(rab.id).all()
+      
+      return {
+        ...rab,
+        items: itemsResult.results || [],
+        item_count: itemsResult.results?.length || 0
+      }
+    }))
+    
+    return c.json({
+      success: true,
+      message: 'RAB Pembelian Langsung retrieved successfully',
+      filter: {
+        jenis_rab: 'Pembelian Langsung'
+      },
+      count: rabList.length,
+      data: rabList,
+      timestamp: new Date().toISOString()
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Public API error:', error)
+    return c.json({ 
+      success: false,
+      error: 'Internal server error',
+      message: error.message || 'Failed to fetch RAB data'
+    }, 500)
+  }
+})
+
 // API: Get materials from RAB with status Tersedia (MUST be before /:id route)
 app.get('/api/rab/materials-tersedia', async (c) => {
   try {
