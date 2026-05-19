@@ -13557,21 +13557,21 @@ function getDashboardListTORHTML() {
             <div class="flex gap-5">
                 <!-- Left Sidebar: Filters -->
                 <div class="w-72 flex-shrink-0">
-                    <div class="bg-white rounded-lg shadow-md p-5 sticky" style="top: 24px;">
-                        <div class="border-b border-gray-200 pb-3 mb-4">
-                            <h2 class="text-lg font-bold text-gray-800 flex items-center">
-                                <i class="fas fa-filter text-blue-600 mr-2"></i>
+                    <div class="bg-black rounded-lg shadow-md p-5 sticky" style="top: 24px;">
+                        <div class="border-b border-gray-700 pb-3 mb-4">
+                            <h2 class="text-lg font-bold text-white flex items-center">
+                                <i class="fas fa-filter text-blue-400 mr-2"></i>
                                 Filter
                             </h2>
                         </div>
                         
                         <!-- Filter Status -->
                         <div class="mb-5">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-tasks text-blue-600 mr-1.5"></i>
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                                <i class="fas fa-tasks text-blue-400 mr-1.5"></i>
                                 Status RAB
                             </label>
-                            <select id="filterStatusDropdown" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                            <select id="filterStatusDropdown" class="w-full px-3 py-2.5 border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-900 text-white">
                                 <option value="All">Semua Status</option>
                                 <option value="Draft">Draft</option>
                                 <option value="Pengadaan">Pengadaan</option>
@@ -13585,43 +13585,43 @@ function getDashboardListTORHTML() {
                         
                         <!-- Filter No. TOR -->
                         <div class="mb-5">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-file-alt text-purple-600 mr-1.5"></i>
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                                <i class="fas fa-file-alt text-purple-400 mr-1.5"></i>
                                 No. TOR
                             </label>
                             <input 
                                 type="text" 
                                 id="filterTORInput" 
                                 placeholder="Cari No. TOR..."
-                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                class="w-full px-3 py-2.5 border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-900 text-white placeholder-gray-500"
                             />
                         </div>
                         
                         <!-- Filter No. Ijin Prinsip -->
                         <div class="mb-5">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-id-card text-orange-600 mr-1.5"></i>
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                                <i class="fas fa-id-card text-orange-400 mr-1.5"></i>
                                 No. Ijin Prinsip
                             </label>
                             <input 
                                 type="text" 
                                 id="filterIPInput" 
                                 placeholder="Cari No. Ijin Prinsip..."
-                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                class="w-full px-3 py-2.5 border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-900 text-white placeholder-gray-500"
                             />
                         </div>
                         
                         <!-- Filter Nama Pekerjaan -->
                         <div class="mb-5">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-briefcase text-teal-600 mr-1.5"></i>
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                                <i class="fas fa-briefcase text-teal-400 mr-1.5"></i>
                                 Nama Pekerjaan
                             </label>
                             <input 
                                 type="text" 
                                 id="filterNamaPekerjaanInput" 
                                 placeholder="Cari Nama Pekerjaan..."
-                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                class="w-full px-3 py-2.5 border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-900 text-white placeholder-gray-500"
                             />
                         </div>
                         
@@ -13638,9 +13638,9 @@ function getDashboardListTORHTML() {
                         </button>
                         
                         <!-- Info Box -->
-                        <div class="mt-5 p-3.5 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p class="text-xs text-blue-700 leading-relaxed">
-                                <i class="fas fa-info-circle mr-1.5"></i>
+                        <div class="mt-5 p-3.5 bg-gray-900 border border-gray-700 rounded-lg">
+                            <p class="text-xs text-gray-300 leading-relaxed">
+                                <i class="fas fa-info-circle mr-1.5 text-blue-400"></i>
                                 Halaman Realisasi hanya menampilkan RAB dengan jenis SPK.
                             </p>
                         </div>
