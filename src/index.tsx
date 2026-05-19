@@ -8284,7 +8284,7 @@ function getDashboardKebutuhanMaterialHTML() {
 
         <div class="flex">
             <!-- Sidebar Filter (Kiri) -->
-            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen">
+            <div class="w-64 bg-black shadow-lg p-6 min-h-screen">
                 <h2 class="text-xl font-bold mb-6 text-white">
                     <i class="fas fa-filter mr-2 text-blue-400"></i>
                     Filter Data
@@ -8502,7 +8502,7 @@ function getDashboardGangguanHTML() {
 
         <div class="flex">
             <!-- Sidebar Filter (Kiri) -->
-            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen">
+            <div class="w-64 bg-black shadow-lg p-6 min-h-screen">
                 <h2 class="text-xl font-bold mb-6 text-white">
                     <i class="fas fa-filter mr-2 text-blue-400"></i>
                     Filter Data
