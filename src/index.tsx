@@ -7905,13 +7905,13 @@ function getFormGangguanHTML() {
                         <!-- Temporary Message -->
                         <div id="tempMessageGangguan" class="hidden"></div>
                         
-                        <!-- Catat Barang Masuk Section -->
+                        <!-- Kebutuhan Material Section -->
                         <div class="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-500 rounded-xl p-6 mb-6 shadow-sm">
                             <div class="flex items-center mb-4">
                                 <div class="bg-green-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
                                     <i class="fas fa-plus text-lg"></i>
                                 </div>
-                                <h3 class="text-lg font-bold text-gray-800">Catat Barang Masuk</h3>
+                                <h3 class="text-lg font-bold text-gray-800">Kebutuhan Material</h3>
                             </div>
                             
                             <!-- Pilih Barang -->
@@ -7974,7 +7974,7 @@ function getFormGangguanHTML() {
                             <div class="mt-6 flex items-center justify-end">
                                 <button type="button" id="addMaterialBtnGangguan" 
                                     class="bg-green-600 text-white py-3 px-8 rounded-lg hover:bg-green-700 transition-all flex items-center justify-center shadow-md font-medium">
-                                    <i class="fas fa-plus mr-2"></i>Catat Barang Masuk
+                                    <i class="fas fa-plus mr-2"></i>Input
                                 </button>
                             </div>
                         </div>
