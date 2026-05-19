@@ -7725,19 +7725,22 @@ function getFormGangguanHTML() {
                 </div>
 
                 <!-- Form -->
-                <form id="gangguanForm" class="space-y-5">
-                    <!-- Section 1: Informasi Dasar (2 Columns Grid) -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-bold text-gray-800 mb-5 pb-3 border-b-2 border-red-500">
-                            <i class="fas fa-info-circle text-red-600 mr-2"></i>
-                            Informasi Dasar
-                        </h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <form id="gangguanForm" class="space-y-6">
+                    <!-- Section 1: Informasi Dasar -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center mb-6 pb-4 border-b-2 border-red-500">
+                            <div class="bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                                <i class="fas fa-info-circle text-lg"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">Informasi Dasar</h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Nomor BA LH05 (Auto) -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     <i class="fas fa-hashtag text-red-600 mr-1"></i>
-                                    Nomor BA LH05 (Auto Generate)
+                                    Nomor BA LH05 (Auto Generate) *
                                 </label>
                                 <div class="bg-red-50 border-l-4 border-red-600 p-4 rounded-lg">
                                     <p class="text-xs text-gray-600 mb-1">Format:</p>
@@ -7748,44 +7751,45 @@ function getFormGangguanHTML() {
 
                             <!-- Hari/Tanggal/Jam Kejadian -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     <i class="fas fa-calendar-alt text-red-600 mr-1"></i>
                                     1. Hari/Tanggal/Jam Kejadian *
                                 </label>
                                 <input type="datetime-local" id="hariTanggal" required
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                             </div>
 
                             <!-- Unit/ULD -->
                             <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     <i class="fas fa-building text-red-600 mr-1"></i>
                                     Unit / ULD *
                                 </label>
                                 <select id="unitULD" required
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                                     <option value="">-- Pilih Unit/ULD --</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Section 2-10: Grid 3 Columns Layout -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-bold text-gray-800 mb-5 pb-3 border-b-2 border-red-500">
-                            <i class="fas fa-clipboard-list text-red-600 mr-2"></i>
-                            Detail Gangguan & Analisa (No. 2-10)
-                        </h2>
+                    <!-- Section 2-10: Detail Gangguan -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center mb-6 pb-4 border-b-2 border-red-500">
+                            <div class="bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                                <i class="fas fa-clipboard-list text-lg"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">Detail Gangguan & Analisa (No. 2-10)</h2>
+                        </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <!-- 2. Kelompok SPD yang rusak -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-tools text-red-600 mr-1"></i>
-                                    2. Kelompok SPD yang rusak *
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <span class="text-red-600 mr-1">●</span>2. Kelompok SPD yang rusak *
                                 </label>
                                 <select id="kelompokSPD" required
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                                     <option value="">-- Pilih Kelompok SPD --</option>
                                     <option value="MEKANIK">MEKANIK</option>
                                     <option value="ELEKTRIK">ELEKTRIK</option>
@@ -7794,82 +7798,74 @@ function getFormGangguanHTML() {
 
                             <!-- 3. Komponen yang rusak -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-cog text-red-600 mr-1"></i>
-                                    3. Komponen yang rusak *
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <span class="text-red-600 mr-1">●</span>3. Komponen yang rusak *
                                 </label>
                                 <input type="text" id="komponenRusak" required
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                             </div>
 
                             <!-- 4. Gejala yang timbul -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-exclamation-triangle text-red-600 mr-1"></i>
-                                    4. Gejala yang timbul *
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <span class="text-red-600 mr-1">●</span>4. Gejala yang timbul *
                                 </label>
                                 <textarea id="gejala" required rows="3"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
 
                             <!-- 5. Uraian kejadian -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-file-alt text-red-600 mr-1"></i>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     5. Uraian kejadian *
                                 </label>
                                 <textarea id="uraianKejadian" required rows="3"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
 
                             <!-- 6. Analisa penyebab -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-search text-red-600 mr-1"></i>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     6. Analisa penyebab *
                                 </label>
                                 <textarea id="analisaPenyebab" required rows="3"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
 
                             <!-- 7. Kesimpulan kerusakan -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-check-circle text-red-600 mr-1"></i>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     7. Kesimpulan kerusakan *
                                 </label>
                                 <textarea id="kesimpulan" required rows="3"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
 
                             <!-- 8. Beban Puncak (MW) -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-bolt text-red-600 mr-1"></i>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     8. Beban Puncak (MW) *
                                 </label>
                                 <input type="number" id="bebanPuncak" step="0.01" required
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                             </div>
 
                             <!-- 8. Daya Mampu (MW) -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-tachometer-alt text-red-600 mr-1"></i>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     8. Daya Mampu (MW) *
                                 </label>
                                 <input type="number" id="dayaMampu" step="0.01" required
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                             </div>
 
                             <!-- 8. Status Pemadaman -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-power-off text-red-600 mr-1"></i>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     8. Status Pemadaman *
                                 </label>
                                 <select id="pemadaman" required
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                                     <option value="">-- Pilih Status --</option>
                                     <option value="NORMAL">NORMAL</option>
                                     <option value="SIAGA">SIAGA</option>
@@ -7879,127 +7875,133 @@ function getFormGangguanHTML() {
 
                             <!-- 9. Tindakan penanggulangan -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-wrench text-red-600 mr-1"></i>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     9. Tindakan penanggulangan *
                                 </label>
                                 <textarea id="tindakanPenanggulangan" required rows="3"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
 
                             <!-- 10. Rencana perbaikan -->
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    <i class="fas fa-calendar-check text-red-600 mr-1"></i>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     10. Rencana perbaikan *
                                 </label>
                                 <textarea id="rencanaPerbaikan" required rows="3"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition resize-none"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
                         </div>
                     </div>
 
                     <!-- 11. Kebutuhan Material -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-boxes text-red-600 mr-2"></i>
-                            11. Kebutuhan Material
-                        </h2>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center mb-6 pb-4 border-b-2 border-red-500">
+                            <div class="bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                                <i class="fas fa-boxes text-lg"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">11. Kebutuhan Material</h2>
+                        </div>
                         
                         <!-- Temporary Message -->
                         <div id="tempMessageGangguan" class="hidden"></div>
                         
-                        <!-- Single Material Input Form -->
-                        <div class="border-2 border-red-500 rounded-lg p-4 bg-red-50 mb-6">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                                <i class="fas fa-edit mr-2"></i>Input Material
-                            </h3>
+                        <!-- Catat Barang Masuk Section -->
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-500 rounded-xl p-6 mb-6 shadow-sm">
+                            <div class="flex items-center mb-4">
+                                <div class="bg-green-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                                    <i class="fas fa-plus text-lg"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-gray-800">Catat Barang Masuk</h3>
+                            </div>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div class="lg:col-span-1">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Material (Cari) *</label>
-                                    <div class="relative">
-                                        <input type="text" 
-                                            class="material-search-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" 
-                                            placeholder="Ketik untuk cari Material"
-                                            data-material-id="1"
-                                            autocomplete="off">
-                                        <div class="search-results-gangguan absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                            <!-- Pilih Barang -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Barang</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-search text-gray-400"></i>
                                     </div>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Part Number</label>
-                                    <input type="text" class="part-number-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Barang</label>
-                                    <input type="text" class="jenis-barang-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Mesin</label>
-                                    <input type="text" class="mesin-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
-                                </div>
-                                
-                                <div class="lg:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">S/N Mesin *</label>
-                                    <input type="text" class="sn-mesin-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg" 
-                                        placeholder="Serial Number Mesin (WAJIB)">
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah *</label>
-                                    <input type="number" class="jumlah-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg" 
-                                        value="1" min="1">
-                                </div>
-                                
-                                <div class="flex items-end">
-                                    <button type="button" id="addMaterialBtnGangguan" 
-                                        class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center">
-                                        <i class="fas fa-plus mr-2"></i>Tambah
-                                    </button>
+                                    <input type="text" 
+                                        class="material-search-gangguan w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" 
+                                        placeholder="Cari barang..."
+                                        data-material-id="1"
+                                        autocomplete="off">
+                                    <div class="search-results-gangguan absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
                                 </div>
                             </div>
                             
+                            <!-- Form Fields in Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah</label>
+                                    <input type="number" class="jumlah-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" 
+                                        value="1" min="1" placeholder="Masukkan jumlah">
+                                </div>
+                                
+                                <div class="md:col-span-3">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">No. Surat Jalan / Referensi</label>
+                                    <input type="text" class="sn-mesin-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" 
+                                        placeholder="Nomor referensi">
+                                </div>
+                            </div>
+                            
+                            <!-- Catatan -->
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Catatan</label>
+                                <textarea class="catatan-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none" 
+                                    rows="2" placeholder="Catatan tambahan (opsional)"></textarea>
+                            </div>
+                            
+                            <!-- Hidden Fields for Data -->
+                            <input type="hidden" class="part-number-gangguan">
+                            <input type="hidden" class="jenis-barang-gangguan">
+                            <input type="hidden" class="mesin-gangguan">
+                            
                             <!-- Stock Info Display -->
                             <div id="stockInfoGangguan" class="mt-4 hidden"></div>
+                            
+                            <!-- Add Button -->
+                            <div class="mt-6 flex items-center justify-end">
+                                <button type="button" id="addMaterialBtnGangguan" 
+                                    class="bg-green-600 text-white py-3 px-8 rounded-lg hover:bg-green-700 transition-all flex items-center justify-center shadow-md font-medium">
+                                    <i class="fas fa-plus mr-2"></i>Catat Barang Masuk
+                                </button>
+                            </div>
                         </div>
                         
                         <!-- Materials Preview Table -->
                         <div class="mt-6">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-gray-800">
-                                    <i class="fas fa-list mr-2"></i>
-                                    List Material (<span id="totalMaterialsCountGangguan">0</span> item)
+                                <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                                    <i class="fas fa-list mr-2 text-red-600"></i>
+                                    List Material (<span id="totalMaterialsCountGangguan" class="text-green-600">0</span> item)
                                 </h3>
                                 <button type="button" onclick="resetMaterialsListGangguan()" 
-                                    class="text-sm text-red-600 hover:text-red-700">
+                                    class="text-sm text-red-600 hover:text-red-700 font-medium flex items-center">
                                     <i class="fas fa-trash mr-1"></i>Hapus Semua
                                 </button>
                             </div>
                             
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full bg-white border border-gray-200 rounded-lg">
-                                    <thead class="bg-gray-100">
+                            <div class="overflow-x-auto rounded-lg border-2 border-gray-200 shadow-sm">
+                                <table class="min-w-full bg-white">
+                                    <thead class="bg-gradient-to-r from-red-600 to-red-700 text-white">
                                         <tr>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">No</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Part Number</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Jenis Barang</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Material</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Mesin</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">S/N Mesin</th>
-                                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Jumlah</th>
-                                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Aksi</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">No</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Part Number</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Jenis Barang</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Material</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Mesin</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">S/N Mesin</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Jumlah</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="materialPreviewBodyGangguan">
                                         <tr>
-                                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">
-                                                <i class="fas fa-inbox text-4xl mb-2"></i>
-                                                <p>Belum ada material yang ditambahkan.</p>
-                                                <p class="text-sm mt-1">Isi form di atas dan klik "Tambah" untuk menambahkan material.</p>
+                                            <td colspan="8" class="px-4 py-12 text-center text-gray-500">
+                                                <i class="fas fa-inbox text-5xl mb-3 text-gray-300"></i>
+                                                <p class="font-medium text-lg">Belum ada material yang ditambahkan.</p>
+                                                <p class="text-sm mt-1">Isi form di atas dan klik "Catat Barang Masuk" untuk menambahkan material.</p>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -8009,34 +8011,42 @@ function getFormGangguanHTML() {
                     </div>
 
                     <!-- 12. TTD Digital -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-signature text-red-600 mr-2"></i>
-                            12. Tanda Tangan Digital Pelapor
-                        </h2>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center mb-6 pb-4 border-b-2 border-red-500">
+                            <div class="bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                                <i class="fas fa-signature text-lg"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">12. Tanda Tangan Digital Pelapor</h2>
+                        </div>
                         
                         <div class="max-w-md mx-auto">
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Nama Pelapor</label>
-                            <input type="text" id="namaPelapor" required placeholder="Nama Pelapor"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nama Pelapor</label>
+                                <input type="text" id="namaPelapor" required placeholder="Masukkan nama pelapor"
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
+                            </div>
                             
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Tanda Tangan Pelapor</label>
-                            <canvas id="signaturePelapor" width="400" height="200" class="signature-pad w-full bg-gray-50"></canvas>
-                            <button type="button" id="clearPelapor" class="mt-2 text-sm text-red-600 hover:text-red-700">
-                                <i class="fas fa-eraser mr-1"></i>Hapus Tanda Tangan
-                            </button>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Pelapor</label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-2 bg-gray-50">
+                                    <canvas id="signaturePelapor" width="400" height="200" class="signature-pad w-full bg-white rounded-lg cursor-crosshair"></canvas>
+                                </div>
+                                <button type="button" id="clearPelapor" class="mt-3 text-sm text-red-600 hover:text-red-700 font-medium flex items-center">
+                                    <i class="fas fa-eraser mr-1"></i>Hapus Tanda Tangan
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Submit -->
-                    <div class="flex gap-4">
+                    <!-- Submit Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4">
                         <button type="submit" 
-                            class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 transition text-lg font-semibold">
+                            class="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-4 px-8 rounded-xl hover:from-green-700 hover:to-green-800 transition-all text-lg font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center">
                             <i class="fas fa-save mr-2"></i>Simpan Form Gangguan
                         </button>
                         <button type="button" id="resetFormGangguan"
-                            class="px-6 py-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
-                            <i class="fas fa-undo mr-2"></i>Reset
+                            class="px-8 py-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold flex items-center justify-center shadow-md">
+                            <i class="fas fa-undo mr-2"></i>Reset Form
                         </button>
                     </div>
                 </form>
