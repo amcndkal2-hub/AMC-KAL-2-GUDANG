@@ -7931,31 +7931,41 @@ function getFormGangguanHTML() {
                             </div>
                             
                             <!-- Form Fields in Grid -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Part Number</label>
+                                    <input type="text" class="part-number-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Barang</label>
+                                    <input type="text" class="jenis-barang-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Material</label>
+                                    <input type="text" class="material-name-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Mesin</label>
+                                    <input type="text" class="mesin-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">S/N Mesin *</label>
+                                    <input type="text" class="sn-mesin-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" 
+                                        placeholder="Serial Number Mesin (WAJIB)">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah *</label>
                                     <input type="number" class="jumlah-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" 
                                         value="1" min="1" placeholder="Masukkan jumlah">
                                 </div>
-                                
-                                <div class="md:col-span-3">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">No. Surat Jalan / Referensi</label>
-                                    <input type="text" class="sn-mesin-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" 
-                                        placeholder="Nomor referensi">
-                                </div>
                             </div>
-                            
-                            <!-- Catatan -->
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Catatan</label>
-                                <textarea class="catatan-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none" 
-                                    rows="2" placeholder="Catatan tambahan (opsional)"></textarea>
-                            </div>
-                            
-                            <!-- Hidden Fields for Data -->
-                            <input type="hidden" class="part-number-gangguan">
-                            <input type="hidden" class="jenis-barang-gangguan">
-                            <input type="hidden" class="mesin-gangguan">
                             
                             <!-- Stock Info Display -->
                             <div id="stockInfoGangguan" class="mt-4 hidden"></div>

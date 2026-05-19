@@ -155,6 +155,13 @@ async function fillMaterialDataForGangguan(data) {
     document.querySelector('.material-search-gangguan').value = material;
     document.querySelector('.part-number-gangguan').value = partNumber;
     document.querySelector('.jenis-barang-gangguan').value = jenisBarang;
+    
+    // Fill material name field (if exists - new UI)
+    const materialNameField = document.querySelector('.material-name-gangguan');
+    if (materialNameField) {
+        materialNameField.value = material;
+    }
+    
     document.querySelector('.mesin-gangguan').value = mesin;
     
     // CHECK STOCK for Form Gangguan (Permintaan = Keluar)
