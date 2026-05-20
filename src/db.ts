@@ -681,34 +681,49 @@ export async function saveGangguan(db: D1Database, data: any) {
       console.log('⚠️ Table material_gangguan does NOT have sn_mesin column, using fallback')
     }
     
-    // Step 3: Validate duplicate Part Number + S/N Mesin (only block if already issued)
-    for (let i = 0; i < data.materials.length; i++) {
-      const material = data.materials[i]
-      const snMesin = material.snMesin || material.sn_mesin || ''
-      
-      if (material.partNumber && snMesin) {
-        console.log(`🔍 Checking duplicate for Part: ${material.partNumber}, S/N: ${snMesin}`)
-        
-        // Check if this Part Number + S/N Mesin has been issued before
-        const duplicateCheck = await db.prepare(`
-          SELECT mg.id, mg.part_number, mg.sn_mesin, mg.is_issued, mg.tanggal_issued, g.nomor_lh05
-          FROM material_gangguan mg
-          LEFT JOIN gangguan g ON mg.gangguan_id = g.id
-          WHERE mg.part_number = ? AND mg.sn_mesin = ? AND mg.is_issued = 1
-          LIMIT 1
-        `).bind(material.partNumber, snMesin).first()
-        
-        if (duplicateCheck) {
-          const errorMsg = `❌ Part Number "${material.partNumber}" dengan S/N Mesin "${snMesin}" sudah pernah dikeluarkan dari gudang pada tanggal ${duplicateCheck.tanggal_issued || 'N/A'} melalui LH05: ${duplicateCheck.nomor_lh05 || 'N/A'}`
-          console.error(errorMsg)
-          throw new Error(errorMsg)
-        } else {
-          console.log(`✅ No duplicate found (or not issued yet), safe to proceed`)
-        }
-      }
+    // Step 3: Check if is_issued column exists in material_gangguan
+    let hasIsIssuedColumn = false
+    try {
+      await db.prepare(`SELECT is_issued FROM material_gangguan LIMIT 1`).all()
+      hasIsIssuedColumn = true
+      console.log('✅ Table material_gangguan has is_issued column')
+    } catch (schemaCheckError) {
+      hasIsIssuedColumn = false
+      console.log('⚠️ Table material_gangguan does NOT have is_issued column, skipping duplicate check')
     }
     
-    // Step 4: Build batch for all materials based on schema
+    // Step 4: Validate duplicate Part Number + S/N Mesin (only if is_issued column exists)
+    if (hasIsIssuedColumn) {
+      for (let i = 0; i < data.materials.length; i++) {
+        const material = data.materials[i]
+        const snMesin = material.snMesin || material.sn_mesin || ''
+        
+        if (material.partNumber && snMesin) {
+          console.log(`🔍 Checking duplicate for Part: ${material.partNumber}, S/N: ${snMesin}`)
+          
+          // Check if this Part Number + S/N Mesin has been issued before
+          const duplicateCheck = await db.prepare(`
+            SELECT mg.id, mg.part_number, mg.sn_mesin, mg.is_issued, mg.tanggal_issued, g.nomor_lh05
+            FROM material_gangguan mg
+            LEFT JOIN gangguan g ON mg.gangguan_id = g.id
+            WHERE mg.part_number = ? AND mg.sn_mesin = ? AND mg.is_issued = 1
+            LIMIT 1
+          `).bind(material.partNumber, snMesin).first()
+          
+          if (duplicateCheck) {
+            const errorMsg = `❌ Part Number "${material.partNumber}" dengan S/N Mesin "${snMesin}" sudah pernah dikeluarkan dari gudang pada tanggal ${duplicateCheck.tanggal_issued || 'N/A'} melalui LH05: ${duplicateCheck.nomor_lh05 || 'N/A'}`
+            console.error(errorMsg)
+            throw new Error(errorMsg)
+          } else {
+            console.log(`✅ No duplicate found (or not issued yet), safe to proceed`)
+          }
+        }
+      }
+    } else {
+      console.log('⚠️ Skipping duplicate validation - is_issued column not available. Please run migration: npx wrangler d1 migrations apply webapp-production --local')
+    }
+    
+    // Step 5: Build batch for all materials based on schema
     const materialBatch: D1PreparedStatement[] = []
     
     for (let i = 0; i < data.materials.length; i++) {
@@ -717,22 +732,43 @@ export async function saveGangguan(db: D1Database, data: any) {
       console.log(`📦 Preparing material ${i + 1}/${data.materials.length}:`, material.partNumber, 'S/N:', snMesin)
       
       if (hasSnMesinColumn) {
-        // New schema: INSERT with sn_mesin and jenis_barang columns
-        const stmt = db.prepare(`
-          INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin, jenis_barang)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(
-          gangguanId,
-          material.partNumber,
-          material.material,
-          material.mesin,
-          material.jumlah,
-          material.status || 'N/A',
-          data.unitULD,
-          data.unitULD,
-          snMesin,
-          material.jenisBarang || 'FILTER'
-        )
+        // New schema: INSERT with sn_mesin, jenis_barang, and is_issued columns
+        // Try with is_issued first, fallback without it if column doesn't exist
+        let stmt
+        if (hasIsIssuedColumn) {
+          stmt = db.prepare(`
+            INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin, jenis_barang, is_issued)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+          `).bind(
+            gangguanId,
+            material.partNumber,
+            material.material,
+            material.mesin,
+            material.jumlah,
+            material.status || 'N/A',
+            data.unitULD,
+            data.unitULD,
+            snMesin,
+            material.jenisBarang || 'FILTER'
+          )
+        } else {
+          // Fallback: Without is_issued column (rely on DEFAULT value)
+          stmt = db.prepare(`
+            INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin, jenis_barang)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            gangguanId,
+            material.partNumber,
+            material.material,
+            material.mesin,
+            material.jumlah,
+            material.status || 'N/A',
+            data.unitULD,
+            data.unitULD,
+            snMesin,
+            material.jenisBarang || 'FILTER'
+          )
+        }
         materialBatch.push(stmt)
       } else {
         // Old schema: INSERT without sn_mesin, store in status field
@@ -756,7 +792,7 @@ export async function saveGangguan(db: D1Database, data: any) {
       }
     }
     
-    // Step 5: Execute all materials insert (with error handling)
+    // Step 6: Execute all materials insert (with error handling)
     console.log(`🚀 Inserting ${materialBatch.length} materials...`)
     let insertedCount = 0
     
@@ -784,21 +820,41 @@ export async function saveGangguan(db: D1Database, data: any) {
         
         try {
           if (hasSnMesinColumn) {
-            await db.prepare(`
-              INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin, jenis_barang)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).bind(
-              gangguanId,
-              material.partNumber,
-              material.material,
-              material.mesin,
-              material.jumlah,
-              material.status || 'N/A',
-              data.unitULD,
-              data.unitULD,
-              snMesin,
-              material.jenisBarang || 'FILTER'
-            ).run()
+            // Try with is_issued column first
+            if (hasIsIssuedColumn) {
+              await db.prepare(`
+                INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin, jenis_barang, is_issued)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+              `).bind(
+                gangguanId,
+                material.partNumber,
+                material.material,
+                material.mesin,
+                material.jumlah,
+                material.status || 'N/A',
+                data.unitULD,
+                data.unitULD,
+                snMesin,
+                material.jenisBarang || 'FILTER'
+              ).run()
+            } else {
+              // Fallback: without is_issued
+              await db.prepare(`
+                INSERT INTO material_gangguan (gangguan_id, part_number, material, mesin, jumlah, status, unit_uld, lokasi_tujuan, sn_mesin, jenis_barang)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `).bind(
+                gangguanId,
+                material.partNumber,
+                material.material,
+                material.mesin,
+                material.jumlah,
+                material.status || 'N/A',
+                data.unitULD,
+                data.unitULD,
+                snMesin,
+                material.jenisBarang || 'FILTER'
+              ).run()
+            }
           } else {
             const statusValue = snMesin ? `SN:${snMesin}` : (material.status || 'N/A')
             await db.prepare(`
