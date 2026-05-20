@@ -1989,9 +1989,14 @@ export async function getAllRAB(db: D1Database) {
 
 export async function getRABById(db: D1Database, rabId: number) {
   try {
-    // Get RAB header
+    // Get RAB header with nomor_ijin_prinsip from pengadaan_rab_links
     const rab = await db.prepare(`
-      SELECT * FROM rab WHERE id = ?
+      SELECT 
+        r.*,
+        prl.nomor_ijin_prinsip
+      FROM rab r
+      LEFT JOIN pengadaan_rab_links prl ON r.nomor_rab = prl.nomor_rab
+      WHERE r.id = ?
     `).bind(rabId).first()
     
     if (!rab) {

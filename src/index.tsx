@@ -13273,6 +13273,10 @@ function getDashboardListRABHTML() {
                             <p id="detailNomorTOR" class="font-semibold"></p>
                         </div>
                         <div>
+                            <p class="text-sm text-gray-600">Nomor Ijin Prinsip</p>
+                            <p id="detailNomorIjinPrinsip" class="font-semibold"></p>
+                        </div>
+                        <div>
                             <p class="text-sm text-gray-600">ROK</p>
                             <p id="detailROK" class="font-semibold"></p>
                         </div>
@@ -13734,6 +13738,10 @@ function getDashboardListTORHTML() {
                         <div>
                             <p class="text-sm text-gray-600">Nomor TOR</p>
                             <p id="detailNomorTOR" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Nomor Ijin Prinsip</p>
+                            <p id="detailNomorIjinPrinsip" class="font-semibold"></p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-600">ROK</p>

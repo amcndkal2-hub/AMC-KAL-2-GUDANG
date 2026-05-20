@@ -901,6 +901,7 @@ async function _showRABDetailModalContent(rab, modal) {
   document.getElementById('detailStatus').innerHTML = `<span class="inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(rab.status)}">${rab.status}</span>`
   document.getElementById('detailJenisRAB').innerHTML = `<span class="inline-block px-3 py-1 rounded-full text-sm font-semibold ${getJenisRABColor(rab.jenis_rab)}">${rab.jenis_rab}</span>`
   document.getElementById('detailNomorTOR').textContent = rab.nomor_tor || '-'
+  document.getElementById('detailNomorIjinPrinsip').textContent = rab.nomor_ijin_prinsip || '-'
   
   // ROK: Editable for admin and Andalcekatan
   const currentUser = localStorage.getItem('username') || ''
