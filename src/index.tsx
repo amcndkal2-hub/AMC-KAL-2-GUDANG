@@ -7637,9 +7637,9 @@ function getDashboardMutasiHTML() {
                     <table class="w-full">
                         <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
+                                <th class="px-4 py-3 text-left">Jenis Transaksi</th>
                                 <th class="px-4 py-3 text-left">Nomor BA</th>
                                 <th class="px-4 py-3 text-left">Tanggal</th>
-                                <th class="px-4 py-3 text-left">Jenis Transaksi</th>
                                 <th class="px-4 py-3 text-left">Part Number</th>
                                 <th class="px-4 py-3 text-center">Jumlah</th>
                                 <th class="px-4 py-3 text-left">Lokasi Keluar</th>

@@ -194,13 +194,17 @@ function renderMutasiTable(data = transactions) {
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-red-100 text-red-800';
             
-            const jenisIcon = (tx.jenis_transaksi || '').includes('Masuk') 
-                ? 'arrow-down' 
-                : 'arrow-up';
+            // Simplify jenis transaksi text
+            const jenisText = (tx.jenis_transaksi || '').includes('Masuk') ? 'Masuk' : 'Keluar';
             
             html += `
                 <tr class="border-b hover:bg-gray-50">
                     ${idx === 0 ? `
+                        <td class="px-4 py-3" rowspan="${materials.length}">
+                            <span class="inline-block ${jenisClass} px-3 py-1 rounded-full text-sm font-mono" style="min-width: 80px; text-align: center;">
+                                ${jenisText}
+                            </span>
+                        </td>
                         <td class="px-4 py-3 font-bold" rowspan="${materials.length}">
                             <a href="#" onclick="event.preventDefault(); viewBA('${tx.nomor_ba}'); return false;" class="text-blue-600 hover:underline cursor-pointer">
                                 ${tx.nomor_ba}
@@ -208,12 +212,6 @@ function renderMutasiTable(data = transactions) {
                         </td>
                         <td class="px-4 py-3" rowspan="${materials.length}">
                             ${formatDate(tx.tanggal)}
-                        </td>
-                        <td class="px-4 py-3" rowspan="${materials.length}">
-                            <span class="inline-block ${jenisClass} px-3 py-1 rounded-full text-sm">
-                                <i class="fas fa-${jenisIcon} mr-1"></i>
-                                ${tx.jenis_transaksi}
-                            </span>
                         </td>
                     ` : ''}
                     <td class="px-4 py-3">${mat.partNumber || mat.part_number || '-'}</td>
