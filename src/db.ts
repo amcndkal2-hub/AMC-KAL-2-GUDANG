@@ -681,7 +681,34 @@ export async function saveGangguan(db: D1Database, data: any) {
       console.log('⚠️ Table material_gangguan does NOT have sn_mesin column, using fallback')
     }
     
-    // Step 3: Build batch for all materials based on schema
+    // Step 3: Validate duplicate Part Number + S/N Mesin (only block if already issued)
+    for (let i = 0; i < data.materials.length; i++) {
+      const material = data.materials[i]
+      const snMesin = material.snMesin || material.sn_mesin || ''
+      
+      if (material.partNumber && snMesin) {
+        console.log(`🔍 Checking duplicate for Part: ${material.partNumber}, S/N: ${snMesin}`)
+        
+        // Check if this Part Number + S/N Mesin has been issued before
+        const duplicateCheck = await db.prepare(`
+          SELECT mg.id, mg.part_number, mg.sn_mesin, mg.is_issued, mg.tanggal_issued, g.nomor_lh05
+          FROM material_gangguan mg
+          LEFT JOIN gangguan g ON mg.gangguan_id = g.id
+          WHERE mg.part_number = ? AND mg.sn_mesin = ? AND mg.is_issued = 1
+          LIMIT 1
+        `).bind(material.partNumber, snMesin).first()
+        
+        if (duplicateCheck) {
+          const errorMsg = `❌ Part Number "${material.partNumber}" dengan S/N Mesin "${snMesin}" sudah pernah dikeluarkan dari gudang pada tanggal ${duplicateCheck.tanggal_issued || 'N/A'} melalui LH05: ${duplicateCheck.nomor_lh05 || 'N/A'}`
+          console.error(errorMsg)
+          throw new Error(errorMsg)
+        } else {
+          console.log(`✅ No duplicate found (or not issued yet), safe to proceed`)
+        }
+      }
+    }
+    
+    // Step 4: Build batch for all materials based on schema
     const materialBatch: D1PreparedStatement[] = []
     
     for (let i = 0; i < data.materials.length; i++) {
@@ -729,7 +756,7 @@ export async function saveGangguan(db: D1Database, data: any) {
       }
     }
     
-    // Step 4: Execute all materials insert (with error handling)
+    // Step 5: Execute all materials insert (with error handling)
     console.log(`🚀 Inserting ${materialBatch.length} materials...`)
     let insertedCount = 0
     
