@@ -881,6 +881,43 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
         let alreadySent = false
         let sentQuantity = 0
         
+        // Check if material from THIS LH05 has been issued using is_issued flag
+        // This is more accurate than checking transactions
+        try {
+          const issuedCheck = await env.DB.prepare(`
+            SELECT is_issued, jumlah 
+            FROM material_gangguan mg
+            LEFT JOIN gangguan g ON mg.gangguan_id = g.id
+            WHERE g.nomor_lh05 = ? 
+            AND mg.part_number = ?
+            AND mg.mesin = ?
+            AND mg.is_issued = 1
+            LIMIT 1
+          `).bind(nomorLH05, mat.partNumber, mat.mesin).first()
+          
+          if (issuedCheck) {
+            alreadySent = true
+            sentQuantity = issuedCheck.jumlah as number
+          }
+        } catch (issuedError) {
+          // If is_issued column doesn't exist (old schema), fallback to transaction check
+          console.warn('⚠️ is_issued column not found, using transaction check fallback')
+          
+          allTransactions.forEach((tx: any) => {
+            tx.materials.forEach((txMat: any) => {
+              if (txMat.partNumber === mat.partNumber && tx.jenis_transaksi.includes('Keluar')) {
+                // Only check from_lh05 field - must match THIS LH05
+                const txFromLH05 = tx.from_lh05 || tx.fromLH05
+                if (txFromLH05 === nomorLH05 && txMat.partNumber === mat.partNumber) {
+                  alreadySent = true
+                  sentQuantity += txMat.jumlah
+                }
+              }
+            })
+          })
+        }
+        
+        // Calculate stock regardless of issued status
         allTransactions.forEach((tx: any) => {
           tx.materials.forEach((txMat: any) => {
             if (txMat.partNumber === mat.partNumber) {
@@ -888,26 +925,6 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
                 stokMasuk += txMat.jumlah
               } else if (tx.jenis_transaksi.includes('Keluar')) {
                 stokKeluar += txMat.jumlah
-                
-                // Check if this material was sent from this LH05
-                // Method 1: Check from_lh05 field (if column exists)
-                const txFromLH05 = tx.from_lh05 || tx.fromLH05
-                if (txFromLH05 === nomorLH05 && txMat.partNumber === mat.partNumber) {
-                  alreadySent = true
-                  sentQuantity += txMat.jumlah
-                }
-                
-                // Method 2: Check by matching part_number + mesin + lokasi_tujuan contains LH05 unit
-                // This is fallback when from_lh05 column doesn't exist
-                // Check OUTGOING transactions (Keluar) where lokasi_tujuan matches LH05's unit
-                if (!txFromLH05 && tx.jenis_transaksi.includes('Keluar') && 
-                    tx.lokasi_tujuan && tx.lokasi_tujuan.includes(gangguan.lokasi_gangguan)) {
-                  // Match by part number and mesin
-                  if (txMat.partNumber === mat.partNumber && txMat.mesin === mat.mesin) {
-                    alreadySent = true
-                    sentQuantity += txMat.jumlah
-                  }
-                }
               }
             }
           })
