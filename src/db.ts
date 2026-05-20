@@ -1048,17 +1048,28 @@ export async function getGangguanByLH05FromMaterials(db: D1Database, nomorLH05: 
       `).bind(gangguanId).all()
       materials = results as any[]
     } catch (schemaError) {
-      // Fallback: without jenis_barang column
-      const { results } = await db.prepare(`
-        SELECT 
-          mg.*,
-          COALESCE(mm.JENIS_BARANG, 'Material Handal') as jenis_barang
-        FROM material_gangguan mg
-        LEFT JOIN master_material mm ON mg.part_number = mm.PART_NUMBER
-        WHERE mg.gangguan_id = ?
-        ORDER BY mg.id ASC
-      `).bind(gangguanId).all()
-      materials = results as any[]
+      console.warn('⚠️ Error querying with master_material, falling back to material_gangguan only')
+      // Fallback: without master_material table (if table doesn't exist)
+      try {
+        const { results } = await db.prepare(`
+          SELECT 
+            mg.*,
+            COALESCE(mg.jenis_barang, 'Material Handal') as jenis_barang
+          FROM material_gangguan mg
+          WHERE mg.gangguan_id = ?
+          ORDER BY mg.id ASC
+        `).bind(gangguanId).all()
+        materials = results as any[]
+      } catch (fallbackError) {
+        // Ultimate fallback: without jenis_barang column
+        const { results } = await db.prepare(`
+          SELECT mg.*, 'Material Handal' as jenis_barang
+          FROM material_gangguan mg
+          WHERE mg.gangguan_id = ?
+          ORDER BY mg.id ASC
+        `).bind(gangguanId).all()
+        materials = results as any[]
+      }
     }
     
     if (materials.length === 0) {
