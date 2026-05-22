@@ -881,10 +881,10 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
         let alreadySentFromThisLH05 = false
         let sentQuantityFromThisLH05 = 0
         
-        // Normalize part number and mesin for matching (trim spaces, normalize case)
+        // Normalize part number and mesin for matching (remove ALL spaces, uppercase)
         const normalizeString = (str: string) => {
           if (!str) return ''
-          return str.trim().toUpperCase().replace(/\s+/g, ' ')
+          return str.trim().toUpperCase().replace(/\s+/g, '')
         }
         
         const targetPartNumber = normalizeString(mat.partNumber)
