@@ -881,10 +881,23 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
         let alreadySentFromThisLH05 = false
         let sentQuantityFromThisLH05 = 0
         
+        // Normalize part number and mesin for matching (trim spaces, normalize case)
+        const normalizeString = (str: string) => {
+          if (!str) return ''
+          return str.trim().toUpperCase().replace(/\s+/g, ' ')
+        }
+        
+        const targetPartNumber = normalizeString(mat.partNumber)
+        const targetMesin = normalizeString(mat.mesin)
+        
         // Calculate total stock (Stok Masuk - Stok Keluar)
         allTransactions.forEach((tx: any) => {
           tx.materials.forEach((txMat: any) => {
-            if (txMat.partNumber === mat.partNumber) {
+            const txPartNumber = normalizeString(txMat.partNumber || '')
+            const txMesin = normalizeString(txMat.mesin || '')
+            
+            // Match by Part Number AND Mesin (both normalized)
+            if (txPartNumber === targetPartNumber && txMesin === targetMesin) {
               if (tx.jenis_transaksi.includes('Masuk')) {
                 stokMasuk += txMat.jumlah
               } else if (tx.jenis_transaksi.includes('Keluar')) {
@@ -892,7 +905,7 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
                 
                 // Check if material was already sent from THIS specific LH05
                 const txFromLH05 = tx.from_lh05 || tx.fromLH05
-                if (txFromLH05 === nomorLH05 && txMat.partNumber === mat.partNumber) {
+                if (txFromLH05 === nomorLH05) {
                   alreadySentFromThisLH05 = true
                   sentQuantityFromThisLH05 += txMat.jumlah
                 }
