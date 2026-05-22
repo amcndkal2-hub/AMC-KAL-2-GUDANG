@@ -874,50 +874,14 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
           console.warn(`⚠️ Failed to lookup jenis_barang for ${mat.partNumber}:`, lookupError)
         }
         
-        // Calculate stock for this part number
+        // Calculate stock for this part number from ALL transactions
         const allTransactions = await DB.getAllTransactions(env.DB)
         let stokMasuk = 0
         let stokKeluar = 0
-        let alreadySent = false
-        let sentQuantity = 0
+        let alreadySentFromThisLH05 = false
+        let sentQuantityFromThisLH05 = 0
         
-        // Check if material from THIS LH05 has been issued using is_issued flag
-        // This is more accurate than checking transactions
-        try {
-          const issuedCheck = await env.DB.prepare(`
-            SELECT is_issued, jumlah 
-            FROM material_gangguan mg
-            LEFT JOIN gangguan g ON mg.gangguan_id = g.id
-            WHERE g.nomor_lh05 = ? 
-            AND mg.part_number = ?
-            AND mg.mesin = ?
-            AND mg.is_issued = 1
-            LIMIT 1
-          `).bind(nomorLH05, mat.partNumber, mat.mesin).first()
-          
-          if (issuedCheck) {
-            alreadySent = true
-            sentQuantity = issuedCheck.jumlah as number
-          }
-        } catch (issuedError) {
-          // If is_issued column doesn't exist (old schema), fallback to transaction check
-          console.warn('⚠️ is_issued column not found, using transaction check fallback')
-          
-          allTransactions.forEach((tx: any) => {
-            tx.materials.forEach((txMat: any) => {
-              if (txMat.partNumber === mat.partNumber && tx.jenis_transaksi.includes('Keluar')) {
-                // Only check from_lh05 field - must match THIS LH05
-                const txFromLH05 = tx.from_lh05 || tx.fromLH05
-                if (txFromLH05 === nomorLH05 && txMat.partNumber === mat.partNumber) {
-                  alreadySent = true
-                  sentQuantity += txMat.jumlah
-                }
-              }
-            })
-          })
-        }
-        
-        // Calculate stock regardless of issued status
+        // Calculate total stock (Stok Masuk - Stok Keluar)
         allTransactions.forEach((tx: any) => {
           tx.materials.forEach((txMat: any) => {
             if (txMat.partNumber === mat.partNumber) {
@@ -925,6 +889,13 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
                 stokMasuk += txMat.jumlah
               } else if (tx.jenis_transaksi.includes('Keluar')) {
                 stokKeluar += txMat.jumlah
+                
+                // Check if material was already sent from THIS specific LH05
+                const txFromLH05 = tx.from_lh05 || tx.fromLH05
+                if (txFromLH05 === nomorLH05 && txMat.partNumber === mat.partNumber) {
+                  alreadySentFromThisLH05 = true
+                  sentQuantityFromThisLH05 += txMat.jumlah
+                }
               }
             }
           })
@@ -932,10 +903,10 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
         
         const stokAkhir = stokMasuk - stokKeluar
         
-        // Material is not available if:
-        // 1. Already sent (sentQuantity >= requested quantity)
-        // 2. Stock is insufficient
-        const isFullySent = sentQuantity >= mat.jumlah
+        // Material can be selected if:
+        // 1. Stock available >= Requested quantity (stokAkhir >= mat.jumlah)
+        // 2. NOT already sent from this LH05 (alreadySentFromThisLH05 === false)
+        const canBeSelected = stokAkhir >= mat.jumlah && !alreadySentFromThisLH05
         
         return {
           id: mat.id || mat.partNumber,
@@ -943,12 +914,12 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
           jenisBarang: jenisBarang,
           material: mat.material,
           mesin: mat.mesin,
-          status: mat.snMesin || mat.sn_mesin || mat.status || 'N/A',  // PRIORITIZE sn_mesin for S/N Mesin
+          status: mat.snMesin || mat.sn_mesin || mat.status || 'N/A',  // S/N Mesin
           jumlah: mat.jumlah,
           stok: stokAkhir,
-          available: stokAkhir >= mat.jumlah && !isFullySent,
-          alreadySent: isFullySent,
-          sentQuantity: sentQuantity
+          available: canBeSelected,
+          alreadySent: alreadySentFromThisLH05,
+          sentQuantity: sentQuantityFromThisLH05
         }
       })
     )
