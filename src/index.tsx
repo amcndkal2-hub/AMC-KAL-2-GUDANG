@@ -6219,7 +6219,7 @@ function getDashboardMainHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
@@ -6228,10 +6228,10 @@ function getDashboardMainHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -6409,7 +6409,7 @@ function getInputFormHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
@@ -6418,10 +6418,10 @@ function getInputFormHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -7114,16 +7114,16 @@ function getDashboardStokHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -7305,16 +7305,16 @@ function getDashboardUmurHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -7461,16 +7461,16 @@ function getDashboardMutasiHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
                         MUTASI
@@ -7682,7 +7682,7 @@ function getFormGangguanHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
                         FORM GANGGUAN
@@ -7691,10 +7691,10 @@ function getFormGangguanHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -8467,16 +8467,16 @@ function getDashboardGangguanHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -8666,13 +8666,13 @@ function getDashboardRefHargaHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         GANGGUAN
@@ -9117,7 +9117,7 @@ function getDashboardResumeHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
@@ -9126,7 +9126,7 @@ function getDashboardResumeHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         GANGGUAN
@@ -9764,7 +9764,7 @@ function getDashboardPengadaanHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         FORM GANGGUAN
@@ -9773,7 +9773,7 @@ function getDashboardPengadaanHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         GANGGUAN
@@ -10584,7 +10584,7 @@ function getDashboardPengadaanMaterialHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
@@ -10593,7 +10593,7 @@ function getDashboardPengadaanMaterialHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         GANGGUAN
