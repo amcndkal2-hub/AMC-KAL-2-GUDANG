@@ -488,13 +488,7 @@ function renderRABList(rabList) {
         </span>
       </td>
       <td class="px-2 py-2 border text-right align-middle font-semibold text-xs" style="background: white; width: 180px; min-width: 180px; max-width: 180px;">
-        ${(() => {
-          const subtotal = rab.total_harga || 0
-          // PPN logic: Add 11% unless "Pembelian Langsung" with 0% ROK
-          const usePPN = !(rab.jenis_rab === 'Pembelian Langsung' && (!rab.rok_percentage || rab.rok_percentage === 0))
-          const totalWithPPN = usePPN ? Math.round(subtotal * 1.11) : subtotal
-          return formatRupiah(totalWithPPN)
-        })()}
+        ${formatRupiah(rab.total_harga || 0)}
       </td>
       <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 140px; min-width: 140px; max-width: 140px;">
         <select onchange="updateRABStatus(${rab.id}, this.value)" 
