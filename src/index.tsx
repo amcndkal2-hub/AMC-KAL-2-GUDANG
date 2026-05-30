@@ -9489,7 +9489,7 @@ function getDashboardCreateRABHTML() {
                     <a href="/dashboard/umur" class="hover:text-blue-200"><i class="fas fa-calendar-alt mr-2"></i>Umur</a>
                     <a href="/dashboard/gangguan" class="hover:text-blue-200"><i class="fas fa-exclamation-triangle mr-2"></i>Gangguan</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
-                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
+                    <a href="/dashboard/list-tor" class="hover:text-blue-200">REALISASI</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         LOGOUT
@@ -13106,26 +13106,26 @@ function getDashboardListRABHTML() {
         <nav class="bg-blue-600 text-white shadow-md">
             <div class="container mx-auto px-6 py-2.5 flex justify-between items-center">
                 <div class="flex items-center space-x-1">
-                    <a href="/dashboard/create-rab" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition">
-                        <i class="fas fa-plus-circle mr-1.5"></i>Create RAB
+                    <a href="/dashboard/create-rab" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        CREATE RAB
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
-                        Kebutuhan
+                        KEBUTUHAN
                     </a>
                     <a href="/dashboard/ref-harga" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
-                        Ref. Harga
+                        REF. HARGA
                     </a>
                     <a href="/dashboard/list-rab" class="px-4 py-2 text-sm font-semibold rounded bg-blue-800 uppercase">
-                        List RAB
+                        LIST RAB
                     </a>
-                    <a href="/dashboard/list-tor" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition">
-                        <i class="fas fa-file-alt mr-1.5"></i>Realisasi
+                    <a href="/dashboard/list-tor" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        REALISASI
                     </a>
                     <a href="/dashboard/data-spk" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
-                        Data SPK
+                        DATA SPK
                     </a>
                     <a href="/dashboard/tagihan-spk" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
-                        Tagihan SPK
+                        TAGIHAN SPK
                     </a>
                     <a href="/dashboard/resume" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
                         Resume
@@ -13538,11 +13538,11 @@ function getDashboardListTORHTML() {
         <nav class="bg-blue-600 text-white shadow-lg">
             <div class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
+                    <a href="/dashboard/create-rab" class="hover:text-blue-200">CREATE RAB</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
                     <a href="/dashboard/list-rab" class="hover:text-blue-200">LIST RAB</a>
-                    <a href="/dashboard/list-tor" class="bg-blue-800 px-3 py-2 rounded">Realisasi</a>
+                    <a href="/dashboard/list-tor" class="bg-blue-800 px-3 py-2 rounded">REALISASI</a>
                     <a href="/dashboard/data-spk" class="hover:text-blue-200">DATA SPK</a>
                     <a href="/dashboard/tagihan-spk" class="hover:text-blue-200">TAGIHAN SPK</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
