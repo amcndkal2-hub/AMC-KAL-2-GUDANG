@@ -8268,6 +8268,9 @@ function getDashboardKebutuhanMaterialHTML() {
                     <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE KHS
                     </a>
+                    <a href="/dashboard/data-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA KHS
+                    </a>
                     <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
                         KEBUTUHAN
                     </a>
@@ -8699,6 +8702,9 @@ function getDashboardRefHargaHTML() {
                     <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE KHS
                     </a>
+                    <a href="/dashboard/data-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA KHS
+                    </a>
                     <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         LIST RAB
                     </a>
@@ -8829,6 +8835,9 @@ function getDashboardTagihanSPKHTML() {
                     </a>
                     <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE KHS
+                    </a>
+                    <a href="/dashboard/data-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA KHS
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         KEBUTUHAN
@@ -9506,6 +9515,9 @@ function getDashboardCreateRABHTML() {
                     </a>
                     <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE KHS
+                    </a>
+                    <a href="/dashboard/data-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA KHS
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         KEBUTUHAN
@@ -13149,6 +13161,9 @@ function getDashboardListRABHTML() {
                     <a href="/dashboard/create-khs" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
                         CREATE KHS
                     </a>
+                    <a href="/dashboard/data-khs" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        DATA KHS
+                    </a>
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
                         KEBUTUHAN
                     </a>
@@ -13441,6 +13456,9 @@ function getDashboardDataSPKHTML() {
                     <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE KHS
                     </a>
+                    <a href="/dashboard/data-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA KHS
+                    </a>
                     <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         KEBUTUHAN
                     </a>
@@ -13583,6 +13601,7 @@ function getDashboardListTORHTML() {
                 <div class="flex items-center space-x-4">
                     <a href="/dashboard/create-rab" class="hover:text-blue-200">CREATE RAB</a>
                     <a href="/dashboard/create-khs" class="hover:text-blue-200">CREATE KHS</a>
+                    <a href="/dashboard/data-khs" class="hover:text-blue-200">DATA KHS</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
                     <a href="/dashboard/list-rab" class="hover:text-blue-200">LIST RAB</a>

@@ -874,39 +874,40 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
           console.warn(`⚠️ Failed to lookup jenis_barang for ${mat.partNumber}:`, lookupError)
         }
         
-        // Calculate stock for this part number
+        // Calculate stock for this part number from ALL transactions
         const allTransactions = await DB.getAllTransactions(env.DB)
         let stokMasuk = 0
         let stokKeluar = 0
-        let alreadySent = false
-        let sentQuantity = 0
+        let alreadySentFromThisLH05 = false
+        let sentQuantityFromThisLH05 = 0
         
+        // Normalize part number and mesin for matching (remove ALL spaces, uppercase)
+        const normalizeString = (str: string) => {
+          if (!str) return ''
+          return str.trim().toUpperCase().replace(/\s+/g, '')
+        }
+        
+        const targetPartNumber = normalizeString(mat.partNumber)
+        const targetMesin = normalizeString(mat.mesin)
+        
+        // Calculate total stock (Stok Masuk - Stok Keluar)
         allTransactions.forEach((tx: any) => {
           tx.materials.forEach((txMat: any) => {
-            if (txMat.partNumber === mat.partNumber) {
+            const txPartNumber = normalizeString(txMat.partNumber || '')
+            const txMesin = normalizeString(txMat.mesin || '')
+            
+            // Match by Part Number AND Mesin (both normalized)
+            if (txPartNumber === targetPartNumber && txMesin === targetMesin) {
               if (tx.jenis_transaksi.includes('Masuk')) {
                 stokMasuk += txMat.jumlah
               } else if (tx.jenis_transaksi.includes('Keluar')) {
                 stokKeluar += txMat.jumlah
                 
-                // Check if this material was sent from this LH05
-                // Method 1: Check from_lh05 field (if column exists)
+                // Check if material was already sent from THIS specific LH05
                 const txFromLH05 = tx.from_lh05 || tx.fromLH05
-                if (txFromLH05 === nomorLH05 && txMat.partNumber === mat.partNumber) {
-                  alreadySent = true
-                  sentQuantity += txMat.jumlah
-                }
-                
-                // Method 2: Check by matching part_number + mesin + lokasi_tujuan contains LH05 unit
-                // This is fallback when from_lh05 column doesn't exist
-                // Check OUTGOING transactions (Keluar) where lokasi_tujuan matches LH05's unit
-                if (!txFromLH05 && tx.jenis_transaksi.includes('Keluar') && 
-                    tx.lokasi_tujuan && tx.lokasi_tujuan.includes(gangguan.lokasi_gangguan)) {
-                  // Match by part number and mesin
-                  if (txMat.partNumber === mat.partNumber && txMat.mesin === mat.mesin) {
-                    alreadySent = true
-                    sentQuantity += txMat.jumlah
-                  }
+                if (txFromLH05 === nomorLH05) {
+                  alreadySentFromThisLH05 = true
+                  sentQuantityFromThisLH05 += txMat.jumlah
                 }
               }
             }
@@ -915,10 +916,10 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
         
         const stokAkhir = stokMasuk - stokKeluar
         
-        // Material is not available if:
-        // 1. Already sent (sentQuantity >= requested quantity)
-        // 2. Stock is insufficient
-        const isFullySent = sentQuantity >= mat.jumlah
+        // Material can be selected if:
+        // 1. Stock available >= Requested quantity (stokAkhir >= mat.jumlah)
+        // 2. NOT already sent from this LH05 (alreadySentFromThisLH05 === false)
+        const canBeSelected = stokAkhir >= mat.jumlah && !alreadySentFromThisLH05
         
         return {
           id: mat.id || mat.partNumber,
@@ -926,12 +927,12 @@ app.get('/api/lh05/:nomorLH05/materials', async (c) => {
           jenisBarang: jenisBarang,
           material: mat.material,
           mesin: mat.mesin,
-          status: mat.snMesin || mat.sn_mesin || mat.status || 'N/A',  // PRIORITIZE sn_mesin for S/N Mesin
+          status: mat.snMesin || mat.sn_mesin || mat.status || 'N/A',  // S/N Mesin
           jumlah: mat.jumlah,
           stok: stokAkhir,
-          available: stokAkhir >= mat.jumlah && !isFullySent,
-          alreadySent: isFullySent,
-          sentQuantity: sentQuantity
+          available: canBeSelected,
+          alreadySent: alreadySentFromThisLH05,
+          sentQuantity: sentQuantityFromThisLH05
         }
       })
     )
@@ -2853,15 +2854,21 @@ app.get('/api/kebutuhan-material', async (c) => {
       else if (isTerkirim) {
         finalStatus = 'Terkirim'
       }
-      // Priority 3: Material punya S/N tapi belum dikirim = Auto-set Tersedia
+      // Priority 3: Keep N/A as-is if status is explicitly null/empty in DB
+      // IMPORTANT: Do NOT auto-update to "Tersedia" if user hasn't set status yet
+      // This allows users to see materials that need attention in "N/A" filter
+      else if (!mat.status || mat.status === '' || mat.status === 'N/A') {
+        finalStatus = 'N/A'
+      }
+      // Priority 4: Material punya S/N tapi belum dikirim = Auto-set Tersedia
       else if (snMesin && snMesin !== 'N/A' && snMesin !== '-' && snMesin !== 'null') {
         finalStatus = 'Tersedia'
       }
-      // Priority 4: Material ada stok (dari transaksi Masuk) = Auto-set Tersedia
+      // Priority 5: Material ada stok (dari transaksi Masuk) = Auto-set Tersedia
       else if (stok > 0) {
         finalStatus = 'Tersedia'
       }
-      // Priority 5: Default fallback - stok habis dan tidak ada manual status = N/A
+      // Priority 6: Default fallback - stok habis dan tidak ada manual status = N/A
       else {
         finalStatus = 'N/A'
       }
@@ -3386,6 +3393,193 @@ app.get('/api/rab', async (c) => {
   }
 })
 
+// =====================================================
+// PUBLIC API: List RAB Pembelian Langsung with Draft Status (with API Key)
+// =====================================================
+app.get('/api/public/rab-pembelian-langsung-draft', async (c) => {
+  try {
+    // API Key authentication
+    const apiKey = c.req.header('X-API-Key')
+    const validApiKey = 'AMC-RAB-DRAFT-2025-KEY-9g8h7f6e5d4c3b2a' // Production API Key for Draft
+    
+    if (!apiKey || apiKey !== validApiKey) {
+      return c.json({ 
+        error: 'Unauthorized',
+        message: 'Invalid or missing API key. Please provide X-API-Key header.'
+      }, 401)
+    }
+    
+    const { env } = c
+    
+    console.log('🔓 Public API: Fetching RAB Pembelian Langsung with Draft status...')
+    
+    // Query RAB dengan jenis_rab = "Pembelian Langsung" AND status = "Draft"
+    const query = `
+      SELECT 
+        r.id,
+        r.nomor_rab,
+        r.jenis_rab,
+        r.status,
+        r.nomor_tor,
+        r.rok_percentage,
+        r.nama_pekerjaan,
+        r.status_scm,
+        r.created_at,
+        r.updated_at
+      FROM rab r
+      WHERE r.jenis_rab = 'Pembelian Langsung' AND r.status = 'Draft'
+      ORDER BY r.created_at DESC
+    `
+    
+    const result = await env.DB.prepare(query).all()
+    
+    console.log(`✅ Found ${result.results?.length || 0} RAB Pembelian Langsung with Draft status`)
+    
+    // Get items for each RAB
+    const rabList = await Promise.all((result.results || []).map(async (rab: any) => {
+      const itemsQuery = `
+        SELECT 
+          id,
+          rab_id,
+          nomor_lh05,
+          part_number,
+          material,
+          mesin,
+          sn_mesin,
+          unit_uld,
+          jumlah,
+          harga_satuan,
+          nama,
+          harga
+        FROM rab_items
+        WHERE rab_id = ?
+        ORDER BY id ASC
+      `
+      
+      const itemsResult = await env.DB.prepare(itemsQuery).bind(rab.id).all()
+      
+      return {
+        ...rab,
+        items: itemsResult.results || [],
+        item_count: itemsResult.results?.length || 0
+      }
+    }))
+    
+    return c.json({
+      success: true,
+      message: 'RAB Pembelian Langsung (Draft) retrieved successfully',
+      filter: {
+        jenis_rab: 'Pembelian Langsung',
+        status: 'Draft'
+      },
+      count: rabList.length,
+      data: rabList,
+      timestamp: new Date().toISOString()
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Public API error:', error)
+    return c.json({ 
+      success: false,
+      error: 'Internal server error',
+      message: error.message || 'Failed to fetch RAB data'
+    }, 500)
+  }
+})
+
+// =====================================================
+// PUBLIC API: List RAB Pembelian Langsung (All Status) (with API Key)
+// =====================================================
+app.get('/api/public/rab-pembelian-langsung', async (c) => {
+  try {
+    // API Key authentication
+    const apiKey = c.req.header('X-API-Key')
+    const validApiKey = 'AMC-RAB-2025-PL-KEY-8f9d3a1b4c6e7h2i' // Production API Key
+    
+    if (!apiKey || apiKey !== validApiKey) {
+      return c.json({ 
+        error: 'Unauthorized',
+        message: 'Invalid or missing API key. Please provide X-API-Key header.'
+      }, 401)
+    }
+    
+    const { env } = c
+    
+    console.log('🔓 Public API: Fetching RAB Pembelian Langsung (all status)...')
+    
+    // Query RAB dengan jenis_rab = "Pembelian Langsung"
+    const query = `
+      SELECT 
+        r.id,
+        r.nomor_rab,
+        r.jenis_rab,
+        r.status,
+        r.nomor_tor,
+        r.rok_percentage,
+        r.nama_pekerjaan,
+        r.status_scm,
+        r.created_at,
+        r.updated_at
+      FROM rab r
+      WHERE r.jenis_rab = 'Pembelian Langsung'
+      ORDER BY r.created_at DESC
+    `
+    
+    const result = await env.DB.prepare(query).all()
+    
+    console.log(`✅ Found ${result.results?.length || 0} RAB Pembelian Langsung`)
+    
+    // Get items for each RAB
+    const rabList = await Promise.all((result.results || []).map(async (rab: any) => {
+      const itemsQuery = `
+        SELECT 
+          id,
+          rab_id,
+          nomor_lh05,
+          part_number,
+          material,
+          mesin,
+          sn_mesin,
+          unit_uld,
+          jumlah,
+          harga_satuan,
+          nama,
+          harga
+        FROM rab_items
+        WHERE rab_id = ?
+        ORDER BY id ASC
+      `
+      
+      const itemsResult = await env.DB.prepare(itemsQuery).bind(rab.id).all()
+      
+      return {
+        ...rab,
+        items: itemsResult.results || [],
+        item_count: itemsResult.results?.length || 0
+      }
+    }))
+    
+    return c.json({
+      success: true,
+      message: 'RAB Pembelian Langsung retrieved successfully',
+      filter: {
+        jenis_rab: 'Pembelian Langsung'
+      },
+      count: rabList.length,
+      data: rabList,
+      timestamp: new Date().toISOString()
+    })
+    
+  } catch (error: any) {
+    console.error('❌ Public API error:', error)
+    return c.json({ 
+      success: false,
+      error: 'Internal server error',
+      message: error.message || 'Failed to fetch RAB data'
+    }, 500)
+  }
+})
+
 // API: Get materials from RAB with status Tersedia (MUST be before /:id route)
 app.get('/api/rab/materials-tersedia', async (c) => {
   try {
@@ -3791,6 +3985,419 @@ app.put('/api/rab/:rabId/item/:itemId/realisasi', async (c) => {
   }
 })
 
+// API: Update harga satuan for RAB item (for admin and Andalcekatan)
+app.put('/api/rab/items/:itemId/harga', async (c) => {
+  try {
+    const { env } = c
+    const itemId = parseInt(c.req.param('itemId'))
+    const body = await c.req.json()
+    const hargaSatuan = parseFloat(body.harga_satuan)
+    
+    console.log('💰 Update Harga Satuan - RAW REQUEST:', { 
+      itemId, 
+      bodyRaw: body,
+      hargaSatuanRaw: body.harga_satuan,
+      hargaSatuanParsed: hargaSatuan,
+      isNaN: isNaN(hargaSatuan)
+    })
+    
+    // Validate input - allow 0 or positive numbers
+    if (isNaN(hargaSatuan) || hargaSatuan < 0) {
+      console.error('❌ Invalid harga satuan value:', { hargaSatuan, isNaN: isNaN(hargaSatuan) })
+      return c.json({ 
+        error: 'Invalid harga satuan value',
+        details: { received: body.harga_satuan, parsed: hargaSatuan }
+      }, 400)
+    }
+    
+    console.log('✅ Validation passed, checking item...')
+    
+    // Check if item exists
+    const item = await env.DB.prepare(`
+      SELECT id, rab_id FROM rab_items WHERE id = ?
+    `).bind(itemId).first()
+    
+    if (!item) {
+      console.error('❌ Item not found:', itemId)
+      return c.json({ error: 'Item not found' }, 404)
+    }
+    
+    console.log('✅ Item found, updating harga satuan...')
+    
+    // Update harga satuan
+    const updateResult = await env.DB.prepare(`
+      UPDATE rab_items 
+      SET harga_satuan = ? 
+      WHERE id = ?
+    `).bind(hargaSatuan, itemId).run()
+    
+    console.log('✅ Update result:', updateResult)
+    
+    // Recalculate RAB total_harga
+    const rabId = item.rab_id
+    const totalResult = await env.DB.prepare(`
+      SELECT SUM(jumlah * harga_satuan) as total 
+      FROM rab_items 
+      WHERE rab_id = ?
+    `).bind(rabId).first()
+    
+    const newTotal = totalResult?.total || 0
+    
+    await env.DB.prepare(`
+      UPDATE rab 
+      SET total_harga = ? 
+      WHERE id = ?
+    `).bind(newTotal, rabId).run()
+    
+    console.log('✅ Harga satuan and RAB total updated successfully!')
+    
+    return c.json({ 
+      success: true,
+      message: 'Harga satuan berhasil diupdate',
+      data: { itemId, harga_satuan: hargaSatuan, new_total: newTotal }
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to update harga satuan - EXCEPTION:', error)
+    return c.json({ 
+      error: 'Failed to update harga satuan',
+      details: error.message 
+    }, 500)
+  }
+})
+
+// API: Update ROK percentage for RAB (for admin and Andalcekatan)
+app.put('/api/rab/:rabId/rok', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('rabId'))
+    const body = await c.req.json()
+    const rokPercentage = parseFloat(body.rok_percentage)
+    
+    console.log('📊 Update ROK - RAW REQUEST:', { 
+      rabId, 
+      bodyRaw: body,
+      rokRaw: body.rok_percentage,
+      rokParsed: rokPercentage,
+      isNaN: isNaN(rokPercentage)
+    })
+    
+    // Validate input - allow 0-100
+    if (isNaN(rokPercentage) || rokPercentage < 0 || rokPercentage > 100) {
+      console.error('❌ Invalid ROK percentage:', { rokPercentage })
+      return c.json({ 
+        error: 'Invalid ROK percentage',
+        details: 'ROK must be between 0-100'
+      }, 400)
+    }
+    
+    console.log('✅ Validation passed, checking RAB...')
+    
+    // Check if RAB exists
+    const rab = await env.DB.prepare(`
+      SELECT id FROM rab WHERE id = ?
+    `).bind(rabId).first()
+    
+    if (!rab) {
+      console.error('❌ RAB not found:', rabId)
+      return c.json({ error: 'RAB not found' }, 404)
+    }
+    
+    console.log('✅ RAB found, updating ROK...')
+    
+    // Update ROK percentage
+    const updateResult = await env.DB.prepare(`
+      UPDATE rab 
+      SET rok_percentage = ? 
+      WHERE id = ?
+    `).bind(rokPercentage, rabId).run()
+    
+    console.log('✅ Update result:', updateResult)
+    console.log('✅ ROK percentage updated successfully!')
+    
+    return c.json({ 
+      success: true,
+      message: 'ROK berhasil diupdate',
+      data: { rabId, rok_percentage: rokPercentage }
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to update ROK - EXCEPTION:', error)
+    return c.json({ 
+      error: 'Failed to update ROK',
+      details: error.message 
+    }, 500)
+  }
+})
+
+// API: Get available RAB Pembelian Langsung (not yet linked)
+app.get('/api/rab/pembelian-langsung/available', async (c) => {
+  try {
+    const { env } = c
+    
+    // Check if table exists first (graceful degradation)
+    try {
+      await env.DB.prepare(`SELECT 1 FROM rab_pembelian_langsung_link LIMIT 1`).first()
+    } catch (tableError) {
+      // Table doesn't exist yet - return all Pembelian Langsung RAB
+      console.warn('⚠️ Table rab_pembelian_langsung_link not found, returning all Pembelian Langsung RAB')
+      const result = await env.DB.prepare(`
+        SELECT r.id, r.nomor_rab, r.total_harga, r.rok_percentage
+        FROM rab r
+        WHERE r.jenis_rab = 'Pembelian Langsung'
+        ORDER BY r.created_at DESC
+      `).all()
+      
+      return c.json({ 
+        success: true, 
+        data: result.results || [] 
+      })
+    }
+    
+    // Get all RAB Pembelian Langsung that are NOT already linked
+    const result = await env.DB.prepare(`
+      SELECT r.id, r.nomor_rab, r.total_harga, r.rok_percentage
+      FROM rab r
+      WHERE r.jenis_rab = 'Pembelian Langsung'
+      AND r.id NOT IN (
+        SELECT rab_pembelian_langsung_id 
+        FROM rab_pembelian_langsung_link
+      )
+      ORDER BY r.created_at DESC
+    `).all()
+    
+    return c.json({ 
+      success: true, 
+      data: result.results || [] 
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to get available Pembelian Langsung:', error)
+    return c.json({ 
+      error: 'Failed to get available RAB Pembelian Langsung',
+      details: error.message 
+    }, 500)
+  }
+})
+
+// API: Get linked RAB Pembelian Langsung for specific RAB SPK
+app.get('/api/rab/:rabId/linked-pembelian-langsung', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('rabId'))
+    
+    const result = await env.DB.prepare(`
+      SELECT 
+        l.id as link_id,
+        r.id as rab_id,
+        r.nomor_rab,
+        r.total_harga,
+        r.rok_percentage
+      FROM rab_pembelian_langsung_link l
+      JOIN rab r ON l.rab_pembelian_langsung_id = r.id
+      WHERE l.rab_spk_id = ?
+      ORDER BY l.created_at DESC
+    `).bind(rabId).all()
+    
+    return c.json({ 
+      success: true, 
+      data: result.results || [] 
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to get linked Pembelian Langsung:', error)
+    return c.json({ 
+      error: 'Failed to get linked RAB Pembelian Langsung',
+      details: error.message 
+    }, 500)
+  }
+})
+
+// API: Link RAB Pembelian Langsung to RAB SPK
+app.post('/api/rab/:rabId/link-pembelian-langsung', async (c) => {
+  try {
+    console.log('🔵 POST /api/rab/:rabId/link-pembelian-langsung - START')
+    const { env } = c
+    const rabSpkId = parseInt(c.req.param('rabId'))
+    const body = await c.req.json()
+    const rabPembelianLangsungId = parseInt(body.rab_pembelian_langsung_id)
+    
+    console.log('📝 RAB SPK ID:', rabSpkId)
+    console.log('📝 RAB Pembelian Langsung ID:', rabPembelianLangsungId)
+    
+    // Validate input
+    if (isNaN(rabSpkId) || isNaN(rabPembelianLangsungId)) {
+      console.error('❌ Invalid RAB IDs')
+      return c.json({ 
+        error: 'Invalid RAB ID',
+        details: 'Both RAB SPK ID and RAB Pembelian Langsung ID must be valid numbers'
+      }, 400)
+    }
+    
+    // Check if RAB SPK exists and is SPK type
+    const rabSpk = await env.DB.prepare(`
+      SELECT id, jenis_rab, rok_percentage FROM rab WHERE id = ?
+    `).bind(rabSpkId).first()
+    
+    if (!rabSpk) {
+      return c.json({ error: 'RAB SPK not found' }, 404)
+    }
+    
+    if (rabSpk.jenis_rab !== 'SPK') {
+      return c.json({ 
+        error: 'Invalid RAB type',
+        details: 'Only RAB with type SPK can link to Pembelian Langsung'
+      }, 400)
+    }
+    
+    // Check if RAB Pembelian Langsung exists
+    const rabPL = await env.DB.prepare(`
+      SELECT id, nomor_rab, total_harga, rok_percentage FROM rab WHERE id = ? AND jenis_rab = 'Pembelian Langsung'
+    `).bind(rabPembelianLangsungId).first()
+    
+    if (!rabPL) {
+      return c.json({ error: 'RAB Pembelian Langsung not found' }, 404)
+    }
+    
+    // Check if already linked (UNIQUE constraint will prevent this, but check first)
+    const existingLink = await env.DB.prepare(`
+      SELECT id FROM rab_pembelian_langsung_link 
+      WHERE rab_pembelian_langsung_id = ?
+    `).bind(rabPembelianLangsungId).first()
+    
+    if (existingLink) {
+      return c.json({ 
+        error: 'RAB Pembelian Langsung already linked',
+        details: 'This RAB Pembelian Langsung is already linked to another RAB SPK'
+      }, 400)
+    }
+    
+    // Get current saldo calculation for RAB SPK
+    const itemsResult = await env.DB.prepare(`
+      SELECT jumlah, harga_satuan, realisasi FROM rab_items WHERE rab_id = ?
+    `).bind(rabSpkId).all()
+    
+    const items = itemsResult.results || []
+    const rokPercentage = rabSpk.rok_percentage || 0
+    
+    let subtotalTanpaROK = 0
+    let totalRealisasi = 0
+    
+    items.forEach(item => {
+      const qty = item.jumlah || 0
+      const harga = item.harga_satuan || 0
+      const realisasi = item.realisasi || 0
+      
+      const hargaTanpaROK = rokPercentage > 0 ? Math.round(harga / (1 + rokPercentage / 100)) : harga
+      subtotalTanpaROK += (qty * hargaTanpaROK)
+      totalRealisasi += (qty * realisasi)
+    })
+    
+    // Get total from already linked Pembelian Langsung
+    const linkedResult = await env.DB.prepare(`
+      SELECT SUM(r.total_harga) as total
+      FROM rab_pembelian_langsung_link l
+      JOIN rab r ON l.rab_pembelian_langsung_id = r.id
+      WHERE l.rab_spk_id = ?
+    `).bind(rabSpkId).first()
+    
+    const currentLinkedTotal = linkedResult?.total || 0
+    
+    // Calculate new saldo after adding this Pembelian Langsung
+    const rabPLTotalTanpaROK = rabPL.rok_percentage > 0 
+      ? Math.round(rabPL.total_harga / (1 + rabPL.rok_percentage / 100))
+      : rabPL.total_harga
+    
+    const newSaldo = subtotalTanpaROK - totalRealisasi - currentLinkedTotal - rabPLTotalTanpaROK
+    
+    // Validation: Saldo must not be negative
+    if (newSaldo < 0) {
+      return c.json({ 
+        error: 'Validation failed',
+        details: 'Total RAB Pembelian Langsung melebihi Saldo yang tersedia',
+        data: {
+          subtotal_tanpa_rok: subtotalTanpaROK,
+          total_realisasi: totalRealisasi,
+          current_linked_total: currentLinkedTotal,
+          new_pembelian_langsung: rabPLTotalTanpaROK,
+          calculated_saldo: newSaldo
+        }
+      }, 400)
+    }
+    
+    // Insert link
+    await env.DB.prepare(`
+      INSERT INTO rab_pembelian_langsung_link (rab_spk_id, rab_pembelian_langsung_id)
+      VALUES (?, ?)
+    `).bind(rabSpkId, rabPembelianLangsungId).run()
+    
+    console.log('✅ RAB Pembelian Langsung linked successfully!')
+    
+    return c.json({ 
+      success: true,
+      message: 'RAB Pembelian Langsung berhasil ditambahkan',
+      data: {
+        rab_spk_id: rabSpkId,
+        rab_pembelian_langsung_id: rabPembelianLangsungId,
+        new_saldo: newSaldo
+      }
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to link Pembelian Langsung:', error)
+    return c.json({ 
+      error: 'Failed to link RAB Pembelian Langsung',
+      details: error.message 
+    }, 500)
+  }
+})
+
+// API: Unlink RAB Pembelian Langsung from RAB SPK
+app.delete('/api/rab/:rabId/unlink-pembelian-langsung/:linkId', async (c) => {
+  try {
+    const { env } = c
+    const rabSpkId = parseInt(c.req.param('rabId'))
+    const linkId = parseInt(c.req.param('linkId'))
+    
+    // Validate input
+    if (isNaN(rabSpkId) || isNaN(linkId)) {
+      return c.json({ 
+        error: 'Invalid ID',
+        details: 'Both RAB SPK ID and Link ID must be valid numbers'
+      }, 400)
+    }
+    
+    // Check if link exists
+    const link = await env.DB.prepare(`
+      SELECT id FROM rab_pembelian_langsung_link 
+      WHERE id = ? AND rab_spk_id = ?
+    `).bind(linkId, rabSpkId).first()
+    
+    if (!link) {
+      return c.json({ error: 'Link not found' }, 404)
+    }
+    
+    // Delete link
+    await env.DB.prepare(`
+      DELETE FROM rab_pembelian_langsung_link WHERE id = ?
+    `).bind(linkId).run()
+    
+    console.log('✅ RAB Pembelian Langsung unlinked successfully!')
+    
+    return c.json({ 
+      success: true,
+      message: 'RAB Pembelian Langsung berhasil dihapus dari daftar'
+    })
+    
+  } catch (error) {
+    console.error('❌ Failed to unlink Pembelian Langsung:', error)
+    return c.json({ 
+      error: 'Failed to unlink RAB Pembelian Langsung',
+      details: error.message 
+    }, 500)
+  }
+})
+
 // API: Save transaction from RAB
 app.post('/api/save-transaction-from-rab', async (c) => {
   try {
@@ -3969,13 +4576,13 @@ app.post('/api/rab/:id/update-status', async (c) => {
   try {
     const { env } = c
     const rabId = parseInt(c.req.param('id'))
-    const { status } = await c.req.json()
+    const { status: newStatus } = await c.req.json()
     
-    console.log('📝 Updating RAB status:', { rabId, status })
+    console.log('📝 Updating RAB status:', { rabId, newStatus })
     
     // Validate status
     const validStatuses = ['Draft', 'Pengadaan', 'Tersedia', 'Masuk Gudang']
-    if (!validStatuses.includes(status)) {
+    if (!validStatuses.includes(newStatus)) {
       return c.json({ error: 'Invalid status' }, 400)
     }
     
@@ -3985,16 +4592,77 @@ app.post('/api/rab/:id/update-status', async (c) => {
       return c.json({ error: 'RAB not found' }, 404)
     }
     
+    // Get username from session
+    const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '')
+    let username = 'guest'
+    if (sessionToken) {
+      const session = await env.DB.prepare(
+        'SELECT username FROM sessions WHERE session_token = ?'
+      ).bind(sessionToken).first()
+      if (session) username = session.username
+    }
+    
+    console.log('👤 User:', username, '| RAB Jenis:', rab.jenis_rab, '| Current:', rab.status, '→ New:', newStatus)
+    
+    // ===== VALIDATION FOR PEMBELIAN LANGSUNG =====
+    if (rab.jenis_rab === 'Pembelian Langsung') {
+      const currentStatus = rab.status
+      const statusOrder = { 'Draft': 1, 'Pengadaan': 2, 'Tersedia': 3, 'Masuk Gudang': 4 }
+      
+      // 1. Masuk Gudang is final/locked
+      if (currentStatus === 'Masuk Gudang') {
+        return c.json({ 
+          error: 'Status Masuk Gudang tidak bisa diubah',
+          details: 'Status sudah final. RAB ini sudah masuk gudang dan terkunci.'
+        }, 400)
+      }
+      
+      // 2. Cannot manually set to Masuk Gudang
+      if (newStatus === 'Masuk Gudang') {
+        return c.json({ 
+          error: 'Status Masuk Gudang hanya bisa otomatis',
+          details: 'Status "Masuk Gudang" akan diset otomatis saat material dari RAB Tersedia di-input di menu Input Material.'
+        }, 400)
+      }
+      
+      // 3. Rollback only for Andalcekatan
+      const isRollback = statusOrder[newStatus] < statusOrder[currentStatus]
+      if (isRollback && username !== 'Andalcekatan') {
+        return c.json({ 
+          error: 'Akses ditolak',
+          details: 'Hanya akun Andalcekatan yang bisa rollback status RAB Pembelian Langsung.'
+        }, 403)
+      }
+      
+      // 4. Cannot skip Pengadaan (Draft → Tersedia)
+      if (currentStatus === 'Draft' && newStatus === 'Tersedia') {
+        return c.json({ 
+          error: 'Transisi status tidak valid',
+          details: 'Status harus melalui Pengadaan terlebih dahulu. Ubah ke Pengadaan dulu, baru ke Tersedia.'
+        }, 400)
+      }
+      
+      // 5. Cannot skip Tersedia (Pengadaan → Masuk Gudang)
+      if (currentStatus === 'Pengadaan' && newStatus === 'Masuk Gudang') {
+        return c.json({ 
+          error: 'Transisi status tidak valid',
+          details: 'Status harus ke Tersedia terlebih dahulu. Status Masuk Gudang hanya bisa otomatis.'
+        }, 400)
+      }
+      
+      console.log('✅ Status transition valid for Pembelian Langsung')
+    }
+    
     // Determine which timestamp field to update based on status
     let updateQuery = 'UPDATE rab SET status = ?, updated_at = datetime(\'now\') WHERE id = ?'
-    let bindParams = [status, rabId]
+    let bindParams = [newStatus, rabId]
     
     // Try to update timestamp columns if they exist
-    if (status === 'Pengadaan') {
+    if (newStatus === 'Pengadaan') {
       updateQuery = 'UPDATE rab SET status = ?, tanggal_pengadaan = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
-    } else if (status === 'Tersedia') {
+    } else if (newStatus === 'Tersedia') {
       updateQuery = 'UPDATE rab SET status = ?, tanggal_tersedia = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
-    } else if (status === 'Masuk Gudang') {
+    } else if (newStatus === 'Masuk Gudang') {
       updateQuery = 'UPDATE rab SET status = ?, tanggal_masuk_gudang = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
     }
     
@@ -4008,11 +4676,11 @@ app.post('/api/rab/:id/update-status', async (c) => {
         UPDATE rab 
         SET status = ?, updated_at = datetime('now')
         WHERE id = ?
-      `).bind(status, rabId).run()
+      `).bind(newStatus, rabId).run()
     }
     
     // Sync status to material_gangguan if status is Pengadaan or Tersedia
-    if (status === 'Pengadaan' || status === 'Tersedia') {
+    if (newStatus === 'Pengadaan' || newStatus === 'Tersedia') {
       const items = rab.items || []
       
       for (const item of items) {
@@ -4022,16 +4690,16 @@ app.post('/api/rab/:id/update-status', async (c) => {
           SET status = ?
           WHERE part_number = ? 
           AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
-        `).bind(status, item.part_number, item.nomor_lh05).run()
+        `).bind(newStatus, item.part_number, item.nomor_lh05).run()
         
-        console.log(`✅ Synced status ${status} to material ${item.part_number}`)
+        console.log(`✅ Synced status ${newStatus} to material ${item.part_number}`)
       }
     }
     
     return c.json({
       success: true,
       message: 'Status RAB berhasil diupdate!',
-      status
+      status: newStatus
     })
   } catch (error: any) {
     console.error('Failed to update RAB status:', error)
@@ -5480,6 +6148,16 @@ app.get('/dashboard/create-rab', (c) => {
   return c.html(getDashboardCreateRABHTML())
 })
 
+// Dashboard Create KHS (PROTECTED - auth required)
+app.get('/dashboard/create-khs', (c) => {
+  return c.html(getDashboardCreateKHSHTML())
+})
+
+// Dashboard Data KHS (PROTECTED - auth required)
+app.get('/dashboard/data-khs', (c) => {
+  return c.html(getDashboardDataKHSHTML())
+})
+
 // Dashboard List RAB (PROTECTED - auth required)
 app.get('/dashboard/list-rab', (c) => {
   return c.html(getDashboardListRABHTML())
@@ -5493,6 +6171,11 @@ app.get('/dashboard/ref-harga', (c) => {
 // Dashboard Data SPK (PROTECTED - auth required)
 app.get('/dashboard/data-spk', (c) => {
   return c.html(getDashboardDataSPKHTML())
+})
+
+// Dashboard Tagihan SPK (PROTECTED - auth required)
+app.get('/dashboard/tagihan-spk', (c) => {
+  return c.html(getDashboardTagihanSPKHTML())
 })
 
 // Dashboard Realisasi (PROTECTED - auth required)
@@ -5546,7 +6229,7 @@ function getDashboardMainHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
@@ -5555,10 +6238,10 @@ function getDashboardMainHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -5736,7 +6419,7 @@ function getInputFormHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
@@ -5745,10 +6428,10 @@ function getInputFormHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -6441,16 +7124,16 @@ function getDashboardStokHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -6632,16 +7315,16 @@ function getDashboardUmurHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -6788,16 +7471,16 @@ function getDashboardMutasiHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
                         MUTASI
@@ -6948,9 +7631,9 @@ function getDashboardMutasiHTML() {
                     <table class="w-full">
                         <thead class="bg-blue-500 text-white" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
+                                <th class="px-4 py-3 text-left">Jenis Transaksi</th>
                                 <th class="px-4 py-3 text-left">Nomor BA</th>
                                 <th class="px-4 py-3 text-left">Tanggal</th>
-                                <th class="px-4 py-3 text-left">Jenis Transaksi</th>
                                 <th class="px-4 py-3 text-left">Part Number</th>
                                 <th class="px-4 py-3 text-center">Jumlah</th>
                                 <th class="px-4 py-3 text-left">Lokasi Keluar</th>
@@ -7009,7 +7692,7 @@ function getFormGangguanHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800 text-base font-semibold">
                         FORM GANGGUAN
@@ -7018,10 +7701,10 @@ function getFormGangguanHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -7033,279 +7716,313 @@ function getFormGangguanHTML() {
             </div>
         </nav>
 
-        <div class="min-h-screen py-8 px-4">
-            <div class="max-w-6xl mx-auto">
+        <div class="w-full min-h-screen py-6 px-4">
+            <div class="w-full">
                 <!-- Header -->
-                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                        <i class="fas fa-file-alt text-red-600 mr-3"></i>
-                        Form Gangguan dan Permintaan Material
-                    </h1>
-                    <p class="text-gray-600">Berita Acara LH05</p>
+                <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-lg shadow-lg p-6 mb-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-2">
+                                <i class="fas fa-file-alt mr-3"></i>
+                                Form Gangguan dan Permintaan Material
+                            </h1>
+                            <p class="text-red-100">Berita Acara LH05 - Sistem Pelaporan Gangguan</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-lg px-6 py-3">
+                            <p class="text-white text-sm font-semibold">Auto Generate</p>
+                            <p class="text-red-100 text-xs">Nomor LH05</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Form -->
                 <form id="gangguanForm" class="space-y-6">
-                    <!-- BA LH05 Number (Auto) -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-hashtag text-red-600 mr-2"></i>
-                            Nomor BA LH05 (Auto)
-                        </h2>
-                        <div class="bg-gray-100 p-4 rounded-lg">
-                            <p class="text-sm text-gray-600 mb-2">Nomor akan di-generate otomatis:</p>
-                            <p class="text-2xl font-bold text-red-600">Format: XXX/ND KAL 2/LH05/TAHUN</p>
-                            <p class="text-sm text-gray-500 mt-2">Contoh: 001/ND KAL 2/LH05/2025</p>
+                    <!-- Section 1: Informasi Dasar -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center mb-6 pb-4 border-b-2 border-red-500">
+                            <div class="bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                                <i class="fas fa-info-circle text-lg"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">Informasi Dasar</h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Nomor BA LH05 (Auto) -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-hashtag text-red-600 mr-1"></i>
+                                    Nomor BA LH05 (Auto Generate) *
+                                </label>
+                                <div class="bg-red-50 border-l-4 border-red-600 p-4 rounded-lg">
+                                    <p class="text-xs text-gray-600 mb-1">Format:</p>
+                                    <p class="text-lg font-bold text-red-600">XXX/ND KAL 2/LH05/TAHUN</p>
+                                    <p class="text-xs text-gray-500 mt-1">Contoh: 001/ND KAL 2/LH05/2025</p>
+                                </div>
+                            </div>
+
+                            <!-- Hari/Tanggal/Jam Kejadian -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-calendar-alt text-red-600 mr-1"></i>
+                                    1. Hari/Tanggal/Jam Kejadian *
+                                </label>
+                                <input type="datetime-local" id="hariTanggal" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
+                            </div>
+
+                            <!-- Unit/ULD -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-building text-red-600 mr-1"></i>
+                                    Unit / ULD *
+                                </label>
+                                <select id="unitULD" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
+                                    <option value="">-- Pilih Unit/ULD --</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 1. Hari/Tanggal/Jam Kejadian -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            1. Hari/Tanggal/Jam Kejadian
-                        </h2>
-                        <input type="datetime-local" id="hariTanggal" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                    </div>
-
-                    <!-- Unit/ULD -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-building text-red-600 mr-2"></i>
-                            Unit / ULD
-                        </h2>
-                        <select id="unitULD" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                            <option value="">-- Pilih Unit/ULD --</option>
-                        </select>
-                    </div>
-
-                    <!-- 2. Kelompok SPD yang rusak -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            2. Kelompok SPD yang rusak
-                        </h2>
-                        <select id="kelompokSPD" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                            <option value="">-- Pilih Kelompok SPD --</option>
-                            <option value="MEKANIK">MEKANIK</option>
-                            <option value="ELEKTRIK">ELEKTRIK</option>
-                        </select>
-                    </div>
-
-                    <!-- 3-6. Isian Manual -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            Analisa Gangguan
-                        </h2>
+                    <!-- Section 2-10: Detail Gangguan -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center mb-6 pb-4 border-b-2 border-red-500">
+                            <div class="bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                                <i class="fas fa-clipboard-list text-lg"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">Detail Gangguan & Analisa (No. 2-10)</h2>
+                        </div>
                         
-                        <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- 2. Kelompok SPD yang rusak -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    3. Komponen yang rusak
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <span class="text-red-600 mr-1">●</span>2. Kelompok SPD yang rusak *
+                                </label>
+                                <select id="kelompokSPD" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
+                                    <option value="">-- Pilih Kelompok SPD --</option>
+                                    <option value="MEKANIK">MEKANIK</option>
+                                    <option value="ELEKTRIK">ELEKTRIK</option>
+                                </select>
+                            </div>
+
+                            <!-- 3. Komponen yang rusak -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <span class="text-red-600 mr-1">●</span>3. Komponen yang rusak *
                                 </label>
                                 <input type="text" id="komponenRusak" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                             </div>
-                            
+
+                            <!-- 4. Gejala yang timbul -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    4. Gejala yang timbul
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <span class="text-red-600 mr-1">●</span>4. Gejala yang timbul *
                                 </label>
                                 <textarea id="gejala" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
-                            
+
+                            <!-- 5. Uraian kejadian -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    5. Uraian kejadian
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    5. Uraian kejadian *
                                 </label>
                                 <textarea id="uraianKejadian" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
-                            
+
+                            <!-- 6. Analisa penyebab -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    6. Analisa penyebab
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    6. Analisa penyebab *
                                 </label>
                                 <textarea id="analisaPenyebab" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
-                            
+
+                            <!-- 7. Kesimpulan kerusakan -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    7. Kesimpulan kerusakan
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    7. Kesimpulan kerusakan *
                                 </label>
                                 <textarea id="kesimpulan" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- 8. Akibat terhadap sistem pembangkit -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            8. Akibat terhadap sistem pembangkit
-                        </h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- 8. Beban Puncak (MW) -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    Beban Puncak (MW)
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    8. Beban Puncak (MW) *
                                 </label>
                                 <input type="number" id="bebanPuncak" step="0.01" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                             </div>
-                            
+
+                            <!-- 8. Daya Mampu (MW) -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    Daya Mampu (MW)
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    8. Daya Mampu (MW) *
                                 </label>
                                 <input type="number" id="dayaMampu" step="0.01" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                             </div>
-                            
+
+                            <!-- 8. Status Pemadaman -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    Status Pemadaman
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    8. Status Pemadaman *
                                 </label>
                                 <select id="pemadaman" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
                                     <option value="">-- Pilih Status --</option>
                                     <option value="NORMAL">NORMAL</option>
                                     <option value="SIAGA">SIAGA</option>
                                     <option value="DEFISIT">DEFISIT</option>
                                 </select>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- 9-10. Tindakan -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            Tindakan dan Rencana
-                        </h2>
-                        
-                        <div class="space-y-4">
+                            <!-- 9. Tindakan penanggulangan -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    9. Tindakan penanggulangan
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    9. Tindakan penanggulangan *
                                 </label>
                                 <textarea id="tindakanPenanggulangan" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
-                            
+
+                            <!-- 10. Rencana perbaikan -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">
-                                    10. Rencana perbaikan
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    10. Rencana perbaikan *
                                 </label>
                                 <textarea id="rencanaPerbaikan" required rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none"></textarea>
                             </div>
                         </div>
                     </div>
 
                     <!-- 11. Kebutuhan Material -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-boxes text-red-600 mr-2"></i>
-                            11. Kebutuhan Material
-                        </h2>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center mb-6 pb-4 border-b-2 border-red-500">
+                            <div class="bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                                <i class="fas fa-boxes text-lg"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">11. Kebutuhan Material</h2>
+                        </div>
                         
                         <!-- Temporary Message -->
                         <div id="tempMessageGangguan" class="hidden"></div>
                         
-                        <!-- Single Material Input Form -->
-                        <div class="border-2 border-red-500 rounded-lg p-4 bg-red-50 mb-6">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                                <i class="fas fa-edit mr-2"></i>Input Material
-                            </h3>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div class="lg:col-span-1">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Material (Cari) *</label>
-                                    <div class="relative">
-                                        <input type="text" 
-                                            class="material-search-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" 
-                                            placeholder="Ketik untuk cari Material"
-                                            data-material-id="1"
-                                            autocomplete="off">
-                                        <div class="search-results-gangguan absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
-                                    </div>
+                        <!-- Kebutuhan Material Section -->
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-500 rounded-xl p-6 mb-6 shadow-sm">
+                            <div class="flex items-center mb-4">
+                                <div class="bg-green-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                                    <i class="fas fa-plus text-lg"></i>
                                 </div>
-                                
+                                <h3 class="text-lg font-bold text-gray-800">Kebutuhan Material</h3>
+                            </div>
+                            
+                            <!-- Pilih Barang -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Barang</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-search text-gray-400"></i>
+                                    </div>
+                                    <input type="text" 
+                                        class="material-search-gangguan w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" 
+                                        placeholder="Cari barang..."
+                                        data-material-id="1"
+                                        autocomplete="off">
+                                    <div class="search-results-gangguan absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Form Fields in Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Part Number</label>
-                                    <input type="text" class="part-number-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                    <input type="text" class="part-number-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-100" readonly>
                                 </div>
                                 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Barang</label>
-                                    <input type="text" class="jenis-barang-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                    <input type="text" class="jenis-barang-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Material</label>
+                                    <input type="text" class="material-name-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-100" readonly>
                                 </div>
                                 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Mesin</label>
-                                    <input type="text" class="mesin-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                    <input type="text" class="mesin-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-100" readonly>
                                 </div>
-                                
-                                <div class="lg:col-span-2">
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">S/N Mesin *</label>
-                                    <input type="text" class="sn-mesin-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                                    <input type="text" class="sn-mesin-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" 
                                         placeholder="Serial Number Mesin (WAJIB)">
                                 </div>
                                 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah *</label>
-                                    <input type="number" class="jumlah-gangguan w-full px-4 py-2 border border-gray-300 rounded-lg" 
-                                        value="1" min="1">
-                                </div>
-                                
-                                <div class="flex items-end">
-                                    <button type="button" id="addMaterialBtnGangguan" 
-                                        class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center">
-                                        <i class="fas fa-plus mr-2"></i>Tambah
-                                    </button>
+                                    <input type="number" class="jumlah-gangguan w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" 
+                                        value="1" min="1" placeholder="Masukkan jumlah">
                                 </div>
                             </div>
                             
                             <!-- Stock Info Display -->
                             <div id="stockInfoGangguan" class="mt-4 hidden"></div>
+                            
+                            <!-- Add Button -->
+                            <div class="mt-6 flex items-center justify-end">
+                                <button type="button" id="addMaterialBtnGangguan" 
+                                    class="bg-green-600 text-white py-3 px-8 rounded-lg hover:bg-green-700 transition-all flex items-center justify-center shadow-md font-medium">
+                                    <i class="fas fa-plus mr-2"></i>Input
+                                </button>
+                            </div>
                         </div>
                         
                         <!-- Materials Preview Table -->
                         <div class="mt-6">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-gray-800">
-                                    <i class="fas fa-list mr-2"></i>
-                                    List Material (<span id="totalMaterialsCountGangguan">0</span> item)
+                                <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                                    <i class="fas fa-list mr-2 text-red-600"></i>
+                                    List Material (<span id="totalMaterialsCountGangguan" class="text-green-600">0</span> item)
                                 </h3>
                                 <button type="button" onclick="resetMaterialsListGangguan()" 
-                                    class="text-sm text-red-600 hover:text-red-700">
+                                    class="text-sm text-red-600 hover:text-red-700 font-medium flex items-center">
                                     <i class="fas fa-trash mr-1"></i>Hapus Semua
                                 </button>
                             </div>
                             
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full bg-white border border-gray-200 rounded-lg">
-                                    <thead class="bg-gray-100">
+                            <div class="overflow-x-auto rounded-lg border-2 border-gray-200 shadow-sm">
+                                <table class="min-w-full bg-white">
+                                    <thead class="bg-gradient-to-r from-red-600 to-red-700 text-white">
                                         <tr>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">No</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Part Number</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Jenis Barang</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Material</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Mesin</th>
-                                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">S/N Mesin</th>
-                                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Jumlah</th>
-                                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Aksi</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">No</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Part Number</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Jenis Barang</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Material</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Mesin</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">S/N Mesin</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Jumlah</th>
+                                            <th class="px-4 py-3 text-center text-sm font-bold uppercase">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="materialPreviewBodyGangguan">
                                         <tr>
-                                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">
-                                                <i class="fas fa-inbox text-4xl mb-2"></i>
-                                                <p>Belum ada material yang ditambahkan.</p>
-                                                <p class="text-sm mt-1">Isi form di atas dan klik "Tambah" untuk menambahkan material.</p>
+                                            <td colspan="8" class="px-4 py-12 text-center text-gray-500">
+                                                <i class="fas fa-inbox text-5xl mb-3 text-gray-300"></i>
+                                                <p class="font-medium text-lg">Belum ada material yang ditambahkan.</p>
+                                                <p class="text-sm mt-1">Isi form di atas dan klik "Catat Barang Masuk" untuk menambahkan material.</p>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -7315,34 +8032,42 @@ function getFormGangguanHTML() {
                     </div>
 
                     <!-- 12. TTD Digital -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-signature text-red-600 mr-2"></i>
-                            12. Tanda Tangan Digital Pelapor
-                        </h2>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center mb-6 pb-4 border-b-2 border-red-500">
+                            <div class="bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                                <i class="fas fa-signature text-lg"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">12. Tanda Tangan Digital Pelapor</h2>
+                        </div>
                         
                         <div class="max-w-md mx-auto">
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Nama Pelapor</label>
-                            <input type="text" id="namaPelapor" required placeholder="Nama Pelapor"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nama Pelapor</label>
+                                <input type="text" id="namaPelapor" required placeholder="Masukkan nama pelapor"
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
+                            </div>
                             
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Tanda Tangan Pelapor</label>
-                            <canvas id="signaturePelapor" width="400" height="200" class="signature-pad w-full bg-gray-50"></canvas>
-                            <button type="button" id="clearPelapor" class="mt-2 text-sm text-red-600 hover:text-red-700">
-                                <i class="fas fa-eraser mr-1"></i>Hapus Tanda Tangan
-                            </button>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan Pelapor</label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-2 bg-gray-50">
+                                    <canvas id="signaturePelapor" width="400" height="200" class="signature-pad w-full bg-white rounded-lg cursor-crosshair"></canvas>
+                                </div>
+                                <button type="button" id="clearPelapor" class="mt-3 text-sm text-red-600 hover:text-red-700 font-medium flex items-center">
+                                    <i class="fas fa-eraser mr-1"></i>Hapus Tanda Tangan
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Submit -->
-                    <div class="flex gap-4">
+                    <!-- Submit Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4">
                         <button type="submit" 
-                            class="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 transition text-lg font-semibold">
+                            class="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-4 px-8 rounded-xl hover:from-green-700 hover:to-green-800 transition-all text-lg font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center">
                             <i class="fas fa-save mr-2"></i>Simpan Form Gangguan
                         </button>
                         <button type="button" id="resetFormGangguan"
-                            class="px-6 py-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
-                            <i class="fas fa-undo mr-2"></i>Reset
+                            class="px-8 py-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold flex items-center justify-center shadow-md">
+                            <i class="fas fa-undo mr-2"></i>Reset Form
                         </button>
                     </div>
                 </form>
@@ -7540,6 +8265,9 @@ function getDashboardKebutuhanMaterialHTML() {
                     <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE RAB
                     </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
                     <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
                         KEBUTUHAN
                     </a>
@@ -7555,6 +8283,9 @@ function getDashboardKebutuhanMaterialHTML() {
                     <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         DATA SPK
                     </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
                     <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         RESUME
                     </a>
@@ -7567,7 +8298,7 @@ function getDashboardKebutuhanMaterialHTML() {
 
         <div class="flex">
             <!-- Sidebar Filter (Kiri) -->
-            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen">
+            <div class="w-64 bg-black shadow-lg p-6 min-h-screen">
                 <h2 class="text-xl font-bold mb-6 text-white">
                     <i class="fas fa-filter mr-2 text-blue-400"></i>
                     Filter Data
@@ -7749,16 +8480,16 @@ function getDashboardGangguanHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2">
                     <a href="/" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/umur" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-calendar-alt mr-1"></i>Umur
+                        UMUR
                     </a>
                     <a href="/dashboard/mutasi" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         MUTASI
@@ -7785,7 +8516,7 @@ function getDashboardGangguanHTML() {
 
         <div class="flex">
             <!-- Sidebar Filter (Kiri) -->
-            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen">
+            <div class="w-64 bg-black shadow-lg p-6 min-h-screen">
                 <h2 class="text-xl font-bold mb-6 text-white">
                     <i class="fas fa-filter mr-2 text-blue-400"></i>
                     Filter Data
@@ -7948,13 +8679,13 @@ function getDashboardRefHargaHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         GANGGUAN
@@ -7964,6 +8695,9 @@ function getDashboardRefHargaHTML() {
                     </a>
                     <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE RAB
+                    </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
                     </a>
                     <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         LIST RAB
@@ -7985,13 +8719,18 @@ function getDashboardRefHargaHTML() {
         </nav>
 
         <!-- Main Content -->
-        <div class="max-w-7xl mx-auto p-6">
-            <!-- Header -->
+        <div class="w-full px-4 py-6">
+            <!-- Header with Cari Material Label -->
             <div class="mb-6">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                    <i class="fas fa-tags text-blue-600 mr-3"></i>
-                    Referensi Harga Material
-                </h1>
+                <div class="flex items-center justify-between mb-2">
+                    <h1 class="text-3xl font-bold text-gray-800">
+                        <i class="fas fa-tags text-blue-600 mr-3"></i>
+                        Referensi Harga Material
+                    </h1>
+                    <label class="text-sm font-semibold text-gray-700">
+                        <i class="fas fa-search text-gray-500 mr-2"></i>Cari Material
+                    </label>
+                </div>
                 <p class="text-gray-600">Cari dan lihat harga historis material dari RAB yang pernah dibuat</p>
             </div>
 
@@ -7999,9 +8738,6 @@ function getDashboardRefHargaHTML() {
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <div class="flex items-center space-x-4">
                     <div class="flex-1">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-search text-gray-500 mr-2"></i>Cari Material
-                        </label>
                         <input type="text" 
                                id="searchInput" 
                                placeholder="Ketik nama material, part number, atau mesin..."
@@ -8012,7 +8748,7 @@ function getDashboardRefHargaHTML() {
                             Hasil pencarian akan tampil secara otomatis
                         </p>
                     </div>
-                    <div class="text-center">
+                    <div class="text-center flex-shrink-0">
                         <p class="text-sm text-gray-600 mb-1">Total Data</p>
                         <p class="text-3xl font-bold text-blue-600" id="totalCount">0</p>
                     </div>
@@ -8070,6 +8806,319 @@ function getDashboardRefHargaHTML() {
   `
 }
 
+function getDashboardTagihanSPKHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tagihan SPK - Sistem Material AMC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+        <script src="/url-redirect.js?v=1770101032"></script>
+    </head>
+    <body class="bg-gray-50">
+        <!-- Navigation Bar -->
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE RAB
+                    </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA SPK
+                    </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
+                    </a>
+                    <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded ml-4 text-base font-semibold">
+                        LOGOUT
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content with Sidebar Layout -->
+        <div class="flex">
+            <!-- Sidebar Filter (Kiri) -->
+            <div class="w-72 bg-gray-900 shadow-lg p-6 min-h-screen flex-shrink-0">
+                <h2 class="text-xl font-bold mb-6 text-white border-b border-gray-700 pb-3">
+                    <i class="fas fa-filter mr-2"></i>Filter Data
+                </h2>
+                
+                <!-- Filter Bidang -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Filter Bidang</label>
+                    <select id="filterBidang" onchange="filterData()" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Semua Bidang</option>
+                    </select>
+                </div>
+
+                <!-- Filter Status Pembayaran -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Status Pembayaran</label>
+                    <select id="filterStatus" onchange="filterData()" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Semua Status</option>
+                        <option value="Belum Dibayar">Belum Dibayar</option>
+                        <option value="Sudah Dibayar">Sudah Dibayar</option>
+                        <option value="Sebagian Dibayar">Sebagian Dibayar</option>
+                    </select>
+                </div>
+
+                <!-- Pencarian -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Pencarian</label>
+                    <input type="text" id="searchBox" oninput="filterData()" placeholder="Cari nomor SPK atau TOR..." class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500">
+                </div>
+
+                <!-- Info -->
+                <div class="mt-8 p-4 bg-blue-900 bg-opacity-50 rounded-lg border border-blue-700">
+                    <p class="text-xs text-gray-300">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Filter akan diterapkan secara otomatis
+                    </p>
+                </div>
+            </div>
+
+            <!-- Main Content (Kanan) -->
+            <div class="flex-1 p-6">
+                <!-- Header -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                                <i class="fas fa-file-invoice-dollar text-blue-600 mr-3"></i>
+                                TAGIHAN SPK
+                            </h1>
+                            <p class="text-gray-600">Data tagihan berdasarkan SPK yang sudah disetujui</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+                                <i class="fas fa-file-excel mr-2"></i>Export Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="overflow-x-auto max-h-[calc(100vh-280px)] overflow-y-auto">
+                        <table class="min-w-full border-collapse">
+                            <thead class="bg-blue-600 text-white sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">NO</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">NOMOR IZIN PRINSIP</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">NOMOR SPK</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">NOMOR PO</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">JENIS ITEM</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">MITRA</th>
+                                    <th class="px-4 py-3 border text-center font-semibold uppercase">NILAI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tagihanTable">
+                                <tr>
+                                    <td colspan="7" class="px-4 py-12 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-5xl mb-4 text-blue-500"></i>
+                                        <p class="text-lg">Memuat data tagihan SPK...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Check authentication
+            if (!localStorage.getItem('sessionToken')) {
+                window.location.href = '/'
+                throw new Error('Not authenticated')
+            }
+
+            let allData = []
+            let filteredData = []
+
+            // Load data on page load
+            window.addEventListener('DOMContentLoaded', () => {
+                loadTagihanData()
+            })
+
+            async function loadTagihanData() {
+                try {
+                    console.log('Loading tagihan SPK data...')
+                    
+                    // Load data from GitHub JSON
+                    const response = await fetch('https://raw.githubusercontent.com/ipanrifan-create/TAGIHAN-SPK/main/data_tagihan_spk.json')
+                    const jsonData = await response.json()
+                    
+                    // Filter only PEMBANGKITAN data (index 8 = bidang)
+                    allData = jsonData.Worksheet.slice(2).filter(row => row[8] === 'PEMBANGKITAN').map(row => ({
+                        no: row[0],
+                        nama: row[1],
+                        nip: row[2],
+                        nomor_ip: row[3],
+                        nomor_spk: row[4],
+                        nomor_po: row[5],
+                        up: row[6],
+                        area: row[7],
+                        bidang: row[8],
+                        project: row[9],
+                        jenis_item: row[10],
+                        mitra: row[11],
+                        nilai: row[12]
+                    }))
+                    
+                    filteredData = [...allData]
+                    
+                    console.log(\`Loaded \${allData.length} PEMBANGKITAN records\`)
+                    renderTable()
+                    
+                } catch (error) {
+                    console.error('Error loading tagihan data:', error)
+                    showError('Gagal memuat data tagihan SPK')
+                }
+            }
+
+            function renderTable() {
+                const tbody = document.getElementById('tagihanTable')
+                
+                if (filteredData.length === 0) {
+                    tbody.innerHTML = \`
+                        <tr>
+                            <td colspan="7" class="px-4 py-12 text-center text-gray-500">
+                                <i class="fas fa-inbox text-5xl mb-4 text-gray-400"></i>
+                                <p class="text-lg">Belum ada data tagihan SPK</p>
+                                <p class="text-sm mt-2">Data tagihan akan muncul setelah SPK disetujui</p>
+                            </td>
+                        </tr>
+                    \`
+                    return
+                }
+
+                tbody.innerHTML = filteredData.map((item, index) => {
+                    return \`
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 border text-center">\${index + 1}</td>
+                            <td class="px-4 py-3 border">\${item.nomor_ip || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.nomor_spk || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.nomor_po || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.jenis_item || '-'}</td>
+                            <td class="px-4 py-3 border">\${item.mitra || '-'}</td>
+                            <td class="px-4 py-3 border text-right font-bold text-blue-600">\${formatRupiah(item.nilai)}</td>
+                        </tr>
+                    \`
+                }).join('')
+            }
+
+            function getStatusBadge(status) {
+                const badges = {
+                    'Belum Dibayar': '<span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Belum Dibayar</span>',
+                    'Sudah Dibayar': '<span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Sudah Dibayar</span>',
+                    'Sebagian Dibayar': '<span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">Sebagian Dibayar</span>'
+                }
+                return badges[status] || '<span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">-</span>'
+            }
+
+            function filterData() {
+                const bidang = document.getElementById('filterBidang').value
+                const status = document.getElementById('filterStatus').value
+                const search = document.getElementById('searchBox').value.toLowerCase()
+
+                filteredData = allData.filter(item => {
+                    const matchBidang = !bidang || item.bidang === bidang
+                    const matchStatus = !status || item.status_pembayaran === status
+                    const matchSearch = !search || 
+                        (item.nomor_spk && item.nomor_spk.toLowerCase().includes(search)) ||
+                        (item.nomor_ip && item.nomor_ip.toLowerCase().includes(search)) ||
+                        (item.nomor_po && item.nomor_po.toLowerCase().includes(search))
+
+                    return matchBidang && matchStatus && matchSearch
+                })
+
+                renderTable()
+            }
+
+            function exportToExcel() {
+                if (filteredData.length === 0) {
+                    alert('Tidak ada data untuk di-export')
+                    return
+                }
+
+                const excelData = filteredData.map((item, index) => ({
+                    'No': index + 1,
+                    'Nomor Izin Prinsip': item.nomor_ip || '-',
+                    'Nomor SPK': item.nomor_spk || '-',
+                    'Nomor PO': item.nomor_po || '-',
+                    'Jenis Item': item.jenis_item || '-',
+                    'Mitra': item.mitra || '-',
+                    'Nilai': item.nilai || 0
+                }))
+
+                const ws = XLSX.utils.json_to_sheet(excelData)
+                const wb = XLSX.utils.book_new()
+                XLSX.utils.book_append_sheet(wb, ws, 'Tagihan SPK')
+
+                const date = new Date().toISOString().split('T')[0]
+                XLSX.writeFile(wb, \`Tagihan_SPK_\${date}.xlsx\`)
+            }
+
+            function formatRupiah(value) {
+                if (!value) return 'Rp 0'
+                // If value is already formatted string like "Rp 117.687.750"
+                if (typeof value === 'string') {
+                    if (value.startsWith('Rp')) return value
+                    // Remove Rp and dots, convert to number
+                    const cleanValue = value.replace(/Rp\s?/g, '').replace(/\./g, '')
+                    return 'Rp ' + parseInt(cleanValue).toLocaleString('id-ID')
+                }
+                // If value is number
+                return 'Rp ' + parseInt(value).toLocaleString('id-ID')
+            }
+
+            function showError(message) {
+                const tbody = document.getElementById('tagihanTable')
+                tbody.innerHTML = \`
+                    <tr>
+                        <td colspan="7" class="px-4 py-12 text-center text-red-500">
+                            <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
+                            <p class="text-lg">\${message}</p>
+                        </td>
+                    </tr>
+                \`
+            }
+
+            function logout() {
+                localStorage.removeItem('sessionToken')
+                localStorage.removeItem('username')
+                window.location.href = '/'
+            }
+        </script>
+    </body>
+    </html>
+  `
+}
+
 function getDashboardResumeHTML() {
   return `
     <!DOCTYPE html>
@@ -8087,7 +9136,7 @@ function getDashboardResumeHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
@@ -8096,7 +9145,7 @@ function getDashboardResumeHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         GANGGUAN
@@ -8448,29 +9497,47 @@ function getDashboardCreateRABHTML() {
     <script src="/url-redirect.js?v=1770101032"></script>
     </head>
     <body class="bg-gray-100">
-        <!-- Navbar -->
-        <nav class="bg-blue-600 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <a href="/form-gangguan" class="hover:text-blue-200"><i class="fas fa-wrench mr-2"></i>Form Gangguan</a>
-                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
-                    <a href="/dashboard/stok" class="hover:text-blue-200">STOK
-                    <a href="/dashboard/mutasi" class="hover:text-blue-200">MUTASI</a>
-                    <a href="/dashboard/umur" class="hover:text-blue-200"><i class="fas fa-calendar-alt mr-2"></i>Umur</a>
-                    <a href="/dashboard/gangguan" class="hover:text-blue-200"><i class="fas fa-exclamation-triangle mr-2"></i>Gangguan</a>
-                    <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
-                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
-                    <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
-                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+        <!-- Navigation Bar -->
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        CREATE RAB
+                    </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA SPK
+                    </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
+                    </a>
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
                         LOGOUT
                     </button>
                 </div>
             </div>
         </nav>
 
-        <div class="flex">
+        <div class="w-full flex">
             <!-- Sidebar Filter (Kiri) -->
-            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen">
+            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen flex-shrink-0">
                 <h2 class="text-xl font-bold mb-6 text-white">
                     <i class="fas fa-filter mr-2 text-blue-400"></i>
                     Filter Data
@@ -8579,7 +9646,6 @@ function getDashboardCreateRABHTML() {
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 required>
                             <option value="">-- Pilih Jenis RAB --</option>
-                            <option value="KHS">KHS (Kontrak Harga Satuan)</option>
                             <option value="SPK">SPK (Surat Perintah Kerja)</option>
                             <option value="Pembelian Langsung">Pembelian Langsung</option>
                         </select>
@@ -8735,7 +9801,7 @@ function getDashboardPengadaanHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         FORM GANGGUAN
@@ -8744,7 +9810,7 @@ function getDashboardPengadaanHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/gangguan" class="px-4 py-2 hover:bg-blue-700 rounded text-lg font-bold">
                         GANGGUAN
@@ -9555,7 +10621,7 @@ function getDashboardPengadaanMaterialHTML() {
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/main" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-plus mr-1"></i>Input Material
+                        INPUT MATERIAL
                     </a>
                     <a href="/form-gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         FORM GANGGUAN
@@ -9564,7 +10630,7 @@ function getDashboardPengadaanMaterialHTML() {
                         <i class="fas fa-tachometer-alt mr-1"></i>Analytics
                     </a>
                     <a href="/dashboard/stok" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
-                        <i class="fas fa-chart-bar mr-1"></i>Stok
+                        STOK
                     </a>
                     <a href="/dashboard/gangguan" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         GANGGUAN
@@ -12074,44 +13140,64 @@ function getDashboardListRABHTML() {
     </head>
     <body class="bg-gray-100">
         <!-- Navbar -->
-        <nav class="bg-blue-600 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
-                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
-                    <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
-                    <a href="/dashboard/list-rab" class="bg-blue-800 px-3 py-2 rounded">LIST RAB</a>
-                    <a href="/dashboard/list-tor" class="hover:text-blue-200"><i class="fas fa-file-alt mr-2"></i>Realisasi</a>
-                    <a href="/dashboard/data-spk" class="hover:text-blue-200">DATA SPK</a>
-                    <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
-                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
-                        LOGOUT
+        <nav class="bg-blue-600 text-white shadow-md">
+            <div class="container mx-auto px-6 py-2.5 flex justify-between items-center">
+                <div class="flex items-center space-x-1">
+                    <a href="/dashboard/create-rab" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        CREATE RAB
+                    </a>
+                    <a href="/dashboard/create-khs" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        CREATE KHS
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        KEBUTUHAN
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        REF. HARGA
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-4 py-2 text-sm font-semibold rounded bg-blue-800 uppercase">
+                        LIST RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        REALISASI
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        DATA SPK
+                    </a>
+                    <a href="/dashboard/tagihan-spk" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        TAGIHAN SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        Resume
+                    </a>
+                    <button onclick="logout()" class="ml-2 bg-red-500 hover:bg-red-600 px-5 py-2 text-sm font-semibold rounded transition shadow-sm uppercase">
+                        Logout
                     </button>
                 </div>
             </div>
         </nav>
 
-        <div class="container mx-auto px-4 py-6">
+        <div class="w-full px-4 py-6">
             <!-- Main Content (Full Width) -->
             <div>
                 <!-- Header -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <div class="flex justify-between items-center">
+                    <div class="flex justify-between items-center mb-4">
                         <div>
                             <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                                <i class="fas fa-list-alt text-blue-600 mr-3"></i>
+                                <i class="fas fa-file-invoice-dollar text-blue-600 mr-3"></i>
                                 Daftar RAB (Rencana Anggaran Biaya)
                             </h1>
-                            <p class="text-gray-600 mt-2">Daftar semua RAB yang telah dibuat</p>
+                            <p class="text-sm text-gray-500 mt-1">Daftar semua RAB yang telah dibuat.</p>
                         </div>
                     </div>
                     
                     <!-- Horizontal Filters -->
-                    <div class="mt-6 flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="mt-4 flex flex-wrap items-center gap-3">
                         <div class="flex items-center gap-2">
-                            <i class="fas fa-filter text-blue-600"></i>
-                            <label class="text-sm font-semibold text-gray-700">Filter Status:</label>
-                            <select id="filterStatusDropdown" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <i class="fas fa-filter text-blue-600 text-sm"></i>
+                            <label class="text-sm font-medium text-gray-700">Filter Status:</label>
+                            <select id="filterStatusDropdown" class="px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
                                 <option value="All">Semua</option>
                                 <option value="Draft">Draft</option>
                                 <option value="Pengadaan">Pengadaan</option>
@@ -12121,25 +13207,22 @@ function getDashboardListRABHTML() {
                         </div>
                         
                         <div class="flex items-center gap-2">
-                            <i class="fas fa-list text-green-600"></i>
-                            <label class="text-sm font-semibold text-gray-700">Filter Jenis:</label>
+                            <i class="fas fa-list text-blue-600 text-sm"></i>
+                            <label class="text-sm font-medium text-gray-700">Filter Jenis:</label>
                             <div class="flex gap-2">
-                                <button onclick="selectJenisFilter('All')" id="btnJenisAll" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-green-600 text-white hover:bg-green-700">
+                                <button onclick="selectJenisFilter('All')" id="btnJenisAll" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-blue-600 text-white hover:bg-blue-700">
                                     Semua
                                 </button>
-                                <button onclick="selectJenisFilter('SPK')" id="btnJenisSPK" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                <button onclick="selectJenisFilter('SPK')" id="btnJenisSPK" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">
                                     SPK
                                 </button>
-                                <button onclick="selectJenisFilter('Pembelian Langsung')" id="btnJenisPembelianLangsung" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
+                                <button onclick="selectJenisFilter('Pembelian Langsung')" id="btnJenisPembelianLangsung" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">
                                     Pembelian Langsung
-                                </button>
-                                <button onclick="selectJenisFilter('KHS')" id="btnJenisKHS" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">
-                                    KHS
                                 </button>
                             </div>
                         </div>
                         
-                        <button onclick="applyFilters()" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">
+                        <button onclick="applyFilters()" class="ml-auto bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition shadow-sm">
                             <i class="fas fa-search"></i>
                             Terapkan
                         </button>
@@ -12210,6 +13293,10 @@ function getDashboardListRABHTML() {
                             <p id="detailNomorTOR" class="font-semibold"></p>
                         </div>
                         <div>
+                            <p class="text-sm text-gray-600">Nomor Ijin Prinsip</p>
+                            <p id="detailNomorIjinPrinsip" class="font-semibold"></p>
+                        </div>
+                        <div>
                             <p class="text-sm text-gray-600">ROK</p>
                             <p id="detailROK" class="font-semibold"></p>
                         </div>
@@ -12257,6 +13344,37 @@ function getDashboardListRABHTML() {
                         <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
                         <p class="text-xl font-bold text-blue-600"><strong>Total + PPN:</strong> <span id="detailTotal"></span></p>
                     </div>
+                    
+                    <!-- RAB Pembelian Langsung Section (Only for SPK RAB in Realisasi page) -->
+                    <div id="rabPembelianLangsungSection" class="mt-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg hidden">
+                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-link text-yellow-600 mr-2"></i>
+                            RAB Pembelian Langsung Terkait
+                        </h3>
+                        
+                        <!-- Add RAB Pembelian Langsung -->
+                        <div class="flex gap-2 mb-4">
+                            <select id="selectPembelianLangsung" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                <option value="">-- Pilih RAB Pembelian Langsung --</option>
+                            </select>
+                            <button onclick="addPembelianLangsung()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition">
+                                <i class="fas fa-plus mr-1"></i> Tambah
+                            </button>
+                        </div>
+                        
+                        <!-- List of linked RAB Pembelian Langsung -->
+                        <div id="linkedPembelianLangsungList" class="space-y-2 mb-4">
+                            <!-- Dynamically populated -->
+                        </div>
+                        
+                        <!-- Total RAB Pembelian Langsung -->
+                        <div class="pt-3 border-t border-yellow-300">
+                            <div class="flex justify-between items-center font-semibold text-gray-800">
+                                <span>Total RAB Pembelian Langsung:</span>
+                                <span class="text-red-600 text-lg" id="totalPembelianLangsung">Rp 0</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="p-4 border-t bg-gray-50 flex justify-end space-x-4 flex-shrink-0">
                     <button onclick="closeRABDetailModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
@@ -12293,7 +13411,7 @@ function getDashboardListRABHTML() {
         <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
         <script src="/static/auth-check.js"></script>
-        <script src="/static/dashboard-list-rab.js"></script>
+        <script src="/static/dashboard-list-rab.js?v=1778120494"></script>
     </body>
     </html>
   `
@@ -12320,6 +13438,9 @@ function getDashboardDataSPKHTML() {
                     <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE RAB
                     </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
                     <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         KEBUTUHAN
                     </a>
@@ -12334,6 +13455,9 @@ function getDashboardDataSPKHTML() {
                     </a>
                     <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
                         DATA SPK
+                    </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        TAGIHAN SPK
                     </a>
                     <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         RESUME
@@ -12457,12 +13581,14 @@ function getDashboardListTORHTML() {
         <nav class="bg-blue-600 text-white shadow-lg">
             <div class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <a href="/dashboard/create-rab" class="hover:text-blue-200"><i class="fas fa-plus-circle mr-2"></i>Create RAB</a>
+                    <a href="/dashboard/create-rab" class="hover:text-blue-200">CREATE RAB</a>
+                    <a href="/dashboard/create-khs" class="hover:text-blue-200">CREATE KHS</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
                     <a href="/dashboard/list-rab" class="hover:text-blue-200">LIST RAB</a>
-                    <a href="/dashboard/list-tor" class="bg-blue-800 px-3 py-2 rounded">Realisasi</a>
+                    <a href="/dashboard/list-tor" class="bg-blue-800 px-3 py-2 rounded">REALISASI</a>
                     <a href="/dashboard/data-spk" class="hover:text-blue-200">DATA SPK</a>
+                    <a href="/dashboard/tagihan-spk" class="hover:text-blue-200">TAGIHAN SPK</a>
                     <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
                     <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
                         LOGOUT
@@ -12471,28 +13597,27 @@ function getDashboardListTORHTML() {
             </div>
         </nav>
 
-        <div class="container mx-auto px-4 py-6">
-            <!-- Main Content (Full Width) -->
-            <div>
-                <!-- Header -->
-                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                                <i class="fas fa-list-alt text-blue-600 mr-3"></i>
-                                Realisasi
-                            </h1>
-                            <p class="text-gray-600 mt-2">Daftar realisasi pembayaran untuk semua RAB</p>
+        <div class="w-full px-4 py-6">
+            <!-- Layout: Sidebar + Main Content -->
+            <div class="flex gap-5">
+                <!-- Left Sidebar: Filters -->
+                <div class="w-72 flex-shrink-0">
+                    <div class="bg-black rounded-lg shadow-md p-5 sticky" style="top: 24px;">
+                        <div class="border-b border-gray-700 pb-3 mb-4">
+                            <h2 class="text-lg font-bold text-white flex items-center">
+                                <i class="fas fa-filter text-blue-400 mr-2"></i>
+                                Filter
+                            </h2>
                         </div>
-                    </div>
-                    
-                    <!-- Horizontal Filters -->
-                    <div class="mt-6 flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-filter text-blue-600"></i>
-                            <label class="text-sm font-semibold text-gray-700">Filter Status:</label>
-                            <select id="filterStatusDropdown" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="All">Semua</option>
+                        
+                        <!-- Filter Status -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                                <i class="fas fa-tasks text-blue-400 mr-1.5"></i>
+                                Status RAB
+                            </label>
+                            <select id="filterStatusDropdown" class="w-full px-3 py-2.5 border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-900 text-white">
+                                <option value="All">Semua Status</option>
                                 <option value="Draft">Draft</option>
                                 <option value="Pengadaan">Pengadaan</option>
                                 <option value="Tersedia">Tersedia</option>
@@ -12500,28 +13625,88 @@ function getDashboardListTORHTML() {
                             </select>
                         </div>
                         
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-list text-green-600"></i>
-                            <label class="text-sm font-semibold text-gray-700">Filter Jenis:</label>
-                            <div class="flex gap-2">
-                                <!-- REALISASI: Only SPK button, always active -->
-                                <button id="btnJenisSPK" class="jenis-filter-pill px-4 py-2 rounded-lg text-sm font-semibold transition bg-green-600 text-white cursor-default">
-                                    SPK (Locked)
-                                </button>
-                            </div>
+                        <!-- Hidden Filter Jenis (Locked to SPK - Background Only) -->
+                        <input type="hidden" id="filterJenisHidden" value="SPK">
+                        
+                        <!-- Filter No. TOR -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                                <i class="fas fa-file-alt text-purple-400 mr-1.5"></i>
+                                No. TOR
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filterTORInput" 
+                                placeholder="Cari No. TOR..."
+                                class="w-full px-3 py-2.5 border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-900 text-white placeholder-gray-500"
+                            />
                         </div>
                         
-                        <button onclick="applyFilters()" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">
+                        <!-- Filter No. Ijin Prinsip -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                                <i class="fas fa-id-card text-orange-400 mr-1.5"></i>
+                                No. Ijin Prinsip
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filterIPInput" 
+                                placeholder="Cari No. Ijin Prinsip..."
+                                class="w-full px-3 py-2.5 border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-900 text-white placeholder-gray-500"
+                            />
+                        </div>
+                        
+                        <!-- Filter Nama Pekerjaan -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">
+                                <i class="fas fa-briefcase text-teal-400 mr-1.5"></i>
+                                Nama Pekerjaan
+                            </label>
+                            <input 
+                                type="text" 
+                                id="filterNamaPekerjaanInput" 
+                                placeholder="Cari Nama Pekerjaan..."
+                                class="w-full px-3 py-2.5 border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-900 text-white placeholder-gray-500"
+                            />
+                        </div>
+                        
+                        <!-- Apply Button -->
+                        <button onclick="applyFilters()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95">
                             <i class="fas fa-search"></i>
-                            Terapkan
+                            Terapkan Filter
                         </button>
+                        
+                        <!-- Clear Filter Button -->
+                        <button onclick="clearFilters()" class="w-full mt-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all">
+                            <i class="fas fa-times"></i>
+                            Reset Filter
+                        </button>
+                        
+                        <!-- Info Box -->
+                        <div class="mt-5 p-3.5 bg-gray-900 border border-gray-700 rounded-lg">
+                            <p class="text-xs text-gray-300 leading-relaxed">
+                                <i class="fas fa-info-circle mr-1.5 text-blue-400"></i>
+                                Halaman Realisasi hanya menampilkan RAB dengan jenis SPK.
+                            </p>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- Right Content: Header + Table -->
+                <div class="flex-1 min-w-0">
+                    <!-- Header -->
+                    <div class="bg-white rounded-lg shadow-md p-5 mb-5">
+                        <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-list-alt text-blue-600 mr-3"></i>
+                            Realisasi
+                        </h1>
+                        <p class="text-gray-600 text-sm mt-2">Daftar realisasi pembayaran untuk semua RAB</p>
+                    </div>
 
-                <!-- Main Table -->
-                    <div class="bg-white rounded-lg shadow-md">
-                        <div class="overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
-                            <table class="border" style="width: 1430px; table-layout: fixed;">
+                    <!-- Main Table -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <div class="overflow-x-auto" style="max-height: calc(100vh - 280px); overflow-y: auto;">
+                            <table class="border" style="width: 100%; min-width: 1400px; table-layout: fixed;">
                         <thead class="sticky top-0 shadow-sm" style="z-index: 20; background-color: #2C5282;">
                             <tr>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="position: sticky; left: 0; z-index: 20; background-color: #2C5282; width: 50px; min-width: 50px; max-width: 50px;">No</th>
@@ -12579,6 +13764,10 @@ function getDashboardListTORHTML() {
                             <p id="detailNomorTOR" class="font-semibold"></p>
                         </div>
                         <div>
+                            <p class="text-sm text-gray-600">Nomor Ijin Prinsip</p>
+                            <p id="detailNomorIjinPrinsip" class="font-semibold"></p>
+                        </div>
+                        <div>
                             <p class="text-sm text-gray-600">ROK</p>
                             <p id="detailROK" class="font-semibold"></p>
                         </div>
@@ -12626,113 +13815,29 @@ function getDashboardListTORHTML() {
                             <tbody id="detailItemsTable"></tbody>
                         </table>
                     </div>
-                    <div class="mt-4 text-right">
-                        <p class="text-lg"><strong>Subtotal:</strong> <span id="detailSubtotal"></span></p>
-                        <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
-                        <p class="text-xl font-bold text-blue-600"><strong>Total + PPN:</strong> <span id="detailTotal"></span></p>
-                    </div>
-                </div>
-                <div class="p-4 border-t bg-gray-50 flex justify-end space-x-4 flex-shrink-0">
-                    <button onclick="closeRABDetailModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
-                        <i class="fas fa-times mr-2"></i>Tutup
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- RAB History Modal -->
-        <div id="rabHistoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-                <div class="p-4 border-b flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-800">
-                        <i class="fas fa-history text-purple-600 mr-2"></i>
-                        History RAB: <span id="historyNomorRAB" class="text-blue-600"></span>
-                    </h2>
-                    <button onclick="closeRABHistoryModal()" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
-                </div>
-                <div class="p-6 overflow-auto" style="max-height: 70vh;">
-                    <div id="historyTimeline"></div>
-                </div>
-                <div class="p-4 border-t bg-gray-50 flex justify-end">
-                    <button onclick="closeRABHistoryModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
-                        <i class="fas fa-times mr-2"></i>Tutup
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- View RAB Modal -->
-        <!-- RAB Detail Modal -->
-        <div id="rabDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-lg shadow-xl w-[98vw] max-w-[1800px] h-[95vh] flex flex-col">
-                <div class="p-4 border-b flex justify-between items-center bg-white z-10 flex-shrink-0">
-                    <h2 class="text-xl font-bold text-gray-800">
-                        <i class="fas fa-file-invoice text-blue-600 mr-2"></i>
-                        Detail RAB: <span id="detailNomorRAB" class="text-blue-600"></span>
-                    </h2>
-                    <button onclick="closeRABDetailModal()" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
-                </div>
-                <div class="p-6 overflow-auto flex-1">
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <p class="text-sm text-gray-600">Status</p>
-                            <p id="detailStatus" class="font-semibold"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Jenis RAB</p>
-                            <p id="detailJenisRAB" class="font-semibold"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Nomor TOR</p>
-                            <p id="detailNomorTOR" class="font-semibold"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">ROK</p>
-                            <p id="detailROK" class="font-semibold"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Tanggal Dibuat</p>
-                            <p id="detailCreated" class="font-semibold"></p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Dibuat Oleh</p>
-                            <p id="detailUsername" class="font-semibold"></p>
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold">Daftar Item</h3>
-                        <div class="space-x-2">
-                            <button onclick="exportRABDetailToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
-                                <i class="fas fa-file-excel mr-2"></i>Download Excel
-                            </button>
-                            <button onclick="exportRABDetailToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
-                                <i class="fas fa-file-pdf mr-2"></i>Download PDF
+                    
+                    <!-- RAB Pembelian Langsung Section (only for RAB SPK on Realisasi page) -->
+                    <div id="rabPembelianLangsungSection" class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <h3 class="text-base font-semibold mb-3 text-gray-800">
+                            <i class="fas fa-link mr-2 text-yellow-600"></i>RAB Pembelian Langsung Terkait
+                        </h3>
+                        <div class="flex gap-2 mb-4">
+                            <select id="selectPembelianLangsung" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                                <option value="">-- Pilih RAB Pembelian Langsung --</option>
+                            </select>
+                            <button onclick="addPembelianLangsung()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                <i class="fas fa-plus mr-1"></i> Tambah
                             </button>
                         </div>
+                        <div id="linkedPembelianLangsungList" class="space-y-2"></div>
+                        <div class="mt-4 pt-3 border-t border-yellow-300">
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-gray-700">Total RAB Pembelian Langsung:</span>
+                                <span id="totalPembelianLangsung" class="text-lg font-bold text-red-600">Rp 0</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full border text-xs">
-                            <thead class="bg-green-600 text-white">
-                                <tr>
-                                    <th class="px-2 py-2 border border-white">No</th>
-                                    <th class="px-2 py-2 border border-white">Nama Material</th>
-                                    <th class="px-2 py-2 border border-white">No. LH05</th>
-                                    <th class="px-2 py-2 border border-white">Part Number</th>
-                                    <th class="px-2 py-2 border border-white">Type Mesin</th>
-                                    <th class="px-2 py-2 border border-white">S/N Mesin</th>
-                                    <th class="px-2 py-2 border border-white">Unit/ULD</th>
-                                    <th class="px-2 py-2 border border-white">Qty</th>
-                                    <th class="px-2 py-2 border border-white">Harga Satuan</th>
-                                    <th class="px-2 py-2 border border-white">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody id="detailItemsTable"></tbody>
-                        </table>
-                    </div>
+                    
                     <div class="mt-4 text-right">
                         <p class="text-lg"><strong>Subtotal:</strong> <span id="detailSubtotal"></span></p>
                         <p class="text-lg"><strong>PPN 11%:</strong> <span id="detailPPN"></span></p>
@@ -12774,7 +13879,7 @@ function getDashboardListTORHTML() {
         <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
         <script src="/static/auth-check.js"></script>
-        <script src="/static/dashboard-list-rab.js"></script>
+        <script src="/static/dashboard-list-rab.js?v=1778120494"></script>
         
         <!-- REALISASI: Auto-select SPK filter on page load -->
         <script>
@@ -13056,6 +14161,359 @@ function getInputFormV2HTML() {
         <script src="/static/auth-check.js"></script>
         <script src="/static/app-material-input.js"></script>
         <script src="/static/app-v2.js"></script>
+    </body>
+    </html>
+  `
+}
+
+// Dashboard Create KHS HTML
+function getDashboardCreateKHSHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CREATE KHS - Kontrak Harga Satuan</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="/url-redirect.js?v=1770101032"></script>
+    </head>
+    <body class="bg-gray-100">
+        <!-- Navigation Bar -->
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE RAB
+                    </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA SPK
+                    </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
+                    </a>
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+                        LOGOUT
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="w-full flex">
+            <!-- Sidebar Filter (Kiri) -->
+            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen flex-shrink-0">
+                <h2 class="text-xl font-bold mb-6 text-white">
+                    <i class="fas fa-filter mr-2 text-blue-400"></i>
+                    Filter Data
+                </h2>
+                
+                <div class="space-y-6">
+                    <!-- Filter Nomor LH05 -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">
+                            <i class="fas fa-file-alt mr-2"></i>Nomor LH05
+                        </label>
+                        <input type="text" id="filterNomorLH05" 
+                               class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Cth: 0248/ND KAL 2/LH05/2026">
+                        <p class="text-xs text-gray-500 mt-1">Filter by Nomor LH05</p>
+                    </div>
+                    
+                    <!-- Filter Nama Material -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">
+                            <i class="fas fa-box mr-2"></i>Nama Material
+                        </label>
+                        <input type="text" id="filterNamaMaterial" 
+                               class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Cth: sealing ring">
+                        <p class="text-xs text-gray-500 mt-1">Filter by Nama Material</p>
+                    </div>
+                    
+                    <!-- Filter Jenis Barang -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Jenis Barang</label>
+                        <select id="filterJenisBarang" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
+                            <option value="">Semua Jenis</option>
+                            <option value="Material Handal">Material Handal</option>
+                            <option value="Filter">Filter</option>
+                            <option value="Material Bekas">Material Bekas</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filter Unit (Multiple Checkbox) -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Filter Unit</label>
+                        <div id="filterUnitCheckboxes" class="space-y-2 max-h-96 overflow-y-auto bg-gray-800 p-3 rounded-lg border border-gray-700">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="checkAllUnits" class="w-4 h-4 text-blue-600 rounded mr-2">
+                                <label for="checkAllUnits" class="text-sm text-gray-300 font-semibold">Pilih Semua</label>
+                            </div>
+                            <hr class="border-gray-700 my-2">
+                            <!-- Unit checkboxes will be populated by JavaScript -->
+                            <p class="text-xs text-gray-500">Loading units...</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="applyFilters()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-search mr-2"></i>Terapkan Filter
+                    </button>
+                    
+                    <button onclick="resetFilters()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                        <i class="fas fa-undo mr-2"></i>Reset Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content (Kanan) -->
+            <div class="flex-1">
+        <div class="container mx-auto px-4 py-6">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-file-contract text-blue-600 mr-3"></i>
+                    CREATE KHS (Kontrak Harga Satuan)
+                </h1>
+                <p class="text-gray-600 mt-2">Buat KHS dari material dengan status Pengadaan</p>
+            </div>
+
+            <!-- Form KHS -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <!-- Tanggal KHS -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar mr-2"></i>Tanggal KHS
+                        </label>
+                        <input type="date" id="tanggalKHS" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               required>
+                    </div>
+                    
+                    <!-- Nomor KHS (auto-generated) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-hashtag mr-2"></i>Nomor KHS
+                        </label>
+                        <input type="text" id="nomorKHS" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                               placeholder="Auto-generated"
+                               readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials Table -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-boxes mr-2 text-blue-600"></i>
+                        Material Tersedia (<span id="totalMaterials">0</span> item)
+                    </h2>
+                    <div class="flex gap-2">
+                        <button onclick="addSelectedToKHS()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
+                            <i class="fas fa-plus mr-2"></i>Tambah ke KHS
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Materials Table -->
+                <div class="overflow-x-auto">
+                    <table id="materialsTable" class="min-w-full border">
+                        <thead class="bg-blue-600 text-white">
+                            <tr>
+                                <th class="px-4 py-3 text-center">
+                                    <input type="checkbox" id="selectAll" class="w-5 h-5" onchange="toggleSelectAll()">
+                                </th>
+                                <th class="px-4 py-3 text-left">No</th>
+                                <th class="px-4 py-3 text-left">Nomor LH05</th>
+                                <th class="px-4 py-3 text-left">Part Number</th>
+                                <th class="px-4 py-3 text-left">Material</th>
+                                <th class="px-4 py-3 text-left">Mesin</th>
+                                <th class="px-4 py-3 text-center">Jumlah</th>
+                                <th class="px-4 py-3 text-left">Unit</th>
+                                <th class="px-4 py-3 text-left">Jenis</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialsTableBody">
+                            <tr>
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-4xl mb-3"></i>
+                                    <p>Memuat data material...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Preview KHS Materials -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-list text-blue-600 mr-2"></i>
+                    Preview Material KHS (<span id="totalSelectedMaterials">0</span> item)
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border">
+                        <thead class="bg-green-600 text-white">
+                            <tr>
+                                <th class="px-4 py-3 text-left">No</th>
+                                <th class="px-4 py-3 text-left">Nomor LH05</th>
+                                <th class="px-4 py-3 text-left">Part Number</th>
+                                <th class="px-4 py-3 text-left">Material</th>
+                                <th class="px-4 py-3 text-left">Mesin</th>
+                                <th class="px-4 py-3 text-center">Jumlah</th>
+                                <th class="px-4 py-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewTableKHS">
+                            <tr>
+                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-inbox text-4xl mb-2"></i>
+                                    <p>Belum ada material dipilih</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex gap-4">
+                <button onclick="submitKHS()" class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition font-semibold text-lg">
+                    <i class="fas fa-save mr-2"></i>
+                    Simpan KHS
+                </button>
+                <button onclick="window.location.href='/dashboard/list-rab'" class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                    <i class="fas fa-times mr-2"></i>
+                    Batal
+                </button>
+            </div>
+        </div>
+            </div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/create-khs.js"></script>
+    </body>
+    </html>
+  `
+}
+
+// Dashboard Data KHS HTML
+function getDashboardDataKHSHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>DATA KHS - Kontrak Harga Satuan</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="/url-redirect.js?v=1770101032"></script>
+    </head>
+    <body class="bg-gray-50">
+        <!-- Navigation Bar -->
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE RAB
+                    </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
+                    <a href="/dashboard/data-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        DATA KHS
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA SPK
+                    </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
+                    </a>
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+                        LOGOUT
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="max-w-full mx-auto p-6">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-file-contract text-blue-600 mr-3"></i>
+                            DATA KHS (Kontrak Harga Satuan)
+                        </h1>
+                        <p class="text-gray-600">Daftar semua KHS yang sudah dibuat</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+                            <i class="fas fa-file-excel mr-2"></i>Export Excel
+                        </button>
+                    </div>
+                </div>
+                <div id="dataInfo" class="mt-4 text-sm text-gray-500">
+                    Loading...
+                </div>
+            </div>
+
+            <!-- KHS List -->
+            <div id="khsListContainer" class="space-y-4">
+                <!-- KHS cards will be populated here -->
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-500">Memuat data KHS...</p>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/data-khs.js"></script>
     </body>
     </html>
   `
