@@ -6153,6 +6153,11 @@ app.get('/dashboard/create-khs', (c) => {
   return c.html(getDashboardCreateKHSHTML())
 })
 
+// Dashboard Data KHS (PROTECTED - auth required)
+app.get('/dashboard/data-khs', (c) => {
+  return c.html(getDashboardDataKHSHTML())
+})
+
 // Dashboard List RAB (PROTECTED - auth required)
 app.get('/dashboard/list-rab', (c) => {
   return c.html(getDashboardListRABHTML())
@@ -14410,6 +14415,105 @@ function getDashboardCreateKHSHTML() {
 
         <script src="/static/auth-check.js"></script>
         <script src="/static/create-khs.js"></script>
+    </body>
+    </html>
+  `
+}
+
+// Dashboard Data KHS HTML
+function getDashboardDataKHSHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>DATA KHS - Kontrak Harga Satuan</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="/url-redirect.js?v=1770101032"></script>
+    </head>
+    <body class="bg-gray-50">
+        <!-- Navigation Bar -->
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE RAB
+                    </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
+                    <a href="/dashboard/data-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        DATA KHS
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA SPK
+                    </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
+                    </a>
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+                        LOGOUT
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="max-w-full mx-auto p-6">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-file-contract text-blue-600 mr-3"></i>
+                            DATA KHS (Kontrak Harga Satuan)
+                        </h1>
+                        <p class="text-gray-600">Daftar semua KHS yang sudah dibuat</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+                            <i class="fas fa-file-excel mr-2"></i>Export Excel
+                        </button>
+                    </div>
+                </div>
+                <div id="dataInfo" class="mt-4 text-sm text-gray-500">
+                    Loading...
+                </div>
+            </div>
+
+            <!-- KHS List -->
+            <div id="khsListContainer" class="space-y-4">
+                <!-- KHS cards will be populated here -->
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-500">Memuat data KHS...</p>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/data-khs.js"></script>
     </body>
     </html>
   `
