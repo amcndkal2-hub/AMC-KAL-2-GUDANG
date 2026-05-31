@@ -26,11 +26,23 @@ async function loadKHSData() {
     
     const data = await response.json()
     console.log('📦 Received RAB data:', data)
+    console.log('📦 Data structure check:', {
+      isArray: Array.isArray(data),
+      hasDataProperty: !!data.data,
+      dataLength: data.data?.length || data.length || 0,
+      firstItem: data.data?.[0] || data[0]
+    })
     
     // Filter only KHS (jenis_rab = 'KHS')
-    allKHSData = (data.data || []).filter(rab => rab.jenis_rab === 'KHS')
+    // Try both data.data and direct array
+    const allRAB = Array.isArray(data) ? data : (data.data || [])
+    allKHSData = allRAB.filter(rab => {
+      console.log(`Checking RAB: ${rab.nomor_rab}, jenis_rab: ${rab.jenis_rab}`)
+      return rab.jenis_rab === 'KHS'
+    })
     
-    console.log(`✅ Found ${allKHSData.length} KHS records`)
+    console.log(`✅ Found ${allKHSData.length} KHS records from ${allRAB.length} total RAB`)
+    console.log('KHS Data:', allKHSData)
     
     renderKHSList()
     updateDataInfo()
