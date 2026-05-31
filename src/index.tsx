@@ -8260,6 +8260,9 @@ function getDashboardKebutuhanMaterialHTML() {
                     <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE RAB
                     </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
                     <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
                         KEBUTUHAN
                     </a>
@@ -8688,6 +8691,9 @@ function getDashboardRefHargaHTML() {
                     <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE RAB
                     </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
                     <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         LIST RAB
                     </a>
@@ -8815,6 +8821,9 @@ function getDashboardTagihanSPKHTML() {
                 <div class="flex flex-wrap space-x-2 items-center">
                     <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE RAB
+                    </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
                     </a>
                     <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         KEBUTUHAN
@@ -9483,20 +9492,38 @@ function getDashboardCreateRABHTML() {
     <script src="/url-redirect.js?v=1770101032"></script>
     </head>
     <body class="bg-gray-100">
-        <!-- Navbar -->
-        <nav class="bg-blue-600 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <a href="/form-gangguan" class="hover:text-blue-200"><i class="fas fa-wrench mr-2"></i>Form Gangguan</a>
-                    <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
-                    <a href="/dashboard/stok" class="hover:text-blue-200">STOK
-                    <a href="/dashboard/mutasi" class="hover:text-blue-200">MUTASI</a>
-                    <a href="/dashboard/umur" class="hover:text-blue-200"><i class="fas fa-calendar-alt mr-2"></i>Umur</a>
-                    <a href="/dashboard/gangguan" class="hover:text-blue-200"><i class="fas fa-exclamation-triangle mr-2"></i>Gangguan</a>
-                    <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
-                    <a href="/dashboard/list-tor" class="hover:text-blue-200">REALISASI</a>
-                    <a href="/dashboard/resume" class="hover:text-blue-200">RESUME</a>
-                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+        <!-- Navigation Bar -->
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        CREATE RAB
+                    </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA SPK
+                    </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
+                    </a>
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
                         LOGOUT
                     </button>
                 </div>
@@ -13114,6 +13141,9 @@ function getDashboardListRABHTML() {
                     <a href="/dashboard/create-rab" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
                         CREATE RAB
                     </a>
+                    <a href="/dashboard/create-khs" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
+                        CREATE KHS
+                    </a>
                     <a href="/dashboard/kebutuhan-material" class="px-4 py-2 text-sm font-medium rounded hover:bg-blue-700 transition uppercase">
                         KEBUTUHAN
                     </a>
@@ -13403,6 +13433,9 @@ function getDashboardDataSPKHTML() {
                     <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         CREATE RAB
                     </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
                     <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         KEBUTUHAN
                     </a>
@@ -13544,6 +13577,7 @@ function getDashboardListTORHTML() {
             <div class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-4">
                     <a href="/dashboard/create-rab" class="hover:text-blue-200">CREATE RAB</a>
+                    <a href="/dashboard/create-khs" class="hover:text-blue-200">CREATE KHS</a>
                     <a href="/dashboard/kebutuhan-material" class="hover:text-blue-200">KEBUTUHAN</a>
                     <a href="/dashboard/ref-harga" class="hover:text-blue-200">REF. HARGA</a>
                     <a href="/dashboard/list-rab" class="hover:text-blue-200">LIST RAB</a>
