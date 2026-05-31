@@ -34,10 +34,27 @@ async function loadMaterials() {
     const data = await response.json()
     console.log('📦 Received materials:', data)
     
-    // Filter materials: is_rab_created = 0 (not yet selected for any RAB/KHS)
-    allMaterials = (data.materials || []).filter(mat => {
-      return !mat.is_rab_created || mat.is_rab_created === 0
-    })
+    // Use ALL materials from API (same as CREATE RAB)
+    // Sort by part_number for grouping similar materials
+    if (Array.isArray(data)) {
+      allMaterials = data.sort((a, b) => {
+        const partA = (a.part_number || '').toUpperCase()
+        const partB = (b.part_number || '').toUpperCase()
+        if (partA < partB) return -1
+        if (partA > partB) return 1
+        return 0
+      })
+    } else if (data.materials) {
+      allMaterials = data.materials.sort((a, b) => {
+        const partA = (a.part_number || '').toUpperCase()
+        const partB = (b.part_number || '').toUpperCase()
+        if (partA < partB) return -1
+        if (partA > partB) return 1
+        return 0
+      })
+    } else {
+      allMaterials = []
+    }
     
     filteredMaterials = [...allMaterials]
     
