@@ -14172,9 +14172,10 @@ function getDashboardCreateKHSHTML() {
         <title>CREATE KHS - Kontrak Harga Satuan</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="/url-redirect.js?v=1770101032"></script>
     </head>
-    <body class="bg-gray-50">
-        <!-- Navigation -->
+    <body class="bg-gray-100">
+        <!-- Navigation Bar -->
         <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-wrap space-x-2 items-center">
@@ -14199,6 +14200,9 @@ function getDashboardCreateKHSHTML() {
                     <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         DATA SPK
                     </a>
+                    <a href="/dashboard/tagihan-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        TAGIHAN SPK
+                    </a>
                     <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
                         RESUME
                     </a>
@@ -14209,123 +14213,199 @@ function getDashboardCreateKHSHTML() {
             </div>
         </nav>
 
-        <!-- Main Content -->
-        <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="w-full flex">
+            <!-- Sidebar Filter (Kiri) -->
+            <div class="w-64 bg-gray-900 shadow-lg p-6 min-h-screen flex-shrink-0">
+                <h2 class="text-xl font-bold mb-6 text-white">
+                    <i class="fas fa-filter mr-2 text-blue-400"></i>
+                    Filter Data
+                </h2>
+                
+                <div class="space-y-6">
+                    <!-- Filter Nomor LH05 -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">
+                            <i class="fas fa-file-alt mr-2"></i>Nomor LH05
+                        </label>
+                        <input type="text" id="filterNomorLH05" 
+                               class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Cth: 0248/ND KAL 2/LH05/2026">
+                        <p class="text-xs text-gray-500 mt-1">Filter by Nomor LH05</p>
+                    </div>
+                    
+                    <!-- Filter Nama Material -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">
+                            <i class="fas fa-box mr-2"></i>Nama Material
+                        </label>
+                        <input type="text" id="filterNamaMaterial" 
+                               class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Cth: sealing ring">
+                        <p class="text-xs text-gray-500 mt-1">Filter by Nama Material</p>
+                    </div>
+                    
+                    <!-- Filter Jenis Barang -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Jenis Barang</label>
+                        <select id="filterJenisBarang" class="w-full px-3 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg text-sm">
+                            <option value="">Semua Jenis</option>
+                            <option value="Material Handal">Material Handal</option>
+                            <option value="Filter">Filter</option>
+                            <option value="Material Bekas">Material Bekas</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filter Unit (Multiple Checkbox) -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-300">Filter Unit</label>
+                        <div id="filterUnitCheckboxes" class="space-y-2 max-h-96 overflow-y-auto bg-gray-800 p-3 rounded-lg border border-gray-700">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="checkAllUnits" class="w-4 h-4 text-blue-600 rounded mr-2">
+                                <label for="checkAllUnits" class="text-sm text-gray-300 font-semibold">Pilih Semua</label>
+                            </div>
+                            <hr class="border-gray-700 my-2">
+                            <!-- Unit checkboxes will be populated by JavaScript -->
+                            <p class="text-xs text-gray-500">Loading units...</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="applyFilters()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-search mr-2"></i>Terapkan Filter
+                    </button>
+                    
+                    <button onclick="resetFilters()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
+                        <i class="fas fa-undo mr-2"></i>Reset Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content (Kanan) -->
+            <div class="flex-1">
+        <div class="container mx-auto px-4 py-6">
+            <!-- Header -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                <h1 class="text-2xl font-bold text-gray-800 flex items-center">
                     <i class="fas fa-file-contract text-blue-600 mr-3"></i>
                     CREATE KHS (Kontrak Harga Satuan)
                 </h1>
-                <p class="text-gray-600">Buat Kontrak Harga Satuan baru dari material yang tersedia</p>
+                <p class="text-gray-600 mt-2">Buat KHS dari material dengan status Pengadaan</p>
             </div>
 
-            <!-- Form Create KHS -->
-            <form id="formCreateKHS" class="space-y-6">
-                <!-- Informasi Dasar -->
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
-                        Informasi KHS
-                    </h2>
+            <!-- Form KHS -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <!-- Tanggal KHS -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar mr-2"></i>Tanggal KHS
+                        </label>
+                        <input type="date" id="tanggalKHS" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               required>
+                    </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Tanggal KHS -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-calendar mr-2"></i>Tanggal KHS
-                            </label>
-                            <input type="date" id="tanggalKHS" 
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                   required>
-                        </div>
-                        
-                        <!-- ROK (Risiko dan Overhead Kontraktor) -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-percent mr-2"></i>ROK (%)
-                            </label>
-                            <input type="number" id="rokPercentage" 
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                   placeholder="Contoh: 10" step="0.01" min="0" max="100" value="10">
-                            <p class="text-xs text-gray-500 mt-1">Risiko dan Overhead Kontraktor (default: 10%)</p>
-                        </div>
+                    <!-- Nomor KHS (auto-generated) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-hashtag mr-2"></i>Nomor KHS
+                        </label>
+                        <input type="text" id="nomorKHS" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                               placeholder="Auto-generated"
+                               readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials Table -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-boxes mr-2 text-blue-600"></i>
+                        Material Tersedia (<span id="totalMaterials">0</span> item)
+                    </h2>
+                    <div class="flex gap-2">
+                        <button onclick="addSelectedToKHS()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
+                            <i class="fas fa-plus mr-2"></i>Tambah ke KHS
+                        </button>
                     </div>
                 </div>
 
-                <!-- Pilih Material -->
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                        <i class="fas fa-boxes text-blue-600 mr-2"></i>
-                        Pilih Material
-                    </h2>
-                    <p class="text-sm text-gray-600 mb-4">
-                        <i class="fas fa-info-circle text-blue-500 mr-1"></i>
-                        Material yang ditampilkan adalah material yang <strong>belum dipilih untuk SPK atau Pembelian Langsung</strong>
-                    </p>
-                    
-                    <!-- Material akan dimuat dari API -->
-                    <div id="materialListContainer" class="space-y-2">
-                        <div class="text-center py-8">
-                            <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-3"></i>
-                            <p class="text-gray-500">Memuat daftar material...</p>
-                        </div>
-                    </div>
+                <!-- Materials Table -->
+                <div class="overflow-x-auto">
+                    <table id="materialsTable" class="min-w-full border">
+                        <thead class="bg-blue-600 text-white">
+                            <tr>
+                                <th class="px-4 py-3 text-center">
+                                    <input type="checkbox" id="selectAll" class="w-5 h-5" onchange="toggleSelectAll()">
+                                </th>
+                                <th class="px-4 py-3 text-left">No</th>
+                                <th class="px-4 py-3 text-left">Nomor LH05</th>
+                                <th class="px-4 py-3 text-left">Part Number</th>
+                                <th class="px-4 py-3 text-left">Material</th>
+                                <th class="px-4 py-3 text-left">Mesin</th>
+                                <th class="px-4 py-3 text-center">Jumlah</th>
+                                <th class="px-4 py-3 text-left">Unit</th>
+                                <th class="px-4 py-3 text-left">Jenis</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialsTableBody">
+                            <tr>
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-4xl mb-3"></i>
+                                    <p>Memuat data material...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
+            </div>
 
-                <!-- Preview Materials -->
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                        <i class="fas fa-list text-blue-600 mr-2"></i>
-                        Preview Material KHS (<span id="totalMaterialsKHS">0</span> item)
-                    </h2>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full border">
-                            <thead class="bg-blue-600 text-white">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">No</th>
-                                    <th class="px-4 py-3 text-left">Nomor LH05</th>
-                                    <th class="px-4 py-3 text-left">Part Number</th>
-                                    <th class="px-4 py-3 text-left">Material</th>
-                                    <th class="px-4 py-3 text-left">Mesin</th>
-                                    <th class="px-4 py-3 text-center">Jumlah</th>
-                                    <th class="px-4 py-3 text-right">Harga Satuan</th>
-                                    <th class="px-4 py-3 text-right">Subtotal</th>
-                                    <th class="px-4 py-3 text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="previewTableKHS">
-                                <tr>
-                                    <td colspan="9" class="px-4 py-8 text-center text-gray-500">
-                                        <i class="fas fa-inbox text-4xl mb-2"></i>
-                                        <p>Belum ada material dipilih</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Total -->
-                    <div class="mt-4 bg-gray-50 p-4 rounded-lg">
-                        <div class="flex justify-between items-center text-lg font-semibold">
-                            <span>Total + PPN (11%):</span>
-                            <span id="totalKHS" class="text-blue-600 text-2xl">Rp 0</span>
-                        </div>
-                    </div>
+            <!-- Preview KHS Materials -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-list text-blue-600 mr-2"></i>
+                    Preview Material KHS (<span id="totalSelectedMaterials">0</span> item)
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border">
+                        <thead class="bg-green-600 text-white">
+                            <tr>
+                                <th class="px-4 py-3 text-left">No</th>
+                                <th class="px-4 py-3 text-left">Nomor LH05</th>
+                                <th class="px-4 py-3 text-left">Part Number</th>
+                                <th class="px-4 py-3 text-left">Material</th>
+                                <th class="px-4 py-3 text-left">Mesin</th>
+                                <th class="px-4 py-3 text-center">Jumlah</th>
+                                <th class="px-4 py-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewTableKHS">
+                            <tr>
+                                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-inbox text-4xl mb-2"></i>
+                                    <p>Belum ada material dipilih</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
+            </div>
 
-                <!-- Submit Button -->
-                <div class="flex gap-4">
-                    <button type="submit" class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition font-semibold text-lg">
-                        <i class="fas fa-save mr-2"></i>
-                        Simpan KHS
-                    </button>
-                    <button type="button" onclick="window.location.href='/dashboard/list-rab'" class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
-                        <i class="fas fa-times mr-2"></i>
-                        Batal
-                    </button>
-                </div>
-            </form>
+            <!-- Submit Buttons -->
+            <div class="flex gap-4">
+                <button onclick="submitKHS()" class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition font-semibold text-lg">
+                    <i class="fas fa-save mr-2"></i>
+                    Simpan KHS
+                </button>
+                <button onclick="window.location.href='/dashboard/list-rab'" class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                    <i class="fas fa-times mr-2"></i>
+                    Batal
+                </button>
+            </div>
+        </div>
+            </div>
         </div>
 
         <script src="/static/auth-check.js"></script>

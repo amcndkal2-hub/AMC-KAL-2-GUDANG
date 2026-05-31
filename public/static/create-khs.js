@@ -1,26 +1,25 @@
 // CREATE KHS - Kontrak Harga Satuan
 console.log('✅ Create KHS Script Loaded')
 
-let availableMaterials = []
-let selectedMaterials = []
-let materialIdCounter = 0
+let allMaterials = []
+let filteredMaterials = []
+let selectedKHSMaterials = []
 
-// Load available materials on page load
+// Load materials on page load
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('🚀 Initializing CREATE KHS...')
+  
   // Set default date to today
   document.getElementById('tanggalKHS').valueAsDate = new Date()
   
   // Load available materials
-  await loadAvailableMaterials()
-  
-  // Setup form submit
-  document.getElementById('formCreateKHS').addEventListener('submit', handleSubmit)
+  await loadMaterials()
 })
 
-// Load materials that are available (not selected for SPK or Pembelian Langsung)
-async function loadAvailableMaterials() {
+// Load materials from API (same as CREATE RAB)
+async function loadMaterials() {
   try {
-    console.log('🔄 Loading available materials for KHS...')
+    console.log('🔄 Loading materials from API...')
     
     const response = await fetch('/api/material-pengadaan', {
       headers: {
@@ -35,80 +34,167 @@ async function loadAvailableMaterials() {
     const data = await response.json()
     console.log('📦 Received materials:', data)
     
-    // Filter out materials that already have is_rab_created = 1
-    // These are materials already selected for SPK or Pembelian Langsung
-    availableMaterials = (data.materials || []).filter(mat => {
+    // Filter materials: is_rab_created = 0 (not yet selected for any RAB/KHS)
+    allMaterials = (data.materials || []).filter(mat => {
       return !mat.is_rab_created || mat.is_rab_created === 0
     })
     
-    console.log(`✅ Found ${availableMaterials.length} available materials (not yet in RAB)`)
+    filteredMaterials = [...allMaterials]
     
-    renderMaterialList()
+    console.log(`✅ Loaded ${allMaterials.length} available materials`)
+    
+    // Populate unit checkboxes
+    populateUnitCheckboxes()
+    
+    // Render materials table
+    renderMaterialsTable()
+    
   } catch (error) {
     console.error('❌ Failed to load materials:', error)
-    document.getElementById('materialListContainer').innerHTML = `
-      <div class="text-center py-8 text-red-600">
-        <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
-        <p>Gagal memuat daftar material</p>
-        <button onclick="loadAvailableMaterials()" class="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          <i class="fas fa-refresh mr-2"></i>Coba Lagi
-        </button>
-      </div>
+    document.getElementById('materialsTableBody').innerHTML = `
+      <tr>
+        <td colspan="9" class="px-4 py-8 text-center text-red-600">
+          <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
+          <p>Gagal memuat daftar material</p>
+          <button onclick="loadMaterials()" class="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            <i class="fas fa-refresh mr-2"></i>Coba Lagi
+          </button>
+        </td>
+      </tr>
     `
   }
 }
 
-// Render material list with checkboxes
-function renderMaterialList() {
-  const container = document.getElementById('materialListContainer')
+// Populate unit checkboxes for filter
+function populateUnitCheckboxes() {
+  const units = [...new Set(allMaterials.map(m => m.lokasi_tujuan || m.unit_uld || 'N/A'))]
+  const container = document.getElementById('filterUnitCheckboxes')
   
-  if (availableMaterials.length === 0) {
-    container.innerHTML = `
-      <div class="text-center py-8 text-gray-500">
-        <i class="fas fa-inbox text-4xl mb-3"></i>
-        <p class="font-semibold">Tidak ada material tersedia</p>
-        <p class="text-sm mt-2">Semua material sudah dipilih untuk SPK atau Pembelian Langsung</p>
-      </div>
-    `
-    return
-  }
+  const checkAllHTML = `
+    <div class="flex items-center">
+      <input type="checkbox" id="checkAllUnits" class="w-4 h-4 text-blue-600 rounded mr-2" onchange="toggleAllUnits()">
+      <label for="checkAllUnits" class="text-sm text-gray-300 font-semibold">Pilih Semua</label>
+    </div>
+    <hr class="border-gray-700 my-2">
+  `
   
-  container.innerHTML = availableMaterials.map((mat, index) => `
-    <div class="border border-gray-300 rounded-lg p-4 hover:bg-blue-50 transition">
-      <div class="flex items-start gap-3">
-        <input type="checkbox" 
-               id="mat_${index}" 
-               class="material-checkbox mt-1 w-5 h-5 text-blue-600 rounded"
-               data-index="${index}"
-               onchange="updateSelectedCount()">
-        <label for="mat_${index}" class="flex-1 cursor-pointer">
-          <div class="font-semibold text-gray-800">
-            ${mat.material}
-          </div>
-          <div class="text-sm text-gray-600 mt-1 grid grid-cols-2 gap-2">
-            <div><span class="font-medium">LH05:</span> ${mat.nomor_lh05}</div>
-            <div><span class="font-medium">Part Number:</span> ${mat.part_number}</div>
-            <div><span class="font-medium">Mesin:</span> ${mat.mesin}</div>
-            <div><span class="font-medium">Jumlah:</span> ${mat.jumlah}</div>
-            <div><span class="font-medium">Unit:</span> ${mat.lokasi_tujuan || mat.unit_uld || '-'}</div>
-            <div><span class="font-medium">Jenis:</span> ${mat.jenis_barang || 'Material Handal'}</div>
-          </div>
-        </label>
-      </div>
+  const unitsHTML = units.map(unit => `
+    <div class="flex items-center">
+      <input type="checkbox" id="unit_${unit}" value="${unit}" class="unit-checkbox w-4 h-4 text-blue-600 rounded mr-2" onchange="updateCheckAllUnits()">
+      <label for="unit_${unit}" class="text-sm text-gray-300">${unit}</label>
     </div>
   `).join('')
   
-  console.log(`✅ Rendered ${availableMaterials.length} materials`)
+  container.innerHTML = checkAllHTML + unitsHTML
 }
 
-// Update selected count
-function updateSelectedCount() {
-  const checked = document.querySelectorAll('.material-checkbox:checked').length
-  console.log(`📊 Selected: ${checked} materials`)
+// Toggle all unit checkboxes
+function toggleAllUnits() {
+  const checkAll = document.getElementById('checkAllUnits')
+  const checkboxes = document.querySelectorAll('.unit-checkbox')
+  checkboxes.forEach(cb => cb.checked = checkAll.checked)
 }
 
-// Add selected materials to preview
-function addSelectedMaterials() {
+// Update check all checkbox
+function updateCheckAllUnits() {
+  const checkAll = document.getElementById('checkAllUnits')
+  const checkboxes = document.querySelectorAll('.unit-checkbox')
+  const allChecked = Array.from(checkboxes).every(cb => cb.checked)
+  checkAll.checked = allChecked
+}
+
+// Apply filters
+function applyFilters() {
+  console.log('🔍 Applying filters...')
+  
+  const nomorLH05 = document.getElementById('filterNomorLH05').value.toLowerCase()
+  const namaMaterial = document.getElementById('filterNamaMaterial').value.toLowerCase()
+  const jenisBarang = document.getElementById('filterJenisBarang').value
+  
+  const selectedUnits = Array.from(document.querySelectorAll('.unit-checkbox:checked')).map(cb => cb.value)
+  
+  filteredMaterials = allMaterials.filter(mat => {
+    // Filter by Nomor LH05
+    if (nomorLH05 && !mat.nomor_lh05.toLowerCase().includes(nomorLH05)) return false
+    
+    // Filter by Material name
+    if (namaMaterial && !mat.material.toLowerCase().includes(namaMaterial)) return false
+    
+    // Filter by Jenis Barang
+    if (jenisBarang && mat.jenis_barang !== jenisBarang) return false
+    
+    // Filter by Unit
+    if (selectedUnits.length > 0) {
+      const matUnit = mat.lokasi_tujuan || mat.unit_uld || 'N/A'
+      if (!selectedUnits.includes(matUnit)) return false
+    }
+    
+    return true
+  })
+  
+  console.log(`✅ Filtered: ${filteredMaterials.length} materials`)
+  renderMaterialsTable()
+}
+
+// Reset filters
+function resetFilters() {
+  document.getElementById('filterNomorLH05').value = ''
+  document.getElementById('filterNamaMaterial').value = ''
+  document.getElementById('filterJenisBarang').value = ''
+  
+  const checkboxes = document.querySelectorAll('.unit-checkbox')
+  checkboxes.forEach(cb => cb.checked = false)
+  document.getElementById('checkAllUnits').checked = false
+  
+  filteredMaterials = [...allMaterials]
+  renderMaterialsTable()
+}
+
+// Render materials table
+function renderMaterialsTable() {
+  const tbody = document.getElementById('materialsTableBody')
+  
+  if (filteredMaterials.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+          <i class="fas fa-inbox text-4xl mb-3"></i>
+          <p>Tidak ada material tersedia</p>
+        </td>
+      </tr>
+    `
+    document.getElementById('totalMaterials').textContent = '0'
+    return
+  }
+  
+  tbody.innerHTML = filteredMaterials.map((mat, index) => `
+    <tr class="border-b hover:bg-gray-50">
+      <td class="px-4 py-3 text-center">
+        <input type="checkbox" class="material-checkbox w-5 h-5" data-id="${mat.id}">
+      </td>
+      <td class="px-4 py-3">${index + 1}</td>
+      <td class="px-4 py-3 font-mono text-sm">${mat.nomor_lh05}</td>
+      <td class="px-4 py-3 font-semibold text-blue-600">${mat.part_number}</td>
+      <td class="px-4 py-3">${mat.material}</td>
+      <td class="px-4 py-3">${mat.mesin}</td>
+      <td class="px-4 py-3 text-center font-semibold">${mat.jumlah}</td>
+      <td class="px-4 py-3">${mat.lokasi_tujuan || mat.unit_uld || '-'}</td>
+      <td class="px-4 py-3">${mat.jenis_barang || 'Material Handal'}</td>
+    </tr>
+  `).join('')
+  
+  document.getElementById('totalMaterials').textContent = filteredMaterials.length
+}
+
+// Toggle select all
+function toggleSelectAll() {
+  const selectAll = document.getElementById('selectAll')
+  const checkboxes = document.querySelectorAll('.material-checkbox')
+  checkboxes.forEach(cb => cb.checked = selectAll.checked)
+}
+
+// Add selected materials to KHS
+function addSelectedToKHS() {
   const checkboxes = document.querySelectorAll('.material-checkbox:checked')
   
   if (checkboxes.length === 0) {
@@ -116,171 +202,114 @@ function addSelectedMaterials() {
     return
   }
   
+  let addedCount = 0
   checkboxes.forEach(checkbox => {
-    const index = parseInt(checkbox.dataset.index)
-    const mat = availableMaterials[index]
+    const matId = parseInt(checkbox.dataset.id)
+    const mat = filteredMaterials.find(m => m.id === matId)
+    
+    if (!mat) return
     
     // Check if already added
-    if (selectedMaterials.find(m => m.materialGangguanId === mat.id)) {
+    if (selectedKHSMaterials.find(m => m.id === matId)) {
       console.warn(`⚠️ Material ${mat.part_number} sudah ditambahkan`)
       return
     }
     
-    materialIdCounter++
-    selectedMaterials.push({
-      id: materialIdCounter,
-      materialGangguanId: mat.id,
+    selectedKHSMaterials.push({
+      id: mat.id,
       nomorLH05: mat.nomor_lh05,
       partNumber: mat.part_number,
       material: mat.material,
       mesin: mat.mesin,
       jumlah: mat.jumlah,
-      hargaSatuan: 0,
-      subtotal: 0,
       unitUld: mat.lokasi_tujuan || mat.unit_uld || '',
       jenisBarang: mat.jenis_barang || 'Material Handal'
     })
     
-    // Uncheck and disable
+    addedCount++
     checkbox.checked = false
-    checkbox.disabled = true
   })
   
+  document.getElementById('selectAll').checked = false
+  
+  if (addedCount > 0) {
+    alert(`✅ ${addedCount} material ditambahkan ke KHS`)
+  }
+  
   updatePreviewTable()
-  updateTotal()
 }
 
 // Update preview table
 function updatePreviewTable() {
   const tbody = document.getElementById('previewTableKHS')
   
-  if (selectedMaterials.length === 0) {
+  if (selectedKHSMaterials.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
           <i class="fas fa-inbox text-4xl mb-2"></i>
           <p>Belum ada material dipilih</p>
         </td>
       </tr>
     `
-    document.getElementById('totalMaterialsKHS').textContent = '0'
+    document.getElementById('totalSelectedMaterials').textContent = '0'
     return
   }
   
-  tbody.innerHTML = selectedMaterials.map((mat, index) => `
+  tbody.innerHTML = selectedKHSMaterials.map((mat, index) => `
     <tr class="border-b hover:bg-gray-50">
       <td class="px-4 py-3">${index + 1}</td>
-      <td class="px-4 py-3">${mat.nomorLH05}</td>
+      <td class="px-4 py-3 font-mono text-sm">${mat.nomorLH05}</td>
       <td class="px-4 py-3 font-semibold text-blue-600">${mat.partNumber}</td>
       <td class="px-4 py-3">${mat.material}</td>
       <td class="px-4 py-3">${mat.mesin}</td>
-      <td class="px-4 py-3 text-center">${mat.jumlah}</td>
-      <td class="px-4 py-3 text-right">
-        <input type="number" 
-               class="w-full px-2 py-1 border rounded text-right"
-               value="${mat.hargaSatuan}"
-               min="0"
-               step="1000"
-               onchange="updateHargaSatuan(${mat.id}, this.value)"
-               placeholder="Harga">
-      </td>
-      <td class="px-4 py-3 text-right font-semibold">${formatRupiah(mat.subtotal)}</td>
+      <td class="px-4 py-3 text-center font-semibold">${mat.jumlah}</td>
       <td class="px-4 py-3 text-center">
-        <button onclick="removeMaterial(${mat.id})" 
-                class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
+        <button onclick="removeFromKHS(${mat.id})" class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
           <i class="fas fa-trash"></i>
         </button>
       </td>
     </tr>
   `).join('')
   
-  document.getElementById('totalMaterialsKHS').textContent = selectedMaterials.length
+  document.getElementById('totalSelectedMaterials').textContent = selectedKHSMaterials.length
 }
 
-// Update harga satuan
-function updateHargaSatuan(matId, harga) {
-  const mat = selectedMaterials.find(m => m.id === matId)
-  if (!mat) return
-  
-  mat.hargaSatuan = parseFloat(harga) || 0
-  mat.subtotal = mat.hargaSatuan * mat.jumlah
-  
+// Remove material from KHS
+function removeFromKHS(matId) {
+  selectedKHSMaterials = selectedKHSMaterials.filter(m => m.id !== matId)
   updatePreviewTable()
-  updateTotal()
 }
 
-// Remove material
-function removeMaterial(matId) {
-  const mat = selectedMaterials.find(m => m.id === matId)
-  if (!mat) return
-  
-  // Re-enable checkbox
-  const matIndex = availableMaterials.findIndex(m => m.id === mat.materialGangguanId)
-  if (matIndex !== -1) {
-    const checkbox = document.querySelector(`input[data-index="${matIndex}"]`)
-    if (checkbox) {
-      checkbox.disabled = false
-    }
-  }
-  
-  selectedMaterials = selectedMaterials.filter(m => m.id !== matId)
-  updatePreviewTable()
-  updateTotal()
-}
-
-// Update total
-function updateTotal() {
-  const subtotal = selectedMaterials.reduce((sum, mat) => sum + mat.subtotal, 0)
-  const ppn = subtotal * 0.11
-  const total = subtotal + ppn
-  
-  document.getElementById('totalKHS').textContent = formatRupiah(total)
-}
-
-// Format Rupiah
-function formatRupiah(amount) {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0
-  }).format(amount)
-}
-
-// Handle form submit
-async function handleSubmit(e) {
-  e.preventDefault()
-  
+// Submit KHS
+async function submitKHS() {
   // Validation
-  if (selectedMaterials.length === 0) {
+  if (selectedKHSMaterials.length === 0) {
     alert('❌ Minimal harus ada 1 material!')
     return
   }
   
-  // Check all materials have harga satuan
-  const missingPrice = selectedMaterials.find(mat => mat.hargaSatuan === 0)
-  if (missingPrice) {
-    alert(`❌ Material "${missingPrice.material}" belum diisi harga satuan!`)
+  const tanggal = document.getElementById('tanggalKHS').value
+  if (!tanggal) {
+    alert('❌ Tanggal KHS harus diisi!')
     return
   }
-  
-  const tanggal = document.getElementById('tanggalKHS').value
-  const rokPercentage = parseFloat(document.getElementById('rokPercentage').value) || 10
   
   const payload = {
     tanggal_rab: tanggal,
     jenis_rab: 'KHS',
-    rok_percentage: rokPercentage,
-    use_ppn: true,
-    items: selectedMaterials.map(mat => ({
+    rok_percentage: 0,  // No ROK for KHS
+    use_ppn: false,     // No PPN for KHS (will be handled in backend)
+    items: selectedKHSMaterials.map(mat => ({
       nomor_lh05: mat.nomorLH05,
       part_number: mat.partNumber,
       material: mat.material,
       mesin: mat.mesin,
       jumlah: mat.jumlah,
       unit_uld: mat.unitUld,
-      harga_satuan: mat.hargaSatuan,
-      subtotal: mat.subtotal,
-      material_gangguan_id: mat.materialGangguanId
+      harga_satuan: 0,    // No harga satuan for KHS
+      subtotal: 0,        // No subtotal for KHS
+      material_gangguan_id: mat.id
     }))
   }
   
@@ -299,7 +328,7 @@ async function handleSubmit(e) {
     const result = await response.json()
     
     if (result.success) {
-      alert(`✅ KHS berhasil dibuat!\nNomor: ${result.nomor_rab}\nTotal: ${formatRupiah(result.total_harga)}`)
+      alert(`✅ KHS berhasil dibuat!\nNomor: ${result.nomor_rab}`)
       window.location.href = '/dashboard/list-rab'
     } else {
       alert(`❌ Gagal membuat KHS: ${result.error}`)
@@ -310,18 +339,8 @@ async function handleSubmit(e) {
   }
 }
 
-// Add button untuk menambahkan material yang dipilih
-document.addEventListener('DOMContentLoaded', () => {
-  // Add button after material list
-  setTimeout(() => {
-    const container = document.getElementById('materialListContainer')
-    if (container && availableMaterials.length > 0) {
-      const addButton = document.createElement('button')
-      addButton.type = 'button'
-      addButton.className = 'mt-4 w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition font-semibold'
-      addButton.innerHTML = '<i class="fas fa-plus-circle mr-2"></i>Tambah Material yang Dipilih'
-      addButton.onclick = addSelectedMaterials
-      container.appendChild(addButton)
-    }
-  }, 1000)
-})
+// Logout function
+function logout() {
+  localStorage.removeItem('sessionToken')
+  window.location.href = '/login'
+}
