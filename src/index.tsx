@@ -6148,6 +6148,11 @@ app.get('/dashboard/create-rab', (c) => {
   return c.html(getDashboardCreateRABHTML())
 })
 
+// Dashboard Create KHS (PROTECTED - auth required)
+app.get('/dashboard/create-khs', (c) => {
+  return c.html(getDashboardCreateKHSHTML())
+})
+
 // Dashboard List RAB (PROTECTED - auth required)
 app.get('/dashboard/list-rab', (c) => {
   return c.html(getDashboardListRABHTML())
@@ -14117,6 +14122,180 @@ function getInputFormV2HTML() {
         <script src="/static/auth-check.js"></script>
         <script src="/static/app-material-input.js"></script>
         <script src="/static/app-v2.js"></script>
+    </body>
+    </html>
+  `
+}
+
+// Dashboard Create KHS HTML
+function getDashboardCreateKHSHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CREATE KHS - Kontrak Harga Satuan</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-gray-50">
+        <!-- Navigation -->
+        <nav class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-wrap space-x-2 items-center">
+                    <a href="/dashboard/create-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        CREATE RAB
+                    </a>
+                    <a href="/dashboard/create-khs" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-blue-900 rounded transition-colors duration-200">
+                        CREATE KHS
+                    </a>
+                    <a href="/dashboard/kebutuhan-material" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        KEBUTUHAN
+                    </a>
+                    <a href="/dashboard/ref-harga" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REF. HARGA
+                    </a>
+                    <a href="/dashboard/list-rab" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        LIST RAB
+                    </a>
+                    <a href="/dashboard/list-tor" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        REALISASI
+                    </a>
+                    <a href="/dashboard/data-spk" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        DATA SPK
+                    </a>
+                    <a href="/dashboard/resume" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide hover:bg-blue-700 rounded transition-colors duration-200">
+                        RESUME
+                    </a>
+                    <button onclick="logout()" class="px-5 py-2.5 text-sm font-bold uppercase tracking-wide bg-red-600 hover:bg-red-700 rounded transition-colors duration-200 ml-auto">
+                        LOGOUT
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                    <i class="fas fa-file-contract text-blue-600 mr-3"></i>
+                    CREATE KHS (Kontrak Harga Satuan)
+                </h1>
+                <p class="text-gray-600">Buat Kontrak Harga Satuan baru dari material yang tersedia</p>
+            </div>
+
+            <!-- Form Create KHS -->
+            <form id="formCreateKHS" class="space-y-6">
+                <!-- Informasi Dasar -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        Informasi KHS
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Tanggal KHS -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-calendar mr-2"></i>Tanggal KHS
+                            </label>
+                            <input type="date" id="tanggalKHS" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   required>
+                        </div>
+                        
+                        <!-- ROK (Risiko dan Overhead Kontraktor) -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-percent mr-2"></i>ROK (%)
+                            </label>
+                            <input type="number" id="rokPercentage" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   placeholder="Contoh: 10" step="0.01" min="0" max="100" value="10">
+                            <p class="text-xs text-gray-500 mt-1">Risiko dan Overhead Kontraktor (default: 10%)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pilih Material -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-boxes text-blue-600 mr-2"></i>
+                        Pilih Material
+                    </h2>
+                    <p class="text-sm text-gray-600 mb-4">
+                        <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                        Material yang ditampilkan adalah material yang <strong>belum dipilih untuk SPK atau Pembelian Langsung</strong>
+                    </p>
+                    
+                    <!-- Material akan dimuat dari API -->
+                    <div id="materialListContainer" class="space-y-2">
+                        <div class="text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-3"></i>
+                            <p class="text-gray-500">Memuat daftar material...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Materials -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-list text-blue-600 mr-2"></i>
+                        Preview Material KHS (<span id="totalMaterialsKHS">0</span> item)
+                    </h2>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full border">
+                            <thead class="bg-blue-600 text-white">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">No</th>
+                                    <th class="px-4 py-3 text-left">Nomor LH05</th>
+                                    <th class="px-4 py-3 text-left">Part Number</th>
+                                    <th class="px-4 py-3 text-left">Material</th>
+                                    <th class="px-4 py-3 text-left">Mesin</th>
+                                    <th class="px-4 py-3 text-center">Jumlah</th>
+                                    <th class="px-4 py-3 text-right">Harga Satuan</th>
+                                    <th class="px-4 py-3 text-right">Subtotal</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewTableKHS">
+                                <tr>
+                                    <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+                                        <i class="fas fa-inbox text-4xl mb-2"></i>
+                                        <p>Belum ada material dipilih</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Total -->
+                    <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center text-lg font-semibold">
+                            <span>Total + PPN (11%):</span>
+                            <span id="totalKHS" class="text-blue-600 text-2xl">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex gap-4">
+                    <button type="submit" class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition font-semibold text-lg">
+                        <i class="fas fa-save mr-2"></i>
+                        Simpan KHS
+                    </button>
+                    <button type="button" onclick="window.location.href='/dashboard/list-rab'" class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                        <i class="fas fa-times mr-2"></i>
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <script src="/static/auth-check.js"></script>
+        <script src="/static/create-khs.js"></script>
     </body>
     </html>
   `
