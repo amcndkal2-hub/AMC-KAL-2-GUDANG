@@ -661,6 +661,11 @@ function applyFilters() {
   
   // Filter the list
   filteredRABList = allRABList.filter(rab => {
+    // EXCLUDE KHS from LIST RAB (KHS should only appear in DATA KHS)
+    if (rab.jenis_rab === 'KHS') {
+      return false
+    }
+    
     // Status filter
     const statusMatch = currentStatusFilter === 'All' || rab.status === currentStatusFilter
     
