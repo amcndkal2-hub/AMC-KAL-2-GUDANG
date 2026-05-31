@@ -346,7 +346,7 @@ async function submitKHS() {
     
     if (result.success) {
       alert(`✅ KHS berhasil dibuat!\nNomor: ${result.nomor_rab}`)
-      window.location.href = '/dashboard/list-rab'
+      window.location.href = '/dashboard/data-khs'
     } else {
       alert(`❌ Gagal membuat KHS: ${result.error}`)
     }
