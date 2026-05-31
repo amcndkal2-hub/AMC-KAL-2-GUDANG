@@ -333,7 +333,7 @@ async function submitKHS() {
   console.log('📤 Submitting KHS:', payload)
   
   try {
-    const response = await fetch('/api/rab/create', {
+    const response = await fetch('/api/create-rab', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
