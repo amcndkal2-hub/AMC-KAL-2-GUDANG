@@ -395,19 +395,8 @@ async function viewKHSDetail(idx) {
   showModal(khs, null)
 
   try {
-    // Jika KHS punya nomor_kr → fetch live dari GitHub JSON
-    if (khs.nomor_kr && khs.nomor_kr.trim() !== '') {
-      console.log(`🔍 Fetching live KR items for: ${khs.nomor_kr}`)
-      const krItems = await fetchKRDetailItems(khs.nomor_kr)
-      if (krItems.length > 0) {
-        showModal(khs, krItems)
-        return
-      }
-      // Jika tidak ditemukan di JSON, fallback ke DB
-      console.warn(`⚠️ No items found in KR JSON for ${khs.nomor_kr}, falling back to DB`)
-    }
-
-    // Fallback: fetch dari DB via /api/rab/{id}
+    // Selalu ambil data dari DB (inputan CREATE KHS)
+    // Kolom: No | Nomor LH05 | Part Number | Material | Mesin | Jumlah | Unit | Jenis
     const res = await fetch(`/api/rab/${khs.id}`, {
       headers: { 'Authorization': `Bearer ${sessionToken}` }
     })
