@@ -1,23 +1,35 @@
 // DATA KHS - Kontrak Harga Satuan
-console.log('✅ Data KHS Script Loaded v2')
+console.log('✅ Data KHS Script Loaded v3')
 
 let allKHSData = []
 let currentUsername = ''
 let currentRole = ''
 let sessionToken = ''
-
-// Daftar nomor KR yang tersedia (hardcoded sesuai kebutuhan lapangan)
-// Format: nomor_kr → nama kontrak
-// User bisa ketik manual atau pilih dari daftar
-const KR_SUGGESTIONS = []
+let krListCache = []   // daftar KR Pembangkitan dari /api/kr-list
 
 // ─── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 Initializing DATA KHS v2...')
+  console.log('🚀 Initializing DATA KHS v3...')
   sessionToken = localStorage.getItem('sessionToken') || ''
   await loadCurrentUser()
+  await loadKRList()   // load daftar KR dulu sebelum render tabel
   await loadKHSData()
 })
+
+// ─── Load daftar KR Pembangkitan dari API ──────────────────────────────────
+async function loadKRList() {
+  try {
+    const res = await fetch('/api/kr-list')
+    if (res.ok) {
+      const data = await res.json()
+      krListCache = data.data || []
+      console.log(`📋 Loaded ${krListCache.length} KR Pembangkitan`)
+    }
+  } catch (e) {
+    console.warn('Could not load KR list:', e)
+    krListCache = []
+  }
+}
 
 // ─── Load current session user ─────────────────────────────────────────────
 async function loadCurrentUser() {
@@ -168,21 +180,36 @@ function renderKRInput(khs, idx, canEdit, isLocked) {
   }
 
   if (canEdit) {
-    // Editable: input + tombol simpan
+    // Editable: dropdown KR Pembangkitan + tombol simpan
     const val = khs.nomor_kr || ''
+    // Build option list dari krListCache
+    const options = krListCache.map(kr => {
+      const selected = kr.nomor_kr === val ? 'selected' : ''
+      // Tampilkan nomor KR singkat (potong setelah KR/)
+      const label = kr.nomor_kr.length > 50
+        ? kr.nomor_kr.substring(0, 50) + '…'
+        : kr.nomor_kr
+      return `<option value="${escapeHtml(kr.nomor_kr)}" ${selected} title="${escapeHtml(kr.nomor_kr)}">${escapeHtml(label)}</option>`
+    }).join('')
+
+    const adminNote = isAdmin && val
+      ? `<span class="ml-1 text-xs text-amber-600" title="Admin: dapat mengubah KR"><i class="fas fa-shield-alt"></i></span>`
+      : ''
+
     return `
       <div class="flex items-center gap-1" id="kr-edit-${khs.id}">
-        <input
-          type="text"
+        <select
           id="kr-input-${khs.id}"
-          value="${escapeHtml(val)}"
-          placeholder="Masukkan Nomor KR..."
-          class="border border-gray-300 rounded px-2 py-1 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          onkeydown="if(event.key==='Enter') saveKR(${idx})"
-        />
+          class="border border-gray-300 rounded px-2 py-1 text-sm w-60 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+          title="Pilih Nomor KR Pembangkitan"
+        >
+          <option value="">-- Pilih Nomor KR --</option>
+          ${options}
+        </select>
+        ${adminNote}
         <button onclick="saveKR(${idx})"
                 class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition whitespace-nowrap"
-                title="Simpan Nomor KR">
+                title="Simpan Nomor KR (permanen)">
           <i class="fas fa-save mr-1"></i>Simpan
         </button>
       </div>`
@@ -194,12 +221,26 @@ function renderKRInput(khs, idx, canEdit, isLocked) {
 // ─── Save KR ke DB ─────────────────────────────────────────────────────────
 async function saveKR(idx) {
   const khs = allKHSData[idx]
-  const input = document.getElementById(`kr-input-${khs.id}`)
-  if (!input) return
+  const select = document.getElementById(`kr-input-${khs.id}`)
+  if (!select) return
 
-  const nomorKR = input.value.trim()
-  const btn = input.nextElementSibling
-  const originalText = btn.innerHTML
+  const nomorKR = select.value.trim()
+  if (!nomorKR) {
+    showToast('warning', 'Pilih Nomor KR terlebih dahulu dari dropdown.')
+    return
+  }
+
+  // Konfirmasi sebelum menyimpan (permanen untuk user biasa)
+  const isAdmin = currentRole === 'admin'
+  const confirmMsg = isAdmin
+    ? `Simpan Nomor KR:\n"${nomorKR}"\n\n(Admin dapat mengubah kembali jika diperlukan)`
+    : `Simpan Nomor KR:\n"${nomorKR}"\n\n⚠️ PERMANEN — setelah disimpan tidak dapat diubah kecuali oleh Admin.\n\nLanjutkan?`
+  if (!confirm(confirmMsg)) return
+
+  // Cari tombol simpan (bisa ada adminNote span di tengah)
+  const btn = select.parentElement.querySelector('button[onclick*="saveKR"]')
+  const originalText = btn ? btn.innerHTML : ''
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>' }
 
   // UI loading
   btn.disabled = true
@@ -219,15 +260,13 @@ async function saveKR(idx) {
 
     if (res.status === 403) {
       showToast('error', data.message || 'Nomor KR terkunci. Hanya admin yang bisa mengubah.')
-      btn.disabled = false
-      btn.innerHTML = originalText
+      if (btn) { btn.disabled = false; btn.innerHTML = originalText }
       return
     }
 
     if (!res.ok) {
       showToast('error', data.message || 'Gagal menyimpan Nomor KR')
-      btn.disabled = false
-      btn.innerHTML = originalText
+      if (btn) { btn.disabled = false; btn.innerHTML = originalText }
       return
     }
 
@@ -235,7 +274,7 @@ async function saveKR(idx) {
     khs.nomor_kr = nomorKR || null
     khs.nomor_kr_set_by = currentUsername
 
-    showToast('success', `Nomor KR "${nomorKR || '(dihapus)'}" berhasil disimpan!`)
+    showToast('success', `✅ Nomor KR berhasil disimpan secara permanen!`)
 
     // Re-render tabel untuk update tampilan (lock/unlock)
     renderKHSTable()
@@ -243,8 +282,7 @@ async function saveKR(idx) {
   } catch (e) {
     console.error('Save KR error:', e)
     showToast('error', 'Gagal menyimpan. Periksa koneksi.')
-    btn.disabled = false
-    btn.innerHTML = originalText
+    if (btn) { btn.disabled = false; btn.innerHTML = originalText }
   }
 }
 

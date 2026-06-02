@@ -3852,6 +3852,52 @@ app.get('/api/debug/tor-list', async (c) => {
   }
 })
 
+// =====================================================
+// API: Daftar KR Bidang Pembangkitan (untuk dropdown)
+// Source: https://raw.githubusercontent.com/ipanrifan-create/DATA-KR/refs/heads/main/data_scm.json
+// Di-cache in-memory 1 jam agar tidak fetch berulang
+// =====================================================
+let krListCache: { data: any[]; ts: number } | null = null
+const KR_CACHE_TTL = 60 * 60 * 1000 // 1 jam
+
+app.get('/api/kr-list', async (c) => {
+  try {
+    const now = Date.now()
+    if (krListCache && now - krListCache.ts < KR_CACHE_TTL) {
+      return c.json({ success: true, data: krListCache.data })
+    }
+
+    const JSON_URL = 'https://raw.githubusercontent.com/ipanrifan-create/DATA-KR/refs/heads/main/data_scm.json'
+    const resp = await fetch(JSON_URL)
+    if (!resp.ok) {
+      throw new Error(`Failed to fetch JSON: ${resp.status}`)
+    }
+    const json: any = await resp.json()
+    const ringkasan: any[] = json['Ringkasan KR'] || []
+
+    const list: { nomor_kr: string; vendor: string; status: string }[] = []
+    for (const row of ringkasan) {
+      if (!Array.isArray(row) || !Number.isInteger(row[0])) continue
+      const bidang = String(row[3] || '').toUpperCase()
+      if (!bidang.includes('PEMBANGKITAN')) continue
+      list.push({
+        nomor_kr: String(row[1] || ''),
+        vendor:   String(row[2] || ''),
+        status:   String(row[7] || '')
+      })
+    }
+
+    // Urutkan nomor KR secara ascending
+    list.sort((a, b) => a.nomor_kr.localeCompare(b.nomor_kr))
+
+    krListCache = { data: list, ts: now }
+    return c.json({ success: true, data: list })
+  } catch (error: any) {
+    console.error('Failed to fetch KR list:', error)
+    return c.json({ success: false, error: error.message, data: [] }, 500)
+  }
+})
+
 // API: Get RAB by ID (MUST be after specific routes)
 app.get('/api/rab/:id', async (c) => {
   try {
