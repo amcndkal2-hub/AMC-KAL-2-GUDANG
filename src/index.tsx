@@ -3871,6 +3871,86 @@ app.get('/api/rab/:id', async (c) => {
   }
 })
 
+// =====================================================
+// API: Set Nomor KR untuk KHS (Permanen - hanya admin yg bisa ubah)
+// =====================================================
+app.put('/api/rab/:id/nomor-kr', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+
+    // Cek session & username
+    const authHeader = c.req.header('Authorization')
+    const sessionToken = authHeader?.replace('Bearer ', '')
+    if (!sessionToken) {
+      return c.json({ error: 'Unauthorized', message: 'Session tidak valid' }, 401)
+    }
+
+    // Ambil username & role dari session (DB atau in-memory)
+    let username = ''
+    let role = ''
+    if (activeSessions.has(sessionToken)) {
+      const s = activeSessions.get(sessionToken)
+      username = s.username
+      role = s.role
+    } else {
+      try {
+        const dbSession: any = await DB.getSession(env.DB, sessionToken)
+        if (dbSession) {
+          username = dbSession.username
+          role = dbSession.role
+          activeSessions.set(sessionToken, { username, role, token: sessionToken })
+        }
+      } catch (e) {}
+    }
+
+    if (!username) {
+      return c.json({ error: 'Unauthorized', message: 'Session tidak ditemukan' }, 401)
+    }
+
+    // Ambil data RAB yang ada
+    const existingRab: any = await env.DB.prepare(
+      'SELECT id, nomor_rab, nomor_kr, nomor_kr_set_by, jenis_rab FROM rab WHERE id = ?'
+    ).bind(rabId).first()
+
+    if (!existingRab) {
+      return c.json({ error: 'RAB tidak ditemukan' }, 404)
+    }
+
+    // Jika sudah ada nomor KR dan user bukan admin → tolak
+    if (existingRab.nomor_kr && existingRab.nomor_kr.trim() !== '') {
+      if (role !== 'admin') {
+        return c.json({
+          error: 'Forbidden',
+          message: 'Nomor KR sudah terkunci. Hanya admin (Andalcekatan) yang bisa mengubahnya.',
+          current_nomor_kr: existingRab.nomor_kr,
+          set_by: existingRab.nomor_kr_set_by
+        }, 403)
+      }
+    }
+
+    const body = await c.req.json()
+    const nomorKR = (body.nomor_kr || '').trim()
+
+    await env.DB.prepare(`
+      UPDATE rab SET nomor_kr = ?, nomor_kr_set_by = ?, nomor_kr_set_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(nomorKR || null, username, rabId).run()
+
+    console.log(`✅ Nomor KR "${nomorKR}" disimpan untuk RAB ID ${rabId} oleh ${username} (role: ${role})`)
+
+    return c.json({
+      success: true,
+      message: `Nomor KR berhasil ${nomorKR ? 'disimpan' : 'dihapus'}`,
+      nomor_kr: nomorKR || null,
+      set_by: username
+    })
+  } catch (error) {
+    console.error('Failed to save nomor KR:', error)
+    return c.json({ error: 'Gagal menyimpan nomor KR' }, 500)
+  }
+})
+
 // API: Update realisasi value for RAB item
 app.put('/api/rab/:rabId/item/:itemId/realisasi', async (c) => {
   try {
@@ -14498,36 +14578,52 @@ function getDashboardDataKHSHTML() {
         <!-- Main Content -->
         <div class="max-w-full mx-auto p-6">
             <!-- Header -->
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="bg-white rounded-lg shadow-md p-5 mb-5">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                            <i class="fas fa-file-contract text-blue-600 mr-3"></i>
+                        <h1 class="text-2xl font-bold text-gray-800 mb-1">
+                            <i class="fas fa-file-contract text-blue-600 mr-2"></i>
                             DATA KHS (Kontrak Harga Satuan)
                         </h1>
-                        <p class="text-gray-600">Daftar semua KHS yang sudah dibuat</p>
+                        <p class="text-gray-500 text-sm">Daftar semua KHS yang sudah dibuat</p>
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
+                        <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-sm">
                             <i class="fas fa-sync-alt mr-2"></i>Refresh
                         </button>
-                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow text-sm">
                             <i class="fas fa-file-excel mr-2"></i>Export Excel
                         </button>
                     </div>
                 </div>
-                <div id="dataInfo" class="mt-4 text-sm text-gray-500">
+                <div id="dataInfo" class="mt-3 text-xs text-gray-400">
                     Loading...
                 </div>
             </div>
 
-            <!-- KHS List -->
-            <div id="khsListContainer" class="space-y-4">
-                <!-- KHS cards will be populated here -->
-                <div class="text-center py-8">
-                    <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-3"></i>
-                    <p class="text-gray-500">Memuat data KHS...</p>
-                </div>
+            <!-- KHS Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="min-w-full">
+                  <thead>
+                    <tr class="bg-red-600 text-white text-xs font-bold uppercase tracking-wide">
+                      <th class="px-4 py-3 text-left w-44">NOMOR RAB</th>
+                      <th class="px-4 py-3 text-left">NOMOR KHS</th>
+                      <th class="px-4 py-3 text-left w-44">VENDOR</th>
+                      <th class="px-4 py-3 text-left w-32">STATUS</th>
+                      <th class="px-4 py-3 text-left w-28">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody id="khsListContainer">
+                    <tr>
+                      <td colspan="5" class="px-4 py-10 text-center text-gray-400">
+                        <i class="fas fa-spinner fa-spin text-2xl block mb-2"></i>
+                        Memuat data KHS...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
         </div>
 

@@ -1904,6 +1904,9 @@ export async function getAllRAB(db: D1Database) {
           r.created_at,
           r.nama_pekerjaan,
           r.status_scm,
+          r.nomor_kr,
+          r.nomor_kr_set_by,
+          r.nomor_kr_set_at,
           COUNT(ri.id) as item_count
         FROM rab r
         LEFT JOIN rab_items ri ON r.id = ri.rab_id
