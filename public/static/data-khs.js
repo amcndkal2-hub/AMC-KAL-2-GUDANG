@@ -546,6 +546,7 @@ function getStatusBadge(status) {
   const s = (status || 'Draft').toLowerCase()
   let cls = 'bg-gray-100 text-gray-700'
   if (s === 'approved' || s === 'disetujui') cls = 'bg-green-100 text-green-700'
+  else if (s === 'acc vendor') cls = 'bg-emerald-100 text-emerald-700'
   else if (s === 'pending' || s === 'menunggu') cls = 'bg-yellow-100 text-yellow-800'
   else if (s === 'rejected' || s === 'ditolak') cls = 'bg-red-100 text-red-700'
   else if (s === 'draft') cls = 'bg-blue-100 text-blue-700'
