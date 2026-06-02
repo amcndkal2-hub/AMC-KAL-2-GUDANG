@@ -125,13 +125,18 @@ function renderKHSTable() {
     // Status badge
     const statusBadge = getStatusBadge(khs.status)
 
-    // Vendor (dari nomor_kr_set_by atau '-')
-    const vendor = khs.nomor_kr_set_by ? `Diset oleh: ${khs.nomor_kr_set_by}` : 'kosongkan dulu'
+    // Vendor: ambil dari krListCache berdasarkan nomor_kr, fallback ke set_by
+    let vendorName = '-'
+    if (khs.nomor_kr) {
+      const krData = krListCache.find(k => k.nomor_kr === khs.nomor_kr)
+      vendorName = krData ? krData.vendor : (khs.nomor_kr_set_by || '-')
+    }
 
     return `
       <tr class="hover:bg-gray-50 border-b border-gray-100" id="row-${khs.id}">
-        <!-- NOMOR RAB -->
-        <td class="px-4 py-3 text-sm font-semibold text-blue-600">
+        <!-- NOMOR RAB → klik langsung buka VIEW detail -->
+        <td class="px-4 py-3 text-sm font-semibold text-blue-600 cursor-pointer hover:underline"
+            onclick="viewKHSDetail(${idx})" title="Klik untuk lihat detail">
           ${khs.nomor_rab || '-'}
         </td>
 
@@ -141,13 +146,15 @@ function renderKHSTable() {
         </td>
 
         <!-- VENDOR -->
-        <td class="px-4 py-3 text-sm text-gray-500">
-          ${hasKR ? `<span class="text-xs text-gray-400 italic">${vendor}</span>` : '<span class="text-gray-300 italic text-xs">kosongkan dulu</span>'}
+        <td class="px-4 py-3 text-sm">
+          ${khs.nomor_kr
+            ? `<span class="text-xs font-medium text-gray-700">${escapeHtml(vendorName)}</span>`
+            : '<span class="text-gray-300 italic text-xs">—</span>'}
         </td>
 
         <!-- STATUS -->
         <td class="px-4 py-3 text-sm">
-          ${hasKR ? statusBadge : '<span class="text-gray-300 italic text-xs">kosongkan dulu</span>'}
+          ${statusBadge}
         </td>
 
         <!-- ACTION -->
@@ -398,19 +405,24 @@ function showModal(khs, items) {
 
         <!-- Modal Header -->
         <div class="bg-gradient-to-r from-blue-700 to-blue-800 text-white px-6 py-4 rounded-t-xl flex justify-between items-start">
-          <div>
+          <div class="flex-1 min-w-0">
             <h2 class="text-xl font-bold mb-1">
               <i class="fas fa-file-contract mr-2"></i>
               Detail KHS: ${escapeHtml(khs.nomor_rab || '-')}
             </h2>
-            <div class="flex flex-wrap gap-4 text-sm opacity-90 mt-1">
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm opacity-90 mt-1">
               <span><i class="fas fa-calendar mr-1"></i>${formatDate(khs.tanggal_rab)}</span>
               ${khs.nomor_kr ? `<span><i class="fas fa-file-signature mr-1"></i>KR: <strong>${escapeHtml(khs.nomor_kr)}</strong></span>` : ''}
-              <span><i class="fas fa-boxes mr-1"></i>${khs.item_count || 0} Material</span>
+              <span><i class="fas fa-boxes mr-1"></i>${Array.isArray(items) ? items.length : (khs.item_count || 0)} Material</span>
               <span>${getStatusBadge(khs.status)}</span>
             </div>
+            ${(() => {
+              const krData = krListCache.find(k => k.nomor_kr === khs.nomor_kr)
+              const v = krData ? krData.vendor : null
+              return v ? `<div class="mt-1 text-xs opacity-80"><i class="fas fa-building mr-1"></i>Vendor: <strong>${escapeHtml(v)}</strong></div>` : ''
+            })()}
           </div>
-          <button onclick="closeModal()" class="ml-4 text-white hover:text-gray-200 text-2xl font-bold leading-none">&times;</button>
+          <button onclick="closeModal()" class="ml-4 text-white hover:text-gray-200 text-2xl font-bold leading-none flex-shrink-0">&times;</button>
         </div>
 
         <!-- Modal Body -->
