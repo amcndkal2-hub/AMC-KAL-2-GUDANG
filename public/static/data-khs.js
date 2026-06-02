@@ -322,6 +322,71 @@ async function clearKR(idx) {
   }
 }
 
+// ─── Cache untuk Detail Item KR dari GitHub JSON ──────────────────────────
+let krDetailCache = null  // { data: [...], ts: number }
+const KR_DETAIL_JSON_URL = 'https://raw.githubusercontent.com/ipanrifan-create/DATA-KR/refs/heads/main/data_scm.json'
+const KR_DETAIL_CACHE_TTL = 60 * 60 * 1000  // 1 jam
+
+async function fetchKRDetailItems(nomorKR) {
+  // Gunakan cache jika masih valid
+  const now = Date.now()
+  if (!krDetailCache || now - krDetailCache.ts > KR_DETAIL_CACHE_TTL) {
+    console.log('🔄 Fetching KR detail JSON from GitHub...')
+    const resp = await fetch(KR_DETAIL_JSON_URL)
+    if (!resp.ok) throw new Error(`Failed to fetch KR JSON: ${resp.status}`)
+    const json = await resp.json()
+    krDetailCache = { data: json['Detail Item KR'] || [], ts: now }
+    console.log(`✅ KR detail cache loaded: ${krDetailCache.data.length} rows`)
+  }
+
+  const allRows = krDetailCache.data
+  // Header row adalah row[0] = 'No', skip it
+  // Cari semua baris yang cocok dengan nomor_kr (bisa row penuh atau continuation)
+  const items = []
+  let currentKR = null
+
+  for (const row of allRows) {
+    if (!Array.isArray(row)) continue
+    // Row dengan nomor KR penuh
+    if (row[1] && String(row[1]).trim() === nomorKR.trim()) {
+      currentKR = nomorKR
+    }
+    // Jika row[1] kosong tapi currentKR aktif, ini continuation item
+    if (currentKR === nomorKR && (row[10] || row[11])) {
+      const kodeMaterial = String(row[10] || '-').trim()
+      const namaMaterial = String(row[11] || '-').trim()
+      const satuan = String(row[12] || '-').trim()
+      const jumlah = parseInt(row[13]) || 0
+      const hargaSatuanStr = String(row[14] || '0').replace(/[^0-9]/g, '')
+      const totalHargaStr = String(row[15] || '0').replace(/[^0-9]/g, '')
+      const hargaSatuan = parseInt(hargaSatuanStr) || 0
+      const totalHarga = parseInt(totalHargaStr) || 0
+
+      if (kodeMaterial !== '-' || namaMaterial !== '-') {
+        items.push({
+          part_number: kodeMaterial,
+          material: namaMaterial,
+          satuan,
+          jumlah,
+          harga_satuan: hargaSatuan,
+          subtotal: totalHarga,
+          _source: 'kr_json'
+        })
+      }
+    }
+    // Jika sudah ketemu KR lain setelah yang kita cari, berhenti
+    if (row[1] && String(row[1]).trim() !== '' && String(row[1]).trim() !== nomorKR.trim() && currentKR === nomorKR) {
+      // Hanya break jika ini adalah baris baru dengan nomor KR berbeda
+      if (typeof row[0] === 'number' || (typeof row[0] === 'string' && row[0].trim() !== '')) {
+        break
+      }
+    }
+  }
+
+  console.log(`📋 Found ${items.length} items for KR: ${nomorKR}`)
+  return items
+}
+
 // ─── View KHS Detail Modal ─────────────────────────────────────────────────
 async function viewKHSDetail(idx) {
   const khs = allKHSData[idx]
@@ -330,12 +395,23 @@ async function viewKHSDetail(idx) {
   showModal(khs, null)
 
   try {
+    // Jika KHS punya nomor_kr → fetch live dari GitHub JSON
+    if (khs.nomor_kr && khs.nomor_kr.trim() !== '') {
+      console.log(`🔍 Fetching live KR items for: ${khs.nomor_kr}`)
+      const krItems = await fetchKRDetailItems(khs.nomor_kr)
+      if (krItems.length > 0) {
+        showModal(khs, krItems)
+        return
+      }
+      // Jika tidak ditemukan di JSON, fallback ke DB
+      console.warn(`⚠️ No items found in KR JSON for ${khs.nomor_kr}, falling back to DB`)
+    }
+
+    // Fallback: fetch dari DB via /api/rab/{id}
     const res = await fetch(`/api/rab/${khs.id}`, {
       headers: { 'Authorization': `Bearer ${sessionToken}` }
     })
-
     if (!res.ok) throw new Error('Failed to load detail')
-
     const data = await res.json()
     showModal(khs, data.items || [])
   } catch (e) {
@@ -355,7 +431,7 @@ function showModal(khs, items) {
     // Loading
     bodyHTML = `
       <tr>
-        <td colspan="5" class="px-4 py-10 text-center text-gray-400">
+        <td colspan="8" class="px-4 py-10 text-center text-gray-400">
           <i class="fas fa-spinner fa-spin text-2xl block mb-2"></i>
           Memuat data material...
         </td>
@@ -363,7 +439,7 @@ function showModal(khs, items) {
   } else if (items === 'error') {
     bodyHTML = `
       <tr>
-        <td colspan="5" class="px-4 py-8 text-center text-red-500">
+        <td colspan="8" class="px-4 py-8 text-center text-red-500">
           <i class="fas fa-exclamation-triangle text-2xl block mb-2"></i>
           Gagal memuat data material
         </td>
@@ -371,32 +447,31 @@ function showModal(khs, items) {
   } else if (items.length === 0) {
     bodyHTML = `
       <tr>
-        <td colspan="5" class="px-4 py-8 text-center text-gray-400">
+        <td colspan="8" class="px-4 py-8 text-center text-gray-400">
           <i class="fas fa-inbox text-2xl block mb-2"></i>
           Tidak ada material
         </td>
       </tr>`
   } else {
-    let totalAll = 0
+    // Tampilkan kolom KHS: No | Nomor LH05 | Part Number | Material | Mesin | Jumlah | Unit | Jenis
     bodyHTML = items.map((item, i) => {
-      const qty     = item.jumlah || item.jumlah_rok || 0
-      const harga   = item.harga_satuan || 0
-      const total   = qty * harga
-      totalAll += total
+      const qty  = item.jumlah || item.jumlah_rok || 0
+      const unit = item.unit_uld || item.satuan || '-'
+      const jenis = item.jenis_barang || item.jenis || '-'
       return `
         <tr class="border-b border-gray-100 hover:bg-blue-50 transition">
-          <td class="px-3 py-2.5 text-sm text-center text-gray-500">${i + 1}</td>
+          <td class="px-3 py-2.5 text-sm text-center text-gray-500 w-10">${i + 1}</td>
+          <td class="px-3 py-2.5 text-sm font-mono text-gray-700">${escapeHtml(item.nomor_lh05 || '-')}</td>
           <td class="px-3 py-2.5 text-sm font-mono text-blue-700 font-semibold">${escapeHtml(item.part_number || '-')}</td>
           <td class="px-3 py-2.5 text-sm">${escapeHtml(item.material || '-')}</td>
+          <td class="px-3 py-2.5 text-sm text-center">${escapeHtml(item.mesin || '-')}</td>
           <td class="px-3 py-2.5 text-sm text-center font-semibold">${qty}</td>
-          <td class="px-3 py-2.5 text-sm text-right">${formatRupiah(harga)}</td>
-          <td class="px-3 py-2.5 text-sm text-right font-semibold">${formatRupiah(total)}</td>
+          <td class="px-3 py-2.5 text-sm text-center">${escapeHtml(unit)}</td>
+          <td class="px-3 py-2.5 text-sm text-center">
+            <span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">${escapeHtml(jenis)}</span>
+          </td>
         </tr>`
-    }).join('') + `
-      <tr class="bg-gray-100 font-bold border-t-2 border-gray-300">
-        <td colspan="5" class="px-3 py-2.5 text-sm text-right">TOTAL KESELURUHAN:</td>
-        <td class="px-3 py-2.5 text-sm text-right text-green-700">${formatRupiah(totalAll)}</td>
-      </tr>`
+    }).join('')
   }
 
   const modalHTML = `
@@ -427,6 +502,7 @@ function showModal(khs, items) {
 
         <!-- Modal Body -->
         <div class="overflow-auto flex-1 p-4">
+          <!-- Sumber data info sudah tidak ditampilkan -->
           <div class="mb-3 flex justify-between items-center">
             <h3 class="text-sm font-semibold text-gray-700">
               <i class="fas fa-list text-blue-600 mr-1"></i>
@@ -443,11 +519,13 @@ function showModal(khs, items) {
               <thead class="bg-red-600 text-white sticky top-0 z-10">
                 <tr>
                   <th class="px-3 py-2.5 text-center w-10">No</th>
-                  <th class="px-3 py-2.5 text-left">Kode Material</th>
-                  <th class="px-3 py-2.5 text-left">Nama Material</th>
+                  <th class="px-3 py-2.5 text-left">Nomor LH05</th>
+                  <th class="px-3 py-2.5 text-left">Part Number</th>
+                  <th class="px-3 py-2.5 text-left">Material</th>
+                  <th class="px-3 py-2.5 text-center">Mesin</th>
                   <th class="px-3 py-2.5 text-center w-20">Jumlah</th>
-                  <th class="px-3 py-2.5 text-right w-36">Harga Satuan</th>
-                  <th class="px-3 py-2.5 text-right w-36">Total Harga</th>
+                  <th class="px-3 py-2.5 text-center w-24">Unit</th>
+                  <th class="px-3 py-2.5 text-center w-28">Jenis</th>
                 </tr>
               </thead>
               <tbody id="modal-tbody">
@@ -493,12 +571,13 @@ async function exportModalToExcel(rabId) {
 
     const rows = items.map((item, i) => ({
       'No': i + 1,
-      'Kode Material': item.part_number || '-',
-      'Nama Material': item.material || '-',
+      'Nomor LH05': item.nomor_lh05 || '-',
+      'Part Number': item.part_number || '-',
+      'Material': item.material || '-',
       'Mesin': item.mesin || '-',
       'Jumlah': item.jumlah || 0,
-      'Harga Satuan (Rp)': item.harga_satuan || 0,
-      'Total Harga (Rp)': (item.jumlah || 0) * (item.harga_satuan || 0)
+      'Unit': item.unit_uld || '-',
+      'Jenis': item.jenis_barang || item.jenis || '-'
     }))
 
     const ws = XLSX.utils.json_to_sheet(rows)

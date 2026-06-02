@@ -2019,9 +2019,17 @@ export async function getRABById(db: D1Database, rabId: number) {
       return null
     }
     
-    // Get RAB items
+    // Get RAB items with jenis_barang from material_gangguan
     const items = await db.prepare(`
-      SELECT * FROM rab_items WHERE rab_id = ? ORDER BY id
+      SELECT 
+        ri.*,
+        COALESCE(mg.jenis_barang, mm.JENIS_BARANG, '-') as jenis_barang
+      FROM rab_items ri
+      LEFT JOIN material_gangguan mg ON ri.part_number = mg.part_number
+      LEFT JOIN master_material mm ON ri.part_number = mm.PART_NUMBER
+      WHERE ri.rab_id = ?
+      GROUP BY ri.id
+      ORDER BY ri.id
     `).bind(rabId).all()
     
     // Enrich items with sn_mesin from material_gangguan via gangguan table
@@ -2030,7 +2038,7 @@ export async function getRABById(db: D1Database, rabId: number) {
         try {
           // JOIN material_gangguan with gangguan to match nomor_lh05
           const mg = await db.prepare(`
-            SELECT mg.sn_mesin 
+            SELECT mg.sn_mesin, mg.jenis_barang
             FROM material_gangguan mg
             JOIN gangguan g ON mg.gangguan_id = g.id
             WHERE g.nomor_lh05 = ? 
@@ -2040,7 +2048,9 @@ export async function getRABById(db: D1Database, rabId: number) {
           
           return {
             ...item,
-            sn_mesin: mg?.sn_mesin || null
+            sn_mesin: mg?.sn_mesin || null,
+            // Override jenis_barang dengan yang lebih spesifik (match nomor_lh05)
+            jenis_barang: (mg as any)?.jenis_barang || item.jenis_barang || '-'
           }
         } catch (error) {
           console.error('Error fetching sn_mesin for', item.nomor_lh05, error)
