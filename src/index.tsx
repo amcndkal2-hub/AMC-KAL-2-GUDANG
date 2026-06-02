@@ -702,6 +702,95 @@ app.post('/api/save-transaction', async (c) => {
 })
 
 // API: Test database connection
+// =====================================================
+// TEMP: Seed KHS data RAB-2026-0125 + 40 material (admin only, one-time)
+// =====================================================
+app.post('/api/admin/seed-khs-prod', async (c) => {
+  try {
+    const { env } = c
+    const authHeader = c.req.header('Authorization')
+    const token = authHeader?.replace('Bearer ', '')
+    if (!token) return c.json({ error: 'Unauthorized' }, 401)
+    let role = ''
+    if (activeSessions.has(token)) role = activeSessions.get(token).role
+    if (role !== 'admin') {
+      // try DB session
+      try {
+        const s: any = await DB.getSession(env.DB, token)
+        if (s) role = s.role
+      } catch {}
+    }
+    if (role !== 'admin') return c.json({ error: 'Admin only' }, 403)
+
+    // Insert RAB record
+    await env.DB.prepare(`
+      INSERT OR IGNORE INTO rab (id, nomor_rab, tanggal_rab, jenis_rab, status, total_harga,
+        nomor_kr, nomor_kr_set_by, nomor_kr_set_at, created_by, created_at)
+      VALUES (4, 'RAB-2026-0125', '2026-01-01', 'KHS', 'Acc Vendor', 1176498660,
+        '829.KR/SPARE PART MESIN MAN TIPE D2842LE201 DAN TIPE D2866LE201-KAL2/2026',
+        'Andalcekatan', CURRENT_TIMESTAMP, 'Andalcekatan', CURRENT_TIMESTAMP)
+    `).run()
+
+    // Insert 40 material items
+    const items = [
+      ['51.96501-0348','Seal Double 6,2X11X1-CU 51.96501-0348',12,108000,1296000],
+      ['51.04902-0028','Seal Valve Stem D25/D28-Motore 51.04902-0028',24,166600,3998400],
+      ['51.00900-6633','General Overhaul Gasket D2842 LE201 51.00900-6633',1,104010000,104010000],
+      ['51.01510-6004','Radial Shaft Seal 51.01510-6004',1,2166000,2166000],
+      ['51.02130-0032','Race Diameter 51.02130-0032',1,2566200,2566200],
+      ['51.01114-6085','Thrust Bearing Normal 51.01114-6085',1,6131800,6131800],
+      ['51.01110-6528','Main Bearing Normal 51.01110-6528',6,1207000,7242000],
+      ['51.02410-6488','Conrod Bearing Normal 51.02410-6488',12,2149500,25794000],
+      ['51.03203-0293','Valve Seat Ring Normal In 51.03203-0293',12,499800,5997600],
+      ['51.03203-0184','Valve Seat Ring 53,11 51.03203-0184',12,999800,11997600],
+      ['51.04101-0501','Exhaust Valve 51.04101-0501',12,4998800,59985600],
+      ['51.04101-0509','Intake Valve 51.04101-0509',12,4598800,55185600],
+      ['51.03201-0088','Valve Guide Normal 51.03201-0088',12,1209800,14517600],
+      ['51.03201-0102','Valve Guide Normal 51.03201-0102',12,1199800,14397600],
+      ['51.04104-0026','Valve Cotter 51.04104-0026',48,158900,7627200],
+      ['51.12503-0099','Fuel Filter 51.12503-0099',12,399840,4798080],
+      ['51.06599-6025','Water Pump Repair Kit 51.06599-6025',1,15246000,15246000],
+      ['51.09100-7466','Turbocharger 51.09100-7466',2,59871000,119742000],
+      ['51.90201-0254','Stud M 10 x 30-SD-HOCHWARMFEST 51.90201-0254',12,149940,1799280],
+      ['81.10109-0031','Nozzle Cap Nut 81.10109-0031',12,1701600,20419200],
+      ['51.96820-0277','V-Belt 2-3VX483 | 2-3VX1226 51.96820-0277',1,2223400,2223400],
+      ['51.96820-0275','V-Belt 2-3VX495 | 2-3VX1257 51.96820-0275',1,2350400,2350400],
+      ['51.01201-0467','Cylinder Liner 51.01201-0467',12,7265200,87182400],
+      ['51.10102-0235','Injection Nozzle 6-Hole 51.10102-0235',12,2832600,33991200],
+      ['51.98701-0065','Seal 9,5 x 20 x 1-CU 51.98701-0065',12,142500,1710000],
+      ['81.11308-0019','Shim 1,0 mm 81.11308-0019',12,66000,792000],
+      ['81.11308-0029','Shim 1,5 mm 81.11308-0029',12,66000,792000],
+      ['51.93410-0117','Fan Bearing 51.93410-0117',1,8165400,8165400],
+      ['51.90020-0355','Elongating Hex Collar Bolt 51.90020-0355',10,562800,5628000],
+      ['06.56190-0706','Seal A14 x 20-CU 06.56190-0706',34,53400,1815600],
+      ['06.56180-0712','Seal A8 x 14-CU 06.56180-0712',2,43900,87800],
+      ['51.06402-0061','Cooling Water Thermpstat 79 51.06402-0061',3,1063400,3190200],
+      ['82.06110-0002','Filler Cap 82.06110-0002',1,1256300,1256300],
+      ['51.97141-0016','Filler Cap 51.97141-0016',1,707700,707700],
+      ['50.27421-0051','Oil Pressure Sender 50.27421-0051',1,3199000,3199000],
+      ['81.27421-0125','Temperature Sender 100 GRAD 81.27421-0125',1,3303300,3303300],
+      ['51.02511-7221','Piston Assy 51.02511-7221',12,26320000,315840000],
+      ['51.06500-6598','Water Pump Assy 51.06500-6598',1,66640000,66640000],
+      ['51.10100-7383','Nozzle Holder 51.10100-7383',12,11220000,134640000],
+      ['51.02201-0107','Crankshaft Vibration Damper 51.02201-0107',1,18066200,18066200],
+    ]
+
+    let inserted = 0
+    for (const [part, mat, qty, harga, sub] of items) {
+      await env.DB.prepare(`
+        INSERT OR IGNORE INTO rab_items
+          (rab_id, nomor_lh05, part_number, material, jumlah, harga_satuan, subtotal, unit_uld)
+        VALUES (4, 'KHS-829', ?, ?, ?, ?, ?, '-')
+      `).bind(part, mat, qty, harga, sub).run()
+      inserted++
+    }
+
+    return c.json({ success: true, rab_inserted: 1, items_inserted: inserted })
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
 app.get('/api/test-db', async (c) => {
   try {
     const { env } = c
