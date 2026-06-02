@@ -1889,13 +1889,13 @@ async function insertRABItems(db: D1Database, rabId: number, nomorRAB: string, t
 
 export async function getAllRAB(db: D1Database) {
   try {
-    // Try with nomor_tor, nama_pekerjaan, status_scm columns first
+    // Try with nomor_tor, nama_pekerjaan, status_scm columns + JOIN pengadaan_rab_links + rab_tor
     try {
       const result = await db.prepare(`
         SELECT 
           r.id,
           r.nomor_rab,
-          r.nomor_tor,
+          COALESCE(r.nomor_tor, rt.nomor_tor) as nomor_tor,
           r.tanggal_rab,
           r.jenis_rab,
           r.total_harga,
@@ -1907,23 +1907,26 @@ export async function getAllRAB(db: D1Database) {
           r.nomor_kr,
           r.nomor_kr_set_by,
           r.nomor_kr_set_at,
+          prl.nomor_ijin_prinsip,
           COUNT(ri.id) as item_count
         FROM rab r
         LEFT JOIN rab_items ri ON r.id = ri.rab_id
+        LEFT JOIN rab_tor rt ON r.id = rt.rab_id
+        LEFT JOIN pengadaan_rab_links prl ON r.nomor_rab = prl.nomor_rab
         GROUP BY r.id
         ORDER BY r.created_at DESC
       `).all()
       
       return result.results || []
     } catch (columnError) {
-      // Fallback: Query with LEFT JOIN to rab_tor table (for production DB without nomor_tor column)
-      console.log('⚠️ nomor_tor column not found in rab table, using rab_tor fallback table')
+      // Fallback: Query without nama_pekerjaan/status_scm but still with JOIN
+      console.log('⚠️ Some columns not found, trying fallback with JOIN pengadaan_rab_links')
       try {
         const result = await db.prepare(`
           SELECT 
             r.id,
             r.nomor_rab,
-            rt.nomor_tor,
+            COALESCE(r.nomor_tor, rt.nomor_tor) as nomor_tor,
             r.tanggal_rab,
             r.jenis_rab,
             r.total_harga,
@@ -1933,18 +1936,20 @@ export async function getAllRAB(db: D1Database) {
             r.nomor_kr,
             r.nomor_kr_set_by,
             r.nomor_kr_set_at,
+            prl.nomor_ijin_prinsip,
             COUNT(ri.id) as item_count
           FROM rab r
           LEFT JOIN rab_items ri ON r.id = ri.rab_id
           LEFT JOIN rab_tor rt ON r.id = rt.rab_id
+          LEFT JOIN pengadaan_rab_links prl ON r.nomor_rab = prl.nomor_rab
           GROUP BY r.id
           ORDER BY r.created_at DESC
         `).all()
         
         return result.results || []
       } catch (fallback1Error) {
-        // Fallback 2: rab_tor table doesn't exist either
-        console.log('⚠️ rab_tor table also not found, using basic query without nomor_tor')
+        // Fallback 2: tanpa rab_tor JOIN
+        console.log('⚠️ rab_tor table not found, using basic query with pengadaan_rab_links only')
         try {
           const result = await db.prepare(`
             SELECT 
@@ -1959,16 +1964,18 @@ export async function getAllRAB(db: D1Database) {
               r.nomor_kr,
               r.nomor_kr_set_by,
               r.nomor_kr_set_at,
+              prl.nomor_ijin_prinsip,
               COUNT(ri.id) as item_count
             FROM rab r
             LEFT JOIN rab_items ri ON r.id = ri.rab_id
+            LEFT JOIN pengadaan_rab_links prl ON r.nomor_rab = prl.nomor_rab
             GROUP BY r.id
             ORDER BY r.created_at DESC
           `).all()
           
           return result.results || []
         } catch (fallback2Error) {
-          // Fallback 3: Query without jenis_rab and nomor_tor
+          // Fallback 3: Query paling dasar tanpa JOIN apapun
           console.log('⚠️ jenis_rab column also not found, using basic query')
           const result = await db.prepare(`
             SELECT 
