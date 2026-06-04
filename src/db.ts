@@ -1895,7 +1895,7 @@ export async function getAllRAB(db: D1Database) {
         SELECT 
           r.id,
           r.nomor_rab,
-          COALESCE(r.nomor_tor, rt.nomor_tor) as nomor_tor,
+          COALESCE(r.nomor_tor, (SELECT nomor_tor FROM rab_tor WHERE rab_id = r.id ORDER BY id DESC LIMIT 1)) as nomor_tor,
           r.tanggal_rab,
           r.jenis_rab,
           r.total_harga,
@@ -1907,13 +1907,9 @@ export async function getAllRAB(db: D1Database) {
           r.nomor_kr,
           r.nomor_kr_set_by,
           r.nomor_kr_set_at,
-          prl.nomor_ijin_prinsip,
-          COUNT(ri.id) as item_count
+          (SELECT nomor_ijin_prinsip FROM pengadaan_rab_links WHERE nomor_rab = r.nomor_rab LIMIT 1) as nomor_ijin_prinsip,
+          (SELECT COUNT(*) FROM rab_items WHERE rab_id = r.id) as item_count
         FROM rab r
-        LEFT JOIN rab_items ri ON r.id = ri.rab_id
-        LEFT JOIN rab_tor rt ON r.id = rt.rab_id
-        LEFT JOIN pengadaan_rab_links prl ON r.nomor_rab = prl.nomor_rab
-        GROUP BY r.id
         ORDER BY r.created_at DESC
       `).all()
       
@@ -1926,7 +1922,7 @@ export async function getAllRAB(db: D1Database) {
           SELECT 
             r.id,
             r.nomor_rab,
-            COALESCE(r.nomor_tor, rt.nomor_tor) as nomor_tor,
+            COALESCE(r.nomor_tor, (SELECT nomor_tor FROM rab_tor WHERE rab_id = r.id ORDER BY id DESC LIMIT 1)) as nomor_tor,
             r.tanggal_rab,
             r.jenis_rab,
             r.total_harga,
@@ -1940,7 +1936,6 @@ export async function getAllRAB(db: D1Database) {
             COUNT(ri.id) as item_count
           FROM rab r
           LEFT JOIN rab_items ri ON r.id = ri.rab_id
-          LEFT JOIN rab_tor rt ON r.id = rt.rab_id
           LEFT JOIN pengadaan_rab_links prl ON r.nomor_rab = prl.nomor_rab
           GROUP BY r.id
           ORDER BY r.created_at DESC
