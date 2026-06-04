@@ -8531,6 +8531,7 @@ function getDashboardKebutuhanMaterialHTML() {
                             <option value="">Semua Status</option>
                             <option value="N/A">N/A</option>
                             <option value="Pengadaan">Pengadaan</option>
+                            <option value="Reorder">Reorder</option>
                             <option value="Tunda">Tunda</option>
                             <option value="Reject">Reject</option>
                             <option value="Terkirim">Terkirim</option>
@@ -8598,6 +8599,10 @@ function getDashboardKebutuhanMaterialHTML() {
                             <span id="totalPengadaan" class="font-bold text-blue-600">0</span>
                         </div>
                         <div class="flex justify-between">
+                            <span>Reorder:</span>
+                            <span id="totalReorder" class="font-bold text-orange-600">0</span>
+                        </div>
+                        <div class="flex justify-between">
                             <span>Tunda:</span>
                             <span id="totalTunda" class="font-bold text-yellow-600">0</span>
                         </div>
@@ -8660,7 +8665,7 @@ function getDashboardKebutuhanMaterialHTML() {
         </div>
 
         <script src="/static/auth-check.js"></script>
-        <script src="/static/dashboard-kebutuhan.js?v=1780532419"></script>
+        <script src="/static/dashboard-kebutuhan.js?v=1780534000"></script>
         <script>
           // Toggle dropdown kebutuhan
           function toggleKebutuhanDropdown() {
