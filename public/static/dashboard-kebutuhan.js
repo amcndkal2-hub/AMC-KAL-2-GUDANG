@@ -85,15 +85,14 @@ async function loadKebutuhanMaterial() {
     
     filteredMaterials = [...allMaterials]
     
-    // Sort by status priority: N/A, Pengadaan, Reorder, Tersedia, Terkirim, Tunda, Reject
+    // Sort by status priority: N/A, Pengadaan, Tersedia, Terkirim, Tunda, Reject
     const statusOrder = {
       'N/A': 1,
       'Pengadaan': 2,
-      'Reorder': 3,
-      'Tersedia': 4,
-      'Terkirim': 5,
-      'Tunda': 6,
-      'Reject': 7
+      'Tersedia': 3,
+      'Terkirim': 4,
+      'Tunda': 5,
+      'Reject': 6
     }
     
     allMaterials.sort((a, b) => {
@@ -129,7 +128,6 @@ async function loadKebutuhanMaterial() {
 function updateStatistics() {
   const total = allMaterials.length
   const pengadaan = allMaterials.filter(m => m.status === 'Pengadaan').length
-  const reorder   = allMaterials.filter(m => m.status === 'Reorder').length
   const tunda = allMaterials.filter(m => m.status === 'Tunda').length
   const reject = allMaterials.filter(m => m.status === 'Reject').length
   const terkirim = allMaterials.filter(m => m.status === 'Terkirim').length
@@ -141,10 +139,8 @@ function updateStatistics() {
   document.getElementById('totalReject').textContent = reject
   
   // Update statistik baru jika elemen ada
-  const reorderEl  = document.getElementById('totalReorder')
   const terkirimEl = document.getElementById('totalTerkirim')
   const tersediaEl = document.getElementById('totalTersedia')
-  if (reorderEl)  reorderEl.textContent  = reorder
   if (terkirimEl) terkirimEl.textContent = terkirim
   if (tersediaEl) tersediaEl.textContent = tersedia
 }
@@ -195,7 +191,7 @@ function applyFilters() {
   console.log(`🔍 Filter [status="${statusFilter}"] → ${filteredMaterials.length} / ${allMaterials.length} items`)
 
   // Sort by status priority
-  const statusOrder = { 'N/A': 1, 'Pengadaan': 2, 'Reorder': 3, 'Tersedia': 4, 'Terkirim': 5, 'Tunda': 6, 'Reject': 7 }
+  const statusOrder = { 'N/A': 1, 'Pengadaan': 2, 'Tersedia': 3, 'Terkirim': 4, 'Tunda': 5, 'Reject': 6 }
   filteredMaterials.sort((a, b) => {
     const oA = statusOrder[a.status] || 999
     const oB = statusOrder[b.status] || 999
@@ -317,7 +313,7 @@ function renderTable() {
       `
       isDisabled = true
     }
-    // Case 4b: Tersedia + No RAB → Dropdown: Tersedia / Reorder (pengadaan ulang) / N/A
+    // Case 4b: Tersedia + No RAB → Dropdown: Tersedia / Pengadaan / N/A
     // HANYA jika status DB memang 'Tersedia' (bukan stok override N/A)
     else if (status === 'Tersedia' && !isRabCreated) {
       statusColor = 'bg-purple-100 text-purple-800 border-purple-300'
@@ -326,36 +322,8 @@ function renderTable() {
           onchange="updateStatus(${item.id}, '${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
           class="px-2 py-1 border rounded ${statusColor} text-xs font-semibold cursor-pointer w-full">
           <option value="Tersedia" selected>Tersedia</option>
-          <option value="Reorder">Reorder</option>
+          <option value="Pengadaan">Pengadaan</option>
           <option value="N/A">N/A</option>
-        </select>
-        <p class="text-xs text-gray-500 text-center mt-0.5">📦 ${stok}</p>
-      `
-      isDisabled = false
-    }
-    // Case 4c: Reorder + RAB Created → Locked (sudah masuk proses RAB)
-    else if (status === 'Reorder' && isRabCreated) {
-      statusColor = 'bg-orange-100 text-orange-800 border-orange-300'
-      statusDisplay = `
-        <span class="inline-block px-2 py-1 rounded ${statusColor} text-xs font-semibold w-full text-center">
-          🔒 Reorder
-          <span class="text-xs block">📦 ${stok} | 📋 RAB</span>
-        </span>
-      `
-      isDisabled = true
-    }
-    // Case 4d: Reorder + No RAB → Dropdown: Reorder / Tersedia / N/A / Tunda / Reject
-    else if (status === 'Reorder' && !isRabCreated) {
-      statusColor = 'bg-orange-100 text-orange-800 border-orange-300'
-      statusDisplay = `
-        <select
-          onchange="updateStatus(${item.id}, '${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
-          class="px-2 py-1 border rounded ${statusColor} text-xs font-semibold cursor-pointer w-full">
-          <option value="Reorder" selected>Reorder</option>
-          <option value="Tersedia">Tersedia</option>
-          <option value="N/A">N/A</option>
-          <option value="Tunda">Tunda</option>
-          <option value="Reject">Reject</option>
         </select>
         <p class="text-xs text-gray-500 text-center mt-0.5">📦 ${stok}</p>
       `
