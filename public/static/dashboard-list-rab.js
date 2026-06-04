@@ -1869,7 +1869,7 @@ async function exportRABDetailToPDF() {
     // ── HEADER ──────────────────────────────────────────────────────────────
     doc.setFontSize(14)
     doc.setFont(undefined, 'bold')
-    doc.text(`Detail RAB: ${rab.nomor_rab}`, 14, 14)
+    doc.text(`Detail RAB: ${rab.nomor_rab}`, 5, 14)
 
     doc.setFontSize(9)
     doc.setFont(undefined, 'normal')
@@ -1878,14 +1878,14 @@ async function exportRABDetailToPDF() {
       : '-'
 
     // Kolom kiri
-    doc.text(`Status: ${rab.status}`,       14, 22)
-    doc.text(`Jenis RAB: ${rab.jenis_rab}`, 14, 27)
+    doc.text(`Status: ${rab.status}`,       5, 22)
+    doc.text(`Jenis RAB: ${rab.jenis_rab}`, 5, 27)
     // Kolom tengah
-    doc.text(`ROK: ${rokPercentage}%`,                     120, 22)
-    doc.text(`Nomor TOR: ${rab.nomor_tor || '-'}`,         120, 27)
+    doc.text(`ROK: ${rokPercentage}%`,                     105, 22)
+    doc.text(`Nomor TOR: ${rab.nomor_tor || '-'}`,         105, 27)
     // Kolom kanan
-    doc.text(`Tanggal: ${createdDate}`,                    220, 22)
-    doc.text(`Dibuat: ${rab.created_by || rab.username || '-'}`, 220, 27)
+    doc.text(`Tanggal: ${createdDate}`,                    215, 22)
+    doc.text(`Dibuat: ${rab.created_by || rab.username || '-'}`, 215, 27)
 
     // ── HITUNG DATA ──────────────────────────────────────────────────────────
     console.log('📄 PDF EXPORT START - isRealisasi:', isRealisasi, '| items:', items.length)
@@ -2034,7 +2034,8 @@ async function exportRABDetailToPDF() {
     let headers, columnStyles
 
     if (isRealisasi) {
-      // 15 kolom — A4 landscape 297mm, margin 7mm kiri+kanan → ~283mm usable
+      // 15 kolom — A4 landscape 297mm, margin 5mm kiri+kanan → 287mm usable
+      // Total lebar kolom = 7+36+22+18+18+14+14+7+20+20+20+20+12+20+20 = 268mm (ada sisa ~19mm untuk padding sel)
       headers = [
         'No', 'Nama Material', 'No. LH05', 'Part Number',
         'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty',
@@ -2043,21 +2044,21 @@ async function exportRABDetailToPDF() {
         'Realisasi', 'Total\nRealisasi', 'Saldo'
       ]
       columnStyles = {
-        0:  { halign: 'center', cellWidth: 8  },   // No
-        1:  { halign: 'left',   cellWidth: 40 },   // Nama Material
-        2:  { halign: 'left',   cellWidth: 24 },   // No. LH05
-        3:  { halign: 'left',   cellWidth: 20 },   // Part Number
-        4:  { halign: 'left',   cellWidth: 20 },   // Type Mesin
-        5:  { halign: 'center', cellWidth: 16 },   // S/N Mesin
-        6:  { halign: 'center', cellWidth: 16 },   // Unit/ULD
-        7:  { halign: 'center', cellWidth: 8  },   // Qty
-        8:  { halign: 'right',  cellWidth: 22 },   // Harga Satuan
-        9:  { halign: 'right',  cellWidth: 22 },   // Total
-        10: { halign: 'right',  cellWidth: 22 },   // Tanpa ROK
-        11: { halign: 'right',  cellWidth: 22 },   // Total Tanpa ROK
-        12: { halign: 'center', cellWidth: 14 },   // Realisasi
-        13: { halign: 'right',  cellWidth: 22 },   // Total Realisasi
-        14: { halign: 'right',  cellWidth: 22 }    // Saldo
+        0:  { halign: 'center', cellWidth: 7  },   // No
+        1:  { halign: 'left',   cellWidth: 36 },   // Nama Material
+        2:  { halign: 'left',   cellWidth: 22 },   // No. LH05
+        3:  { halign: 'left',   cellWidth: 18 },   // Part Number
+        4:  { halign: 'left',   cellWidth: 18 },   // Type Mesin
+        5:  { halign: 'center', cellWidth: 14 },   // S/N Mesin
+        6:  { halign: 'center', cellWidth: 14 },   // Unit/ULD
+        7:  { halign: 'center', cellWidth: 7  },   // Qty
+        8:  { halign: 'right',  cellWidth: 20 },   // Harga Satuan
+        9:  { halign: 'right',  cellWidth: 20 },   // Total
+        10: { halign: 'right',  cellWidth: 20 },   // Tanpa ROK
+        11: { halign: 'right',  cellWidth: 20 },   // Total Tanpa ROK
+        12: { halign: 'center', cellWidth: 12 },   // Realisasi
+        13: { halign: 'right',  cellWidth: 20 },   // Total Realisasi
+        14: { halign: 'right',  cellWidth: 20 }    // Saldo
       }
     } else {
       headers = [
@@ -2084,7 +2085,7 @@ async function exportRABDetailToPDF() {
     // ── RENDER TABLE ─────────────────────────────────────────────────────────
     doc.autoTable({
       startY: 33,
-      margin: { left: 7, right: 7 },
+      margin: { left: 5, right: 5 },
       head: [headers],
       body: tableData,
       theme: 'grid',
@@ -2093,14 +2094,15 @@ async function exportRABDetailToPDF() {
         textColor: [255, 255, 255],
         fontStyle: 'bold',
         halign: 'center',
-        fontSize: 7,
-        cellPadding: 2
+        fontSize: isRealisasi ? 6.5 : 7,
+        cellPadding: isRealisasi ? 1.5 : 2
       },
       styles: {
-        fontSize: 7,
-        cellPadding: 2,
+        fontSize: isRealisasi ? 6.5 : 7,
+        cellPadding: isRealisasi ? 1.5 : 2,
         overflow: 'linebreak'
       },
+      tableWidth: 'wrap',
       columnStyles,
       // Warna khusus summary rows
       didParseCell: function(data) {
