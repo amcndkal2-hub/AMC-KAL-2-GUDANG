@@ -24,30 +24,51 @@ async function initializeData() {
   
   console.log('🔄 Initializing List RAB data...')
   
-  // Load RAB list immediately (don't wait for SPK data)
+  // Step 1: Load RAB list pertama kali
   await loadRABList()
-  console.log('✅ RAB list loaded and rendered')
-  
-  // Load SPK data in background (for Status SCM matching)
-  loadSPKData().then(async () => {
-    console.log('✅ SPK data loaded, re-rendering to show Status SCM...')
-    renderRABList(filteredRABList) // Re-render to show Status SCM column
-    // Auto-update status Tersedia untuk RAB yang SCM-nya sudah Acc Direktur Operasi
+  console.log('✅ RAB list loaded')
+
+  // Step 2: Rule 1 → Batch update Draft+TOR → Pengadaan via backend (AWAIT dulu!)
+  // Ini HARUS selesai sebelum load SPK/cek Tersedia, agar allRABList tidak stale
+  console.log('🔄 Step 2: Auto-check Draft+TOR → Pengadaan...')
+  const updated = await autoCheckRABStatus()
+  if (updated > 0) {
+    console.log(`🔄 ${updated} RAB diupdate ke Pengadaan, reload list...`)
+    await loadRABList() // allRABList sekarang fresh, Draft sudah jadi Pengadaan
+  }
+
+  // Step 3: Load SPK data (AWAIT) lalu cek Tersedia
+  // allRABList sudah fresh setelah Step 2, sehingga autoUpdateTersediaFromSCM
+  // akan melihat data Pengadaan (bukan Draft lagi)
+  console.log('🔄 Step 3: Load SPK data untuk cek SCM Acc Direktur...')
+  try {
+    await loadSPKData()
+    console.log('✅ SPK data loaded, re-rendering dengan Status SCM...')
+    renderRABList(filteredRABList)
+
+    // Step 4: Rule 3 → Pengadaan + SCM Acc Direktur → Tersedia
+    console.log('🔄 Step 4: Auto-update Pengadaan+SCM Acc Direktur → Tersedia...')
     await autoUpdateTersediaFromSCM()
-  }).catch(err => {
+  } catch (err) {
     console.error('SPK data load failed:', err)
-  })
+  }
   
   isDataLoaded = true
+  console.log('✅ initializeData selesai')
   
-  // Start auto-check every 2 minutes (120000 ms) - only once
+  // Refresh setiap 2 menit
   if (!autoCheckInterval) {
-    console.log('Starting auto-check timer (2 minutes)...')
     autoCheckInterval = setInterval(async () => {
-      console.log('⏱️ Auto-check triggered...')
-      await loadRABList() // Re-render RAB list
-    }, 120000) // 2 minutes
-    console.log('✅ Auto-check timer started')
+      console.log('⏱️ Auto-refresh triggered...')
+      const updated = await autoCheckRABStatus()
+      if (updated > 0) {
+        await loadRABList()
+        // Setelah reload, cek lagi apakah ada yang perlu → Tersedia
+        if (allSPKData.length > 0) {
+          await autoUpdateTersediaFromSCM()
+        }
+      }
+    }, 120000)
   }
 }
 
@@ -73,10 +94,11 @@ if (document.readyState === 'loading') {
   initializeData()
 }
 
-// Auto-check RAB status (Draft → Pengadaan → Tersedia)
+// Auto-check RAB status (Draft+TOR → Pengadaan)
+// Returns jumlah RAB yang diupdate
 async function autoCheckRABStatus() {
   try {
-    console.log('🔄 Running auto-check...')
+    console.log('🔄 Running auto-check RAB status...')
     const response = await fetch('/api/rab/auto-check-status', {
       method: 'POST',
       headers: {
@@ -87,19 +109,16 @@ async function autoCheckRABStatus() {
     
     if (!response.ok) {
       console.log('Auto-check failed:', response.status)
-      return
+      return 0
     }
     
     const result = await response.json()
-    console.log('✅ Auto-check result:', result)
-    
-    // Reload RAB list to show updated statuses
-    if (result.updated > 0) {
-      console.log(`🔄 ${result.updated} RAB status updated, reloading list...`)
-      await loadRABList()
-    }
+    const updatedCount = result.updates ? result.updates.length : 0
+    console.log(`✅ Auto-check: ${updatedCount} RAB diupdate`, result.updates || [])
+    return updatedCount
   } catch (error) {
     console.error('Auto-check error:', error)
+    return 0
   }
 }
 
@@ -138,36 +157,63 @@ async function loadSPKData() {
   }
 }
 
-// Auto-update RAB status ke Tersedia jika SCM = Acc Direktur Operasi
+// Auto-update RAB status berdasarkan SCM dari GitHub JSON
+// Handles:
+//   Draft + TOR + SCM=Acc Direktur → langsung Tersedia
+//   Pengadaan + TOR + SCM=Acc Direktur → Tersedia
 async function autoUpdateTersediaFromSCM() {
-  if (!allSPKData.length || !allRABList.length) return
-
-  // Cari semua RAB yang status = 'Pengadaan' dan punya nomor_tor
-  const rabPengadaan = allRABList.filter(r =>
-    r.status === 'Pengadaan' && r.nomor_tor && r.nomor_tor.trim() !== ''
-  )
-
-  if (rabPengadaan.length === 0) {
-    console.log('ℹ️ Tidak ada RAB Pengadaan dengan TOR untuk dicek SCM status')
+  console.log(`🔍 autoUpdateTersediaFromSCM: allSPKData=${allSPKData.length}, allRABList=${allRABList.length}`)
+  if (!allSPKData.length || !allRABList.length) {
+    console.warn('⚠️ autoUpdateTersediaFromSCM: data belum tersedia, skip')
     return
   }
 
-  console.log(`🔍 Cek SCM status untuk ${rabPengadaan.length} RAB Pengadaan...`)
+  // Debug: Tampilkan distribusi status allRABList saat ini
+  const statusDist = allRABList.reduce((acc, r) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc }, {})
+  console.log('📊 Status distribusi allRABList:', statusDist)
+
+  // Cari RAB yang: (Draft atau Pengadaan) + punya TOR + belum Tersedia/Masuk Gudang
+  const rabCandidates = allRABList.filter(r =>
+    (r.status === 'Pengadaan' || r.status === 'Draft') &&
+    r.nomor_tor && r.nomor_tor.trim() !== '' &&
+    r.status !== 'Tersedia' && r.status !== 'Masuk Gudang'
+  )
+
+  if (rabCandidates.length === 0) {
+    console.log('ℹ️ Tidak ada RAB candidate untuk cek SCM Tersedia')
+    return
+  }
+
+  console.log(`🔍 Cek SCM status untuk ${rabCandidates.length} RAB (Draft/Pengadaan+TOR)...`)
+  // Debug: list candidates
+  rabCandidates.forEach(r => console.log(`  → RAB ${r.nomor_rab} | status=${r.status} | TOR=${r.nomor_tor}`))
 
   let updatedCount = 0
-  for (const rab of rabPengadaan) {
+  for (const rab of rabCandidates) {
     const spkItem = allSPKData.find(item => matchTOR(rab.nomor_tor, item.keterangan))
     if (!spkItem) continue
 
     const scmStatus = (spkItem.status || '').toLowerCase()
-    const isAccDirektur = scmStatus.includes('acc direktur operasi') ||
-                          scmStatus.includes('acc direktur operasi & pengembangan')
+    const isAccDirektur = scmStatus.includes('acc direktur operasi')
 
     if (!isAccDirektur) continue
 
-    console.log(`🔄 RAB ${rab.nomor_rab} (id=${rab.id}): SCM="${spkItem.status}" → update ke Tersedia`)
+    console.log(`🔄 RAB ${rab.nomor_rab} (id=${rab.id}) status=${rab.status}: SCM="${spkItem.status}" → Tersedia`)
 
     try {
+      // Jika masih Draft, update ke Pengadaan dulu agar valid, lalu Tersedia
+      if (rab.status === 'Draft') {
+        await fetch(`/api/rab/${rab.id}/update-status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+          },
+          body: JSON.stringify({ status: 'Pengadaan' })
+        })
+      }
+
+      // Update ke Tersedia
       const res = await fetch(`/api/rab/${rab.id}/update-status`, {
         method: 'POST',
         headers: {
@@ -176,12 +222,13 @@ async function autoUpdateTersediaFromSCM() {
         },
         body: JSON.stringify({ status: 'Tersedia' })
       })
+
       if (res.ok) {
         updatedCount++
-        console.log(`✅ RAB ${rab.nomor_rab} berhasil diupdate ke Tersedia`)
+        console.log(`✅ RAB ${rab.nomor_rab} → Tersedia`)
       } else {
         const err = await res.json()
-        console.warn(`⚠️ Gagal update RAB ${rab.nomor_rab}:`, err)
+        console.warn(`⚠️ Gagal update RAB ${rab.nomor_rab}:`, err.details || err.error)
       }
     } catch (e) {
       console.error(`❌ Error update RAB ${rab.nomor_rab}:`, e)
@@ -190,9 +237,30 @@ async function autoUpdateTersediaFromSCM() {
 
   if (updatedCount > 0) {
     console.log(`✅ ${updatedCount} RAB diupdate ke Tersedia otomatis`)
-    await loadRABList() // Reload untuk tampilkan status terbaru
+    await loadRABList()
   } else {
-    console.log('ℹ️ Tidak ada RAB yang perlu diupdate ke Tersedia')
+    // Cek dan update Draft+TOR → Pengadaan untuk yang SCM belum Acc
+    const draftWithTOR = allRABList.filter(r =>
+      r.status === 'Draft' && r.nomor_tor && r.nomor_tor.trim() !== ''
+    )
+    if (draftWithTOR.length > 0) {
+      console.log(`🔄 Update ${draftWithTOR.length} RAB Draft+TOR → Pengadaan`)
+      for (const rab of draftWithTOR) {
+        try {
+          await fetch(`/api/rab/${rab.id}/update-status`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+            },
+            body: JSON.stringify({ status: 'Pengadaan' })
+          })
+        } catch (e) { /* silent */ }
+      }
+      await loadRABList()
+    } else {
+      console.log('ℹ️ Tidak ada RAB yang perlu diupdate')
+    }
   }
 }
 
