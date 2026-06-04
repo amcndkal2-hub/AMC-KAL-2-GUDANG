@@ -1843,7 +1843,7 @@ function exportRABDetailToExcel() {
 
 
 // Export RAB Detail to PDF
-function exportRABDetailToPDF() {
+async function exportRABDetailToPDF() {
   if (!currentRABDetail) {
     showNotification('Tidak ada data RAB untuk di-export', 'error')
     return
@@ -1860,151 +1860,291 @@ function exportRABDetailToPDF() {
     const rab = currentRABDetail
     const items = rab.items || []
     const rokPercentage = rab.rok_percentage || 0
-    
-    // Use landscape orientation for more columns
+    const isRealisasi = isListTORPage  // true kalau di halaman Realisasi
+
+    // Landscape A4 untuk cukup tampung 15 kolom di Realisasi
     const { jsPDF } = window.jspdf
-    const doc = new jsPDF('l', 'mm', 'a4')
-    
-    // Title
-    doc.setFontSize(16)
-    doc.text(`Detail RAB: ${rab.nomor_rab}`, 14, 15)
-    
-    // RAB Info
-    doc.setFontSize(10)
-    doc.text(`Status: ${rab.status}`, 14, 25)
-    doc.text(`Jenis RAB: ${rab.jenis_rab}`, 14, 30)
-    doc.text(`ROK: ${rokPercentage}%`, 100, 25)
-    doc.text(`Nomor TOR: ${rab.nomor_tor || '-'}`, 100, 30)
-    
-    const createdDate = rab.created_at ? new Date(rab.created_at).toLocaleDateString('id-ID') : '-'
-    doc.text(`Tanggal: ${createdDate}`, 180, 25)
-    doc.text(`Dibuat: ${rab.username || '-'}`, 180, 30)
-    
-    console.log('📄 PDF EXPORT START - Total items:', items.length)
-    
-    // Build table data array directly
-    const tableData = []
-    
-    // Add data rows
+    const doc = new jsPDF('l', 'mm', 'a4')  // 297 x 210 mm
+
+    // ── HEADER ──────────────────────────────────────────────────────────────
+    doc.setFontSize(14)
+    doc.setFont(undefined, 'bold')
+    doc.text(`Detail RAB: ${rab.nomor_rab}`, 14, 14)
+
+    doc.setFontSize(9)
+    doc.setFont(undefined, 'normal')
+    const createdDate = rab.created_at
+      ? new Date(rab.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+      : '-'
+
+    // Kolom kiri
+    doc.text(`Status: ${rab.status}`,       14, 22)
+    doc.text(`Jenis RAB: ${rab.jenis_rab}`, 14, 27)
+    // Kolom tengah
+    doc.text(`ROK: ${rokPercentage}%`,                     120, 22)
+    doc.text(`Nomor TOR: ${rab.nomor_tor || '-'}`,         120, 27)
+    // Kolom kanan
+    doc.text(`Tanggal: ${createdDate}`,                    220, 22)
+    doc.text(`Dibuat: ${rab.created_by || rab.username || '-'}`, 220, 27)
+
+    // ── HITUNG DATA ──────────────────────────────────────────────────────────
+    console.log('📄 PDF EXPORT START - isRealisasi:', isRealisasi, '| items:', items.length)
+
+    let subtotalTotal      = 0
+    let subtotalTanpaROK   = 0
+    let subtotalRealisasi  = 0
+    const tableData        = []
+
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
-      
-      const no = i + 1
-      const nama = String(item.material || item.nama || '-')
-      const noLH05 = String(item.nomor_lh05 || item.no_lh05 || '-')
+
+      const nama       = String(item.material || item.nama || '-')
+      const noLH05     = String(item.nomor_lh05 || item.no_lh05 || '-')
       const partNumber = String(item.part_number || '-')
-      const typeMesin = String(item.mesin || item.type_mesin || item.tipe_mesin || '-')
-      const snMesin = String(item.sn_mesin || '-')
-      const unitULD = String(item.unit_uld || item.lokasi_gangguan || item.lokasi_tujuan || '-')
-      const qty = Number(item.jumlah || item.qty || item.quantity || 1)
-      const harga = Number(item.harga_satuan || item.harga || item.unit_price || item.price || 0)
-      const total = qty * harga
-      
-      console.log(`PDF Row ${no}:`, {nama, qty, harga})
-      
-      tableData.push([
-        no,
-        nama,
-        noLH05,
-        partNumber,
-        typeMesin,
-        snMesin,
-        unitULD,
-        qty,
-        formatRupiah(harga),
-        formatRupiah(total)
-      ])
+      const typeMesin  = String(item.mesin || item.type_mesin || item.tipe_mesin || '-')
+      const snMesin    = String(item.sn_mesin || '-')
+      const unitULD    = String(item.unit_uld || item.lokasi_gangguan || item.lokasi_tujuan || '-')
+      const qty        = Number(item.jumlah || item.qty || item.quantity || 1)
+      const harga      = Number(item.harga_satuan || item.harga || item.unit_price || item.price || 0)
+      const total      = qty * harga
+
+      // Kalkulasi Realisasi
+      const tanpaROK      = rokPercentage > 0 ? harga / (1 + rokPercentage / 100) : harga
+      const totalTanpaROK = tanpaROK * qty
+      const realisasi     = Number(item.realisasi || 0)
+      const totalRealisasi = realisasi * qty
+      const saldo         = totalTanpaROK - totalRealisasi
+
+      subtotalTotal     += total
+      subtotalTanpaROK  += totalTanpaROK
+      subtotalRealisasi += totalRealisasi
+
+      if (isRealisasi) {
+        // 15 kolom untuk halaman Realisasi
+        tableData.push([
+          i + 1,
+          nama,
+          noLH05,
+          partNumber,
+          typeMesin,
+          snMesin,
+          unitULD,
+          qty,
+          formatRupiah(harga),
+          formatRupiah(total),
+          formatRupiah(tanpaROK),
+          formatRupiah(totalTanpaROK),
+          realisasi,
+          formatRupiah(totalRealisasi),
+          formatRupiah(saldo)
+        ])
+      } else {
+        // 10 kolom untuk halaman List RAB
+        tableData.push([
+          i + 1,
+          nama,
+          noLH05,
+          partNumber,
+          typeMesin,
+          snMesin,
+          unitULD,
+          qty,
+          formatRupiah(harga),
+          formatRupiah(total)
+        ])
+      }
     }
-    
-    // Calculate subtotal
-    let subtotalTotal = 0
-    for (let i = 0; i < items.length; i++) {
-      const qty = Number(items[i].jumlah || items[i].qty || items[i].quantity || 1)
-      const harga = Number(items[i].harga_satuan || items[i].harga || items[i].unit_price || items[i].price || 0)
-      subtotalTotal += (qty * harga)
-    }
-    
-    console.log('📄 PDF Subtotal:', subtotalTotal)
-    
-    // Check if RAB uses PPN (same logic as view)
-    const usePPN = !(rab.jenis_rab === 'Pembelian Langsung' && rokPercentage === 0)
-    
-    const ppnTotal = usePPN ? Math.round(subtotalTotal * 0.11) : 0
+
+    const usePPN     = !(rab.jenis_rab === 'Pembelian Langsung' && rokPercentage === 0)
+    const ppnTotal   = usePPN ? Math.round(subtotalTotal * 0.11) : 0
     const grandTotal = subtotalTotal + ppnTotal
-    
-    // Add summary rows
-    tableData.push([
-      '', '', '', '', '', '', '', '', 
-      'Subtotal:', 
-      formatRupiah(subtotalTotal)
-    ])
-    
-    // Add PPN rows only if usePPN is true
-    if (usePPN) {
+
+    // ── SUMMARY ROWS ─────────────────────────────────────────────────────────
+    if (isRealisasi) {
+      // Ambil total RAB Pembelian Langsung terkait (async)
+      let totalPL = 0
+      if (rab.jenis_rab === 'SPK') {
+        totalPL = await loadLinkedPembelianLangsung(rab.id)
+      }
+      const saldoSubtotal = subtotalTanpaROK - subtotalRealisasi - totalPL
+
+      // Baris Subtotal
       tableData.push([
-        '', '', '', '', '', '', '', '', 
-        'PPN 11%:', 
-        formatRupiah(ppnTotal)
+        '', '', '', '', '', '', '', '',
+        'Subtotal:',
+        formatRupiah(subtotalTotal),
+        '-',
+        formatRupiah(subtotalTanpaROK),
+        '-',
+        formatRupiah(subtotalRealisasi),
+        '-'
       ])
-      
+
+      // Baris RAB Pembelian Langsung (hanya kalau ada)
+      if (rab.jenis_rab === 'SPK' && totalPL > 0) {
+        tableData.push([
+          '', '', '', '', '', '', '', '',
+          '(-) RAB PL:',
+          '-',
+          '-',
+          formatRupiah(totalPL),
+          '-',
+          '-',
+          '-'
+        ])
+      }
+
+      // Baris Saldo
       tableData.push([
-        '', '', '', '', '', '', '', '', 
-        'Total + PPN:', 
-        formatRupiah(grandTotal)
+        '', '', '', '', '', '', '', '',
+        'Saldo:',
+        '-',
+        '-',
+        '-',
+        '-',
+        '-',
+        formatRupiah(saldoSubtotal)
       ])
+
+      // Baris PPN + Total+PPN (kolom Total saja)
+      if (usePPN) {
+        tableData.push([
+          '', '', '', '', '', '', '', '',
+          'PPN 11%:',
+          formatRupiah(ppnTotal),
+          '-', '-', '-', '-', '-'
+        ])
+        tableData.push([
+          '', '', '', '', '', '', '', '',
+          'Total + PPN:',
+          formatRupiah(grandTotal),
+          '-', '-', '-', '-', '-'
+        ])
+      }
+    } else {
+      // Summary List RAB (10 kolom)
+      tableData.push(['', '', '', '', '', '', '', '', 'Subtotal:', formatRupiah(subtotalTotal)])
+      if (usePPN) {
+        tableData.push(['', '', '', '', '', '', '', '', 'PPN 11%:', formatRupiah(ppnTotal)])
+        tableData.push(['', '', '', '', '', '', '', '', 'Total + PPN:', formatRupiah(grandTotal)])
+      }
     }
-    
-    // Table headers - 10 columns
-    const headers = [
-      'No', 'Nama Material', 'No. LH05', 'Part Number', 
-      'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty', 
-      'Harga Satuan', 'Total'
-    ]
-    
-    // Create table with autoTable
+
+    // ── DEFINISI KOLOM ───────────────────────────────────────────────────────
+    let headers, columnStyles
+
+    if (isRealisasi) {
+      // 15 kolom — A4 landscape 297mm, margin 7mm kiri+kanan → ~283mm usable
+      headers = [
+        'No', 'Nama Material', 'No. LH05', 'Part Number',
+        'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty',
+        'Harga Satuan', 'Total',
+        'Tanpa ROK', 'Total\nTanpa ROK',
+        'Realisasi', 'Total\nRealisasi', 'Saldo'
+      ]
+      columnStyles = {
+        0:  { halign: 'center', cellWidth: 8  },   // No
+        1:  { halign: 'left',   cellWidth: 40 },   // Nama Material
+        2:  { halign: 'left',   cellWidth: 24 },   // No. LH05
+        3:  { halign: 'left',   cellWidth: 20 },   // Part Number
+        4:  { halign: 'left',   cellWidth: 20 },   // Type Mesin
+        5:  { halign: 'center', cellWidth: 16 },   // S/N Mesin
+        6:  { halign: 'center', cellWidth: 16 },   // Unit/ULD
+        7:  { halign: 'center', cellWidth: 8  },   // Qty
+        8:  { halign: 'right',  cellWidth: 22 },   // Harga Satuan
+        9:  { halign: 'right',  cellWidth: 22 },   // Total
+        10: { halign: 'right',  cellWidth: 22 },   // Tanpa ROK
+        11: { halign: 'right',  cellWidth: 22 },   // Total Tanpa ROK
+        12: { halign: 'center', cellWidth: 14 },   // Realisasi
+        13: { halign: 'right',  cellWidth: 22 },   // Total Realisasi
+        14: { halign: 'right',  cellWidth: 22 }    // Saldo
+      }
+    } else {
+      headers = [
+        'No', 'Nama Material', 'No. LH05', 'Part Number',
+        'Type Mesin', 'S/N Mesin', 'Unit/ULD', 'Qty',
+        'Harga Satuan', 'Total'
+      ]
+      columnStyles = {
+        0: { halign: 'center', cellWidth: 10 },
+        1: { halign: 'left',   cellWidth: 45 },
+        2: { halign: 'left',   cellWidth: 30 },
+        3: { halign: 'left',   cellWidth: 25 },
+        4: { halign: 'left',   cellWidth: 25 },
+        5: { halign: 'center', cellWidth: 20 },
+        6: { halign: 'center', cellWidth: 20 },
+        7: { halign: 'center', cellWidth: 10 },
+        8: { halign: 'right',  cellWidth: 25 },
+        9: { halign: 'right',  cellWidth: 25 }
+      }
+    }
+
+    const totalCols = headers.length
+
+    // ── RENDER TABLE ─────────────────────────────────────────────────────────
     doc.autoTable({
-      startY: 38,
+      startY: 33,
+      margin: { left: 7, right: 7 },
       head: [headers],
       body: tableData,
       theme: 'grid',
-      headStyles: { 
-        fillColor: [34, 197, 94],  // Green-500
+      headStyles: {
+        fillColor: [34, 197, 94],   // green-500
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        halign: 'center'
-      },
-      styles: { 
+        halign: 'center',
         fontSize: 7,
         cellPadding: 2
       },
-      columnStyles: {
-        0: { halign: 'center', cellWidth: 10 },   // No
-        1: { halign: 'left', cellWidth: 45 },     // Nama Material
-        2: { halign: 'left', cellWidth: 30 },     // No. LH05
-        3: { halign: 'left', cellWidth: 25 },     // Part Number
-        4: { halign: 'left', cellWidth: 25 },     // Type Mesin
-        5: { halign: 'center', cellWidth: 20 },   // S/N Mesin
-        6: { halign: 'center', cellWidth: 20 },   // Unit/ULD
-        7: { halign: 'center', cellWidth: 10 },   // Qty
-        8: { halign: 'right', cellWidth: 25 },    // Harga Satuan
-        9: { halign: 'right', cellWidth: 25 }     // Total
+      styles: {
+        fontSize: 7,
+        cellPadding: 2,
+        overflow: 'linebreak'
       },
-      // Highlight summary rows
+      columnStyles,
+      // Warna khusus summary rows
       didParseCell: function(data) {
-        if (data.row.index >= items.length && data.column.index === 8) {
+        if (data.row.index < items.length) return   // baris data biasa
+
+        const col = data.column.index
+        const labelCol = isRealisasi ? 8 : 8
+        const cellVal  = String(data.cell.raw || '')
+
+        // Baris Saldo → highlight biru muda
+        if (cellVal === 'Saldo:' || (data.row.index >= items.length && cellVal.startsWith('Saldo:'))) {
+          if (col >= labelCol) {
+            data.cell.styles.fillColor   = [219, 234, 254]  // blue-100
+            data.cell.styles.fontStyle   = 'bold'
+          }
+        }
+        // Baris Total + PPN → highlight biru
+        else if (cellVal === 'Total + PPN:' || (data.column.index === labelCol && cellVal === 'Total + PPN:')) {
+          data.cell.styles.fillColor = [219, 234, 254]
           data.cell.styles.fontStyle = 'bold'
         }
-        if (data.row.index >= items.length && data.column.index === 9) {
-          data.cell.styles.fontStyle = 'bold'
-          data.cell.styles.fillColor = [243, 244, 246]  // Gray-100
+        // Semua label & nilai summary → bold + abu
+        else {
+          if (col >= labelCol) {
+            data.cell.styles.fontStyle   = 'bold'
+            data.cell.styles.fillColor   = [243, 244, 246]  // gray-100
+          }
+        }
+
+        // Kolom Saldo per baris data: warna merah kalau negatif
+        if (isRealisasi && data.row.index < items.length && col === 14) {
+          const raw = data.cell.raw
+          if (typeof raw === 'string' && raw.startsWith('-')) {
+            data.cell.styles.textColor = [220, 38, 38]  // red-600
+          }
         }
       }
     })
-    
-    // Save PDF
-    const date = new Date().toISOString().split('T')[0]
-    doc.save(`Detail_RAB_${rab.nomor_rab}_${date}.pdf`)
-    
+
+    // ── SIMPAN ────────────────────────────────────────────────────────────────
+    const date   = new Date().toISOString().split('T')[0]
+    const prefix = isRealisasi ? 'Realisasi_RAB' : 'Detail_RAB'
+    doc.save(`${prefix}_${rab.nomor_rab}_${date}.pdf`)
+
     showNotification('PDF berhasil diunduh', 'success')
   } catch (error) {
     console.error('Error exporting to PDF:', error)
