@@ -134,9 +134,9 @@ function renderKHSTable() {
 
     return `
       <tr class="hover:bg-gray-50 border-b border-gray-100" id="row-${khs.id}">
-        <!-- NOMOR RAB → klik langsung buka VIEW detail -->
+        <!-- NOMOR RAB → klik = data CREATE KHS (DB) -->
         <td class="px-4 py-3 text-sm font-semibold text-blue-600 cursor-pointer hover:underline"
-            onclick="viewKHSDetail(${idx})" title="Klik untuk lihat detail">
+            onclick="viewKHSFromDB(${idx})" title="Lihat items inputan CREATE KHS">
           ${khs.nomor_rab || '-'}
         </td>
 
@@ -159,7 +159,9 @@ function renderKHSTable() {
 
         <!-- ACTION -->
         <td class="px-4 py-3 text-sm">
-          <button onclick="viewKHSDetail(${idx})"
+          <!-- VIEW → data dari JSON KR (harga, vendor) -->
+          <button onclick="viewKHSFromKR(${idx})"
+                  title="Lihat detail KR dari kontrak"
                   class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700 transition shadow-sm">
             <i class="fas fa-eye mr-1.5"></i>VIEW
           </button>
@@ -387,69 +389,60 @@ async function fetchKRDetailItems(nomorKR) {
   return items
 }
 
-// ─── View KHS Detail Modal ─────────────────────────────────────────────────
-async function viewKHSDetail(idx) {
+// ─── 🟡 Klik NOMOR RAB → data CREATE KHS dari DB ───────────────────────────
+async function viewKHSFromDB(idx) {
   const khs = allKHSData[idx]
-
-  // Show modal immediately with loading state
-  showModal(khs, null)
-
+  showModalDB(khs, null)
   try {
-    // Selalu ambil data dari DB (inputan CREATE KHS)
-    // Kolom: No | Nomor LH05 | Part Number | Material | Mesin | Jumlah | Unit | Jenis
     const res = await fetch(`/api/rab/${khs.id}`, {
       headers: { 'Authorization': `Bearer ${sessionToken}` }
     })
-    if (!res.ok) throw new Error('Failed to load detail')
+    if (!res.ok) throw new Error('Failed to load')
     const data = await res.json()
-    showModal(khs, data.items || [])
+    showModalDB(khs, data.items || [])
   } catch (e) {
-    console.error('View detail error:', e)
-    showModal(khs, 'error')
+    console.error('viewKHSFromDB error:', e)
+    showModalDB(khs, 'error')
   }
 }
 
-function showModal(khs, items) {
-  // Remove existing modal
+// ─── 🔵 Tombol VIEW → data dari GitHub JSON KR (harga) ──────────────────────
+async function viewKHSFromKR(idx) {
+  const khs = allKHSData[idx]
+  showModalKR(khs, null)
+  try {
+    if (!khs.nomor_kr || khs.nomor_kr.trim() === '') {
+      showModalKR(khs, 'no_kr')
+      return
+    }
+    const krItems = await fetchKRDetailItems(khs.nomor_kr)
+    showModalKR(khs, krItems)
+  } catch (e) {
+    console.error('viewKHSFromKR error:', e)
+    showModalKR(khs, 'error')
+  }
+}
+
+function showModalDB(khs, items) {
   const existing = document.getElementById('khs-modal')
   if (existing) existing.remove()
 
+  const COLS = 8
   let bodyHTML = ''
-
   if (items === null) {
-    // Loading
-    bodyHTML = `
-      <tr>
-        <td colspan="8" class="px-4 py-10 text-center text-gray-400">
-          <i class="fas fa-spinner fa-spin text-2xl block mb-2"></i>
-          Memuat data material...
-        </td>
-      </tr>`
+    bodyHTML = `<tr><td colspan="${COLS}" class="px-4 py-10 text-center text-gray-400"><i class="fas fa-spinner fa-spin text-2xl block mb-2"></i>Memuat data...</td></tr>`
   } else if (items === 'error') {
-    bodyHTML = `
-      <tr>
-        <td colspan="8" class="px-4 py-8 text-center text-red-500">
-          <i class="fas fa-exclamation-triangle text-2xl block mb-2"></i>
-          Gagal memuat data material
-        </td>
-      </tr>`
+    bodyHTML = `<tr><td colspan="${COLS}" class="px-4 py-8 text-center text-red-500"><i class="fas fa-exclamation-triangle text-2xl block mb-2"></i>Gagal memuat data</td></tr>`
   } else if (items.length === 0) {
-    bodyHTML = `
-      <tr>
-        <td colspan="8" class="px-4 py-8 text-center text-gray-400">
-          <i class="fas fa-inbox text-2xl block mb-2"></i>
-          Tidak ada material
-        </td>
-      </tr>`
+    bodyHTML = `<tr><td colspan="${COLS}" class="px-4 py-8 text-center text-gray-400"><i class="fas fa-inbox text-2xl block mb-2"></i>Belum ada material</td></tr>`
   } else {
-    // Tampilkan kolom KHS: No | Nomor LH05 | Part Number | Material | Mesin | Jumlah | Unit | Jenis
     bodyHTML = items.map((item, i) => {
-      const qty  = item.jumlah || item.jumlah_rok || 0
-      const unit = item.unit_uld || item.satuan || '-'
+      const qty   = item.jumlah || 0
+      const unit  = item.unit_uld || '-'
       const jenis = item.jenis_barang || item.jenis || '-'
       return `
-        <tr class="border-b border-gray-100 hover:bg-blue-50 transition">
-          <td class="px-3 py-2.5 text-sm text-center text-gray-500 w-10">${i + 1}</td>
+        <tr class="border-b border-gray-100 hover:bg-yellow-50 transition">
+          <td class="px-3 py-2.5 text-sm text-center text-gray-400">${i + 1}</td>
           <td class="px-3 py-2.5 text-sm font-mono text-gray-700">${escapeHtml(item.nomor_lh05 || '-')}</td>
           <td class="px-3 py-2.5 text-sm font-mono text-blue-700 font-semibold">${escapeHtml(item.part_number || '-')}</td>
           <td class="px-3 py-2.5 text-sm">${escapeHtml(item.material || '-')}</td>
@@ -463,48 +456,29 @@ function showModal(khs, items) {
     }).join('')
   }
 
-  const modalHTML = `
-    <div id="khs-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onclick="if(event.target===this) closeModal()">
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="khs-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onclick="if(event.target===this)closeModal()">
       <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl mx-4 max-h-[90vh] flex flex-col">
-
-        <!-- Modal Header -->
-        <div class="bg-gradient-to-r from-blue-700 to-blue-800 text-white px-6 py-4 rounded-t-xl flex justify-between items-start">
+        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-6 py-4 rounded-t-xl flex justify-between items-start">
           <div class="flex-1 min-w-0">
-            <h2 class="text-xl font-bold mb-1">
-              <i class="fas fa-file-contract mr-2"></i>
-              Detail KHS: ${escapeHtml(khs.nomor_rab || '-')}
-            </h2>
+            <h2 class="text-xl font-bold mb-1"><i class="fas fa-database mr-2"></i>Items CREATE KHS: ${escapeHtml(khs.nomor_rab || '-')}</h2>
             <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm opacity-90 mt-1">
               <span><i class="fas fa-calendar mr-1"></i>${formatDate(khs.tanggal_rab)}</span>
-              ${khs.nomor_kr ? `<span><i class="fas fa-file-signature mr-1"></i>KR: <strong>${escapeHtml(khs.nomor_kr)}</strong></span>` : ''}
-              <span><i class="fas fa-boxes mr-1"></i>${Array.isArray(items) ? items.length : (khs.item_count || 0)} Material</span>
+              <span><i class="fas fa-boxes mr-1"></i>${Array.isArray(items) ? items.length : (khs.item_count || 0)} item</span>
               <span>${getStatusBadge(khs.status)}</span>
             </div>
-            ${(() => {
-              const krData = krListCache.find(k => k.nomor_kr === khs.nomor_kr)
-              const v = krData ? krData.vendor : null
-              return v ? `<div class="mt-1 text-xs opacity-80"><i class="fas fa-building mr-1"></i>Vendor: <strong>${escapeHtml(v)}</strong></div>` : ''
-            })()}
           </div>
-          <button onclick="closeModal()" class="ml-4 text-white hover:text-gray-200 text-2xl font-bold leading-none flex-shrink-0">&times;</button>
+          <button onclick="closeModal()" class="ml-4 text-white hover:text-yellow-200 text-2xl font-bold leading-none">&times;</button>
         </div>
-
-        <!-- Modal Body -->
         <div class="overflow-auto flex-1 p-4">
-          <!-- Sumber data info sudah tidak ditampilkan -->
           <div class="mb-3 flex justify-between items-center">
-            <h3 class="text-sm font-semibold text-gray-700">
-              <i class="fas fa-list text-blue-600 mr-1"></i>
-              Daftar Material
-            </h3>
-            <button onclick="exportModalToExcel(${JSON.stringify(khs.id)})"
-                    class="px-3 py-1.5 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition">
+            <h3 class="text-sm font-semibold text-gray-700"><i class="fas fa-list text-yellow-600 mr-1"></i>Daftar Material (inputan CREATE KHS)</h3>
+            <button onclick="exportModalDBToExcel(${JSON.stringify(khs.id)})" class="px-3 py-1.5 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition">
               <i class="fas fa-file-excel mr-1"></i>Export Excel
             </button>
           </div>
-
           <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <table class="min-w-full text-sm" id="modal-table">
+            <table class="min-w-full text-sm">
               <thead class="bg-red-600 text-white sticky top-0 z-10">
                 <tr>
                   <th class="px-3 py-2.5 text-center w-10">No</th>
@@ -517,66 +491,108 @@ function showModal(khs, items) {
                   <th class="px-3 py-2.5 text-center w-28">Jenis</th>
                 </tr>
               </thead>
-              <tbody id="modal-tbody">
-                ${bodyHTML}
-              </tbody>
+              <tbody>${bodyHTML}</tbody>
             </table>
           </div>
         </div>
-
-        <!-- Modal Footer -->
         <div class="px-6 py-3 bg-gray-50 rounded-b-xl flex justify-end border-t">
-          <button onclick="closeModal()" class="px-5 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm">
-            <i class="fas fa-times mr-1"></i>Tutup
-          </button>
+          <button onclick="closeModal()" class="px-5 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"><i class="fas fa-times mr-1"></i>Tutup</button>
         </div>
       </div>
-    </div>`
-
-  document.body.insertAdjacentHTML('beforeend', modalHTML)
+    </div>`)
 }
 
+// ─── Modal 🔵 VIEW dari JSON KR: Kode Material|Nama Material|Satuan|Jumlah|Harga Satuan|Total Harga ───
+function showModalKR(khs, items) {
+  const existing = document.getElementById('khs-modal')
+  if (existing) existing.remove()
+
+  const COLS = 7
+  let bodyHTML = ''
+  if (items === null) {
+    bodyHTML = `<tr><td colspan="${COLS}" class="px-4 py-10 text-center text-gray-400"><i class="fas fa-spinner fa-spin text-2xl block mb-2"></i>Memuat data KR...</td></tr>`
+  } else if (items === 'error') {
+    bodyHTML = `<tr><td colspan="${COLS}" class="px-4 py-8 text-center text-red-500"><i class="fas fa-exclamation-triangle text-2xl block mb-2"></i>Gagal memuat data KR</td></tr>`
+  } else if (items === 'no_kr') {
+    bodyHTML = `<tr><td colspan="${COLS}" class="px-4 py-8 text-center text-gray-400"><i class="fas fa-file-slash text-2xl block mb-2"></i>Nomor KR belum diset untuk KHS ini</td></tr>`
+  } else if (items.length === 0) {
+    bodyHTML = `<tr><td colspan="${COLS}" class="px-4 py-8 text-center text-gray-400"><i class="fas fa-inbox text-2xl block mb-2"></i>Tidak ada data di JSON KR untuk nomor ini</td></tr>`
+  } else {
+    let grandTotal = 0
+    bodyHTML = items.map((item, i) => {
+      const qty   = item.jumlah || 0
+      const harga = item.harga_satuan || 0
+      const total = item.subtotal || qty * harga
+      grandTotal += total
+      return `
+        <tr class="border-b border-gray-100 hover:bg-blue-50 transition">
+          <td class="px-3 py-2.5 text-sm text-center text-gray-400">${i + 1}</td>
+          <td class="px-3 py-2.5 text-sm font-mono text-blue-700 font-semibold">${escapeHtml(item.part_number || '-')}</td>
+          <td class="px-3 py-2.5 text-sm">${escapeHtml(item.material || '-')}</td>
+          <td class="px-3 py-2.5 text-sm text-center">${escapeHtml(item.satuan || '-')}</td>
+          <td class="px-3 py-2.5 text-sm text-center font-semibold">${qty}</td>
+          <td class="px-3 py-2.5 text-sm text-right">${formatRupiah(harga)}</td>
+          <td class="px-3 py-2.5 text-sm text-right font-semibold text-green-700">${formatRupiah(total)}</td>
+        </tr>`
+    }).join('') + `
+      <tr class="bg-gray-100 font-bold border-t-2 border-gray-300">
+        <td colspan="6" class="px-3 py-2.5 text-sm text-right">TOTAL KESELURUHAN:</td>
+        <td class="px-3 py-2.5 text-sm text-right text-green-700">${formatRupiah(grandTotal)}</td>
+      </tr>`
+  }
+
+  const krData = krListCache.find(k => k.nomor_kr === khs.nomor_kr)
+  const vendorName = krData ? krData.vendor : ''
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="khs-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onclick="if(event.target===this)closeModal()">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl mx-4 max-h-[90vh] flex flex-col">
+        <div class="bg-gradient-to-r from-blue-700 to-blue-800 text-white px-6 py-4 rounded-t-xl flex justify-between items-start">
+          <div class="flex-1 min-w-0">
+            <h2 class="text-xl font-bold mb-1"><i class="fas fa-file-contract mr-2"></i>Detail KR: ${escapeHtml(khs.nomor_rab || '-')}</h2>
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm opacity-90 mt-1">
+              <span><i class="fas fa-calendar mr-1"></i>${formatDate(khs.tanggal_rab)}</span>
+              ${khs.nomor_kr ? `<span><i class="fas fa-file-signature mr-1"></i>KR: <strong>${escapeHtml(khs.nomor_kr)}</strong></span>` : ''}
+              <span><i class="fas fa-boxes mr-1"></i>${Array.isArray(items) ? items.length : 0} item</span>
+              <span>${getStatusBadge(khs.status)}</span>
+            </div>
+            ${vendorName ? `<div class="mt-1 text-xs opacity-80"><i class="fas fa-building mr-1"></i>Vendor: <strong>${escapeHtml(vendorName)}</strong></div>` : ''}
+          </div>
+          <button onclick="closeModal()" class="ml-4 text-white hover:text-gray-200 text-2xl font-bold leading-none">&times;</button>
+        </div>
+        <div class="overflow-auto flex-1 p-4">
+          <div class="mb-3 flex justify-between items-center">
+            <h3 class="text-sm font-semibold text-gray-700"><i class="fas fa-wifi text-blue-600 mr-1"></i>Data KR dari Kontrak (JSON)</h3>
+            <button onclick="exportModalKRToExcel(${JSON.stringify(khs.id)})" class="px-3 py-1.5 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition">
+              <i class="fas fa-file-excel mr-1"></i>Export Excel
+            </button>
+          </div>
+          <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <table class="min-w-full text-sm">
+              <thead class="bg-red-600 text-white sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2.5 text-center w-10">No</th>
+                  <th class="px-3 py-2.5 text-left">Kode Material</th>
+                  <th class="px-3 py-2.5 text-left">Nama Material</th>
+                  <th class="px-3 py-2.5 text-center w-20">Satuan</th>
+                  <th class="px-3 py-2.5 text-center w-20">Jumlah</th>
+                  <th class="px-3 py-2.5 text-right w-36">Harga Satuan</th>
+                  <th class="px-3 py-2.5 text-right w-36">Total Harga</th>
+                </tr>
+              </thead>
+              <tbody>${bodyHTML}</tbody>
+            </table>
+          </div>
+        </div>
+        <div class="px-6 py-3 bg-gray-50 rounded-b-xl flex justify-end border-t">
+          <button onclick="closeModal()" class="px-5 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"><i class="fas fa-times mr-1"></i>Tutup</button>
+        </div>
+      </div>
+    </div>`)
+}
 function closeModal() {
   const modal = document.getElementById('khs-modal')
   if (modal) modal.remove()
-}
-
-// ─── Export modal data to Excel ────────────────────────────────────────────
-async function exportModalToExcel(rabId) {
-  if (typeof XLSX === 'undefined') {
-    showToast('error', 'Library Excel belum siap, coba lagi')
-    return
-  }
-
-  const khs = allKHSData.find(k => k.id === rabId)
-  if (!khs) return
-
-  try {
-    const res = await fetch(`/api/rab/${rabId}`, {
-      headers: { 'Authorization': `Bearer ${sessionToken}` }
-    })
-    const data = await res.json()
-    const items = data.items || []
-
-    const rows = items.map((item, i) => ({
-      'No': i + 1,
-      'Nomor LH05': item.nomor_lh05 || '-',
-      'Part Number': item.part_number || '-',
-      'Material': item.material || '-',
-      'Mesin': item.mesin || '-',
-      'Jumlah': item.jumlah || 0,
-      'Unit': item.unit_uld || '-',
-      'Jenis': item.jenis_barang || item.jenis || '-'
-    }))
-
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Material KHS')
-    XLSX.writeFile(wb, `KHS_${khs.nomor_rab || 'DRAFT'}_${dateNow()}.xlsx`)
-    showToast('success', 'Export Excel berhasil!')
-  } catch (e) {
-    showToast('error', 'Gagal export Excel')
-  }
 }
 
 // ─── Export all KHS to Excel ───────────────────────────────────────────────
