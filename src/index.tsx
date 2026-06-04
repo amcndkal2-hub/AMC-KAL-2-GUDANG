@@ -5068,13 +5068,57 @@ app.post('/api/rab/:id/update-tor', async (c) => {
     }
     
     console.log(`✅ Nomor TOR updated for RAB ${rabId} by ${username}`)
-    
+
+    // ── AUTO STATUS: Draft → Pengadaan ketika TOR diisi ──────────────────
+    let statusUpdated = false
+    let newStatus = null
+    if (nomor_tor && nomor_tor.trim() !== '') {
+      try {
+        const currentRAB = await env.DB.prepare(
+          `SELECT status FROM rab WHERE id = ?`
+        ).bind(rabId).first()
+
+        if (currentRAB && currentRAB.status === 'Draft') {
+          await env.DB.prepare(`
+            UPDATE rab
+            SET status = 'Pengadaan',
+                tanggal_pengadaan = datetime('now'),
+                updated_at = datetime('now')
+            WHERE id = ?
+          `).bind(rabId).run()
+          statusUpdated = true
+          newStatus = 'Pengadaan'
+          console.log(`✅ RAB ${rabId} auto-updated Draft → Pengadaan (TOR diisi)`)
+        }
+      } catch (statusErr: any) {
+        // Fallback tanpa tanggal_pengadaan jika kolom belum ada
+        try {
+          const currentRAB = await env.DB.prepare(
+            `SELECT status FROM rab WHERE id = ?`
+          ).bind(rabId).first()
+          if (currentRAB && currentRAB.status === 'Draft') {
+            await env.DB.prepare(`
+              UPDATE rab SET status = 'Pengadaan', updated_at = datetime('now') WHERE id = ?
+            `).bind(rabId).run()
+            statusUpdated = true
+            newStatus = 'Pengadaan'
+            console.log(`✅ RAB ${rabId} auto-updated Draft → Pengadaan (fallback)`)
+          }
+        } catch (fallbackErr) {
+          console.error('⚠️ Failed to auto-update status to Pengadaan:', fallbackErr)
+        }
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     return c.json({
       success: true,
       message: 'Nomor TOR berhasil diupdate!',
       rab_id: rabId,
       nomor_tor,
-      username
+      username,
+      status_updated: statusUpdated,
+      new_status: newStatus
     })
   } catch (error: any) {
     console.error('❌ Failed to update Nomor TOR:', error)

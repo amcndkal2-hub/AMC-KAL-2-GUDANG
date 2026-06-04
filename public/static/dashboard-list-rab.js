@@ -29,9 +29,11 @@ async function initializeData() {
   console.log('✅ RAB list loaded and rendered')
   
   // Load SPK data in background (for Status SCM matching)
-  loadSPKData().then(() => {
+  loadSPKData().then(async () => {
     console.log('✅ SPK data loaded, re-rendering to show Status SCM...')
     renderRABList(filteredRABList) // Re-render to show Status SCM column
+    // Auto-update status Tersedia untuk RAB yang SCM-nya sudah Acc Direktur Operasi
+    await autoUpdateTersediaFromSCM()
   }).catch(err => {
     console.error('SPK data load failed:', err)
   })
@@ -133,6 +135,64 @@ async function loadSPKData() {
   } catch (error) {
     console.error('❌ Failed to load SPK data:', error)
     allSPKData = []
+  }
+}
+
+// Auto-update RAB status ke Tersedia jika SCM = Acc Direktur Operasi
+async function autoUpdateTersediaFromSCM() {
+  if (!allSPKData.length || !allRABList.length) return
+
+  // Cari semua RAB yang status = 'Pengadaan' dan punya nomor_tor
+  const rabPengadaan = allRABList.filter(r =>
+    r.status === 'Pengadaan' && r.nomor_tor && r.nomor_tor.trim() !== ''
+  )
+
+  if (rabPengadaan.length === 0) {
+    console.log('ℹ️ Tidak ada RAB Pengadaan dengan TOR untuk dicek SCM status')
+    return
+  }
+
+  console.log(`🔍 Cek SCM status untuk ${rabPengadaan.length} RAB Pengadaan...`)
+
+  let updatedCount = 0
+  for (const rab of rabPengadaan) {
+    const spkItem = allSPKData.find(item => matchTOR(rab.nomor_tor, item.keterangan))
+    if (!spkItem) continue
+
+    const scmStatus = (spkItem.status || '').toLowerCase()
+    const isAccDirektur = scmStatus.includes('acc direktur operasi') ||
+                          scmStatus.includes('acc direktur operasi & pengembangan')
+
+    if (!isAccDirektur) continue
+
+    console.log(`🔄 RAB ${rab.nomor_rab} (id=${rab.id}): SCM="${spkItem.status}" → update ke Tersedia`)
+
+    try {
+      const res = await fetch(`/api/rab/${rab.id}/update-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+        },
+        body: JSON.stringify({ status: 'Tersedia' })
+      })
+      if (res.ok) {
+        updatedCount++
+        console.log(`✅ RAB ${rab.nomor_rab} berhasil diupdate ke Tersedia`)
+      } else {
+        const err = await res.json()
+        console.warn(`⚠️ Gagal update RAB ${rab.nomor_rab}:`, err)
+      }
+    } catch (e) {
+      console.error(`❌ Error update RAB ${rab.nomor_rab}:`, e)
+    }
+  }
+
+  if (updatedCount > 0) {
+    console.log(`✅ ${updatedCount} RAB diupdate ke Tersedia otomatis`)
+    await loadRABList() // Reload untuk tampilkan status terbaru
+  } else {
+    console.log('ℹ️ Tidak ada RAB yang perlu diupdate ke Tersedia')
   }
 }
 
@@ -491,13 +551,7 @@ function renderRABList(rabList) {
         ${formatRupiah(rab.total_harga || 0)}
       </td>
       <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 140px; min-width: 140px; max-width: 140px;">
-        <select onchange="updateRABStatus(${rab.id}, this.value)" 
-                class="w-full px-2 py-1 rounded text-xs font-semibold border cursor-pointer ${getStatusColorSelect(rab.status)}">
-          <option value="Draft" ${rab.status === 'Draft' ? 'selected' : ''}>Draft</option>
-          <option value="Pengadaan" ${rab.status === 'Pengadaan' ? 'selected' : ''}>Pengadaan</option>
-          <option value="Tersedia" ${rab.status === 'Tersedia' ? 'selected' : ''}>Tersedia</option>
-          <option value="Masuk Gudang" ${rab.status === 'Masuk Gudang' ? 'selected' : ''} disabled>Masuk Gudang</option>
-        </select>
+        ${renderRABStatusBadge(rab)}
       </td>
       <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 200px; min-width: 200px; max-width: 200px;">
         <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getSCMStatusColor(spkData.status)}">
@@ -550,6 +604,48 @@ function getStatusColorSelect(status) {
     case 'Masuk Gudang': return 'bg-purple-100 text-purple-800'
     default: return 'bg-gray-100 text-gray-800'
   }
+}
+
+// Render status badge otomatis (mengikuti aturan cascade)
+function renderRABStatusBadge(rab) {
+  const s = rab.status || 'Draft'
+
+  // Aturan tampilan per status
+  const configs = {
+    'Draft': {
+      color: 'bg-gray-100 text-gray-700 border border-gray-300',
+      icon: '📝',
+      label: 'Draft',
+      hint: 'Belum ada No. TOR'
+    },
+    'Pengadaan': {
+      color: 'bg-yellow-100 text-yellow-800 border border-yellow-300',
+      icon: '🔄',
+      label: 'Pengadaan',
+      hint: 'No. TOR sudah diisi'
+    },
+    'Tersedia': {
+      color: 'bg-green-100 text-green-800 border border-green-300',
+      icon: '✅',
+      label: 'Tersedia',
+      hint: 'SCM: Acc Direktur Operasi'
+    },
+    'Masuk Gudang': {
+      color: 'bg-purple-100 text-purple-800 border border-purple-300',
+      icon: '🏭',
+      label: 'Masuk Gudang',
+      hint: 'Sudah di-input ke gudang'
+    }
+  }
+
+  const cfg = configs[s] || configs['Draft']
+
+  return `
+    <span class="inline-flex flex-col items-center px-2 py-1 rounded-lg text-xs font-semibold ${cfg.color} w-full text-center"
+          title="${cfg.hint}">
+      <span>${cfg.icon} ${cfg.label}</span>
+    </span>
+  `
 }
 
 // Get jenis RAB color
