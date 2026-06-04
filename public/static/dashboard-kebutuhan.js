@@ -83,31 +83,6 @@ async function loadKebutuhanMaterial() {
       snMesin: item.sn_mesin // Alias for compatibility
     }))
     
-    // DEBUG: Log materials with Pengadaan status
-    const pengadaanItems = allMaterials.filter(m => m.status === 'Pengadaan')
-    console.log(`[Load Data] Found ${pengadaanItems.length} materials with status "Pengadaan"`)
-    if (pengadaanItems.length > 0) {
-      console.log('[Load Data] Sample Pengadaan items:', pengadaanItems.slice(0, 3).map(m => ({
-        part: m.partNumber,
-        lh05: m.nomorLH05,
-        status: m.status
-      })))
-    }
-    
-    // DEBUG: Check specific problematic materials
-    const problematicParts = ['0117-4421', '0118 0597', '0118 0597']
-    problematicParts.forEach(part => {
-      const items = allMaterials.filter(m => m.partNumber === part)
-      if (items.length > 0) {
-        console.log(`[DEBUG] Part ${part}:`, items.map(m => ({
-          lh05: m.nomorLH05,
-          status: m.status,
-          raw_status: m.status,
-          stok: m.stok,
-          isRab: m.isRabCreated
-        })))
-      }
-    })
     filteredMaterials = [...allMaterials]
     
     // Sort by status priority: N/A, Pengadaan, Tersedia, Terkirim, Tunda, Reject
@@ -171,77 +146,58 @@ function updateStatistics() {
 }
 
 function applyFilters() {
-  const statusFilter = document.getElementById('filterStatus').value
-  const mesinFilter = document.getElementById('filterMesin').value
-  const unitFilter = document.getElementById('filterUnit').value
-  const jenisBarangFilter = document.getElementById('filterJenisBarang').value
-  const searchNomor = document.getElementById('searchNomor').value.toLowerCase()
-  const searchMaterial = document.getElementById('searchMaterial').value.toLowerCase()
-  
-  // Save filter state to sessionStorage
+  const statusFilter  = document.getElementById('filterStatus').value.trim()
+  const mesinFilter   = document.getElementById('filterMesin').value.trim()
+  const unitFilter    = document.getElementById('filterUnit').value.trim()
+  const jenisFilter   = document.getElementById('filterJenisBarang').value.trim()
+  const searchNomor   = document.getElementById('searchNomor').value.trim().toLowerCase()
+  const searchMat     = document.getElementById('searchMaterial').value.trim().toLowerCase()
+
   saveFilterState()
-  
+
   filteredMaterials = allMaterials.filter(item => {
-    let match = true
-    
-    // Filter by Status
-    if (statusFilter && item.status !== statusFilter) {
-      match = false
+    // ── 1. Status ──────────────────────────────────────────────
+    // Normalize item status sama seperti saat load: null/''/N/A → 'N/A'
+    const itemStatus = (!item.status || item.status === '' || item.status.trim() === 'N/A')
+      ? 'N/A'
+      : item.status.trim()
+
+    if (statusFilter !== '' && itemStatus !== statusFilter) return false
+
+    // ── 2. Mesin ───────────────────────────────────────────────
+    if (mesinFilter !== '' && (item.mesin || '').trim() !== mesinFilter) return false
+
+    // ── 3. Unit / Lokasi Tujuan ────────────────────────────────
+    if (unitFilter !== '') {
+      const itemUnit = (item.lokasiTujuan || item.unitULD || '').trim()
+      if (itemUnit !== unitFilter) return false
     }
-    
-    // Filter by Mesin
-    if (mesinFilter && item.mesin !== mesinFilter) {
-      match = false
+
+    // ── 4. Jenis Barang (case-insensitive) ─────────────────────
+    if (jenisFilter !== '') {
+      const itemJenis = (item.jenisBarang || '').trim().toUpperCase()
+      if (itemJenis !== jenisFilter.toUpperCase()) return false
     }
-    
-    // Filter by Unit (check both unitULD and lokasiTujuan)
-    if (unitFilter) {
-      const itemUnit = item.lokasiTujuan || item.unitULD || ''
-      if (itemUnit !== unitFilter) {
-        match = false
-      }
-    }
-    
-    // Filter by Jenis Barang (case-insensitive)
-    if (jenisBarangFilter) {
-      const itemJenis = (item.jenisBarang || '').toUpperCase()
-      const filterJenis = jenisBarangFilter.toUpperCase()
-      if (itemJenis !== filterJenis) {
-        match = false
-      }
-    }
-    
-    // Filter by Nomor LH05
-    if (searchNomor && !item.nomorLH05.toLowerCase().includes(searchNomor)) {
-      match = false
-    }
-    
-    // Filter by Material (searchable)
-    if (searchMaterial && !item.material.toLowerCase().includes(searchMaterial)) {
-      match = false
-    }
-    
-    return match
+
+    // ── 5. Search Nomor LH05 ───────────────────────────────────
+    if (searchNomor && !(item.nomorLH05 || '').toLowerCase().includes(searchNomor)) return false
+
+    // ── 6. Search Material ─────────────────────────────────────
+    if (searchMat && !(item.material || '').toLowerCase().includes(searchMat)) return false
+
+    return true
   })
-  
-  // Sort by status priority: N/A, Pengadaan, Tersedia, Terkirim, Tunda, Reject
-  const statusOrder = {
-    'N/A': 1,
-    'Pengadaan': 2,
-    'Tersedia': 3,
-    'Terkirim': 4,
-    'Tunda': 5,
-    'Reject': 6
-  }
-  
+
+  console.log(`🔍 Filter [status="${statusFilter}"] → ${filteredMaterials.length} / ${allMaterials.length} items`)
+
+  // Sort by status priority
+  const statusOrder = { 'N/A': 1, 'Pengadaan': 2, 'Tersedia': 3, 'Terkirim': 4, 'Tunda': 5, 'Reject': 6 }
   filteredMaterials.sort((a, b) => {
-    const statusA = a.status || 'N/A'
-    const statusB = b.status || 'N/A'
-    const orderA = statusOrder[statusA] || 999
-    const orderB = statusOrder[statusB] || 999
-    return orderA - orderB
+    const oA = statusOrder[a.status] || 999
+    const oB = statusOrder[b.status] || 999
+    return oA - oB
   })
-  
+
   renderTable()
 }
 
@@ -280,17 +236,6 @@ function renderTable() {
     const status = item.status || 'N/A'
     const isTerkirim = item.isTerkirim || status === 'Terkirim'
     const isRabCreated = item.is_rab_created || item.isRabCreated || false
-    
-    // DEBUG: Log status for Part 0118 1003
-    if (item.partNumber === '0118 1003') {
-      console.log('[RENDER DEBUG] Part 0118 1003:', {
-        status: status,
-        stok: stok,
-        isRabCreated: isRabCreated,
-        isTerkirim: isTerkirim,
-        raw_status: item.status
-      })
-    }
     
     // Jenis Barang badge with color
     const jenisBarang = item.jenisBarang || 'Material Handal'
@@ -372,7 +317,6 @@ function renderTable() {
     }
     // Case 5: Pengadaan (no RAB yet) → Dropdown: can change to N/A, Tunda, Reject
     else if (status === 'Pengadaan' && !isRabCreated) {
-      console.log('[CASE 5 MATCHED] Pengadaan without RAB:', item.partNumber)
       statusColor = 'bg-blue-100 text-blue-800 border-blue-300'
       statusDisplay = `
         <select 
@@ -405,7 +349,6 @@ function renderTable() {
     }
     // Case 7: N/A or default → Dropdown: can change to Pengadaan, Tunda, Reject
     else {
-      console.log('[CASE 7 FALLBACK] Default case for:', item.partNumber, 'Status:', status)
       statusColor = 'bg-gray-100 text-gray-800 border-gray-300'
       statusDisplay = `
         <select 
@@ -475,21 +418,17 @@ async function updateStatus(materialId, nomorLH05, partNumber, newStatus, snMesi
     const result = await response.json()
     
     if (result.success) {
-      // Update ONLY the specific material by ID
+      // Update item di allMaterials secara langsung
       const material = allMaterials.find(m => m.id === materialId)
-      
       if (material) {
         material.status = newStatus
-        console.log(`[Update Status] Updated material ID ${materialId}: ${material.partNumber} (SN: ${material.sn_mesin || 'null'}) → ${newStatus}`)
+        console.log(`✅ Updated ID ${materialId}: ${material.partNumber} → ${newStatus}`)
       }
-      
-      // Re-render table to reflect changes immediately
-      renderTable()
-      
-      // Show success notification
-      showNotification(`Status berhasil diupdate! (${updatedMaterials.length} material)`, 'success')
-      
-      // Refresh statistics
+
+      // Re-apply filter yang aktif agar tabel konsisten dengan filter
+      applyFilters()
+
+      showNotification(`Status berhasil diupdate ke "${newStatus}"`, 'success')
       updateStatistics()
     } else {
       showNotification('Gagal update status: ' + result.error, 'error')
