@@ -6431,12 +6431,14 @@ function getDashboardMainHTML() {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="0">
         <title>Dashboard Utama - Sistem Manajemen Material</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="/url-redirect.js?v=1770101032"></script>
-    <script src="/url-redirect.js?v=1770101032"></script>
     </head>
     <body class="bg-gray-50">
         <!-- Navigation -->
@@ -8658,7 +8660,7 @@ function getDashboardKebutuhanMaterialHTML() {
         </div>
 
         <script src="/static/auth-check.js"></script>
-        <script src="/static/dashboard-kebutuhan.js"></script>
+        <script src="/static/dashboard-kebutuhan.js?v=1780532419"></script>
         <script>
           // Toggle dropdown kebutuhan
           function toggleKebutuhanDropdown() {

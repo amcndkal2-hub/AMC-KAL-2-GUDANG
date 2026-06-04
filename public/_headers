@@ -1,13 +1,28 @@
-# Force no-cache for all JS files
+# Force no-cache for all JS files (root level)
 /*.js
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
   Pragma: no-cache
 
-# Force no-cache for all CSS files  
+# Force no-cache for all CSS files (root level)
 /*.css
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
   Pragma: no-cache
 
-# Allow caching for static assets
-/static/*
-  Cache-Control: public, max-age=3600
+# Force no-cache for ALL static JS/CSS files (prevent stale cache issues)
+/static/*.js
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+
+/static/*.css
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+
+# Allow caching only for actual static binary assets (images, fonts)
+/static/*.png
+  Cache-Control: public, max-age=86400
+/static/*.jpg
+  Cache-Control: public, max-age=86400
+/static/*.ico
+  Cache-Control: public, max-age=86400
+/static/*.woff2
+  Cache-Control: public, max-age=86400

@@ -230,10 +230,21 @@ function renderTable() {
     return
   }
   
+  // Debug: log status distribution of filteredMaterials before render
+  const activeFilter = document.getElementById('filterStatus')?.value || ''
+  const statusCount = filteredMaterials.reduce((acc, m) => {
+    const s = m.status || 'N/A'
+    acc[s] = (acc[s] || 0) + 1
+    return acc
+  }, {})
+  console.log(`🎨 renderTable [filter="${activeFilter}"] ${filteredMaterials.length} items:`, statusCount)
+  
   tbody.innerHTML = filteredMaterials.map((item, index) => {
     const lokasiTujuan = item.lokasiTujuan || item.unitULD || '-'
     const stok = item.stok || 0
-    const status = item.status || 'N/A'
+    // Normalize status di renderTable juga untuk keamanan ganda
+    const rawStatus = item.status
+    const status = (!rawStatus || rawStatus === '' || rawStatus === 'N/A') ? 'N/A' : rawStatus
     const isTerkirim = item.isTerkirim || status === 'Terkirim'
     const isRabCreated = item.is_rab_created || item.isRabCreated || false
     
