@@ -4786,6 +4786,133 @@ app.post('/api/save-transaction-from-rab', async (c) => {
   }
 })
 
+// API: Auto-check and update RAB status (Draft → Pengadaan → Tersedia)
+// MUST be before /:id routes to avoid being caught by /:id pattern
+app.post('/api/rab/auto-check-status', async (c) => {
+  try {
+    const { env } = c
+    
+    console.log('🔄 Auto-checking RAB status...')
+    
+    // Get all RAB records
+    const allRAB = await DB.getAllRAB(env.DB)
+    const updates = []
+    
+    for (const rab of allRAB) {
+      let needsUpdate = false
+      let newStatus = rab.status
+      let reason = ''
+      
+      // Rule 1: Draft → Pengadaan (when nomor_tor is not empty)
+      if (rab.status === 'Draft' && rab.nomor_tor && rab.nomor_tor.trim() !== '') {
+        newStatus = 'Pengadaan'
+        needsUpdate = true
+        reason = `TOR ${rab.nomor_tor} added`
+      }
+      
+      // Rule 2: Pengadaan → Tersedia (when SCM status = "Acc Direktur Operasi & Pengembangan Usaha")
+      if (rab.status === 'Pengadaan' && rab.nomor_tor) {
+        // Fetch Pengadaan data from Google Sheets
+        try {
+          const pengadaanResponse = await fetch('https://script.google.com/macros/s/AKfycbynUyVrOfSXn-X6V4HFE6YbanXJZo2tBGWEvBbTMie1DyK2wL0RM9UOvVpfoWDmuxhm/exec')
+          const pengadaanData = await pengadaanResponse.json()
+          
+          if (pengadaanData && pengadaanData['data KR']) {
+            const rows = pengadaanData['data KR']
+            
+            // Filter PEMBANGKITAN rows
+            const pembangkitanRows = rows.filter((row: any) => {
+              return row.Kolom_3 && row.Kolom_3.includes('PEMBANGKITAN')
+            })
+            
+            // Find matching TOR in Keterangan (Kolom_11)
+            const matchedRow = pembangkitanRows.find((row: any) => {
+              const keterangan = row.Kolom_11 || ''
+              return keterangan.includes(rab.nomor_tor)
+            })
+            
+            if (matchedRow) {
+              const status = matchedRow.Kolom_12 || ''
+              
+              // Check if status is "Acc Direktur Operasi & Pengembangan Usaha"
+              if (status.includes('Acc Direktur Operasi') || status.includes('Acc Direktur Operasi & Pengembangan Usaha')) {
+                newStatus = 'Tersedia'
+                needsUpdate = true
+                reason = `SCM status: ${status}`
+              }
+            }
+          }
+        } catch (fetchError) {
+          console.log(`⚠️ Failed to fetch Pengadaan data for RAB ${rab.nomor_rab}:`, fetchError)
+        }
+      }
+      
+      // Update status if needed
+      if (needsUpdate && newStatus !== rab.status) {
+        try {
+          // Update RAB status
+          let updateQuery = 'UPDATE rab SET status = ?, updated_at = datetime(\'now\') WHERE id = ?'
+          let bindParams = [newStatus, rab.id]
+          
+          // Add timestamp for specific status
+          if (newStatus === 'Pengadaan') {
+            updateQuery = 'UPDATE rab SET status = ?, tanggal_pengadaan = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
+          } else if (newStatus === 'Tersedia') {
+            updateQuery = 'UPDATE rab SET status = ?, tanggal_tersedia = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
+          }
+          
+          try {
+            await env.DB.prepare(updateQuery).bind(...bindParams).run()
+          } catch (updateError) {
+            // Fallback without timestamp columns
+            await env.DB.prepare(`
+              UPDATE rab 
+              SET status = ?, updated_at = datetime('now')
+              WHERE id = ?
+            `).bind(newStatus, rab.id).run()
+          }
+          
+          // Sync status to material_gangguan
+          const rabDetails = await DB.getRABById(env.DB, rab.id)
+          if (rabDetails && rabDetails.items) {
+            for (const item of rabDetails.items) {
+              await env.DB.prepare(`
+                UPDATE material_gangguan 
+                SET status = ?
+                WHERE part_number = ? 
+                AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
+              `).bind(newStatus, item.part_number, item.nomor_lh05).run()
+            }
+          }
+          
+          updates.push({
+            nomor_rab: rab.nomor_rab,
+            old_status: rab.status,
+            new_status: newStatus,
+            reason: reason
+          })
+          
+          console.log(`✅ Auto-updated RAB ${rab.nomor_rab}: ${rab.status} → ${newStatus} (${reason})`)
+        } catch (updateError) {
+          console.error(`❌ Failed to update RAB ${rab.nomor_rab}:`, updateError)
+        }
+      }
+    }
+    
+    return c.json({
+      success: true,
+      message: `Auto-check completed. ${updates.length} RAB(s) updated.`,
+      updates: updates
+    })
+  } catch (error: any) {
+    console.error('❌ Auto-check failed:', error)
+    return c.json({ 
+      success: false,
+      error: error.message || 'Auto-check failed' 
+    }, 500)
+  }
+})
+
 // API: Update RAB status
 app.post('/api/rab/:id/update-status', async (c) => {
   try {
@@ -5125,132 +5252,6 @@ app.post('/api/rab/:id/update-tor', async (c) => {
     return c.json({ 
       success: false,
       error: error.message || 'Failed to update Nomor TOR' 
-    }, 500)
-  }
-})
-
-// API: Auto-check and update RAB status (Draft → Pengadaan → Tersedia)
-app.post('/api/rab/auto-check-status', async (c) => {
-  try {
-    const { env } = c
-    
-    console.log('🔄 Auto-checking RAB status...')
-    
-    // Get all RAB records
-    const allRAB = await DB.getAllRAB(env.DB)
-    const updates = []
-    
-    for (const rab of allRAB) {
-      let needsUpdate = false
-      let newStatus = rab.status
-      let reason = ''
-      
-      // Rule 1: Draft → Pengadaan (when nomor_tor is not empty)
-      if (rab.status === 'Draft' && rab.nomor_tor && rab.nomor_tor.trim() !== '') {
-        newStatus = 'Pengadaan'
-        needsUpdate = true
-        reason = `TOR ${rab.nomor_tor} added`
-      }
-      
-      // Rule 2: Pengadaan → Tersedia (when SCM status = "Acc Direktur Operasi & Pengembangan Usaha")
-      if (rab.status === 'Pengadaan' && rab.nomor_tor) {
-        // Fetch Pengadaan data from Google Sheets
-        try {
-          const pengadaanResponse = await fetch('https://script.google.com/macros/s/AKfycbynUyVrOfSXn-X6V4HFE6YbanXJZo2tBGWEvBbTMie1DyK2wL0RM9UOvVpfoWDmuxhm/exec')
-          const pengadaanData = await pengadaanResponse.json()
-          
-          if (pengadaanData && pengadaanData['data KR']) {
-            const rows = pengadaanData['data KR']
-            
-            // Filter PEMBANGKITAN rows
-            const pembangkitanRows = rows.filter((row: any) => {
-              return row.Kolom_3 && row.Kolom_3.includes('PEMBANGKITAN')
-            })
-            
-            // Find matching TOR in Keterangan (Kolom_11)
-            const matchedRow = pembangkitanRows.find((row: any) => {
-              const keterangan = row.Kolom_11 || ''
-              return keterangan.includes(rab.nomor_tor)
-            })
-            
-            if (matchedRow) {
-              const status = matchedRow.Kolom_12 || ''
-              
-              // Check if status is "Acc Direktur Operasi & Pengembangan Usaha"
-              if (status.includes('Acc Direktur Operasi') || status.includes('Acc Direktur Operasi & Pengembangan Usaha')) {
-                newStatus = 'Tersedia'
-                needsUpdate = true
-                reason = `SCM status: ${status}`
-              }
-            }
-          }
-        } catch (fetchError) {
-          console.log(`⚠️ Failed to fetch Pengadaan data for RAB ${rab.nomor_rab}:`, fetchError)
-        }
-      }
-      
-      // Update status if needed
-      if (needsUpdate && newStatus !== rab.status) {
-        try {
-          // Update RAB status
-          let updateQuery = 'UPDATE rab SET status = ?, updated_at = datetime(\'now\') WHERE id = ?'
-          let bindParams = [newStatus, rab.id]
-          
-          // Add timestamp for specific status
-          if (newStatus === 'Pengadaan') {
-            updateQuery = 'UPDATE rab SET status = ?, tanggal_pengadaan = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
-          } else if (newStatus === 'Tersedia') {
-            updateQuery = 'UPDATE rab SET status = ?, tanggal_tersedia = datetime(\'now\'), updated_at = datetime(\'now\') WHERE id = ?'
-          }
-          
-          try {
-            await env.DB.prepare(updateQuery).bind(...bindParams).run()
-          } catch (updateError) {
-            // Fallback without timestamp columns
-            await env.DB.prepare(`
-              UPDATE rab 
-              SET status = ?, updated_at = datetime('now')
-              WHERE id = ?
-            `).bind(newStatus, rab.id).run()
-          }
-          
-          // Sync status to material_gangguan
-          const rabDetails = await DB.getRABById(env.DB, rab.id)
-          if (rabDetails && rabDetails.items) {
-            for (const item of rabDetails.items) {
-              await env.DB.prepare(`
-                UPDATE material_gangguan 
-                SET status = ?
-                WHERE part_number = ? 
-                AND gangguan_id IN (SELECT id FROM gangguan WHERE nomor_lh05 = ?)
-              `).bind(newStatus, item.part_number, item.nomor_lh05).run()
-            }
-          }
-          
-          updates.push({
-            nomor_rab: rab.nomor_rab,
-            old_status: rab.status,
-            new_status: newStatus,
-            reason: reason
-          })
-          
-          console.log(`✅ Auto-updated RAB ${rab.nomor_rab}: ${rab.status} → ${newStatus} (${reason})`)
-        } catch (updateError) {
-          console.error(`❌ Failed to update RAB ${rab.nomor_rab}:`, updateError)
-        }
-      }
-    }
-    
-    return c.json({
-      success: true,
-      message: `Auto-check completed. ${updates.length} RAB(s) updated.`,
-      updates: updates
-    })
-  } catch (error: any) {
-    console.error('❌ Auto-check failed:', error)
-    return c.json({ 
-      success: false,
-      error: error.message || 'Auto-check failed' 
     }, 500)
   }
 })
