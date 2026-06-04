@@ -290,8 +290,9 @@ function renderTable() {
       `
       isDisabled = true
     }
-    // Case 4a: Tersedia + RAB Created → Locked, no dropdown (cannot re-order)
-    else if ((stok > 0 || status === 'Tersedia') && isRabCreated) {
+    // Case 4a: Tersedia + RAB Created → Locked, no dropdown
+    // HANYA jika status DB memang 'Tersedia' (bukan override dari stok)
+    else if (status === 'Tersedia' && isRabCreated) {
       statusColor = 'bg-purple-100 text-purple-800 border-purple-300'
       statusDisplay = `
         <span class="inline-block px-2 py-1 rounded ${statusColor} text-xs font-semibold w-full text-center">
@@ -301,15 +302,17 @@ function renderTable() {
       `
       isDisabled = true
     }
-    // Case 4b: Tersedia + No RAB → Dropdown: can change to Pengadaan (re-order)
-    else if (stok > 0 && (status === 'Tersedia' || !status || status === 'N/A') && !isRabCreated) {
+    // Case 4b: Tersedia + No RAB → Dropdown: Tersedia / Pengadaan / N/A
+    // HANYA jika status DB memang 'Tersedia' (bukan stok override N/A)
+    else if (status === 'Tersedia' && !isRabCreated) {
       statusColor = 'bg-purple-100 text-purple-800 border-purple-300'
       statusDisplay = `
-        <select 
+        <select
           onchange="updateStatus(${item.id}, '${item.nomorLH05}', '${item.partNumber}', this.value, '${item.sn_mesin || item.snMesin || ''}')"
           class="px-2 py-1 border rounded ${statusColor} text-xs font-semibold cursor-pointer w-full">
-          <option value="Tersedia" ${status === 'Tersedia' || !status ? 'selected' : ''}>Tersedia</option>
+          <option value="Tersedia" selected>Tersedia</option>
           <option value="Pengadaan">Pengadaan</option>
+          <option value="N/A">N/A</option>
         </select>
         <p class="text-xs text-gray-500 text-center mt-0.5">📦 ${stok}</p>
       `
