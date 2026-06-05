@@ -9,7 +9,7 @@ let allRABList = []
 let filteredRABList = []
 let currentRABDetail = null
 let currentStatusFilter = 'All'
-let currentJenisFilter = 'All'
+let currentJenisFilter = 'SPK'
 let autoCheckInterval = null
 let isDataLoaded = false
 let allSPKData = [] // Data SPK from GitHub JSON
@@ -766,17 +766,21 @@ function filterByJenis(jenis) {
 function selectJenisFilter(jenis) {
   currentJenisFilter = jenis
   
-  // Update button styles
+  // Reset semua tombol ke state non-aktif
   document.querySelectorAll('.jenis-filter-pill').forEach(btn => {
-    btn.classList.remove('bg-green-600', 'text-white')
-    btn.classList.add('bg-gray-200', 'text-gray-700')
+    btn.classList.remove('bg-blue-600', 'bg-green-600', 'text-white')
+    btn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300')
   })
   
+  // Aktifkan tombol yang dipilih
   const activeBtn = document.getElementById(`btnJenis${jenis.replace(/ /g, '')}`)
   if (activeBtn) {
-    activeBtn.classList.remove('bg-gray-200', 'text-gray-700')
-    activeBtn.classList.add('bg-green-600', 'text-white')
+    activeBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300')
+    activeBtn.classList.add('bg-blue-600', 'text-white')
   }
+  
+  // Langsung apply filter tanpa perlu klik Terapkan
+  applyFilters()
   
   console.log(`✅ Jenis filter selected: ${jenis}`)
 }
@@ -792,8 +796,8 @@ function updateJenisFilterButtonState() {
   // Set active button based on currentJenisFilter
   const activeBtn = document.getElementById(`btnJenis${currentJenisFilter.replace(/ /g, '')}`)
   if (activeBtn) {
-    activeBtn.classList.remove('bg-gray-200', 'text-gray-700')
-    activeBtn.classList.add('bg-green-600', 'text-white')
+    activeBtn.classList.remove('bg-gray-200', 'text-gray-700', 'bg-white', 'border', 'border-gray-300')
+    activeBtn.classList.add('bg-blue-600', 'text-white')
   }
   
   console.log(`✅ Button state updated: ${currentJenisFilter}`)

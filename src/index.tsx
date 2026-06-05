@@ -13487,10 +13487,7 @@ function getDashboardListRABHTML() {
                             <i class="fas fa-list text-blue-600 text-sm"></i>
                             <label class="text-sm font-medium text-gray-700">Filter Jenis:</label>
                             <div class="flex gap-2">
-                                <button onclick="selectJenisFilter('All')" id="btnJenisAll" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-blue-600 text-white hover:bg-blue-700">
-                                    Semua
-                                </button>
-                                <button onclick="selectJenisFilter('SPK')" id="btnJenisSPK" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">
+                                <button onclick="selectJenisFilter('SPK')" id="btnJenisSPK" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-blue-600 text-white hover:bg-blue-700">
                                     SPK
                                 </button>
                                 <button onclick="selectJenisFilter('Pembelian Langsung')" id="btnJenisPembelianLangsung" class="jenis-filter-pill px-3 py-1.5 rounded text-sm font-medium transition bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">
