@@ -35,7 +35,7 @@ app.use('/api/*', async (c, next) => {
 })
 
 // Google Sheets URL
-const GOOGLE_SHEETS_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLgIOFG1fLbjU_hBye86rPyTSJVSulXqCHlMw0sZwtZF8_nolEs11-zQhoZRe5c6w7wtbJw6mpdvKj2eCYaTGjHNrSyikvMKzjxLpYViD0RUnHENi_x2IfD9_yOUwQI_BrBfJRKnu-N48Fr5AP7fQJYf22-v2zMV_SERF4SBUcciAcJVuPB7QaWtd5G2vOFMjmYTexNBC1z7YlnllCRSkoGbO3Axnat70P3mcKT4KpDjhBaH3_mDQgzn7BZKaANTLEx-QD-yGp0zbkMBoUMLsBIZqcFbfHe1vfe-bn68&lib=MRb65GHGTxo8fAtO2JZr8dy1qv6vbq6ko'
+const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbykiA2WkHd0bL6HPS-8KFHE9jRTzAX7YCvVmq0Kbr2uixcoTZGS-trsG-4U_02_FHarEA/exec'
 
 // In-memory storage untuk demo (ganti dengan Firestore di production)
 let transactions: any[] = []
@@ -4814,7 +4814,7 @@ app.post('/api/rab/auto-check-status', async (c) => {
       if (rab.status === 'Pengadaan' && rab.nomor_tor) {
         // Fetch Pengadaan data from Google Sheets
         try {
-          const pengadaanResponse = await fetch('https://script.google.com/macros/s/AKfycbynUyVrOfSXn-X6V4HFE6YbanXJZo2tBGWEvBbTMie1DyK2wL0RM9UOvVpfoWDmuxhm/exec')
+          const pengadaanResponse = await fetch('https://script.google.com/macros/s/AKfycbykiA2WkHd0bL6HPS-8KFHE9jRTzAX7YCvVmq0Kbr2uixcoTZGS-trsG-4U_02_FHarEA/exec')
           const pengadaanData = await pengadaanResponse.json()
           
           if (pengadaanData && pengadaanData['data KR']) {
@@ -10270,7 +10270,7 @@ function getDashboardPengadaanHTML() {
         <script src="/static/auth-check.js"></script>
         <script>
             // Google Sheets JSON URL
-            const PENGADAAN_URL = 'https://script.google.com/macros/s/AKfycbynUyVrOfSXn-X6V4HFE6YbanXJZo2tBGWEvBbTMie1DyK2wL0RM9UOvVpfoWDmuxhm/exec';
+            const PENGADAAN_URL = 'https://script.google.com/macros/s/AKfycbykiA2WkHd0bL6HPS-8KFHE9jRTzAX7YCvVmq0Kbr2uixcoTZGS-trsG-4U_02_FHarEA/exec';
             
             let pengadaanData = [];
             let filteredData = [];
