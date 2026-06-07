@@ -2563,41 +2563,60 @@ async function removePembelianLangsung(linkId) {
 
 const VENDOR_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbykiA2WkHd0bL6HPS-8KFHE9jRTzAX7YCvVmq0Kbr2uixcoTZGS-trsG-4U_02_FHarEA/exec'
 
-async function loadVendorDropdown(selectedVendor = '') {
-  const select = document.getElementById('vendorSelect')
-  if (!select) return
+// Cache vendor list agar tidak fetch ulang setiap buka modal
+let _vendorListCache = null
 
+async function getVendorList() {
+  if (_vendorListCache) return _vendorListCache
   try {
     const response = await fetch(VENDOR_SHEETS_URL)
     const data = await response.json()
-
-    // Ambil daftar VENDOR unik (filter kosong)
-    const vendors = [...new Set(
+    _vendorListCache = [...new Set(
       (data || [])
         .map(row => (row.VENDOR || '').trim())
         .filter(v => v !== '')
     )].sort()
-
-    // Populate dropdown
-    select.innerHTML = `<option value="">-- Pilih Vendor --</option>`
-    vendors.forEach(v => {
-      const opt = document.createElement('option')
-      opt.value = v
-      opt.textContent = v
-      if (v === selectedVendor) opt.selected = true
-      select.appendChild(opt)
-    })
   } catch (err) {
     console.error('Gagal load vendor dari Google Sheets:', err)
-    // Fallback: vendor yang sudah tersimpan
-    if (selectedVendor) {
+    _vendorListCache = []
+  }
+  return _vendorListCache
+}
+
+async function loadVendorDropdown(selectedVendor = '') {
+  const select = document.getElementById('vendorSelect')
+  if (!select) return
+
+  // Tampilkan loading sementara
+  select.innerHTML = `<option value="">Memuat daftar vendor...</option>`
+  select.disabled = true
+
+  const vendors = await getVendorList()
+
+  // Populate dropdown
+  select.innerHTML = `<option value="">-- Pilih Vendor --</option>`
+  vendors.forEach(v => {
+    const opt = document.createElement('option')
+    opt.value = v
+    opt.textContent = v
+    select.appendChild(opt)
+  })
+
+  // Pastikan vendor yang sudah tersimpan ter-select
+  if (selectedVendor) {
+    // Cek apakah ada di list
+    const exists = vendors.includes(selectedVendor)
+    if (!exists) {
+      // Tambahkan sebagai opsi jika tidak ada di list
       const opt = document.createElement('option')
       opt.value = selectedVendor
       opt.textContent = selectedVendor
-      opt.selected = true
       select.appendChild(opt)
     }
+    select.value = selectedVendor
   }
+
+  select.disabled = false
 }
 
 async function saveRABVendor(rabId, vendor) {
