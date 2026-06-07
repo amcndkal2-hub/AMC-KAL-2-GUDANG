@@ -1090,8 +1090,30 @@ async function _showRABDetailModalContent(rab, modal) {
   }
   
   document.getElementById('detailCreated').textContent = createdDate
-  document.getElementById('detailUsername').textContent = rab.username || '-'
-  
+
+  // Render Vendor field
+  const vendorContainer = document.getElementById('detailVendorContainer')
+  if (vendorContainer) {
+    const isAndalcekatan = currentUser === 'Andalcekatan' || isAdmin
+    if (isAndalcekatan) {
+      // Andalcekatan: dropdown editable
+      vendorContainer.innerHTML = `
+        <div class="flex items-center gap-2">
+          <select id="vendorSelect" onchange="saveRABVendor(${rab.id}, this.value)"
+            class="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 min-w-[220px]">
+            <option value="">-- Pilih Vendor --</option>
+          </select>
+          <span id="vendorSaveStatus" class="text-xs text-gray-400"></span>
+        </div>
+      `
+      // Load vendor list dari Google Sheets
+      loadVendorDropdown(rab.vendor || '')
+    } else {
+      // Akun lain: read-only
+      vendorContainer.innerHTML = `<span class="text-gray-800">${rab.vendor || '-'}</span>`
+    }
+  }
+
   // Render items table
   const itemsTable = document.getElementById('detailItemsTable')
   if (rab.items && rab.items.length > 0) {
@@ -2536,6 +2558,88 @@ async function removePembelianLangsung(linkId) {
 }
 
 // ==================== End RAB Pembelian Langsung Functions ====================
+
+// ==================== Vendor Functions ====================
+
+const VENDOR_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbykiA2WkHd0bL6HPS-8KFHE9jRTzAX7YCvVmq0Kbr2uixcoTZGS-trsG-4U_02_FHarEA/exec'
+
+async function loadVendorDropdown(selectedVendor = '') {
+  const select = document.getElementById('vendorSelect')
+  if (!select) return
+
+  try {
+    const response = await fetch(VENDOR_SHEETS_URL)
+    const data = await response.json()
+
+    // Ambil daftar VENDOR unik (filter kosong)
+    const vendors = [...new Set(
+      (data || [])
+        .map(row => (row.VENDOR || '').trim())
+        .filter(v => v !== '')
+    )].sort()
+
+    // Populate dropdown
+    select.innerHTML = `<option value="">-- Pilih Vendor --</option>`
+    vendors.forEach(v => {
+      const opt = document.createElement('option')
+      opt.value = v
+      opt.textContent = v
+      if (v === selectedVendor) opt.selected = true
+      select.appendChild(opt)
+    })
+  } catch (err) {
+    console.error('Gagal load vendor dari Google Sheets:', err)
+    // Fallback: vendor yang sudah tersimpan
+    if (selectedVendor) {
+      const opt = document.createElement('option')
+      opt.value = selectedVendor
+      opt.textContent = selectedVendor
+      opt.selected = true
+      select.appendChild(opt)
+    }
+  }
+}
+
+async function saveRABVendor(rabId, vendor) {
+  const statusEl = document.getElementById('vendorSaveStatus')
+  if (statusEl) statusEl.textContent = 'Menyimpan...'
+
+  try {
+    const response = await fetch(`/api/rab/${rabId}/vendor`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+      },
+      body: JSON.stringify({ vendor })
+    })
+
+    const result = await response.json()
+
+    if (response.ok) {
+      if (statusEl) {
+        statusEl.textContent = '✅ Tersimpan'
+        statusEl.className = 'text-xs text-green-600'
+        setTimeout(() => { if (statusEl) statusEl.textContent = '' }, 2000)
+      }
+      // Update currentRABDetail
+      if (currentRABDetail) currentRABDetail.vendor = vendor
+    } else {
+      if (statusEl) {
+        statusEl.textContent = `❌ ${result.message || 'Gagal'}`
+        statusEl.className = 'text-xs text-red-600'
+      }
+    }
+  } catch (err) {
+    console.error('Error saving vendor:', err)
+    if (statusEl) {
+      statusEl.textContent = '❌ Error jaringan'
+      statusEl.className = 'text-xs text-red-600'
+    }
+  }
+}
+
+// ==================== End Vendor Functions ====================
 
 // Logout
 function logout() {

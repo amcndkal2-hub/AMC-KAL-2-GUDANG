@@ -1907,6 +1907,7 @@ export async function getAllRAB(db: D1Database) {
           r.nomor_kr,
           r.nomor_kr_set_by,
           r.nomor_kr_set_at,
+          r.vendor,
           (SELECT nomor_ijin_prinsip FROM pengadaan_rab_links WHERE nomor_rab = r.nomor_rab LIMIT 1) as nomor_ijin_prinsip,
           (SELECT COUNT(*) FROM rab_items WHERE rab_id = r.id) as item_count
         FROM rab r
@@ -1932,6 +1933,7 @@ export async function getAllRAB(db: D1Database) {
             r.nomor_kr,
             r.nomor_kr_set_by,
             r.nomor_kr_set_at,
+            r.vendor,
             prl.nomor_ijin_prinsip,
             COUNT(ri.id) as item_count
           FROM rab r
@@ -1959,6 +1961,7 @@ export async function getAllRAB(db: D1Database) {
               r.nomor_kr,
               r.nomor_kr_set_by,
               r.nomor_kr_set_at,
+              r.vendor,
               prl.nomor_ijin_prinsip,
               COUNT(ri.id) as item_count
             FROM rab r

@@ -4086,6 +4086,76 @@ app.put('/api/rab/:id/nomor-kr', async (c) => {
   }
 })
 
+// API: Set Vendor untuk RAB (hanya Andalcekatan)
+// =====================================================
+app.patch('/api/rab/:id/vendor', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+
+    // Cek session
+    const authHeader = c.req.header('Authorization')
+    const sessionToken = authHeader?.replace('Bearer ', '')
+    if (!sessionToken) {
+      return c.json({ error: 'Unauthorized', message: 'Session tidak valid' }, 401)
+    }
+
+    // Ambil username & role dari session
+    let username = ''
+    let role = ''
+    if (activeSessions.has(sessionToken)) {
+      const s = activeSessions.get(sessionToken)
+      username = s.username
+      role = s.role
+    } else {
+      try {
+        const dbSession: any = await DB.getSession(env.DB, sessionToken)
+        if (dbSession) {
+          username = dbSession.username
+          role = dbSession.role
+          activeSessions.set(sessionToken, { username, role, token: sessionToken })
+        }
+      } catch (e) {}
+    }
+
+    if (!username) {
+      return c.json({ error: 'Unauthorized', message: 'Session tidak ditemukan' }, 401)
+    }
+
+    // Hanya Andalcekatan yang bisa ubah vendor
+    if (username !== 'Andalcekatan' && role !== 'admin') {
+      return c.json({ error: 'Forbidden', message: 'Hanya Andalcekatan yang bisa mengubah Vendor.' }, 403)
+    }
+
+    const body = await c.req.json()
+    const vendor = (body.vendor || '').trim()
+
+    // Cek RAB ada
+    const existingRab: any = await env.DB.prepare(
+      'SELECT id, nomor_rab FROM rab WHERE id = ?'
+    ).bind(rabId).first()
+
+    if (!existingRab) {
+      return c.json({ error: 'RAB tidak ditemukan' }, 404)
+    }
+
+    await env.DB.prepare(`
+      UPDATE rab SET vendor = ? WHERE id = ?
+    `).bind(vendor || null, rabId).run()
+
+    console.log(`✅ Vendor "${vendor}" disimpan untuk RAB ID ${rabId} oleh ${username}`)
+
+    return c.json({
+      success: true,
+      message: `Vendor berhasil ${vendor ? 'disimpan' : 'dihapus'}`,
+      vendor: vendor || null
+    })
+  } catch (error) {
+    console.error('Failed to save vendor:', error)
+    return c.json({ error: 'Gagal menyimpan vendor' }, 500)
+  }
+})
+
 // API: Update realisasi value for RAB item
 app.put('/api/rab/:rabId/item/:itemId/realisasi', async (c) => {
   try {
@@ -13579,8 +13649,8 @@ function getDashboardListRABHTML() {
                             <p id="detailCreated" class="font-semibold"></p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600">Dibuat Oleh</p>
-                            <p id="detailUsername" class="font-semibold"></p>
+                            <p class="text-sm text-gray-600">Vendor</p>
+                            <div id="detailVendorContainer" class="font-semibold"></div>
                         </div>
                     </div>
                     <div class="flex justify-between items-center mb-4">
@@ -14054,8 +14124,8 @@ function getDashboardListTORHTML() {
                             <p id="detailCreated" class="font-semibold"></p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600">Dibuat Oleh</p>
-                            <p id="detailUsername" class="font-semibold"></p>
+                            <p class="text-sm text-gray-600">Vendor</p>
+                            <div id="detailVendorContainer" class="font-semibold"></div>
                         </div>
                     </div>
                     <div class="flex justify-between items-center mb-4">
