@@ -14066,12 +14066,13 @@ function getDashboardListTORHTML() {
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 180px; min-width: 180px; max-width: 180px;">Status SCM</th>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 400px; min-width: 400px; max-width: 400px;">Nama Pekerjaan</th>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 140px; min-width: 140px; max-width: 140px;">No. SPK</th>
+                                <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 200px; min-width: 200px; max-width: 200px;">Vendor</th>
                                 <th class="px-2 py-3 border border-white text-center text-white text-xs font-bold uppercase" style="background-color: #2C5282; width: 100px; min-width: 100px; max-width: 100px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="rabListTable">
                             <tr>
-                                <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="11" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
                                     <p>Memuat data realisasi...</p>
                                 </td>

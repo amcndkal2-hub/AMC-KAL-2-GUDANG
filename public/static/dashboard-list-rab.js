@@ -453,7 +453,7 @@ function renderRABList(rabList) {
   console.log(`📊 Rendering ${rabList.length} RAB items`)
   
   if (rabList.length === 0) {
-    const totalColumns = isListTORPage ? 10 : 13
+    const totalColumns = isListTORPage ? 11 : 13
     tableBody.innerHTML = `
       <tr>
         <td colspan="${totalColumns}" class="px-6 py-8 text-center text-gray-500">
@@ -632,6 +632,11 @@ function renderRABList(rabList) {
       <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 150px; min-width: 150px; max-width: 150px;">
         <span class="text-gray-700 font-mono text-xs">${spkData.nomor_spk}</span>
       </td>
+      ${isListTORPage ? `
+      <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 200px; min-width: 200px; max-width: 200px;">
+        <span class="text-gray-700 text-xs font-semibold">${rab.vendor || '-'}</span>
+      </td>
+      ` : ''}
       <td class="px-2 py-2 border text-center align-middle" style="background: white; width: 120px; min-width: 120px; max-width: 120px;">
         <div class="flex gap-1 justify-center items-center flex-nowrap">
           <button onclick="viewRABDetail(${rab.id})" 
