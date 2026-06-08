@@ -4086,6 +4086,76 @@ app.put('/api/rab/:id/nomor-kr', async (c) => {
   }
 })
 
+// API: Update Status RAB manual (khusus Pembelian Langsung, semua akun)
+// =====================================================
+app.patch('/api/rab/:id/status', async (c) => {
+  try {
+    const { env } = c
+    const rabId = parseInt(c.req.param('id'))
+
+    // Cek session
+    const authHeader = c.req.header('Authorization')
+    const sessionToken = authHeader?.replace('Bearer ', '')
+    if (!sessionToken) {
+      return c.json({ error: 'Unauthorized', message: 'Session tidak valid' }, 401)
+    }
+
+    // Ambil username dari session
+    let username = ''
+    if (activeSessions.has(sessionToken)) {
+      username = activeSessions.get(sessionToken).username
+    } else {
+      try {
+        const dbSession: any = await DB.getSession(env.DB, sessionToken)
+        if (dbSession) {
+          username = dbSession.username
+          activeSessions.set(sessionToken, { username, role: dbSession.role, token: sessionToken })
+        }
+      } catch (e) {}
+    }
+
+    if (!username) {
+      return c.json({ error: 'Unauthorized', message: 'Session tidak ditemukan' }, 401)
+    }
+
+    // Cek RAB ada & hanya Pembelian Langsung
+    const existingRab: any = await env.DB.prepare(
+      'SELECT id, nomor_rab, jenis_rab FROM rab WHERE id = ?'
+    ).bind(rabId).first()
+
+    if (!existingRab) {
+      return c.json({ error: 'RAB tidak ditemukan' }, 404)
+    }
+
+    if (existingRab.jenis_rab !== 'Pembelian Langsung') {
+      return c.json({ error: 'Forbidden', message: 'Update status manual hanya untuk Pembelian Langsung.' }, 403)
+    }
+
+    const body = await c.req.json()
+    const newStatus = (body.status || '').trim()
+    const validStatuses = ['Draft', 'Pengadaan', 'Tersedia', 'Masuk Gudang']
+
+    if (!validStatuses.includes(newStatus)) {
+      return c.json({ error: 'Status tidak valid', valid: validStatuses }, 400)
+    }
+
+    await env.DB.prepare(`
+      UPDATE rab SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    `).bind(newStatus, rabId).run()
+
+    console.log(`✅ Status RAB ID ${rabId} (${existingRab.nomor_rab}) diubah ke "${newStatus}" oleh ${username}`)
+
+    return c.json({
+      success: true,
+      message: `Status berhasil diubah ke "${newStatus}"`,
+      status: newStatus
+    })
+  } catch (error) {
+    console.error('Failed to update RAB status:', error)
+    return c.json({ error: 'Gagal mengubah status' }, 500)
+  }
+})
+
 // API: Set Vendor untuk RAB (hanya Andalcekatan)
 // =====================================================
 app.patch('/api/rab/:id/vendor', async (c) => {
