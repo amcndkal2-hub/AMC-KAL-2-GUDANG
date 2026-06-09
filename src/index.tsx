@@ -3676,7 +3676,7 @@ app.get('/api/rab/materials-tersedia', async (c) => {
     
     console.log('📦 Fetching RAB materials with status Tersedia...')
     
-    // Ultra-safe query with only guaranteed columns
+    // Query: include Tersedia + Sebagian Masuk Gudang, filter is_transacted=0
     const query = `
       SELECT 
         ri.id,
@@ -3687,24 +3687,26 @@ app.get('/api/rab/materials-tersedia', async (c) => {
         ri.mesin,
         ri.jumlah,
         ri.unit_uld,
+        ri.is_transacted,
         r.nomor_rab,
         r.status as rab_status
       FROM rab_items ri
       JOIN rab r ON ri.rab_id = r.id
-      WHERE r.status = 'Tersedia'
-      ORDER BY ri.id ASC
+      WHERE r.status IN ('Tersedia', 'Sebagian Masuk Gudang')
+        AND (ri.is_transacted = 0 OR ri.is_transacted IS NULL)
+      ORDER BY r.nomor_rab ASC, ri.id ASC
     `
     
     const result = await env.DB.prepare(query).all()
     
-    console.log(`✅ Found ${result.results?.length || 0} materials from RAB Tersedia`)
+    console.log(`✅ Found ${result.results?.length || 0} materials from RAB Tersedia/Sebagian Masuk Gudang`)
     
     // Add default values for new fields
     const materials = (result.results || []).map(item => ({
       ...item,
       material_gangguan_id: item.material_gangguan_id || null,
       jenis_barang: item.jenis_barang || '-',
-      is_transacted: 0  // Always 0 for now (all items selectable)
+      is_transacted: item.is_transacted || 0
     }))
     
     return c.json({
@@ -4861,53 +4863,70 @@ app.post('/api/save-transaction-from-rab', async (c) => {
       }
     }
     
-    // Mark selected RAB items as transacted
+    // Mark selected RAB items as transacted (by part_number, fallback material_gangguan_id)
     if (data.rab_id && data.materials && data.materials.length > 0) {
       for (const material of data.materials) {
-        if (material.material_gangguan_id) {
-          try {
-            // Update is_transacted flag for this specific RAB item
+        try {
+          if (material.material_gangguan_id) {
+            // Coba update by material_gangguan_id dulu
             await env.DB.prepare(`
               UPDATE rab_items 
               SET is_transacted = 1
               WHERE rab_id = ? AND material_gangguan_id = ?
             `).bind(data.rab_id, material.material_gangguan_id).run()
-            
-            console.log(`✅ Marked rab_item (rab_id=${data.rab_id}, material_gangguan_id=${material.material_gangguan_id}) as transacted`)
-          } catch (markError) {
-            console.error(`⚠️ Failed to mark rab_item as transacted:`, markError)
+            console.log(`✅ Marked rab_item by material_gangguan_id=${material.material_gangguan_id} as transacted`)
           }
+          // Selalu update by part_number juga (untuk cover semua kasus)
+          if (material.part_number) {
+            await env.DB.prepare(`
+              UPDATE rab_items 
+              SET is_transacted = 1
+              WHERE rab_id = ? AND part_number = ?
+            `).bind(data.rab_id, material.part_number).run()
+            console.log(`✅ Marked rab_item by part_number=${material.part_number} as transacted`)
+          }
+        } catch (markError) {
+          console.error(`⚠️ Failed to mark rab_item as transacted:`, markError)
         }
       }
     }
-    
-    // Update RAB status to "Masuk Gudang" and set tanggal_masuk_gudang
+
+    // Update RAB status: cek apakah semua item sudah transacted
     if (data.rab_id) {
       try {
-        await env.DB.prepare(`
-          UPDATE rab 
-          SET status = 'Masuk Gudang', 
-              tanggal_masuk_gudang = datetime('now'),
-              updated_at = datetime('now')
-          WHERE id = ?
-        `).bind(data.rab_id).run()
-        
-        console.log(`✅ RAB ${data.rab_id} status updated to "Masuk Gudang"`)
-      } catch (updateError) {
-        // If tanggal_masuk_gudang column doesn't exist, use basic update
-        console.log('⚠️ tanggal_masuk_gudang column not found, using fallback')
+        // Hitung total item vs yang sudah transacted
+        const countResult: any = await env.DB.prepare(`
+          SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN is_transacted = 1 THEN 1 ELSE 0 END) as transacted
+          FROM rab_items WHERE rab_id = ?
+        `).bind(data.rab_id).first()
+
+        const total = countResult?.total || 0
+        const transacted = countResult?.transacted || 0
+        const allDone = total > 0 && transacted >= total
+        const newStatus = allDone ? 'Masuk Gudang' : 'Sebagian Masuk Gudang'
+
+        console.log(`📊 RAB ${data.rab_id}: ${transacted}/${total} items transacted → status = "${newStatus}"`)
+
         try {
           await env.DB.prepare(`
             UPDATE rab 
-            SET status = 'Masuk Gudang', 
+            SET status = ?,
+                tanggal_masuk_gudang = CASE WHEN ? = 'Masuk Gudang' THEN datetime('now') ELSE tanggal_masuk_gudang END,
                 updated_at = datetime('now')
             WHERE id = ?
-          `).bind(data.rab_id).run()
-          
-          console.log(`✅ RAB ${data.rab_id} status updated to "Masuk Gudang" (fallback)`)
-        } catch (fallbackError) {
-          console.error('⚠️ Failed to update RAB status (fallback):', fallbackError)
+          `).bind(newStatus, newStatus, data.rab_id).run()
+          console.log(`✅ RAB ${data.rab_id} status updated to "${newStatus}"`)
+        } catch (updateError) {
+          // Fallback tanpa tanggal_masuk_gudang
+          await env.DB.prepare(`
+            UPDATE rab SET status = ?, updated_at = datetime('now') WHERE id = ?
+          `).bind(newStatus, data.rab_id).run()
+          console.log(`✅ RAB ${data.rab_id} status updated to "${newStatus}" (fallback)`)
         }
+      } catch (statusError) {
+        console.error('⚠️ Failed to update RAB status:', statusError)
       }
     }
     
@@ -5063,7 +5082,7 @@ app.post('/api/rab/:id/update-status', async (c) => {
     console.log('📝 Updating RAB status:', { rabId, newStatus })
     
     // Validate status
-    const validStatuses = ['Draft', 'Pengadaan', 'Tersedia', 'Masuk Gudang']
+    const validStatuses = ['Draft', 'Pengadaan', 'Tersedia', 'Sebagian Masuk Gudang', 'Masuk Gudang']
     if (!validStatuses.includes(newStatus)) {
       return c.json({ error: 'Invalid status' }, 400)
     }
@@ -5089,7 +5108,7 @@ app.post('/api/rab/:id/update-status', async (c) => {
     // ===== VALIDATION FOR PEMBELIAN LANGSUNG =====
     if (rab.jenis_rab === 'Pembelian Langsung') {
       const currentStatus = rab.status
-      const statusOrder = { 'Draft': 1, 'Pengadaan': 2, 'Tersedia': 3, 'Masuk Gudang': 4 }
+      const statusOrder = { 'Draft': 1, 'Pengadaan': 2, 'Tersedia': 3, 'Sebagian Masuk Gudang': 4, 'Masuk Gudang': 5 }
       
       // 1. Masuk Gudang is final/locked
       if (currentStatus === 'Masuk Gudang') {
@@ -5099,11 +5118,11 @@ app.post('/api/rab/:id/update-status', async (c) => {
         }, 400)
       }
       
-      // 2. Cannot manually set to Masuk Gudang
-      if (newStatus === 'Masuk Gudang') {
+      // 2. Cannot manually set to Masuk Gudang or Sebagian Masuk Gudang
+      if (newStatus === 'Masuk Gudang' || newStatus === 'Sebagian Masuk Gudang') {
         return c.json({ 
-          error: 'Status Masuk Gudang hanya bisa otomatis',
-          details: 'Status "Masuk Gudang" akan diset otomatis saat material dari RAB Tersedia di-input di menu Input Material.'
+          error: 'Status ini hanya bisa otomatis',
+          details: 'Status "Masuk Gudang" dan "Sebagian Masuk Gudang" akan diset otomatis saat material di-input di menu Input Material.'
         }, 400)
       }
       
@@ -13619,6 +13638,7 @@ function getDashboardListRABHTML() {
                                 <option value="Draft">Draft</option>
                                 <option value="Pengadaan">Pengadaan</option>
                                 <option value="Tersedia">Tersedia</option>
+                                <option value="Sebagian Masuk Gudang">Sebagian Masuk Gudang</option>
                                 <option value="Masuk Gudang">Masuk Gudang</option>
                             </select>
                         </div>
@@ -14039,6 +14059,7 @@ function getDashboardListTORHTML() {
                                 <option value="Draft">Draft</option>
                                 <option value="Pengadaan">Pengadaan</option>
                                 <option value="Tersedia">Tersedia</option>
+                                <option value="Sebagian Masuk Gudang">Sebagian Masuk Gudang</option>
                                 <option value="Masuk Gudang">Masuk Gudang</option>
                             </select>
                         </div>

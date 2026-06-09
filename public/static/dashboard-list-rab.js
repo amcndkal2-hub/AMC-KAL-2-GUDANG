@@ -726,12 +726,13 @@ function renderRABStatusBadge(rab) {
 
 // Render status dropdown untuk Pembelian Langsung (semua akun bisa ubah)
 function renderRABStatusDropdown(rab) {
-  const statuses = ['Draft', 'Pengadaan', 'Tersedia', 'Masuk Gudang']
+  const statuses = ['Draft', 'Pengadaan', 'Tersedia', 'Sebagian Masuk Gudang', 'Masuk Gudang']
   const colorMap = {
-    'Draft':        'bg-gray-100 text-gray-700 border border-gray-300',
-    'Pengadaan':    'bg-yellow-100 text-yellow-800 border border-yellow-300',
-    'Tersedia':     'bg-green-100 text-green-800 border border-green-300',
-    'Masuk Gudang': 'bg-purple-100 text-purple-800 border border-purple-300'
+    'Draft':                  'bg-gray-100 text-gray-700 border border-gray-300',
+    'Pengadaan':              'bg-yellow-100 text-yellow-800 border border-yellow-300',
+    'Tersedia':               'bg-green-100 text-green-800 border border-green-300',
+    'Sebagian Masuk Gudang':  'bg-orange-100 text-orange-800 border border-orange-300',
+    'Masuk Gudang':           'bg-purple-100 text-purple-800 border border-purple-300'
   }
   const current = rab.status || 'Draft'
   const colorClass = colorMap[current] || colorMap['Draft']
@@ -770,10 +771,11 @@ async function updateRABStatusManual(rabId, newStatus, selectEl) {
     if (response.ok) {
       // Update warna dropdown sesuai status baru
       const colorMap = {
-        'Draft':        'bg-gray-100 text-gray-700 border border-gray-300',
-        'Pengadaan':    'bg-yellow-100 text-yellow-800 border border-yellow-300',
-        'Tersedia':     'bg-green-100 text-green-800 border border-green-300',
-        'Masuk Gudang': 'bg-purple-100 text-purple-800 border border-purple-300'
+        'Draft':                  'bg-gray-100 text-gray-700 border border-gray-300',
+        'Pengadaan':              'bg-yellow-100 text-yellow-800 border border-yellow-300',
+        'Tersedia':               'bg-green-100 text-green-800 border border-green-300',
+        'Sebagian Masuk Gudang':  'bg-orange-100 text-orange-800 border border-orange-300',
+        'Masuk Gudang':           'bg-purple-100 text-purple-800 border border-purple-300'
       }
       // Hapus semua class warna lama
       selectEl.className = selectEl.className.replace(/bg-\S+|text-\S+|border-\S+/g, '').trim()
