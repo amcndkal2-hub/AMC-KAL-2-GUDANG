@@ -706,6 +706,12 @@ function renderRABStatusBadge(rab) {
       label: 'Tersedia',
       hint: 'SCM: Acc Direktur Operasi'
     },
+    'Sebagian Masuk Gudang': {
+      color: 'bg-orange-100 text-orange-800 border border-orange-300',
+      icon: '📦',
+      label: 'Sebagian Masuk Gudang',
+      hint: 'Sebagian item sudah masuk gudang'
+    },
     'Masuk Gudang': {
       color: 'bg-purple-100 text-purple-800 border border-purple-300',
       icon: '🏭',
