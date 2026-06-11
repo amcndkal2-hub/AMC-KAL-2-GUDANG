@@ -8057,6 +8057,7 @@ function getDashboardMutasiHTML() {
                                 <th class="px-4 py-3 text-left">Tanggal</th>
                                 <th class="px-4 py-3 text-left">Part Number</th>
                                 <th class="px-4 py-3 text-center">Jumlah</th>
+                                <th class="px-4 py-3 text-left">No. LH05</th>
                                 <th class="px-4 py-3 text-left">Lokasi Keluar</th>
                                 <th class="px-4 py-3 text-left">Lokasi Tujuan</th>
                                 <th class="px-4 py-3 text-left">Pemeriksa</th>
@@ -8067,7 +8068,7 @@ function getDashboardMutasiHTML() {
                         </thead>
                         <tbody id="mutasiTable">
                             <tr>
-                                <td colspan="11" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="12" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
                                     <p>Memuat data...</p>
                                 </td>

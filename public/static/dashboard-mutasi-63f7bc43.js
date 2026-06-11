@@ -55,7 +55,7 @@ async function loadTransactions() {
         if (tbody) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="10" class="px-4 py-8 text-center">
+                    <td colspan="12" class="px-4 py-8 text-center">
                         <div class="text-red-600">
                             <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
                             <p class="font-semibold">Gagal memuat data transaksi</p>
@@ -169,7 +169,7 @@ function renderMutasiTable(data = transactions) {
     if (data.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="11" class="px-4 py-8 text-center text-gray-500">
+                <td colspan="12" class="px-4 py-8 text-center text-gray-500">
                     Tidak ada data mutasi
                 </td>
             </tr>
@@ -189,45 +189,65 @@ function renderMutasiTable(data = transactions) {
             return; // Skip this transaction
         }
         
-        materials.forEach((mat, idx) => {
-            const jenisClass = (tx.jenis_transaksi || '').includes('Masuk') 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-red-100 text-red-800';
-            
-            // Simplify jenis transaksi text
-            const jenisText = (tx.jenis_transaksi || '').includes('Masuk') ? 'Masuk' : 'Keluar';
-            
-            html += `
+        // Hitung total rows per transaksi (expand jika LH05 > 1 per material, khusus Masuk)
+        const isMasuk = (tx.jenis_transaksi || '').includes('Masuk');
+        
+        // Pre-process: hitung lh05 rows per material
+        const matRows = materials.map(mat => {
+            if (!isMasuk) return { mat, lh05Array: ['-'] };
+            const lh05Raw = mat.lh05_list || '';
+            const lh05Array = lh05Raw ? lh05Raw.split(',').map(s => s.trim()).filter(Boolean) : ['-'];
+            return { mat, lh05Array };
+        });
+        
+        // Total baris visual untuk rowspan kolom transaksi
+        const totalRows = matRows.reduce((sum, r) => sum + r.lh05Array.length, 0);
+        
+        const jenisClass = isMasuk ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+        const jenisText = isMasuk ? 'Masuk' : 'Keluar';
+        
+        let firstRowOfTx = true;
+        
+        matRows.forEach(({ mat, lh05Array }, matIdx) => {
+            lh05Array.forEach((lh05, lh05Idx) => {
+                const isFirstRow = firstRowOfTx;
+                const isFirstLH05ofMat = lh05Idx === 0;
+                firstRowOfTx = false;
+                
+                html += `
                 <tr class="border-b hover:bg-gray-50">
-                    ${idx === 0 ? `
-                        <td class="px-4 py-3" rowspan="${materials.length}">
+                    ${isFirstRow ? `
+                        <td class="px-4 py-3" rowspan="${totalRows}">
                             <span class="inline-block ${jenisClass} px-3 py-1 rounded-full text-sm font-mono" style="min-width: 80px; text-align: center;">
                                 ${jenisText}
                             </span>
                         </td>
-                        <td class="px-4 py-3 font-bold" rowspan="${materials.length}">
+                        <td class="px-4 py-3 font-bold" rowspan="${totalRows}">
                             <a href="#" onclick="event.preventDefault(); viewBA('${tx.nomor_ba}'); return false;" class="text-blue-600 hover:underline cursor-pointer">
                                 ${tx.nomor_ba}
                             </a>
                         </td>
-                        <td class="px-4 py-3" rowspan="${materials.length}">
+                        <td class="px-4 py-3" rowspan="${totalRows}">
                             ${formatDate(tx.tanggal)}
                         </td>
                     ` : ''}
-                    <td class="px-4 py-3">${mat.partNumber || mat.part_number || '-'}</td>
-                    <td class="px-4 py-3 text-center font-semibold">${mat.jumlah || 0}</td>
-                    ${idx === 0 ? `
-                        <td class="px-4 py-3" rowspan="${materials.length}">${tx.lokasi_asal || '-'}</td>
-                        <td class="px-4 py-3" rowspan="${materials.length}">${tx.lokasi_tujuan || '-'}</td>
-                        <td class="px-4 py-3" rowspan="${materials.length}">${tx.pemeriksa || '-'}</td>
-                        <td class="px-4 py-3" rowspan="${materials.length}">${tx.penerima || '-'}</td>
-                        <td class="px-4 py-3 text-center" rowspan="${materials.length}">
+                    ${isFirstLH05ofMat ? `
+                        <td class="px-4 py-3" rowspan="${lh05Array.length}">${mat.partNumber || mat.part_number || '-'}</td>
+                        <td class="px-4 py-3 text-center font-semibold" rowspan="${lh05Array.length}">${mat.jumlah || 0}</td>
+                    ` : ''}
+                    <td class="px-4 py-3 text-xs text-gray-700">${lh05 !== '-' ? `<span class="font-mono">${lh05}</span>` : '<span class="text-gray-400">-</span>'}</td>
+                    ${isFirstRow ? `
+                        <td class="px-4 py-3" rowspan="${totalRows}">${tx.lokasi_asal || '-'}</td>
+                        <td class="px-4 py-3" rowspan="${totalRows}">${tx.lokasi_tujuan || '-'}</td>
+                        <td class="px-4 py-3" rowspan="${totalRows}">${tx.pemeriksa || '-'}</td>
+                        <td class="px-4 py-3" rowspan="${totalRows}">${tx.penerima || '-'}</td>
+                        <td class="px-4 py-3 text-center" rowspan="${totalRows}">
                             <button onclick="event.preventDefault(); exportBA('${tx.nomor_ba}'); return false;" 
                                 class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">
                                 <i class="fas fa-download mr-1"></i>Export
                             </button>
                         </td>
-                        <td class="px-4 py-3 text-center" rowspan="${materials.length}">
+                        <td class="px-4 py-3 text-center" rowspan="${totalRows}">
                             ${isAdminUser ? `
                                 <button onclick="deleteTransaction('${tx.nomor_ba}')" 
                                     class="admin-only btn-delete bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">
@@ -237,7 +257,8 @@ function renderMutasiTable(data = transactions) {
                         </td>
                     ` : ''}
                 </tr>
-            `;
+                `;
+            });
         });
     });
     

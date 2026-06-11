@@ -187,7 +187,14 @@ export async function getAllTransactions(db: D1Database) {
             'mesin', m.mesin,
             'snMesin', m.sn_mesin,
             'sn_mesin', m.sn_mesin,
-            'jumlah', m.jumlah
+            'jumlah', m.jumlah,
+            'lh05_list', (
+              SELECT GROUP_CONCAT(DISTINCT ri.nomor_lh05)
+              FROM rab_items ri
+              WHERE ri.part_number = m.part_number
+                AND ri.nomor_lh05 IS NOT NULL
+                AND ri.nomor_lh05 != ''
+            )
           )
         ) as materials
       FROM transactions t
